@@ -229,11 +229,12 @@ class Query:
 
         It is deliberately **not** ``require_can(..., NotePermissions.VIEW)``. Notes are a
         legacy-only domain: ``LEGACY_INERT_APPS`` (``common/permissions/domain.py``) lists
-        shelters/teams/reports/organizations, not notes, and the scoped ``CASEWORKER_ROLE``
-        carries only ``Team.perms.VIEW`` (RFC 0003 step 1) — **no ``Role`` carries
-        ``notes.view_note``**. A grant predicate on that codename therefore resolves to an
-        empty scope and denies every non-superuser, including the caseworkers the map is
-        for. That is the ADR §5.3 anti-pattern: gating on a permission before its cutover
+        the cut-over apps (shelters/teams/reports/organizations, the client family,
+        referrals), never notes, and the scoped ``CASEWORKER_ROLE`` carries
+        ``Team.perms.VIEW``, the client bundle and the referral bundle — but **no ``Role``
+        carries ``notes.view_note``**. A grant predicate on that codename therefore
+        resolves to an empty scope and denies every non-superuser, including the
+        caseworkers the map is for. That is the ADR §5.3 anti-pattern: gating on a permission before its cutover
         deletes authority rather than moving it. The note scope is enforced below, through
         the same legacy path the Notes pages use.
 

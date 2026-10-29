@@ -500,7 +500,7 @@ The mechanics in §2.4–§2.6 are traced concretely for real people and orgs in
 | Org grants (org→org view/edit) | `Grant(principal_org, role, scope_org)` + delegation arm | ✅ (granularity limits, §3) |
 | Object grants | `Grant(…, scope_object_*)` + ancestor cascade | ✅ schema / ⚠️ wired at clients cutover |
 | Cross-org grants | delegation + multi-scope rows | ✅ |
-| Outreach app (notes/clients/…) | `org_via` on each model + §2.4 tiers | ⚠️ notes §5, clients §5.1 |
+| Outreach app (notes/clients/…) | `org_via` on each model + §2.4 tiers | ⚠️ notes/tasks §5 · ✅ clients §5.1 profile + family (documents/imports still legacy) |
 | Shelter-first isolation | phased cutover, §4 | ✅ |
 | Client sharing (future) | data edge feeding `org_paths()`; object arm for per-record | ✅ v1 decided (2026-09-02) — BA-created person object grants; org-level edge future (§7.4) |
 
@@ -759,7 +759,7 @@ still needs at its cutover:
 | **Teams** | `Team.organization` | `()` | legacy `ORG_ADMIN`/`ORG_SUPERUSER` template — no scoped `Role` row yet | **Cut over (§5.3)** — no guardian rows; org reads/writes via `can()`/`can_obj` on the role-backed admin roles | None (after §5.3) |
 | **Reports** | report row `.organization` | `()` | legacy `ORG_ADMIN`/`ORG_SUPERUSER` template — role-backed as of §5.3 | **Cut over (§5.3)** — DRF + GraphQL reads authorize through the grant predicate | None (after §5.3) |
 | **Notes** | `Note.organization` | `()` | legacy template + guardian rows at creation | org-owned writes on the role; shared/foreign notes via the object arm | **Not mechanical** — §5 design |
-| **Clients** | `ClientProfile` (no org FK) | `None` (platform-shared) | legacy model-level perms on CASEWORKER (no per-record rows) | parity-first: SHARED write via `can_anywhere` (RFC 0002); owner-tier (`created_by_org`) parked | §5.1 / RFC 0002 |
+| **Clients** | `ClientProfile` (no org FK) | `None` (platform-shared) | **Cut over** — grant-only, SHARED tier (RFC 0002); documents/imports remain legacy (`LEGACY_LIVE_PERMISSIONS`) | parity-first: SHARED write via `can_anywhere` (RFC 0002); owner-tier (`created_by_org`) parked | §5.1 / RFC 0002 |
 | **HMIS** | `HmisProfile` → `ClientProfile` | `None` (platform-shared) | legacy `resolve_permission_group` | rides the clients cutover | rides clients |
 | **Reference data** (City, SPA, lookups, media) | global data, no org | n/a | legacy GSO `PermissionGroup` template (global tier) | stays on the global tier — never org-scoped | None — by design |
 

@@ -1,9 +1,18 @@
 # RFC 0002 — Per-model read/write tiers & the client domain (ADR 0001 §5.1 / §7.6)
 
-**Status:** Proposed — records the per-model tiering product rule (2026-09-02) and the
-client-domain write-tier decision; the architectural prerequisite (decoupling read scope
-from write scope, § Precondition) is the work that gates the clients cutover.
-**Date:** 2026-09-02 (amended 2026-09-02)
+**Status:** Implemented (2026-09-10, amended 2026-10-27) — the client family
+(`ClientProfile`, `ClientContact`, `ClientHouseholdMember`, `HmisProfile`,
+`SocialMediaProfile`) enforces through the grant checkers: SHARED read / SHARED
+write, the root list fields carry `HasPerm(..., fail_silently=True)` so a denial
+is an empty page, and single reads and mutations refuse; `clients` joined
+`LEGACY_INERT_APPS` and `CASEWORKER_ROLE` carries the bundle.  Was: Proposed —
+records the per-model
+tiering product rule (2026-09-02) and the client-domain write-tier decision;
+the architectural prerequisite (decoupling read scope from write scope,
+§ Precondition) was the work that gated the cutover.  Remaining: client
+documents (CREATOR/UPLOADER tier), import surfaces, and the shelter-operator
+read-surface narrow (dedupe search).
+**Date:** 2026-09-02 (amended 2026-09-02, 2026-10-27)
 **Scope:** Resolves ADR 0001 §7.6 (the §5.1 client-writes design) and establishes the
 per-model read/write-tier vocabulary that the caseworker domains (RFC 0003) inherit.
 Gates the clients cutover (ADR §4 phase 4). Independent of the tier-3 FE surfacing
@@ -272,3 +281,26 @@ The anchor is deliberately not an `org_via` hop: reads stay platform-shared, and
 authority is an org-scope check against the column (`can(user, perm, org=…)`), not
 an object grant. Object grants remain person-granular by E006 and are reserved for
 explicit sharing.
+
+## Amendment (2026-10-27) — nested gating and the document carve-out
+
+The clients cutover landed (profile + family grant-enforced) with two consequences
+worth recording explicitly:
+
+- **Read gates live on the root list fields, not on the types.** A type-level
+  `get_queryset` hook is a scoping hook: it applies to every occurrence of the
+  type (including nested ones) and re-evaluates once per type, which both broke
+  nested parity for profile-only roles and multiplied the permission lookups.
+  The root list fields instead carry
+  `HasPerm(..., perm_checker=can_anywhere_checker, fail_silently=True)`, which
+  returns an empty page on denial — the empty-not-error shape `main` had — and
+  shows the gate in the SDL. Nested family lists ride the parent profile's
+  `VIEW`, exactly as on `main`; per-model visibility inside a profile would be a
+  deliberate later change with its own mechanism, not a side effect.
+- **Client documents remain on the legacy gates.** They are still owned through
+  guardian object rows; the two upload mutations still load the parent through
+  `filter_for_user`, and the read fields still use `HasRetvalPerm`. `clients`
+  joining `LEGACY_INERT_APPS` therefore covers the profile/family surfaces only —
+  the document surface is the remaining legacy consumer and is listed in the
+  gating test's exemptions. The CREATOR/UPLOADER cutover (uploader-org anchor,
+  RFC 0002 decision 2) removes it.

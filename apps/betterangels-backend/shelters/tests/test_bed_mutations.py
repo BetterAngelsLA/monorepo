@@ -77,7 +77,7 @@ class CreateBedMutationTestCase(BedMutationTestCase):
                 "type": BedTypeChoices.TWIN.name,
             }
         }
-        expected_query_count = 41
+        expected_query_count = 38
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 
@@ -422,7 +422,7 @@ class CloneBedMutationTestCase(BedMutationTestCase):
         variables = {"id": str(source.pk)}
 
         # The clone now checks can(ADD) too (create convention, ADR 0001 §2.6).
-        expected_query_count = 37
+        expected_query_count = 34
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.mutation, variables)
 

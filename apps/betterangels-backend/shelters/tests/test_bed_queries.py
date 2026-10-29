@@ -55,7 +55,7 @@ class BedQueriesTestCase(ShelterTestCase, TestCase):
 
 class BedQueryTestCase(BedQueriesTestCase):
     def test_bed_query(self) -> None:
-        expected_query_count = 18
+        expected_query_count = 12
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.bed_query, variables={"id": str(self.bed.pk)})
         self.assertIsNone(response.get("errors"))
@@ -84,7 +84,7 @@ class BedsQueryTestCase(BedQueriesTestCase):
     def test_beds_query_returns_org_beds(self) -> None:
         baker.make(Bed, shelter=self.shelter, name="Bed-2")
 
-        expected_query_count = 19
+        expected_query_count = 13
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(
                 self.beds_query,
@@ -121,7 +121,7 @@ class BedsQueryTestCase(BedQueriesTestCase):
         other_shelter = shelter_recipe.make(organization=self.org)
         other_bed = baker.make(Bed, shelter=other_shelter, name="Bed-2")
 
-        expected_query_count = 19
+        expected_query_count = 13
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(
                 self.beds_query,
@@ -142,7 +142,7 @@ class BedsQueryTestCase(BedQueriesTestCase):
 
         baker.make(Reservation, bed=reserved_bed, status=ReservationStatusChoices.CONFIRMED)
 
-        expected_query_count = 18
+        expected_query_count = 12
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(
                 self.beds_query,
@@ -160,7 +160,7 @@ class BedsQueryTestCase(BedQueriesTestCase):
     def test_beds_query_filters_by_type(self) -> None:
         bunk_bed = baker.make(Bed, shelter=self.shelter, name="Bed-3", type=BedTypeChoices.BUNK)
 
-        expected_query_count = 18
+        expected_query_count = 12
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(
                 self.beds_query,
@@ -180,7 +180,7 @@ class BedsQueryTestCase(BedQueriesTestCase):
         other_shelter = shelter_recipe.make(organization=other_org)
         baker.make(Bed, shelter=other_shelter, name="Other-Bed")
 
-        expected_query_count = 19
+        expected_query_count = 13
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.beds_query, variables={"pagination": {"offset": 0, "limit": 10}})
 

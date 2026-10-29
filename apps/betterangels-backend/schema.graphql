@@ -505,7 +505,6 @@ type ClientProfileType {
   unhousedStartDate: Date
   veteranStatus: VeteranStatusEnum
   id: ID!
-  profilePhoto: DjangoImageType
   contacts: [ClientContactType!]
   hmisProfiles: [HmisProfileType!]
   householdMembers: [ClientHouseholdMemberType!]
@@ -516,6 +515,7 @@ type ClientProfileType {
   docReadyDocuments: [ClientDocumentType!]
   consentFormDocuments: [ClientDocumentType!]
   otherDocuments: [ClientDocumentType!]
+  profilePhoto: DjangoImageType
   displayCaseManager: String!
 }
 
@@ -1637,27 +1637,27 @@ type Mutation {
   createOrganization(data: CreateOrganizationInput!): CreateOrganizationResponse!
   changeOrganizationMemberRole(data: ChangeOrganizationMemberRoleInput!): ChangeOrganizationMemberRolePayload!
   createClientContact(data: ClientContactInput!): CreateClientContactPayload! @hasPerm(permissions: [{ app: "clients", permission: "add_clientcontact" }], any: true)
-  updateClientContact(data: ClientContactInput!): UpdateClientContactPayload! @hasRetvalPerm(permissions: [{ app: "clients", permission: "change_clientcontact" }], any: true)
-  deleteClientContact(data: DeleteDjangoObjectInput!): DeleteClientContactPayload! @hasRetvalPerm(permissions: [{ app: "clients", permission: "delete_clientcontact" }], any: true)
+  updateClientContact(data: ClientContactInput!): UpdateClientContactPayload! @hasPerm(permissions: [{ app: "clients", permission: "change_clientcontact" }], any: true)
+  deleteClientContact(data: DeleteDjangoObjectInput!): DeleteClientContactPayload! @hasPerm(permissions: [{ app: "clients", permission: "delete_clientcontact" }], any: true)
   createClientHouseholdMember(data: ClientHouseholdMemberInput!): CreateClientHouseholdMemberPayload! @hasPerm(permissions: [{ app: "clients", permission: "add_clienthouseholdmember" }], any: true)
-  updateClientHouseholdMember(data: ClientHouseholdMemberInput!): UpdateClientHouseholdMemberPayload! @hasRetvalPerm(permissions: [{ app: "clients", permission: "change_clienthouseholdmember" }], any: true)
-  deleteClientHouseholdMember(data: DeleteDjangoObjectInput!): DeleteClientHouseholdMemberPayload! @hasRetvalPerm(permissions: [{ app: "clients", permission: "delete_clienthouseholdmember" }], any: true)
+  updateClientHouseholdMember(data: ClientHouseholdMemberInput!): UpdateClientHouseholdMemberPayload! @hasPerm(permissions: [{ app: "clients", permission: "change_clienthouseholdmember" }], any: true)
+  deleteClientHouseholdMember(data: DeleteDjangoObjectInput!): DeleteClientHouseholdMemberPayload! @hasPerm(permissions: [{ app: "clients", permission: "delete_clienthouseholdmember" }], any: true)
   createHmisProfile(data: HmisProfileInput!): CreateHmisProfilePayload! @hasPerm(permissions: [{ app: "clients", permission: "add_hmisprofile" }], any: true)
-  updateHmisProfile(data: HmisProfileInput!): UpdateHmisProfilePayload! @hasRetvalPerm(permissions: [{ app: "clients", permission: "change_hmisprofile" }], any: true)
-  deleteHmisProfile(data: DeleteDjangoObjectInput!): DeleteHmisProfilePayload! @hasRetvalPerm(permissions: [{ app: "clients", permission: "delete_hmisprofile" }], any: true)
+  updateHmisProfile(data: HmisProfileInput!): UpdateHmisProfilePayload! @hasPerm(permissions: [{ app: "clients", permission: "change_hmisprofile" }], any: true)
+  deleteHmisProfile(data: DeleteDjangoObjectInput!): DeleteHmisProfilePayload! @hasPerm(permissions: [{ app: "clients", permission: "delete_hmisprofile" }], any: true)
   createSocialMediaProfile(data: SocialMediaProfileInput!): CreateSocialMediaProfilePayload! @hasPerm(permissions: [{ app: "clients", permission: "add_socialmediaprofile" }], any: true)
-  updateSocialMediaProfile(data: SocialMediaProfileInput!): UpdateSocialMediaProfilePayload! @hasRetvalPerm(permissions: [{ app: "clients", permission: "change_socialmediaprofile" }], any: true)
-  deleteSocialMediaProfile(data: DeleteDjangoObjectInput!): DeleteSocialMediaProfilePayload! @hasRetvalPerm(permissions: [{ app: "clients", permission: "delete_socialmediaprofile" }], any: true)
+  updateSocialMediaProfile(data: SocialMediaProfileInput!): UpdateSocialMediaProfilePayload! @hasPerm(permissions: [{ app: "clients", permission: "change_socialmediaprofile" }], any: true)
+  deleteSocialMediaProfile(data: DeleteDjangoObjectInput!): DeleteSocialMediaProfilePayload! @hasPerm(permissions: [{ app: "clients", permission: "delete_socialmediaprofile" }], any: true)
   updateClientDocument(data: UpdateClientDocumentInput!): UpdateClientDocumentPayload! @hasRetvalPerm(permissions: [{ app: "common", permission: "change_attachment" }], any: true)
   createClientProfile(data: CreateClientProfileInput!): CreateClientProfilePayload! @hasPerm(permissions: [{ app: "clients", permission: "add_clientprofile" }], any: true)
-  updateClientProfile(data: UpdateClientProfileInput!): UpdateClientProfilePayload! @hasRetvalPerm(permissions: [{ app: "clients", permission: "change_clientprofile" }], any: true)
-  deleteClientProfile(data: DeleteDjangoObjectInput!): DeleteClientProfilePayload!
+  updateClientProfile(data: UpdateClientProfileInput!): UpdateClientProfilePayload! @hasPerm(permissions: [{ app: "clients", permission: "change_clientprofile" }], any: true)
+  deleteClientProfile(data: DeleteDjangoObjectInput!): DeleteClientProfilePayload! @hasPerm(permissions: [{ app: "clients", permission: "delete_clientprofile" }], any: true)
   deleteClientDocument(data: DeleteDjangoObjectInput!): DeleteClientDocumentPayload! @permissionedQuerySet(permissions: [{ app: "common", permission: "delete_attachment" }], any: true)
-  deleteClientProfilePhoto(clientProfileId: ID!): DeleteClientProfilePhotoPayload! @hasRetvalPerm(permissions: [{ app: "clients", permission: "change_clientprofile" }], any: true)
+  deleteClientProfilePhoto(clientProfileId: ID!): DeleteClientProfilePhotoPayload! @hasPerm(permissions: [{ app: "clients", permission: "change_clientprofile" }], any: true)
   generateClientDocumentUploads(data: GenerateClientDocumentUploadsInput!): GenerateClientDocumentUploadsPayload! @hasPerm(permissions: [{ app: "common", permission: "add_attachment" }], any: true)
   resolveClientDocumentUploads(data: ResolveClientDocumentUploadsInput!): ResolveClientDocumentUploadsPayload! @hasPerm(permissions: [{ app: "common", permission: "add_attachment" }], any: true)
   generateClientProfilePhotoUpload(data: GenerateClientProfilePhotoUploadInput!): GenerateClientProfilePhotoUploadPayload! @hasPerm(permissions: [{ app: "clients", permission: "change_clientprofile" }], any: true)
-  resolveClientProfilePhotoUpload(data: ResolveClientProfilePhotoUploadInput!): ResolveClientProfilePhotoUploadPayload! @hasRetvalPerm(permissions: [{ app: "clients", permission: "change_clientprofile" }], any: true)
+  resolveClientProfilePhotoUpload(data: ResolveClientProfilePhotoUploadInput!): ResolveClientProfilePhotoUploadPayload! @hasPerm(permissions: [{ app: "clients", permission: "change_clientprofile" }], any: true)
   createClientProfileDataImport(data: CreateProfileDataImportInput!): CreateClientProfileDataImportPayload! @hasPerm(permissions: [{ app: "clients", permission: "add_clientprofileimportrecord" }], any: true)
   importClientProfile(data: ImportClientProfileInput!): ImportClientProfilePayload! @hasPerm(permissions: [{ app: "clients", permission: "add_clientprofileimportrecord" }], any: true)
   hmisLogin(email: String!, password: String!): HmisLoginSuccessHmisLoginError! @hmisDirective
@@ -2255,17 +2255,17 @@ type Query {
     """
     limit: Int! = 20
   ): [AuditActorType!]!
-  clientProfiles(pagination: OffsetPaginationInput, filters: ClientProfileFilter, ordering: [ClientProfileOrder!]! = []): ClientProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{ app: "clients", permission: "view_clientprofile" }], any: true)
+  clientProfiles(pagination: OffsetPaginationInput, filters: ClientProfileFilter, ordering: [ClientProfileOrder!]! = []): ClientProfileTypeOffsetPaginated! @hasPerm(permissions: [{ app: "clients", permission: "view_clientprofile" }], any: true)
   clientDocument(pk: ID!): ClientDocumentType! @hasRetvalPerm(permissions: [{ app: "common", permission: "view_attachment" }], any: true)
-  clientContact(pk: ID!): ClientContactType! @hasRetvalPerm(permissions: [{ app: "clients", permission: "view_clientcontact" }], any: true)
-  clientContacts(pagination: OffsetPaginationInput): ClientContactTypeOffsetPaginated! @hasRetvalPerm(permissions: [{ app: "clients", permission: "view_clientcontact" }], any: true)
-  clientHouseholdMember(pk: ID!): ClientHouseholdMemberType! @hasRetvalPerm(permissions: [{ app: "clients", permission: "view_clienthouseholdmember" }], any: true)
-  clientHouseholdMembers(pagination: OffsetPaginationInput): ClientHouseholdMemberTypeOffsetPaginated! @hasRetvalPerm(permissions: [{ app: "clients", permission: "view_clienthouseholdmember" }], any: true)
-  hmisProfile(pk: ID!): HmisProfileType! @hasRetvalPerm(permissions: [{ app: "clients", permission: "view_hmisprofile" }], any: true)
-  hmisProfiles(pagination: OffsetPaginationInput): HmisProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{ app: "clients", permission: "view_hmisprofile" }], any: true)
-  socialMediaProfile(pk: ID!): SocialMediaProfileType! @hasRetvalPerm(permissions: [{ app: "clients", permission: "view_socialmediaprofile" }], any: true)
-  socialMediaProfiles(pagination: OffsetPaginationInput): SocialMediaProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{ app: "clients", permission: "view_socialmediaprofile" }], any: true)
-  clientProfile(pk: ID!): ClientProfileType! @hasRetvalPerm(permissions: [{ app: "clients", permission: "view_clientprofile" }], any: true)
+  clientContact(pk: ID!): ClientContactType! @hasPerm(permissions: [{ app: "clients", permission: "view_clientcontact" }], any: true)
+  clientContacts(pagination: OffsetPaginationInput): ClientContactTypeOffsetPaginated! @hasPerm(permissions: [{ app: "clients", permission: "view_clientcontact" }], any: true)
+  clientHouseholdMember(pk: ID!): ClientHouseholdMemberType! @hasPerm(permissions: [{ app: "clients", permission: "view_clienthouseholdmember" }], any: true)
+  clientHouseholdMembers(pagination: OffsetPaginationInput): ClientHouseholdMemberTypeOffsetPaginated! @hasPerm(permissions: [{ app: "clients", permission: "view_clienthouseholdmember" }], any: true)
+  hmisProfile(pk: ID!): HmisProfileType! @hasPerm(permissions: [{ app: "clients", permission: "view_hmisprofile" }], any: true)
+  hmisProfiles(pagination: OffsetPaginationInput): HmisProfileTypeOffsetPaginated! @hasPerm(permissions: [{ app: "clients", permission: "view_hmisprofile" }], any: true)
+  socialMediaProfile(pk: ID!): SocialMediaProfileType! @hasPerm(permissions: [{ app: "clients", permission: "view_socialmediaprofile" }], any: true)
+  socialMediaProfiles(pagination: OffsetPaginationInput): SocialMediaProfileTypeOffsetPaginated! @hasPerm(permissions: [{ app: "clients", permission: "view_socialmediaprofile" }], any: true)
+  clientProfile(pk: ID!): ClientProfileType! @hasPerm(permissions: [{ app: "clients", permission: "view_clientprofile" }], any: true)
   clientDocuments(clientId: String!, filters: ClientDocumentFilter, pagination: OffsetPaginationInput): ClientDocumentTypeOffsetPaginated! @hasRetvalPerm(permissions: [{ app: "common", permission: "view_attachment" }], any: true)
   bulkClientProfileImportRecords(data: ClientProfileImportRecordsBulkInput!, pagination: OffsetPaginationInput): ClientProfileImportRecordTypeOffsetPaginated! @hasPerm(permissions: [{ app: "clients", permission: "view_clientprofileimportrecord" }], any: true)
   featureControls: FeatureControlData!

@@ -34,37 +34,13 @@ def _perm_parts(perm: str) -> tuple[str, str]:
     return app_label, codename
 
 
-def _global_role_holds(user: "User", perm: str) -> bool:
-    """Whether *user* holds *perm* at the global tier through a global Role."""
-    app_label, codename = _perm_parts(perm)
-    return user.groups.filter(
-        role__is_global=True,
-        role__permissions__content_type__app_label=app_label,
-        role__permissions__codename=codename,
-    ).exists()
-
-
-def _user_permission_holds(user: "User", perm: str) -> bool:
-    """Whether *user* holds *perm* directly via ``user_permissions``."""
-    app_label, codename = _perm_parts(perm)
-    return user.user_permissions.filter(content_type__app_label=app_label, codename=codename).exists()
-
-
-def _global_tier_holds(user: "User", perm: str) -> bool:
-    """Whether *user* holds *perm* through a global Role or a direct permission.
-
-    Memoized per request on the user instance: ``scopes`` is consulted once per
-    row by per-field permission gates (e.g. the BA-review output fields), so the
-    two ``EXISTS`` queries below would otherwise be paid N times per list query.
-    """
-    cache: dict[str, bool] = user.__dict__.setdefault("_global_tier_cache", {})
-    if perm not in cache:
-        cache[perm] = _global_role_holds(user, perm) or _user_permission_holds(user, perm)
-    return cache[perm]
-
-
 def _roles_carrying_perm(perm: str) -> "QuerySet":
-    """Scoped ``Role`` ids that carry *perm* — the roles a Grant may reference."""
+    """Scoped ``Role`` ids that carry *perm* — the legacy matcher's role set.
+
+    Kept for :mod:`common.permissions.explain`, which matches leftover legacy
+    ``PermissionGroup`` rows against the roles that would carry the permission.
+    Authority itself reads :func:`_authority`, not this.
+    """
     app_label, codename = _perm_parts(perm)
     from accounts.models import Role
 
@@ -73,6 +49,87 @@ def _roles_carrying_perm(perm: str) -> "QuerySet":
         permissions__content_type__app_label=app_label,
         permissions__codename=codename,
     ).values("pk")
+
+
+_NO_ORGS: frozenset[int] = frozenset()
+"""The finite-scope empty set — shared, so a non-holder allocates nothing."""
+
+
+def _authority(user: "User") -> dict[str, Any]:
+    """The request's authority snapshot: global perms + org scopes per permission.
+
+    One pass over the user's grants, role permissions, memberships, and
+    delegations instead of one query per ``(user, perm)``.  ``scopes`` is
+    consulted once per row by per-field gates, so the per-permission form paid
+    the same lookups for every distinct permission on the page.  This pays three
+    queries for the whole request:
+
+    * global-tier permissions — global Roles plus direct ``user_permissions``;
+    * direct scoped Grants, expanded through their role's permissions;
+    * org-principal delegations, kept only for a principal org the user is a
+      member of and where they already hold the same permission directly
+      (§2.4 permission-matched, one hop).
+
+    Object grants are excluded (``scope_org`` NULL): they never register as an
+    org scope.  Memoized on the user instance; :func:`invalidate_scope_cache`
+    drops it with the other authority memos.  Membership writes are not
+    invalidated — the through model is third-party and the memo lives on the
+    instance serving the request — so the contract is request-scoped: the
+    instance that served a request keeps its snapshot, and the next request
+    (a fresh ``User``) reads the new membership.
+    """
+    cache: Optional[dict[str, Any]] = user.__dict__.get("_authority_cache")
+    if cache is not None:
+        return cache
+
+    from django.contrib.auth.models import Permission
+    from organizations.models import Organization
+
+    from accounts.models import Grant
+
+    global_perms = set(
+        Permission.objects.filter(Q(group__in=user.groups.filter(role__is_global=True)) | Q(user=user)).values_list(
+            "content_type__app_label", "codename"
+        )
+    )
+
+    orgs: dict[str, set[int]] = {}
+    direct_orgs: dict[str, set[int]] = {}
+    direct = Grant.objects.filter(
+        principal_user=user,
+        role__is_global=False,
+        role__permissions__isnull=False,
+        scope_org__isnull=False,
+    ).values_list(
+        "scope_org_id",
+        "role__permissions__content_type__app_label",
+        "role__permissions__codename",
+    )
+    for org_id, app_label, codename in direct:
+        perm = f"{app_label}.{codename}"
+        orgs.setdefault(perm, set()).add(org_id)
+        direct_orgs.setdefault(perm, set()).add(org_id)
+
+    delegated = Grant.objects.filter(
+        Exists(Organization.objects.filter(users=user, pk=OuterRef("principal_org_id"))),
+        role__is_global=False,
+        role__permissions__isnull=False,
+        principal_org__isnull=False,
+        scope_org__isnull=False,
+    ).values_list(
+        "principal_org_id",
+        "scope_org_id",
+        "role__permissions__content_type__app_label",
+        "role__permissions__codename",
+    )
+    for principal_id, scope_id, app_label, codename in delegated:
+        perm = f"{app_label}.{codename}"
+        if principal_id in direct_orgs.get(perm, ()):
+            orgs.setdefault(perm, set()).add(scope_id)
+
+    cache = {"global": global_perms, "orgs": {perm: frozenset(ids) for perm, ids in orgs.items()}}
+    user.__dict__["_authority_cache"] = cache
+    return cache
 
 
 def global_permissions(user: "User") -> list[str]:
@@ -172,53 +229,21 @@ def scopes(user: "User", perm: str) -> Any:
     Object grants (``scope_org`` NULL) are excluded so they can never register
     as an org scope or as "holds the perm somewhere" for a platform-shared model.
 
-    Memoized per request on the user instance.  The cached value is a lazy
-    queryset used as a subquery — caching it does not evaluate it.  Authority
-    write services invalidate it via :func:`invalidate_scope_cache` when they
-    change the user's grants.
-
-    The global-tier arm is memoized the same way (``_global_tier_cache``), since
-    per-row field gates call this once per object per field.
+    Returns a ``frozenset`` of org ids (or :data:`ALL`), read from the
+    request-cached :func:`_authority` snapshot — one traversal of the user's
+    grants for every permission the request asks about.
     """
-    if user.is_superuser or _global_tier_holds(user, perm):
+    if user.is_superuser:
         return ALL
 
-    from accounts.models import Grant, Organization
-
-    cache = user.__dict__.setdefault("_scope_cache", {})
-    if perm not in cache:
-        roles = _roles_carrying_perm(perm)
-        mine = Grant.objects.filter(principal_user=user, role__in=Subquery(roles), scope_org__isnull=False).values(
-            "scope_org"
-        )
-
-        # Delegation: delegations whose principal org is one where the user acts
-        # (member AND holds a direct Grant there carrying *this* permission's
-        # role — permission-matched: the delegated role's bundle is the ceiling,
-        # and a weak-role holder at B is not amplified to B's stronger delegated
-        # roles at C).  Correlated EXISTS per delegation row, so there is no
-        # org-list subquery to materialize and no DISTINCT to dedupe one.
-        acts_at = Organization.objects.filter(
-            users=user,
-            grants__principal_user=user,
-            grants__role__in=Subquery(roles),
-            pk=OuterRef("principal_org_id"),
-        )
-        # Delegations only (org-principal), org-scope arm only — object grants
-        # and user-principal grants never feed the org filter.
-        inherited = Grant.objects.filter(
-            Exists(acts_at),
-            principal_org__isnull=False,
-            role__in=Subquery(roles),
-            scope_org__isnull=False,
-        ).values("scope_org")
-
-        cache[perm] = mine.union(inherited)
-    return cache[perm]
+    authority = _authority(user)
+    if _perm_parts(perm) in authority["global"]:
+        return ALL
+    return authority["orgs"].get(perm, _NO_ORGS)
 
 
 def invalidate_scope_cache(user: "User") -> None:
-    """Drop *user*'s memoized authority decisions (scopes + global tier + report).
+    """Drop *user*'s memoized authority decisions (the snapshot + report).
 
     The memoized values live in ``user.__dict__`` — not model fields — so
     ``refresh_from_db()`` does not clear them; this is the only way to
@@ -227,15 +252,16 @@ def invalidate_scope_cache(user: "User") -> None:
     tier) call this after changing *user*'s authority so a request that
     grants/revokes and then re-reads authority on the same user instance never
     serves the stale decision (a cached ``ALL`` sentinel is the hard-stale
-    case).  The same request-scope staleness applies to the newer global-tier
-    and effective-report memos (``_global_tier_cache`` /
-    ``global_permissions`` / ``organization_effective_permissions``), so they
-    are dropped here too.  Org→org delegation rows have no single user
-    principal, and the selectors are consumed per request on fresh user
-    instances, so those flows need no per-user invalidation here.
+    case).  The same request-scope staleness applies to the effective-report memos
+    (``global_permissions`` / ``organization_effective_permissions``), so they
+    are dropped here too.  Delegation writes (``grant_delegate`` / ``grant_delete``
+    on an org principal) have no single user principal to reach from here, so
+    invalidation is caller-supplied: pass the instance serving the request
+    (``acting_user``).  Fanning out to DB-loaded members would clear memos on
+    instances nobody reads and leave the caller's cache stale.
     """
-    user.__dict__.pop("_scope_cache", None)
-    user.__dict__.pop("_global_tier_cache", None)
+    user.__dict__.pop("_authority_cache", None)
+    user.__dict__.pop("_can_anywhere_cache", None)
     user.__dict__.pop("_global_permissions", None)
     user.__dict__.pop("_org_effective_permissions", None)
 
@@ -263,8 +289,10 @@ def visible(qs: "QuerySet", user: "User", perm: str, *, in_org: int | str | None
     if s is ALL:
         qs = qs
     elif not paths:
-        # platform-shared: perm held anywhere (finite s) ⇒ all rows
-        qs = qs if s.exists() else qs.none()
+        # platform-shared: perm held anywhere (finite s) ⇒ all rows.
+        # `can_anywhere` is the memoized holder check, so a caller that just ran
+        # the permission checker does not repeat it here.
+        qs = qs if can_anywhere(user, perm) else qs.none()
     elif s:
         qs = qs.filter(reduce(or_, (Q(**{f"{p}__in": s}) for p in paths)))
     else:
@@ -277,12 +305,15 @@ def visible(qs: "QuerySet", user: "User", perm: str, *, in_org: int | str | None
 
 def can(user: "User", perm: str, *, org: Any) -> bool:
     """Authority in an organization — the check for creates, which have no row yet."""
-    from accounts.models import Grant
-
     s = scopes(user, perm)
     if s is ALL:
         return True
-    return Grant.objects.filter(scope_org=org, scope_org__in=Subquery(s)).exists()
+    org_id = getattr(org, "pk", org)
+    try:
+        org_id = int(org_id)
+    except TypeError, ValueError:
+        return False
+    return org_id in s
 
 
 def can_obj(user: "User", perm: str, obj: "Model") -> bool:
@@ -307,7 +338,27 @@ def can_obj(user: "User", perm: str, obj: "Model") -> bool:
     if not issubclass(model, OrgScoped):
         return False
     if model.org_via is not None:
-        return visible(model._base_manager.filter(pk=obj.pk), user, perm).exists()
+        # Own-org columns are read from the row; a hop reads just the org id
+        # column from the database, because a cached parent can be stale after a
+        # re-point and the object graph cannot prove it is current.
+        s = scopes(user, perm)
+        if s is ALL:
+            return True
+        if not s:
+            return False
+        paths = model.org_paths()
+        if not any("__" in path for path in paths):
+            # Own-org columns live on the row — no query, no stale relation.
+            return any(getattr(obj, path, None) in s for path in paths)
+
+        # A hop needs the parent row, and a cached relation can be stale after a
+        # re-point (merge, ``queryset.update()``) or absent on a row built from
+        # the FK id.  Read only the org id column(s): one cheap query, not the
+        # full permission-filtered queryset the old check compiled per row.
+        row = model._base_manager.filter(pk=obj.pk).values_list(*paths).first()
+        if row is None:
+            return False
+        return any(value in s for value in row if value is not None)
     if model.write_tier == WRITE_SHARED:
         return can_anywhere(user, perm)
     s = scopes(user, perm)
@@ -315,9 +366,19 @@ def can_obj(user: "User", perm: str, obj: "Model") -> bool:
 
 
 def can_anywhere(user: "User", perm: str) -> bool:
-    """Authority anywhere — the check for creates on platform-shared models."""
-    s = scopes(user, perm)
-    return s is ALL or s.exists()
+    """Authority anywhere — the check for creates on platform-shared models.
+
+    Memoized per request: :func:`scopes` caches the lazy queryset, but
+    ``.exists()`` evaluates it, so an unmemoized predicate re-queries once per
+    call site (every row of a list field, every nested type).  The boolean is
+    what callers ask for, so cache that; :func:`invalidate_scope_cache` drops
+    it with the other authority memos.
+    """
+    cache: dict[str, bool] = user.__dict__.setdefault("_can_anywhere_cache", {})
+    if perm not in cache:
+        s = scopes(user, perm)
+        cache[perm] = s is ALL or bool(s)
+    return cache[perm]
 
 
 def can_globally(user: "User", perm: str) -> bool:
@@ -329,7 +390,7 @@ def can_globally(user: "User", perm: str) -> bool:
     global (e.g. the BA-only additional-contacts field).
 
     Sibling of :func:`can_anywhere`, which admits scoped Grant reach
-    (``ALL or s.exists()``) — use this predicate only when scoped authority
+    (``ALL`` or a non-empty scope set) — use this predicate only when scoped authority
     must never satisfy the gate.  The two diverge the moment a scoped Role
     carries *perm* and is granted.
     """
