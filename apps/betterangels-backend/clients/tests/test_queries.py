@@ -74,7 +74,10 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         """
 
         variables = {"id": client_profile_id}
-        expected_query_count = 18
+        # 15, not 18: strawberry-graphql-django 0.93 resolves three of the grant
+        # authority lookups in fewer round trips. The invariant above still holds --
+        # this is a constant, not a per-row, reduction.
+        expected_query_count = 15
 
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
