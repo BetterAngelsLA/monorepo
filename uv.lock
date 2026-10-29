@@ -116,7 +116,7 @@ requires-dist = [
     { name = "django-organizations", specifier = ">=2.5.0,<3" },
     { name = "django-pghistory", specifier = ">=3.9.1,<4" },
     { name = "django-phonenumber-field", extras = ["phonenumbers"], specifier = ">=9.0.0,<10" },
-    { name = "django-post-office", specifier = ">=3.11.0,<4" },
+    { name = "django-post-office", specifier = ">=3.12.0,<4" },
     { name = "django-select2", specifier = ">=8.4.8,<9" },
     { name = "django-ses", specifier = ">=4.8.2,<5" },
     { name = "django-storages", extras = ["s3"], specifier = ">=1.14.6,<2" },
@@ -826,15 +826,15 @@ phonenumbers = [
 
 [[package]]
 name = "django-post-office"
-version = "3.11.2"
+version = "3.12.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django" },
     { name = "nh3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/7a/1b/65bd500cea15666c67c89da6f646eaa54d4c11e15ced9f5c7b1373091fa4/django_post_office-3.11.2.tar.gz", hash = "sha256:7899fd697404340db789c1d0663fe76f0055d6efce41ceb10f909f68d0a45957", size = 91636, upload-time = "2026-04-16T14:18:56.434Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/2b/83/699e0763a9bef10ee0b0bedc9926f4b1a6b95b4fa0908ddd584dc8a1312f/django_post_office-3.12.0.tar.gz", hash = "sha256:9529437daac5602939bb18bf0e807fb0b4e7a4a5f0b6827204b51624276dff96", size = 113473, upload-time = "2026-10-08T06:29:54.377Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/93/16/557c9fa9b1c9e464e2f13c9b80a9dd236d1a0c24cb5accccd820fdc2e6ec/django_post_office-3.11.2-py3-none-any.whl", hash = "sha256:03110496add62f93d1e5b2279343166cec71785d904b9eaf1f1ca8baf25bb324", size = 86131, upload-time = "2026-04-16T14:18:55.012Z" },
+    { url = "https://files.pythonhosted.org/packages/80/78/b8ba274b1893900b78638f5d6c31bef8186cabefa50bba3685d76bdd1a93/django_post_office-3.12.0-py3-none-any.whl", hash = "sha256:b75d90d2553b5c735e329b7577f4d4e522190a99174fff0a441d2f08b7052f66", size = 90727, upload-time = "2026-10-08T06:29:56.223Z" },
 ]
 
 [[package]]
