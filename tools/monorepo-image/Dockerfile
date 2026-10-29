@@ -286,3 +286,5 @@ COPY --chown=betterangels . /workspace
 # a compiled extension or a GIS shared library is missing from runtime-base.
 # (The preview deploy exercises the same imports end to end.)
 RUN python -c "import ctypes.util, django, psycopg; missing = [n for n in ('gdal', 'geos_c', 'proj') if not ctypes.util.find_library(n)]; assert not missing, missing; print('runtime libs ok')"
+
+RUN cd apps/betterangels-backend && python manage.py collectstatic --noinput
