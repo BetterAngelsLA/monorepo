@@ -281,3 +281,8 @@ RUN git config --global --add safe.directory "*"
 FROM runtime-base AS production
 COPY --from=uv-runtime --link /workspace /workspace
 COPY --chown=betterangels . /workspace
+
+# The venv is built on `base` but runs here: fail the build, not the deploy, if
+# a compiled extension or a GIS shared library is missing from runtime-base.
+# (The preview deploy exercises the same imports end to end.)
+RUN python -c "import psycopg; from django.contrib.gis.geos import GEOSGeometry; from django.contrib.gis.gdal import GDALRaster; GEOSGeometry('POINT(0 0)'); print('runtime libs ok')"
