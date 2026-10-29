@@ -32,6 +32,19 @@ describe('AuditEventRow', () => {
     expect(screen.queryByText('Name:')).toBeNull();
   });
 
+  it('labels related choice values in the event details', () => {
+    render(
+      <AuditEventRow
+        event={makeEvent({
+          fieldChanges: { Parking: [['street'], []] },
+        })}
+      />,
+    );
+
+    expect(screen.getByText(/Street Parking/)).not.toBeNull();
+    expect(screen.queryByText(/street/)).toBeNull();
+  });
+
   it('renders field changes when there is no summary', () => {
     render(
       <AuditEventRow

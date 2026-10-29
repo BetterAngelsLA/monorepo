@@ -10,6 +10,22 @@
  */
 
 import { sanitizeHtml } from '@monorepo/react/shared';
+import {
+  enumDisplayAccessibilityChoices,
+  enumDisplayDemographics,
+  enumDisplayEntryRequirementChoices,
+  enumDisplayExitPolicyChoices,
+  enumDisplayFunderChoices,
+  enumDisplayParkingChoices,
+  enumDisplayPetChoices,
+  enumDisplayReferralRequirementChoices,
+  enumDisplayRoomStyles,
+  enumDisplayShelterChoices,
+  enumDisplayShelterProgramChoices,
+  enumDisplaySpecialSituationRestrictionChoices,
+  enumDisplayStorageChoices,
+  enumDisplayVaccinationRequirementChoices,
+} from '@monorepo/react/shelter';
 
 export type AuditScalarChange = {
   kind: 'scalar';
@@ -142,6 +158,72 @@ export function formatValue(value: unknown): string {
   } catch {
     return String(value);
   }
+}
+
+type ValueLabels = Readonly<Record<string, string>>;
+
+/** Keep the typed enum maps assignable to one lookup table. */
+const asValueLabels = (labels: object): ValueLabels => labels as ValueLabels;
+
+/**
+ * Field-keyed labels for related-choice values (M2M rows such as Storage and
+ * Parking). The API sends the stored code (``shared_storage``); the labels are
+ * the same user-facing copy used by the shelter forms.
+ */
+const FIELD_VALUE_LABELS: Readonly<Record<string, ValueLabels>> = {
+  accessibility: asValueLabels(enumDisplayAccessibilityChoices),
+  demographics: asValueLabels(enumDisplayDemographics),
+  entryrequirements: asValueLabels(enumDisplayEntryRequirementChoices),
+  exitpolicy: asValueLabels(enumDisplayExitPolicyChoices),
+  funder: asValueLabels(enumDisplayFunderChoices),
+  parking: asValueLabels(enumDisplayParkingChoices),
+  pets: asValueLabels(enumDisplayPetChoices),
+  referralrequirements: asValueLabels(enumDisplayReferralRequirementChoices),
+  roomstyles: asValueLabels(enumDisplayRoomStyles),
+  shelterprograms: asValueLabels(enumDisplayShelterProgramChoices),
+  sheltertypes: asValueLabels(enumDisplayShelterChoices),
+  specialsituationrestrictions: asValueLabels(
+    enumDisplaySpecialSituationRestrictionChoices,
+  ),
+  storage: asValueLabels(enumDisplayStorageChoices),
+  vaccinationrequirements: asValueLabels(
+    enumDisplayVaccinationRequirementChoices,
+  ),
+};
+
+const normalizeField = (field: string): string =>
+  field.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+const normalizeValue = (value: string): string =>
+  value
+    .trim()
+    .toUpperCase()
+    .replace(/[\s-]+/g, '_');
+
+/**
+ * Format a value with the display labels for its field, falling back to the
+ * raw value formatter for unknown fields and plain values.
+ */
+export function formatFieldValue(field: string, value: unknown): string {
+  const labels = FIELD_VALUE_LABELS[normalizeField(field)];
+
+  if (labels) {
+    if (Array.isArray(value)) {
+      return value.length > 0
+        ? value.map((item) => formatFieldValue(field, item)).join(', ')
+        : '\u2014';
+    }
+
+    if (typeof value === 'string') {
+      const label = labels[normalizeValue(value)];
+
+      if (label) {
+        return label;
+      }
+    }
+  }
+
+  return formatValue(value);
 }
 
 function isArrayPair(value: unknown): value is [unknown[], unknown[]] {

@@ -79,6 +79,28 @@ describe('AuditActionRow', () => {
     expect(screen.getByText('Shelter B')).not.toBeNull();
   });
 
+  it('labels related choice values in the default card view', () => {
+    render(
+      <AuditActionRow
+        action={makeAction({
+          fieldChanges: {
+            Storage: [[], ['shared_storage']],
+            Parking: [['street'], ['motorcycle']],
+            Pets: [[], ['pet_area']],
+            'Shelter types': [[], ['safe_parking']],
+          },
+          events: [],
+        })}
+      />,
+    );
+
+    expect(screen.getByText(/Shared Storage/)).not.toBeNull();
+    expect(screen.getByText(/Street Parking/)).not.toBeNull();
+    expect(screen.getByText(/Pet Area/)).not.toBeNull();
+    expect(screen.getByText(/Safe Parking/)).not.toBeNull();
+    expect(screen.queryByText(/shared_storage/)).toBeNull();
+  });
+
   it('keeps event rows in the expanded details', () => {
     render(
       <AuditActionRow

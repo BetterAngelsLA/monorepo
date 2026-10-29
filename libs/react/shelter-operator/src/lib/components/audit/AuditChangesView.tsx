@@ -2,23 +2,30 @@ import { mergeCss } from '@monorepo/react/shared';
 import type { ReactNode } from 'react';
 import { Text } from '../base-ui/text/text';
 import {
-  formatValue,
+  formatFieldValue,
   parseFieldChanges,
   truncateValue,
   type AuditChange,
 } from './auditChanges';
 
 /** The full value goes in the tooltip; the inline text is capped. */
-function displayValue(value: unknown): { text: string; title: string } {
-  const full = formatValue(value);
+function displayValue(
+  field: string,
+  value: unknown,
+): { text: string; title: string } {
+  const full = formatFieldValue(field, value);
 
   return { text: truncateValue(full), title: full };
 }
 
 function renderChange(change: AuditChange): ReactNode {
   if (change.kind === 'multi') {
-    const removed = change.removed.map(formatValue).join(', ');
-    const added = change.added.map(formatValue).join(', ');
+    const removed = change.removed
+      .map((value) => formatFieldValue(change.field, value))
+      .join(', ');
+    const added = change.added
+      .map((value) => formatFieldValue(change.field, value))
+      .join(', ');
 
     return (
       <div key={change.field} className="flex flex-col gap-0.5 py-0.5">
@@ -49,8 +56,8 @@ function renderChange(change: AuditChange): ReactNode {
     );
   }
 
-  const oldValue = displayValue(change.oldValue);
-  const newValue = displayValue(change.newValue);
+  const oldValue = displayValue(change.field, change.oldValue);
+  const newValue = displayValue(change.field, change.newValue);
 
   return (
     <div

@@ -1,4 +1,5 @@
 import {
+  formatFieldValue,
   formatValue,
   humanizeAction,
   MAX_VALUE_LENGTH,
@@ -82,6 +83,40 @@ describe('truncateValue', () => {
     expect(truncated.length).toBe(MAX_VALUE_LENGTH);
     expect(truncated.endsWith('\u2026')).toBe(true);
     expect(truncateValue('abcdef', 4)).toBe('abc\u2026');
+  });
+});
+
+describe('formatFieldValue', () => {
+  it('labels related choice values by field', () => {
+    expect(formatFieldValue('Storage', 'shared_storage')).toBe(
+      'Shared Storage',
+    );
+    expect(formatFieldValue('Storage', 'unit_storage')).toBe(
+      'Unit-level Storage',
+    );
+    expect(formatFieldValue('Parking', 'street')).toBe('Street Parking');
+    expect(formatFieldValue('Pets', 'pet_area')).toBe('Pet Area');
+    expect(formatFieldValue('Shelter types', 'safe_parking')).toBe(
+      'Safe Parking',
+    );
+    expect(formatFieldValue('Demographics', 'families')).toBe('Families');
+    expect(formatFieldValue('Accessibility', 'ada_rooms')).toBe(
+      'ADA Rooms Available',
+    );
+  });
+
+  it('labels arrays of choice values', () => {
+    expect(
+      formatFieldValue('Storage', ['shared_storage', 'unit_storage']),
+    ).toBe('Shared Storage, Unit-level Storage');
+  });
+
+  it('falls back for unknown fields, unknown codes, and plain values', () => {
+    expect(formatFieldValue('Notes', 'shared_storage')).toBe('shared_storage');
+    expect(formatFieldValue('Storage', 'not_a_storage_choice')).toBe(
+      'not_a_storage_choice',
+    );
+    expect(formatFieldValue('Pets', null)).toBe('\u2014');
   });
 });
 
