@@ -7,14 +7,20 @@ import pytest
 import time_machine
 from django.utils import timezone
 from model_bakery import baker
-from pytest_django.fixtures import SettingsWrapper
+from pytest_django import Settings
 
 from accounts.models import Organization, OrganizationProfile, OrgTypeChoices
 from notes.models import Note
 from reports.calendar import report_calendar_time_zone
 from reports.models import ScheduledReport
-from reports.selectors import report_default_date_range
+from reports.selectors import report_default_date_range, scope_notes_to_group
 from reports.services import generate_report_data, get_previous_month_range
+
+
+def test_scope_notes_to_group_refuses_codes_without_a_kind() -> None:
+    """A caller with codes but no dimension has not resolved the group; do not drop the filter."""
+    with pytest.raises(ValueError, match="requires a region_kind"):
+        scope_notes_to_group(Note.objects.none(), region_kind=None, region_codes=["90012"])
 
 
 @pytest.mark.django_db
@@ -214,7 +220,7 @@ class TestCalendarBelongsToTheOrganization:
     period the organization has ever reported on.
     """
 
-    def test_the_orgs_calendar_wins_over_the_sites(self, settings: SettingsWrapper) -> None:
+    def test_the_orgs_calendar_wins_over_the_sites(self, settings: Settings) -> None:
         settings.TIME_ZONE = "America/Los_Angeles"
         org = baker.make(Organization)
         baker.make(
@@ -226,13 +232,13 @@ class TestCalendarBelongsToTheOrganization:
 
         assert report_calendar_time_zone(org) == ZoneInfo("Asia/Tokyo")
 
-    def test_an_org_that_has_not_named_one_falls_back_to_the_site(self, settings: SettingsWrapper) -> None:
+    def test_an_org_that_has_not_named_one_falls_back_to_the_site(self, settings: Settings) -> None:
         settings.TIME_ZONE = "America/Los_Angeles"
         org = baker.make(Organization)
 
         assert report_calendar_time_zone(org) == ZoneInfo("America/Los_Angeles")
 
-    def test_a_boundary_is_cut_on_the_orgs_calendar_not_the_sites(self, settings: SettingsWrapper) -> None:
+    def test_a_boundary_is_cut_on_the_orgs_calendar_not_the_sites(self, settings: Settings) -> None:
         """An org a day ahead of the site still reports its own month.
 
         2025-02-01 05:30 UTC is 31 January in Los Angeles but 1 February in Tokyo,
@@ -254,7 +260,7 @@ class TestCalendarBelongsToTheOrganization:
         assert meta["notes_count"] == 0
         assert "02/01/2025" not in content
 
-    def test_the_row_label_follows_the_orgs_calendar(self, settings: SettingsWrapper) -> None:
+    def test_the_row_label_follows_the_orgs_calendar(self, settings: Settings) -> None:
         settings.TIME_ZONE = "America/Los_Angeles"
         org = baker.make(Organization)
         baker.make(
@@ -271,7 +277,7 @@ class TestCalendarBelongsToTheOrganization:
         assert meta["notes_count"] == 1
         assert "02/01/2025" in content
 
-    def test_the_default_range_is_the_current_month_on_the_orgs_calendar(self, settings: SettingsWrapper) -> None:
+    def test_the_default_range_is_the_current_month_on_the_orgs_calendar(self, settings: Settings) -> None:
         """Nothing else asserts the value this returns — the GraphQL default depends on it.
 
         The site sits on a calendar a day behind, so the two disagree about which
@@ -293,7 +299,7 @@ class TestCalendarBelongsToTheOrganization:
         with time_machine.travel("2026-08-31 06:00:00", tick=False):
             assert report_default_date_range(org=org) == (date(2026, 8, 1), date(2026, 8, 31))
 
-    def test_an_unusable_stored_zone_falls_back_instead_of_raising(self, settings: SettingsWrapper) -> None:
+    def test_an_unusable_stored_zone_falls_back_instead_of_raising(self, settings: Settings) -> None:
         """A bad value cannot be stored through the admin, but can through the ORM.
 
         ``validate_iana_time_zone`` runs only via ``full_clean``, so a data import or
@@ -316,7 +322,7 @@ class TestCalendarBelongsToTheOrganization:
 
         assert report_calendar_time_zone(org) == ZoneInfo("America/Los_Angeles")
 
-    def test_an_unusable_stored_zone_does_not_break_a_report(self, settings: SettingsWrapper) -> None:
+    def test_an_unusable_stored_zone_does_not_break_a_report(self, settings: Settings) -> None:
         """The fallback has to reach the report itself, not just the resolver."""
         settings.TIME_ZONE = "America/Los_Angeles"
         org = baker.make(Organization)

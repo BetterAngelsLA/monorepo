@@ -12,6 +12,7 @@ export const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     gap: Spacings.xs,
     backgroundColor: Colors.WHITE,
@@ -24,11 +25,18 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.PRIMARY,
     borderRadius: 8,
-    paddingHorizontal: Spacings.sm,
+    paddingHorizontal: Spacings.xs,
     paddingVertical: Spacings.xxs,
+    minHeight: 48,
+    justifyContent: 'center',
   },
   headerBtnFlex: {
-    flex: 1,
+    flexGrow: 1,
+    flexShrink: 0,
+    alignItems: 'center',
+  },
+  headerIconBtn: {
+    width: 48,
     alignItems: 'center',
   },
   body: {
@@ -147,26 +155,6 @@ export const styles = StyleSheet.create({
   textarea: {
     minHeight: 72,
     textAlignVertical: 'top',
-  },
-  checkboxRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacings.xs,
-    marginTop: Spacings.xs,
-  },
-  checkbox: {
-    width: 20,
-    height: 20,
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: Colors.NEUTRAL_LIGHT,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.WHITE,
-  },
-  checkboxOn: {
-    backgroundColor: Colors.PRIMARY,
-    borderColor: Colors.PRIMARY,
   },
   divider: {
     height: 1,

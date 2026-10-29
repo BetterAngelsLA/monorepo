@@ -33,6 +33,7 @@ import pytest
 # legacy arm, so this test scans it and fails on gates that do not exist yet.
 GRANT_GATED_MODULES = (
     "accounts.schema",
+    "clients.schema",
     "reports.schema",
     "shelters.schema",
     "teams.schema",
@@ -64,12 +65,28 @@ GATE_EXEMPT = {
     ("accounts.schema", "create_organization"): (
         "org creation itself — no org authority exists yet; eligibility lives in create_organization_service"
     ),
-    # No entries for ``clients.schema`` / ``notes.schema`` / ``tasks.schema``:
-    # those modules are not in GRANT_GATED_MODULES on this branch, so an
-    # exemption for them would never be consulted — a reason that reads as
-    # coverage while providing none.  Their exemptions live with the branch that
-    # adds the module to GRANT_GATED_MODULES, which is the commit whose cutover
-    # makes them necessary.  ``test_exemptions_name_gated_modules`` enforces this.
+    ("clients.schema", "delete_client_document"): (
+        "attachment-domain gate (PermissionedQuerySet) — documents cut over with the CREATOR/UPLOADER tier (RFC 0002)"
+    ),
+    ("clients.schema", "update_client_document"): (
+        "attachment-domain gate — documents cut over with the CREATOR/UPLOADER tier (RFC 0002)"
+    ),
+    ("clients.schema", "generate_client_document_uploads"): (
+        "attachment perms + legacy client CHANGE load — documents cut over with the CREATOR/UPLOADER tier (RFC 0002)"
+    ),
+    ("clients.schema", "resolve_client_document_uploads"): (
+        "attachment perms + legacy client CHANGE load — documents cut over with the CREATOR/UPLOADER tier (RFC 0002)"
+    ),
+    ("clients.schema", "create_client_profile_data_import"): (
+        "import surfaces remain legacy until a role carries the import-record perms"
+    ),
+    ("clients.schema", "import_client_profile"): (
+        "import surfaces remain legacy until a role carries the import-record perms"
+    ),
+    # No entries for ``notes.schema`` / ``tasks.schema``: those modules are not
+    # in GRANT_GATED_MODULES on this branch, so an exemption for them would never
+    # be consulted — a reason that reads as coverage while providing none.
+    # ``test_exemptions_name_gated_modules`` enforces this.
 }
 
 #: Raw ``get_or_none(<Model>.objects.all(), …)`` fetches allowed inside a gated

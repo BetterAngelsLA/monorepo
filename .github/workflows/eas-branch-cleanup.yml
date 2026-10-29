@@ -3,27 +3,27 @@ name: 🧹 EAS Update Branch Cleanup
 on:
   pull_request:
     types: [closed]
+  # Drains branches the cleanup missed while it was broken: run it by hand for any
+  # ref that has an EAS update branch but no git branch left to close.
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: Git ref whose EAS update branch should be deleted
+        required: true
 
 jobs:
   cleanup:
+    # Fork PRs cannot access EXPO_TOKEN and have no EAS branches of ours to clean up.
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.fork == false
     runs-on: ubuntu-latest
     permissions:
-      actions: read # Required to find the last successful workflow run
       contents: read # Required for actions/checkout
     steps:
       - name: 🏗 Check out repo
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: 🔀 Track main
-        run: git branch --track main origin/main
-
-      - name: 🔧 Configure NX SHAs
-        uses: nrwl/nx-set-shas@v4
+        uses: actions/checkout@v7
 
       - name: 🔧 Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '22.21.1'
           cache: 'yarn'
@@ -37,19 +37,42 @@ jobs:
       - name: 📱 Install EAS CLI
         run: npm install -g eas-cli@24.8.0
 
-      - name: ️ Delete EAS Branches for Affected Projects
+      - name: 🗑 Delete this PR's EAS update branches
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          # Via env, not interpolated into the script: a ref can carry shell
+          # metacharacters (`a$(...)`), and this value reaches a shell either way.
+          RAW_BRANCH_NAME: ${{ inputs.branch || github.head_ref || github.ref_name }}
         run: |
-          BRANCH_NAME='${{ github.head_ref || github.ref_name }}'
-          affected=$(yarn nx show projects --affected --withTarget eas-update)
-          if [ -z "$affected" ]; then
-            echo "No affected projects with eas-update target"
+          set -euo pipefail
+          if [ -z "${EXPO_TOKEN:-}" ]; then
+            echo "EXPO_TOKEN is not configured; nothing to clean up."
             exit 0
           fi
-          for project in $affected; do
-            echo "Deleting EAS branch for project: $project"
-            pushd apps/$project > /dev/null
+
+          # The name the previews published under, not the raw ref: `eas update` is
+          # handed the sanitized slug, so `dependabot/uv/foo` publishes to
+          # `dependabot-uv-foo` and deleting the raw ref matches nothing.
+          BRANCH_NAME=$(tools/scripts/sanitize-branch-name.sh "$RAW_BRANCH_NAME")
+          if [ -z "$BRANCH_NAME" ]; then
+            echo "No branch name resolved from ref '$RAW_BRANCH_NAME'; nothing to clean up."
+            exit 0
+          fi
+          echo "Cleaning up EAS branch '$BRANCH_NAME' (from ref '$RAW_BRANCH_NAME')"
+
+          # Every project with an `eas-update` target publishes a branch per preview run,
+          # whether or not Nx calls the app affected — a backend-only PR still runs
+          # `eas update` — so this must not filter by `--affected`, which skips exactly
+          # the branches that need deleting.
+          projects=$(yarn nx show projects --with-target eas-update)
+          if [ -z "$projects" ]; then
+            echo "No projects have an eas-update target."
+            exit 0
+          fi
+
+          for project in $projects; do
+            echo "Deleting EAS branch '$BRANCH_NAME' for project: $project"
+            pushd "apps/$project" > /dev/null
             output=$(eas branch:delete --non-interactive "$BRANCH_NAME" 2>&1) || {
               if echo "$output" | grep -q "Could not find branch"; then
                 echo "Branch $BRANCH_NAME does not exist on $project, skipping."

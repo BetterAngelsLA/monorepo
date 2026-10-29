@@ -20,12 +20,21 @@ type TProps = {
   onBlur: () => void;
   errors?: ContactFormErrors;
   isViewMode?: boolean;
+  disabled?: boolean;
   className?: string;
 };
 
 export function ShelterContactForm(props: TProps) {
-  const { entry, onChange, onRemove, onBlur, errors, isViewMode, className } =
-    props;
+  const {
+    entry,
+    onChange,
+    onRemove,
+    onBlur,
+    errors,
+    isViewMode,
+    disabled = false,
+    className,
+  } = props;
 
   return (
     <div
@@ -40,6 +49,7 @@ export function ShelterContactForm(props: TProps) {
           <Button
             variant="trash"
             onClick={onRemove}
+            disabled={disabled}
             aria-label={`Remove contact: ${entry.contactName || 'name field empty'}`}
           />
         )}
@@ -49,11 +59,13 @@ export function ShelterContactForm(props: TProps) {
         <Input
           label="Name"
           dataType="string"
+          maxLength={255}
           value={entry.contactName}
           onChange={(e) => onChange({ contactName: e.target.value })}
           onBlur={onBlur}
           required
           isViewMode={isViewMode}
+          disabled={disabled}
           error={errors?.contactName?.message}
         />
 
@@ -65,6 +77,7 @@ export function ShelterContactForm(props: TProps) {
           onBlur={onBlur}
           required
           isViewMode={isViewMode}
+          disabled={disabled}
           error={errors?.contactNumber?.message}
         />
 
@@ -75,6 +88,7 @@ export function ShelterContactForm(props: TProps) {
           onChange={(e) => onChange({ contactEmail: e.target.value })}
           onBlur={onBlur}
           isViewMode={isViewMode}
+          disabled={disabled}
           error={errors?.contactEmail?.message}
         />
 
@@ -86,6 +100,7 @@ export function ShelterContactForm(props: TProps) {
           onChange={(e) => onChange({ contactTitle: e.target.value })}
           onBlur={onBlur}
           isViewMode={isViewMode}
+          disabled={disabled}
           error={errors?.contactTitle?.message}
         />
 
@@ -94,6 +109,7 @@ export function ShelterContactForm(props: TProps) {
           value={entry.isClaimant}
           onChange={(value) => onChange({ isClaimant: value })}
           isViewMode={isViewMode}
+          disabled={disabled}
           trueLabel="Yes"
           falseLabel="No"
         />

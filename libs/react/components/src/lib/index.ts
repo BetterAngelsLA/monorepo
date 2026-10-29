@@ -32,3 +32,4 @@ export * from './SearchList';
 export * from './Sidebar';
 export * from './Table';
 export * from './VideoEmbed';
+export * from './YouTubeThumbnail';

@@ -7,8 +7,8 @@ They should not contain write logic — that belongs in services.
 Reference: https://github.com/HackSoftware/Django-Styleguide#selectors
 """
 
-from datetime import date, datetime, time, timedelta
-from typing import Any
+from datetime import date, timedelta
+from typing import Any, Sequence
 from zoneinfo import ZoneInfo
 
 from django.db.models import Count, F, QuerySet
@@ -16,7 +16,9 @@ from django.db.models.functions import TruncDate
 from django.utils import timezone
 from organizations.models import Organization
 
+from common.utils import aware_range
 from notes.models import Note
+from regions.selectors import scope_notes_to_region_kind, scope_notes_to_regions
 
 from .calendar import report_calendar_time_zone
 
@@ -37,17 +39,30 @@ def report_default_date_range(*, org: Organization) -> tuple[date, date]:
     return report_month_range(year=today.year, month=today.month)
 
 
+def resolve_date_range(*, org: Organization, start_date: date | None, end_date: date | None) -> tuple[date, date]:
+    """Fill in whichever end of the range the caller omitted, from the org's default.
+
+    The one place the fallback lives: ``reportSummary``, ``interactionsByRegion``,
+    ``interactionMap`` and the density tile all read it, so an omitted ``start``/``end``
+    means the same window on every surface. Each end falls back independently — passing
+    only ``start`` keeps it and defaults ``end``.
+    """
+    if start_date is None or end_date is None:
+        default_start, default_end = report_default_date_range(org=org)
+        start_date = start_date or default_start
+        end_date = end_date or default_end
+    return start_date, end_date
+
+
 def note_list_for_org(*, org: Organization, start_date: date, end_date: date, time_zone: ZoneInfo) -> QuerySet[Note]:
     """Return Notes for an organization between two inclusive calendar dates.
 
     *time_zone* is the calendar the dates are read on — one decision per report,
     made by the caller, so the range and the buckets below it cannot disagree.
     """
-    org_time_zone = time_zone
-    # Half-open on instants rather than ``interacted_at__date``, which would wrap
-    # the column in a cast and lose the index.
-    start = timezone.make_aware(datetime.combine(start_date, time.min), timezone=org_time_zone)
-    end = timezone.make_aware(datetime.combine(end_date + timedelta(days=1), time.min), timezone=org_time_zone)
+    # Half-open on instants rather than ``interacted_at__date``; see ``common.utils.aware_range``
+    # for why, and for why the calendar is passed in rather than read from the active zone.
+    start, end = aware_range(start_date, end_date, time_zone)
 
     return Note.objects.filter(
         interacted_at__gte=start,
@@ -144,16 +159,57 @@ def _dates_to_iso(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return rows
 
 
-def report_summary(*, org: Organization, start_date: date, end_date: date) -> dict[str, Any]:
+def scope_notes_to_group(
+    notes: QuerySet[Note],
+    *,
+    region_kind: str | None,
+    region_codes: Sequence[str] | None,
+) -> QuerySet[Note]:
+    """Apply a resolved group to *notes*; shared by the summary and the CSV export.
+
+    ``region_codes=None`` means every region of ``region_kind``; ``[]`` matches nothing.
+    """
+    if region_kind is None:
+        # Refuse rather than silently returning the unfiltered queryset: a caller that has
+        # codes but no dimension has not resolved the scope, and guessing "all notes" would
+        # make a group filter disappear.
+        if region_codes:
+            raise ValueError("region_codes requires a region_kind")
+        if region_codes is not None:
+            # No dimension and no named region: an empty selection is an answer of zero. This
+            # covers any empty sequence, not just the list the GraphQL layer sends.
+            return notes.none()
+        return notes
+    if region_codes is None:
+        return scope_notes_to_region_kind(notes, kind=region_kind)
+    return scope_notes_to_regions(notes, kind=region_kind, codes=region_codes)
+
+
+def report_summary(
+    *,
+    org: Organization,
+    start_date: date,
+    end_date: date,
+    region_kind: str | None = None,
+    region_codes: Sequence[str] | None = None,
+) -> dict[str, Any]:
     """
     Build the full report summary for an organization and inclusive date range.
 
-    Returns a dict ready to be serialized by the GraphQL layer or a DRF view.
+    ``region_kind``/``region_codes`` scope every figure — the KPIs and all six charts — to the
+    chosen geography. The pair is interpreted by ``resolve_group_scope``; the filter is applied
+    once, before the aggregates.
     """
+    # An empty list is a valid "no regions" answer even without a dimension; only non-empty
+    # codes require one. The selector handles the empty case as `notes.none()`.
+    if region_codes and region_kind is None:
+        raise ValueError("region_codes requires a region_kind")
+
     # One calendar for the whole summary: the range, the buckets and the labels all
     # have to describe the same one.
     org_time_zone = report_calendar_time_zone(org)
     notes = note_list_for_org(org=org, start_date=start_date, end_date=end_date, time_zone=org_time_zone)
+    notes = scope_notes_to_group(notes, region_kind=region_kind, region_codes=region_codes)
 
     return {
         "total_notes": notes.count(),

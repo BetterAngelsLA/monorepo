@@ -21,7 +21,7 @@ export function FilterTeamsOptions(props: TProps) {
   const [localSelected, setLocalSelected] =
     useState<TFilterOption[]>(initialSelected);
 
-  const { teams, error } = useOrgTeams();
+  const { teams, error, isIdle } = useOrgTeams();
 
   const options = useMemo<TFilterOption[]>(() => {
     return teams.map((t) => ({
@@ -29,6 +29,12 @@ export function FilterTeamsOptions(props: TProps) {
       label: t.name,
     }));
   }, [teams]);
+
+  // No active organization to list teams for: an empty picker would read as
+  // "this org has no teams", which is a different problem with a different fix.
+  if (isIdle) {
+    return <TextRegular>Select an organization to filter by team.</TextRegular>;
+  }
 
   if (error) {
     console.error(error);

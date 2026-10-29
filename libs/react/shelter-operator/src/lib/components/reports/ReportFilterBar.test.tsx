@@ -1,8 +1,10 @@
 import { MockedProvider } from '@apollo/client/testing/react';
 import type { MockLink } from '@apollo/client/testing';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { getDefaultStore } from 'jotai';
 import { OperatorShelterSummaryDocument } from '../../graphql/__generated__/shelters.generated';
 import { ShelterOccupancyMetricsDocument } from '../../hooks/useShelterOccupancyMetrics/__generated__/useShelterOccupancyMetrics.generated';
+import { dateRangeFilterAtom } from '../date-range-filter';
 import { ReportFilterBar } from './ReportFilterBar';
 
 const fetchMock = vi.fn();
@@ -110,13 +112,10 @@ vi.mock('../../pages/report/useExportPdf', () => ({
 }));
 
 // The atom defaults to LAST_30_DAYS off the real clock; pin it so the
-// start/end params are predictable.
-vi.mock('jotai', () => ({
-  useAtomValue: () => ({
-    preset: 'LAST_30_DAYS',
-    range: { from: new Date(2026, 5, 1), to: new Date(2026, 5, 30) },
-  }),
-}));
+// start/end params are predictable. The bar now renders the real date
+// controls, which read and write this atom, so seed the store rather than
+// mocking jotai out from under them.
+const store = getDefaultStore();
 
 // @ant-design/plots needs real layout/canvas APIs jsdom doesn't reliably
 // provide; the off-screen PDF render's chart content is covered in
@@ -173,6 +172,10 @@ function waitForPdfSelectable() {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  store.set(dateRangeFilterAtom, {
+    preset: 'LAST_30_DAYS',
+    range: { from: new Date(2026, 5, 1), to: new Date(2026, 5, 30) },
+  });
   URL.createObjectURL = vi.fn(() => 'blob:report');
   URL.revokeObjectURL = vi.fn();
   HTMLAnchorElement.prototype.click = vi.fn();

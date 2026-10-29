@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, cast
 
 import pghistory
+import pgtrigger
 from django.core.exceptions import NON_FIELD_ERRORS, ValidationError
 from django.db import models
-from django.db.models import UniqueConstraint
+from django.db.models import Field, UniqueConstraint
 from django_choices_field import TextChoicesField
 
 from common.models import BaseModel, OrgScoped
@@ -17,10 +18,44 @@ if TYPE_CHECKING:
     from .shelter import Shelter
 
 
+class _NonStatusChange(pghistory.AnyChange):
+    """Any tracked field changed, and ``status`` did not.
+
+    Makes the two ``Reservation`` update events genuinely disjoint, so a write
+    produces exactly one event row. ``AnyChange(exclude=["status"])`` is not
+    enough on its own: one ``save()`` that changes ``status`` *and* another field
+    (the check-in path sets ``checked_in_at``) matches both triggers and writes
+    two rows with identical snapshots. The aggregate diffs a row against the
+    previous event of the *object* (any label), so the second row carries an
+    empty ``pgh_diff`` and the audit log renders a phantom event.
+    """
+
+    def resolve(self, model: type[models.Model]) -> str:
+        status = cast(Field[Any, Any], model._meta.get_field("status")).column
+        return f'(({super().resolve(model)}) AND OLD."{status}" IS NOT DISTINCT FROM (NEW."{status}"))'
+
+
 @pghistory.track(
     pghistory.InsertEvent("reservation.add"),
     pghistory.DeleteEvent("reservation.remove"),
+    # These two update triggers are mutually exclusive, so every write emits
+    # exactly one row: ``status_change`` when ``status`` changed (carrying the
+    # whole write's diff, including ``checked_in_at``/``notes`` set in the same
+    # save), and ``update`` only when ``status`` is untouched. ``updated_at`` is
+    # excluded alongside ``status`` because it is ``auto_now`` and would
+    # otherwise make every save match ``update``.
     pghistory.UpdateEvent("reservation.status_change", condition=pghistory.AnyChange("status")),
+    pghistory.UpdateEvent("reservation.update", condition=_NonStatusChange(exclude=["status", "updated_at"])),
+    meta={
+        "indexes": [
+            models.Index(fields=["pgh_obj", "pgh_id"], name="reservation_evt_obj_idx"),
+            # Reached through the room/bed (``references(room)`` / ``(bed)``).
+            models.Index(fields=["room", "pgh_id"], name="reservation_evt_room_idx"),
+            models.Index(fields=["bed", "pgh_id"], name="reservation_evt_bed_idx"),
+            models.Index(fields=["pgh_created_at"], name="reservation_evt_ca_idx"),
+        ],
+        "triggers": [pgtrigger.Protect(name="protect_updates", operation=pgtrigger.Update)],
+    },
 )
 class Reservation(OrgScoped, BaseModel):
     org_via = ("bed", "room")
@@ -92,6 +127,19 @@ class Reservation(OrgScoped, BaseModel):
         return f"Reservation #{self.pk} at {shelter} ({self.status})"
 
 
+@pghistory.track(
+    pghistory.InsertEvent("reservation_client.add"),
+    pghistory.UpdateEvent("reservation_client.update"),
+    pghistory.DeleteEvent("reservation_client.remove"),
+    meta={
+        "indexes": [
+            models.Index(fields=["pgh_obj", "pgh_id"], name="resclient_evt_obj_idx"),
+            models.Index(fields=["reservation", "pgh_id"], name="resclient_evt_res_idx"),
+            models.Index(fields=["pgh_created_at"], name="resclient_evt_ca_idx"),
+        ],
+        "triggers": [pgtrigger.Protect(name="protect_updates", operation=pgtrigger.Update)],
+    },
+)
 class ReservationClient(BaseModel):
     reservation = models.ForeignKey(Reservation, on_delete=models.CASCADE, related_name="reservation_clients")
     client_profile = models.ForeignKey(

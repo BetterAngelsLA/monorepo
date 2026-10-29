@@ -6,9 +6,18 @@ from django.test import TestCase
 from model_bakery import baker
 
 from accounts.models import Role, User
-from accounts.services import grant_create, role_assign, sync_roles
+from accounts.services import grant_create, role_assign, role_remove, sync_roles
 from accounts.tests.baker_recipes import organization_recipe
-from common.permissions.selectors import ALL, can, can_anywhere, can_globally, can_obj, scopes, visible
+from common.permissions.selectors import (
+    ALL,
+    can,
+    can_anywhere,
+    can_globally,
+    can_obj,
+    invalidate_scope_cache,
+    scopes,
+    visible,
+)
 from notes.models import Note
 from shelters.groups import GLOBAL_SHELTER_OPERATOR_ROLE, SHELTER_OPERATOR_ROLE
 from shelters.models import ContactInfo, Shelter
@@ -120,8 +129,46 @@ class GrantSelectorsTestCase(TestCase):
         s = scopes(alice, Shelter.perms.VIEW)
 
         self.assertIsNot(s, ALL)
-        self.assertIn("_scope_cache", alice.__dict__)
+        self.assertIn("_authority_cache", alice.__dict__)
         self.assertIs(scopes(alice, Shelter.perms.VIEW), s)
+
+    def test_global_tier_check_is_memoized_per_request(self) -> None:
+        """The global-tier EXISTS checks are paid once per (user, perm), not per row."""
+        gso = baker.make(User)
+        role_assign(user=gso, role=self.gso_role)
+
+        self.assertTrue(can_globally(gso, Shelter.perms.VIEW))
+        with self.assertNumQueries(0):
+            self.assertTrue(can_globally(gso, Shelter.perms.VIEW))
+
+    def test_role_assign_invalidates_the_memoized_global_tier(self) -> None:
+        """A memoized ``False`` must not outlive the role grant that changes it."""
+        user = baker.make(User)
+        self.assertFalse(can_globally(user, Shelter.perms.VIEW))
+
+        role_assign(user=user, role=self.gso_role)
+
+        self.assertTrue(can_globally(user, Shelter.perms.VIEW))
+
+    def test_role_remove_invalidates_the_memoized_global_tier(self) -> None:
+        """A memoized ``True`` must not outlive the revocation."""
+        user = baker.make(User)
+        role_assign(user=user, role=self.gso_role)
+        self.assertTrue(can_globally(user, Shelter.perms.VIEW))
+
+        role_remove(user=user, role=self.gso_role)
+
+        self.assertFalse(can_globally(user, Shelter.perms.VIEW))
+
+    def test_invalidate_drops_the_global_tier_memo(self) -> None:
+        gso = baker.make(User)
+        role_assign(user=gso, role=self.gso_role)
+        can_globally(gso, Shelter.perms.VIEW)
+        self.assertIn("_authority_cache", gso.__dict__)
+
+        invalidate_scope_cache(gso)
+
+        self.assertNotIn("_authority_cache", gso.__dict__)
 
     def test_can_checks_authority_in_an_org(self) -> None:
         alice = baker.make(User)
@@ -133,12 +180,70 @@ class GrantSelectorsTestCase(TestCase):
         self.assertFalse(can(alice, Shelter.perms.VIEW, org=self.org_b))
         self.assertTrue(can(gso, Shelter.perms.VIEW, org=self.org_b))
 
+    def test_can_fails_closed_for_a_malformed_org(self) -> None:
+        """M1: a malformed ``org`` is a denial, not an exception.
+
+        ``can()`` gates creates at 30 call sites.  Its coercion accepts an
+        ``Organization`` or a stringified pk and denies anything it cannot
+        resolve, so a caller bug (``org=object()``) becomes "not authorized"
+        rather than a 500 on a create path.  That is the decision: authorization
+        predicates fail closed.
+
+        If the decision flips to surfacing the caller bug, replace the last
+        assertion with ``assertRaises((TypeError, ValueError))`` (and drop the
+        ``try``/``except`` in ``can``).  ``org=None`` is part of the same
+        fail-closed rule and pinned here.
+        """
+        alice = baker.make(User)
+        grant_create(user=alice, role=self.shelter_role, scope_org=self.org_a)
+
+        # Well-formed, unauthorized: a denial, not an error.
+        self.assertFalse(can(alice, Shelter.perms.VIEW, org=self.org_b))
+
+        # Well-formed but non-model: still resolved.
+        self.assertTrue(can(alice, Shelter.perms.VIEW, org=str(self.org_a.pk)))
+
+        # Malformed and missing: denied, never raised.
+        self.assertFalse(can(alice, Shelter.perms.VIEW, org=object()))
+        self.assertFalse(can(alice, Shelter.perms.VIEW, org=None))
+
     def test_can_obj_is_the_row_filter_on_one_row(self) -> None:
         alice = baker.make(User)
         grant_create(user=alice, role=self.shelter_role, scope_org=self.org_a)
 
         self.assertTrue(can_obj(alice, Shelter.perms.VIEW, self.shelter_a))
         self.assertFalse(can_obj(alice, Shelter.perms.VIEW, self.shelter_b))
+
+        # Own-org paths read the column on the row, so the scope being memoized
+        # means the check itself issues no query.
+        with self.assertNumQueries(0):
+            self.assertTrue(can_obj(alice, Shelter.perms.VIEW, self.shelter_a))
+
+    def test_can_obj_ignores_a_stale_cached_parent(self) -> None:
+        """A re-pointed hop is read from the row, not the object graph."""
+        from shelters.models import ContactInfo
+
+        contact = baker.make(ContactInfo, shelter=self.shelter_a, contact_number="2125551212")
+        contact = ContactInfo.objects.select_related("shelter").get(pk=contact.pk)
+        ContactInfo.objects.filter(pk=contact.pk).update(shelter=self.shelter_b)
+
+        role = Role.objects.create(name="Contact Viewer", is_global=False)
+        role.permissions.add(
+            Permission.objects.get(codename=ContactInfo.perms.VIEW.split(".")[1], content_type__app_label="shelters")
+        )
+        alice = baker.make(User)
+        grant_create(user=alice, role=role, scope_org=self.org_a)
+        bob = baker.make(User)
+        grant_create(user=bob, role=role, scope_org=self.org_b)
+
+        self.assertFalse(can_obj(alice, ContactInfo.perms.VIEW, contact))
+        self.assertTrue(can_obj(bob, ContactInfo.perms.VIEW, contact))
+
+        # A hop reads only the org-id column from the row: one query, not a
+        # compiled ``visible()`` queryset plus EXISTS. The scope is memoized on
+        # the instance, so the repeat check pays only for that column read.
+        with self.assertNumQueries(1):
+            self.assertTrue(can_obj(bob, ContactInfo.perms.VIEW, contact))
 
     def test_can_obj_shared_tier_is_any_holder_anywhere(self) -> None:
         """ClientProfile declares WRITE_SHARED (RFC 0002 #1): can_obj == can_anywhere."""

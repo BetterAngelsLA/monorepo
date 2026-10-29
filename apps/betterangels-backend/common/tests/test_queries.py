@@ -14,6 +14,11 @@ from common.tests.utils import GraphQLBaseTestCase
 class FeatureControlDataTestCase(GraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
+        # A test database created before the imgproxy switch was removed still
+        # carries its seeded row (``--reuse-db`` keeps it), so start from an
+        # empty waffle table and let the counts below describe only the rows
+        # this test creates.
+        get_waffle_switch_model().objects.all().delete()
         self.flags = [
             get_waffle_flag_model().objects.create(name="flag_1", everyone=True),
             get_waffle_flag_model().objects.create(name="flag_2", everyone=True),
@@ -51,7 +56,7 @@ class FeatureControlDataTestCase(GraphQLBaseTestCase):
         result = self.execute_graphql(query)
         self.assertNotIn("errors", result)
         self.assertEqual(len(result["data"]["featureControls"]["flags"]), 3)
-        self.assertEqual(len(result["data"]["featureControls"]["switches"]), 3)
+        self.assertEqual(len(result["data"]["featureControls"]["switches"]), 2)
         self.assertEqual(len(result["data"]["featureControls"]["samples"]), 1)
 
 

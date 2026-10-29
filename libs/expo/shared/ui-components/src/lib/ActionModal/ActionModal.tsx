@@ -9,10 +9,12 @@ export interface IActionModalProps {
   body?: ReactNode;
   primaryButtonTitle: string;
   secondaryButtonTitle?: string;
+  tertiaryButtonTitle?: string;
   visible: boolean;
   setVisible: Dispatch<SetStateAction<boolean>>;
   onPrimaryPress: () => void;
   onSecondaryPress?: () => void;
+  onTertiaryPress?: () => void;
   onClose?: () => void;
 }
 
@@ -25,7 +27,9 @@ export function ActionModal(props: IActionModalProps) {
     body,
     onPrimaryPress,
     onSecondaryPress,
+    onTertiaryPress,
     secondaryButtonTitle,
+    tertiaryButtonTitle,
     primaryButtonTitle,
     onClose,
   } = props;
@@ -45,7 +49,9 @@ export function ActionModal(props: IActionModalProps) {
         setVisible={setVisible}
         onPrimaryPress={onPrimaryPress}
         onSecondaryPress={onSecondaryPress}
+        onTertiaryPress={onTertiaryPress}
         secondaryButtonTitle={secondaryButtonTitle}
+        tertiaryButtonTitle={tertiaryButtonTitle}
         primaryButtonTitle={primaryButtonTitle}
       />
     </BasicModal>

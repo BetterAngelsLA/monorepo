@@ -3,11 +3,12 @@ from typing import Any, ClassVar, Dict, Iterator, Optional, cast
 
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.gis.db.models import PointField
+from django.contrib.gis.db.models import GeometryField, PointField
 from django.contrib.gis.geos import Point
+from django.contrib.postgres.indexes import GistIndex
 from django.db import models
 from django.db.models import ForeignKey
-from django.db.models.functions import Lower
+from django.db.models.functions import Cast, Lower
 from django_choices_field import TextChoicesField
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from phonenumber_field.modelfields import PhoneNumberField
@@ -144,6 +145,7 @@ class Attachment(BaseModel):
         content_object: Generic relation to the associated model instance.
         namespace: Optional field for further categorization within specific contexts.
         uploaded_by: Reference to the User who uploaded the file.
+        upload_org: The organization the upload was made on behalf of.
     """
 
     file = models.FileField(upload_to=get_unique_file_path)
@@ -159,6 +161,21 @@ class Attachment(BaseModel):
 
     uploaded_by = models.ForeignKey(
         "accounts.User", on_delete=models.SET_NULL, null=True, related_name="uploaded_attachments"
+    )
+
+    # The write anchor for domains that read platform-shared but are owned by the
+    # uploader's org (client documents — RFC 0002 / ADR 0002, decision 2).  It is
+    # deliberately *not* an ``org_via`` hop: reads stay shared, and authority is an
+    # org-scope check against this column.  Nullable because it is set per upload
+    # (``resolve_upload``) and rows predate it; the backfill in
+    # ``common/0005_backfill_attachment_upload_org`` fills historical documents
+    # from the guardian group rows that recorded the same fact.
+    upload_org = models.ForeignKey(
+        "organizations.Organization",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="uploaded_attachments",
     )
 
     def __str__(self) -> str:
@@ -229,9 +246,34 @@ class Location(BaseModel):
 
     address = models.ForeignKey(Address, on_delete=models.SET_NULL, null=True, blank=True)
     point = PointField(geography=True)
+    # ``point`` again, as ``geometry``, maintained by the database.
+    #
+    # The boundary joins index this rather than ``point``. PostGIS indexes a ``geography``
+    # column spheroidally, and ``geography -> geometry`` is an **explicit-only** cast, so a
+    # point-in-polygon test against a ``geometry`` boundary has to write ``point::geometry``
+    # — which discards the geography GiST index. Casting the *boundaries* to geography to
+    # reuse that index instead measures ~2,200 ms against ~85 ms for the rollup this column
+    # serves.
+    #
+    # A **generated column**, for the same reasons as ``Region.geom_display``: the database
+    # derives it, so there is no backfill to run, nothing to remember on write, and no way
+    # for it to drift from ``point``. ``geography -> geometry`` is IMMUTABLE, which is what
+    # makes that legal. Adding it rewrites ``common_location`` once, under an ACCESS
+    # EXCLUSIVE lock — see the migration.
+    point_geom = models.GeneratedField(
+        expression=Cast("point", GeometryField(srid=4326)),
+        output_field=GeometryField(srid=4326),
+        db_persist=True,
+    )
     point_of_interest = models.CharField(max_length=255, blank=True, null=True)
 
     objects = models.Manager()
+
+    class Meta:
+        indexes = [
+            # GiST on the generated geometry, which is what the region joins probe.
+            GistIndex(fields=["point_geom"], name="common_location_point_geom_gix"),
+        ]
 
     def __str__(self) -> str:
         if self.address and str(self.address) != Address.ADDRESS_DEFAULT:

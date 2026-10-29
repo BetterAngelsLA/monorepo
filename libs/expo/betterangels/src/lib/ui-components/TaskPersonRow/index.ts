@@ -1,0 +1,1 @@
+export { TaskPersonRow } from './TaskPersonRow';

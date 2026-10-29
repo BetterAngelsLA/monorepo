@@ -1,20 +1,33 @@
 {
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  "cacheDirectory": ".nx/cache",
   "tasksRunnerOptions": {
     "default": {}
   },
   "targetDefaults": {
     "build": {
-      "dependsOn": ["^build"],
-      "inputs": ["production", "^production"],
+      "dependsOn": [
+        "^build"
+      ],
+      "inputs": [
+        "production",
+        "^production"
+      ],
       "cache": true
     },
     "test": {
-      "inputs": ["default", "^production", "{workspaceRoot}/jest.preset.js"],
-      "cache": true
+      "inputs": [
+        "default",
+        "^production",
+        "{workspaceRoot}/jest.preset.js"
+      ],
+      "cache": false
     },
     "lint": {
-      "inputs": ["default", "{workspaceRoot}/eslint.config.mjs"],
+      "inputs": [
+        "default",
+        "{workspaceRoot}/eslint.config.mjs"
+      ],
       "cache": true
     },
     "typecheck": {
@@ -36,17 +49,54 @@
       "cache": true
     },
     "@nx/eslint:lint": {
-      "inputs": ["default", "{workspaceRoot}/eslint.config.mjs"],
+      "inputs": [
+        "default",
+        "{workspaceRoot}/eslint.config.mjs"
+      ],
       "cache": true
     },
     "@nx/js:swc": {
       "cache": true,
-      "dependsOn": ["^build"],
-      "inputs": ["production", "^production"]
+      "dependsOn": [
+        "^build"
+      ],
+      "inputs": [
+        "production",
+        "^production"
+      ]
+    },
+    "eas-build": {
+      "cache": false,
+      "dependsOn": [
+        "write-eas-env",
+        "sync-deps",
+        "copy-lockfile"
+      ],
+      "configurations": {
+        "preview": {
+          "profile": "preview"
+        },
+        "production": {
+          "profile": "production"
+        }
+      }
+    },
+    "e2e": {
+      "cache": false,
+      "configurations": {
+        "preview": {},
+        "production": {}
+      }
     }
   },
   "namedInputs": {
-    "default": ["{projectRoot}/**/*", "sharedGlobals"],
+    "default": [
+      "{projectRoot}/**/*",
+      "sharedGlobals",
+      "!{projectRoot}/android/**",
+      "!{projectRoot}/ios/**",
+      "!{projectRoot}/.env.local"
+    ],
     "production": [
       "default",
       "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
@@ -60,13 +110,16 @@
       "!{projectRoot}/tsconfig.storybook.json"
     ],
     "sharedGlobals": [
-      "{workspaceRoot}/Dockerfile",
-      "{workspaceRoot}/docker-compose*.yml",
-      "{workspaceRoot}/mypy.ini",
-      "{workspaceRoot}/uv.*",
-      "{workspaceRoot}/docker-compose*.yml",
-      "{workspaceRoot}/docker-pyproject.toml"
+      "{workspaceRoot}/nx.json",
+      "{workspaceRoot}/package.json",
+      "{workspaceRoot}/yarn.lock",
+      "{workspaceRoot}/tsconfig.base.json"
     ]
+  },
+  "pluginsConfig": {
+    "@nx/js": {
+      "projectsAffectedByDependencyUpdates": "auto"
+    }
   },
   "plugins": [
     "@nxlv/python",
@@ -110,6 +163,7 @@
       "include": [
         "apps/betterangels/**/*",
         "apps/betterangels-admin/**/*",
+        "apps/shelter-e2e/**/*",
         "apps/shelter-web/**/*",
         "apps/wildfires/**/*",
         "libs/apollo/**/*",

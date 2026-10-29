@@ -1,5 +1,6 @@
 import { BaError, getFieldErrorsOrThrow } from '@monorepo/ba-platform';
 import { applyFieldErrors } from '@monorepo/react/shared';
+import { FunderChoices, ShelterProgramChoices } from '@monorepo/react/shelter';
 import { useState } from 'react';
 import type { UseFormSetError } from 'react-hook-form';
 import {
@@ -30,8 +31,15 @@ function toUpdateInput(
     cityCouncilDistrict: data.cityCouncilDistrict ?? null,
     supervisorialDistrict: data.supervisorialDistrict ?? null,
     shelterPrograms: data.shelterPrograms,
+    shelterProgramsOther: data.shelterPrograms.includes(
+      ShelterProgramChoices.Other,
+    )
+      ? (data.shelterProgramsOther ?? null)
+      : null,
     funders: data.funders,
-    fundersOther: data.fundersOther ?? null,
+    fundersOther: data.funders.includes(FunderChoices.Other)
+      ? (data.fundersOther ?? null)
+      : null,
   };
 }
 
@@ -43,7 +51,6 @@ export function ShelterEcosystem(props: TProps) {
   const { shelterId } = props;
 
   const [isEditMode, setEditMode] = useState<boolean>(false);
-  const [formKey, setFormKey] = useState(0);
 
   const { shelter } = useShelterOperatorProfile(shelterId);
   const { updateShelter } = useUpdateShelterProfile();
@@ -72,7 +79,6 @@ export function ShelterEcosystem(props: TProps) {
       }
 
       setEditMode(false);
-      setFormKey((k) => k + 1);
 
       showToast({
         status: 'success',
@@ -105,7 +111,6 @@ export function ShelterEcosystem(props: TProps) {
 
   return (
     <ShelterEcosystemForm
-      key={formKey}
       values={toFormData(shelter)}
       onSubmit={onSubmit}
       isViewMode={!isEditMode}

@@ -14,9 +14,8 @@ const mmkv = () => (store ??= createMMKV());
  *
  * No instance id, so this lands in MMKV's default instance — the app-wide one,
  * and the documented home for global values. User preferences deliberately get
- * their own ``user:${userId}`` instance; this value cannot, because the request
- * that fetches the user is itself one that needs the header, so the id has to
- * be readable before there is a user id to scope by. Sign-out calls
+ * their own ``user:${userId}`` instance; this value cannot, because org-scoped
+ * requests can go out before there is a user id to scope by. Sign-out calls
  * ``clearActiveOrgId`` and the organization list reconciles it, which is what
  * keeps a shared device honest instead.
  *

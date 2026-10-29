@@ -9,7 +9,6 @@ from django.core.exceptions import PermissionDenied
 from django.db.models import Model, TextChoices
 from django.utils.encoding import force_str
 from guardian.shortcuts import assign_perm
-from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
 
 from common.errors import UnauthenticatedGQLError
@@ -41,7 +40,24 @@ def get_registered_permission_enums() -> list[type[TextChoices]]:
 # permissions. Seed/dev-fixture-only models are not product surfaces: their
 # permissions would otherwise appear in the role/admin permission pickers, in
 # ``currentUser.permissions`` and in the generated frontend catalog.
-PERMISSION_EXCLUDED_MODELS: frozenset[str] = frozenset({"referrals.ReferralTestShelter"})
+#
+# ``regions.*`` is the second case, and a different one: the two region models are
+# *reference data with no write surface in the product*. Boundaries arrive through
+# ``manage.py import_regions``; ``RegionAdmin`` is read-only but for Django's own
+# ``change``/``delete``, which check ``user.has_perm`` (the legacy path) and which no
+# ``RoleDef`` carries — so a grant on them would authorize nothing. Shipping them to the
+# catalog would put four unassignable checkboxes per model in the role picker: eight
+# permissions that cannot grant the thing they name. Declaring the data surface is what
+# the exclusion list is for. Server-side reads of region data are gated by
+# ``IsAuthenticated`` / ``reports.view_reports`` (see ``regions.schema``), never by a
+# ``regions.*`` permission.
+PERMISSION_EXCLUDED_MODELS: frozenset[str] = frozenset(
+    {
+        "referrals.ReferralTestShelter",
+        "regions.Region",
+        "regions.RegionPiece",
+    }
+)
 
 
 def register_model_permissions() -> None:
@@ -230,24 +246,6 @@ class IsAuthenticated(strawberry.BasePermission):
         return True
 
 
-def get_current_organization(info: Info) -> str:
-    """Return the organization ID from the ``X-Organization-ID`` header.
-
-    Kept only until mobile migrates its teams reads to the ``organizationId``
-    filter (DEV-2566) — every other org-scoped surface is header-free.  See the
-    ADR 0001 §5.3 strip checklist.
-
-    Raises ``PermissionDenied`` if the header is absent, or ``AttributeError``
-    if ``OrganizationMiddleware`` is not installed.
-    """
-    org_id = info.context.request.organization_id
-
-    if org_id is None:
-        raise PermissionDenied("Organization ID (X-Organization-ID header) is required.")
-
-    return str(org_id)
-
-
 #: The standard refusal for org-scoped authority checks — one string, so every
 #: refusal reads the same.
 PERMISSION_DENIED_MESSAGE = "You do not have permission to perform this action in this organization."
@@ -259,7 +257,8 @@ def require_can(user: Any, perm: str, *, org: Any) -> None:
     The create gate: creates carry an explicit target organization and are
     authorized by ``can`` — never by the read rule.  ``can`` never implies the
     organization exists (finding F7), so callers that take an org from client
-    input must check existence separately (see ``shelter_create``).
+    input must check existence separately: pass a resolved organization, which
+    ``common.graphql.utils.org_or_deny`` returns and refuses without.
     """
     from common.permissions.selectors import can
 

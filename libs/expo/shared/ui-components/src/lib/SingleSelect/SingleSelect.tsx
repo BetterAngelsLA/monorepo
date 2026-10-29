@@ -26,6 +26,8 @@ interface ISingleSelectProps extends TMarginProps {
   maxRadioItems?: number;
   modalTitle?: string;
   testId?: string;
+  /** Renders the clear (⊗) affordance once a value is selected. */
+  onClear?: () => void;
 }
 
 export function SingleSelect(props: ISingleSelectProps) {
@@ -42,6 +44,7 @@ export function SingleSelect(props: ISingleSelectProps) {
     maxRadioItems = 3,
     modalTitle,
     placeholderTextColor,
+    onClear,
     ...rest
   } = props;
 
@@ -62,6 +65,7 @@ export function SingleSelect(props: ISingleSelectProps) {
         disabled={disabled}
         placeholder={placeholder}
         items={items}
+        onClear={onClear}
         {...rest}
       />
     );

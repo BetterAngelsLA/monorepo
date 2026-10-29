@@ -4,7 +4,6 @@ from unittest.mock import ANY, patch
 from deepdiff import DeepDiff
 from django.test import override_settings
 from unittest_parametrize import parametrize
-from waffle.testutils import override_switch
 
 from clients.enums import (
     AdaAccommodationEnum,
@@ -32,13 +31,14 @@ from clients.tests.utils import (
     HmisProfileBaseTestCase,
     SocialMediaProfileBaseTestCase,
 )
-from common.imgproxy import IMGPROXY_SWITCH
 from common.models import Attachment
 from common.services.s3 import PresignedS3UploadBatchResult, PresignedS3UploadResult
 
 
 @override_settings(IMGPROXY_KEY="", IMGPROXY_SALT="")
-@override_switch(IMGPROXY_SWITCH, active=False)
+# The photo mutations authorize through the grant snapshot (`visible`/`can_obj`)
+# instead of the guardian `filter_for_user` prefilter, so these pins are two to
+# three queries *higher* than the pre-cutover expectations (measured, not inherited).
 class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
@@ -467,7 +467,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         """
         variables = {"id": client_profile["id"]}
 
-        expected_query_count = 19
+        expected_query_count = 22
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(mutation, variables)
 
@@ -538,7 +538,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
 
     def test_resolve_client_profile_photo_upload_invalid_token(self) -> None:
         with patch("common.services.file_upload.validate_upload_token", return_value=False):
-            expected_query_count = 6
+            expected_query_count = 8
             with self.assertNumQueriesWithoutCache(expected_query_count):
                 response = self._resolve_client_profile_photo_upload_fixture(
                     client_profile_id=self.client_profile_1["id"],
@@ -604,7 +604,7 @@ class ClientContactMutationTestCase(ClientContactBaseTestCase):
             "relationshipToClientOther": None,
         }
 
-        expected_query_count = 11
+        expected_query_count = 12
         with self.assertNumQueriesWithoutCache(expected_query_count):
             client_contact = self._create_client_contact_fixture(variables)["data"]["createClientContact"]
 
@@ -629,7 +629,7 @@ class ClientContactMutationTestCase(ClientContactBaseTestCase):
             "relationshipToClientOther": None,
         }
 
-        expected_query_count = 11
+        expected_query_count = 12
         with self.assertNumQueriesWithoutCache(expected_query_count):
             client_contact = self._update_client_contact_fixture(variables)["data"]["updateClientContact"]
 
@@ -640,7 +640,7 @@ class ClientContactMutationTestCase(ClientContactBaseTestCase):
     def test_delete_client_contact_mutation(self) -> None:
         variables = {"object": "ClientContact", "object_id": self.client_contact_1["id"]}
 
-        expected_query_count = 9
+        expected_query_count = 10
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._delete_fixture(**variables)
 
@@ -705,7 +705,7 @@ class ClientHouseholdMemberMutationTestCase(ClientHouseholdMemberBaseTestCase):
             "relationshipToClientOther": None,
         }
 
-        expected_query_count = 11
+        expected_query_count = 12
         with self.assertNumQueriesWithoutCache(expected_query_count):
             client_household_member = self._create_client_household_member_fixture(variables)["data"][
                 "createClientHouseholdMember"
@@ -732,7 +732,7 @@ class ClientHouseholdMemberMutationTestCase(ClientHouseholdMemberBaseTestCase):
             "relationshipToClientOther": "fren",
         }
 
-        expected_query_count = 11
+        expected_query_count = 12
         with self.assertNumQueriesWithoutCache(expected_query_count):
             client_household_member = self._update_client_household_member_fixture(variables)["data"][
                 "updateClientHouseholdMember"
@@ -745,7 +745,7 @@ class ClientHouseholdMemberMutationTestCase(ClientHouseholdMemberBaseTestCase):
     def test_delete_client_household_member_mutation(self) -> None:
         variables = {"object": "ClientHouseholdMember", "object_id": self.client_household_member_1["id"]}
 
-        expected_query_count = 9
+        expected_query_count = 10
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._delete_fixture(**variables)
 
@@ -764,7 +764,7 @@ class HmisProfileMutationTestCase(HmisProfileBaseTestCase):
             "clientProfile": self.client_profile_id,
         }
 
-        expected_query_count = 12
+        expected_query_count = 13
         with self.assertNumQueriesWithoutCache(expected_query_count):
             hmis_profile = self._create_hmis_profile_fixture(variables)["data"]["createHmisProfile"]
 
@@ -784,7 +784,7 @@ class HmisProfileMutationTestCase(HmisProfileBaseTestCase):
             "agency": HmisAgencyEnum.PASADENA.name,
         }
 
-        expected_query_count = 12
+        expected_query_count = 13
         with self.assertNumQueriesWithoutCache(expected_query_count):
             hmis_profile = self._update_hmis_profile_fixture(variables)["data"]["updateHmisProfile"]
 
@@ -793,7 +793,7 @@ class HmisProfileMutationTestCase(HmisProfileBaseTestCase):
     def test_delete_hmis_profile_mutation(self) -> None:
         variables = {"object": "HmisProfile", "object_id": self.hmis_profile_1["id"]}
 
-        expected_query_count = 9
+        expected_query_count = 10
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._delete_fixture(**variables)
 
@@ -803,11 +803,11 @@ class HmisProfileMutationTestCase(HmisProfileBaseTestCase):
     @parametrize(
         ("hmis_id", "expected_error_message", "expected_query_count"),
         [
-            ("hmis id 1", None, 12),
-            (" ", "This field cannot be null.", 11),
-            ("", "This field cannot be null.", 11),
-            ("hmis id 2", "Constraint “unique_hmis_id_agency” is violated.", 12),
-            (None, "This field cannot be null.", 11),
+            ("hmis id 1", None, 13),
+            (" ", "This field cannot be null.", 12),
+            ("", "This field cannot be null.", 12),
+            ("hmis id 2", "Constraint “unique_hmis_id_agency” is violated.", 13),
+            (None, "This field cannot be null.", 12),
         ],
     )
     def test_update_hmis_profile_mutation_validation(
@@ -839,7 +839,7 @@ class SocialMediaProfileMutationTestCase(SocialMediaProfileBaseTestCase):
             "clientProfile": self.client_profile_id,
         }
 
-        expected_query_count = 11
+        expected_query_count = 12
         with self.assertNumQueriesWithoutCache(expected_query_count):
             social_media_profile = self._create_social_media_profile_fixture(variables)["data"][
                 "createSocialMediaProfile"
@@ -861,7 +861,7 @@ class SocialMediaProfileMutationTestCase(SocialMediaProfileBaseTestCase):
             "platform": SocialMediaEnum.WHATSAPP.name,
         }
 
-        expected_query_count = 11
+        expected_query_count = 12
         with self.assertNumQueriesWithoutCache(expected_query_count):
             social_media_profile = self._update_social_media_profile_fixture(variables)["data"][
                 "updateSocialMediaProfile"
@@ -872,7 +872,7 @@ class SocialMediaProfileMutationTestCase(SocialMediaProfileBaseTestCase):
     def test_delete_social_media_profile_mutation(self) -> None:
         variables = {"object": "SocialMediaProfile", "object_id": self.social_media_profile_1["id"]}
 
-        expected_query_count = 9
+        expected_query_count = 10
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._delete_fixture(**variables)
 
@@ -895,7 +895,7 @@ class SocialMediaProfileMutationTestCase(SocialMediaProfileBaseTestCase):
             "platform": SocialMediaEnum.FACEBOOK.name,
         }
 
-        expected_query_count = 11
+        expected_query_count = 12
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_social_media_profile_fixture(variables)["data"]["updateSocialMediaProfile"]
 

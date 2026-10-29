@@ -10,17 +10,17 @@ Renewing one does not renew the other: `preview` was renewed on 2026-10-01 and `
 
 When you build an iOS app outside Xcode, two separate things get stored on EAS's servers:
 
-| Thing | What it does | Scope |
-| --- | --- | --- |
-| **Distribution certificate** | Proves to Apple that your team is allowed to sign an app | Team-wide, shared |
-| **Provisioning profile** | Binds that certificate to a specific bundle ID + distribution type (App Store or Ad Hoc) | **Per bundle ID** |
+| Thing                        | What it does                                                                             | Scope             |
+| ---------------------------- | ---------------------------------------------------------------------------------------- | ----------------- |
+| **Distribution certificate** | Proves to Apple that your team is allowed to sign an app                                 | Team-wide, shared |
+| **Provisioning profile**     | Binds that certificate to a specific bundle ID + distribution type (App Store or Ad Hoc) | **Per bundle ID** |
 
 The provisioning profile is scoped to a single bundle ID. This repo ships **two** bundles from one Expo project (`app.config.js:15`):
 
-| eas.json profile | Bundle ID | Distribution | Used by |
-| --- | --- | --- | --- |
-| `production` | `la.betterangels.app` | store | production releases |
-| `preview` | `la.betterangels.dev.app` | Ad Hoc | dev-client / preview builds |
+| eas.json profile | Bundle ID                 | Distribution | Used by                     |
+| ---------------- | ------------------------- | ------------ | --------------------------- |
+| `production`     | `la.betterangels.app`     | store        | production releases         |
+| `preview`        | `la.betterangels.dev.app` | Ad Hoc       | dev-client / preview builds |
 
 The two profiles have independent expiry dates; either can expire while the other stays valid. On 2026-10-01 the `preview` profile was renewed and the `production` profile was not.
 
@@ -44,7 +44,7 @@ At the prompts:
 
 1. **Log in to your Apple account** → yes. Choose the **existing App Store Connect API Key** if offered (fall back to Apple ID + 2FA otherwise).
 2. **Distribution certificate** → if the existing one is still valid, **reuse it**. Don't regenerate and don't revoke. You'll be shown the serial and expiry — check it before deciding.
-3. **Provisioning profile** → if it's expired or invalid, **generate a new one** for the *correct bundle ID* and distribution type (`la.betterangels.app` + store, or `la.betterangels.dev.app` + Ad Hoc).
+3. **Provisioning profile** → if it's expired or invalid, **generate a new one** for the _correct bundle ID_ and distribution type (`la.betterangels.app` + store, or `la.betterangels.dev.app` + Ad Hoc).
 4. Push Notifications key → leave alone, unrelated.
 
 Then confirm the new profile's expiry is ~12 months out, and repeat for the other profile.
@@ -67,8 +67,8 @@ npx -y eas-cli build:list --platform ios --build-profile production --limit 3 --
 
 ## Why expiry goes unnoticed
 
-- **CI cannot renew credentials.** The deploy script passes `--freeze-credentials` (`eas-deploy.ts:154`) — deliberate, so CI never modifies the Apple account — and an expiry stays a hard failure until a human renews it.
-- **CI often skips the build entirely.** The EAS build is skipped when a build already exists for the current app fingerprint (`eas-deploy.ts:145`). Fingerprints change mostly on version bumps (the version fields in `app.config.js` are part of the fingerprint), so credentials can go unexercised for weeks: the last successful prod build was **Aug 31** (v1.2.11), and the next prod build attempt — **Oct 1** — failed on the expired profile.
+- **CI cannot renew credentials.** The `eas-build` invocations pass `--freeze-credentials` (the `eas build` call in `tools/scripts/eas-builds.ts`) — deliberate, so CI never modifies the Apple account — and an expiry stays a hard failure until a human renews it.
+- **CI often skips the build entirely.** The EAS build is skipped when a live build already exists for the current app fingerprint (`tools/scripts/find-build.mjs`, called from `tools/scripts/eas-builds.ts` by both the preview workflow and `tools/scripts/eas-e2e.ts`). A build that ended `ERRORED`/`CANCELED` fails the step instead, so a real failure is not mistaken for a crash after the fact. Fingerprints change mostly on version bumps (the version fields in `app.config.js` are part of the fingerprint), so credentials can go unexercised for weeks: the last successful prod build was **Aug 31** (v1.2.11), and the next prod build attempt — **Oct 1** — failed on the expired profile.
 - Production builds only run on merges to `main` (`default.yml:25`).
 
 **A green pipeline is not evidence that credentials are valid.**

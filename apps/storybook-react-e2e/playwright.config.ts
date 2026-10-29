@@ -2,8 +2,16 @@ import { workspaceRoot } from '@nx/devkit';
 import { nxE2EPreset } from '@nx/playwright/preset';
 import { defineConfig, devices } from '@playwright/test';
 
-// For CI, you may want to set BASE_URL to the deployed application.
-const baseURL = process.env['BASE_URL'] || 'http://localhost:4200';
+import { e2eBaseUrl } from '../../tools/shared/e2e-base-url.mjs';
+
+/**
+ * `e2eBaseUrl` (tools/shared/e2e-base-url.mjs) returns an explicit `BASE_URL`,
+ * else the branch preview when this run deployed `storybook-react`, else `undefined` — in
+ * which case the local server below is used.
+ */
+const previewBaseURL = e2eBaseUrl('storybook-react');
+const localBaseURL = 'http://localhost:4200';
+const baseURL = previewBaseURL ?? `${localBaseURL}/`;
 
 /**
  * Read environment variables from file.
@@ -23,12 +31,16 @@ export default defineConfig({
     trace: 'on-first-retry',
   },
   /* Run your local dev server before starting the tests */
-  webServer: {
-    command: 'yarn nx run storybook-react:serve-static',
-    url: 'http://localhost:4200',
-    reuseExistingServer: true,
-    cwd: workspaceRoot,
-  },
+  ...(previewBaseURL
+    ? {}
+    : {
+        webServer: {
+          command: 'yarn nx run storybook-react:serve-static',
+          url: localBaseURL,
+          reuseExistingServer: true,
+          cwd: workspaceRoot,
+        },
+      }),
   projects: [
     {
       name: 'chromium',

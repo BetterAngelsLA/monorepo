@@ -1,5 +1,6 @@
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
-import { LoadingView } from '@monorepo/expo/shared/ui-components';
+import { LoadingView, TextRegular } from '@monorepo/expo/shared/ui-components';
+import { formatScalarDate } from '@monorepo/shared/scalars';
 import { router } from 'expo-router';
 import { useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -7,11 +8,11 @@ import { MainScrollContainer, TaskStatusBtn } from '../../ui-components';
 import { useUser } from '../../hooks';
 
 import { useQuery } from '@apollo/client/react';
+import TaskAssignee from './TaskAssignee';
 import TaskBody from './TaskBody';
 import TaskClient from './TaskClient';
 import TaskCreatedBy from './TaskCreatedBy';
 import TaskHeader from './TaskHeader';
-import TaskUpdatedAt from './TaskUpdatedAt';
 import { TaskDocument } from './__generated__/Task.generated';
 
 export default function Task({
@@ -58,21 +59,40 @@ export default function Task({
       */}
       <View style={styles.body}>
         <TaskHeader id={id} task={task} arrivedFrom={arrivedFrom} />
-        <TaskUpdatedAt updatedAt={task.updatedAt} />
-        <View>
+        {/*
+          Client and assignee sit two-up, as on the card: both are people the
+          reader acts on, and stacking them cost two extra blocks of height.
+          The creator keeps a line of its own but at caption weight.
+        */}
+        <View style={styles.people}>
           {task.clientProfile && (
             <TaskClient
+              style={styles.person}
               clientProfile={task.clientProfile}
               onPress={handleClientPress}
             />
           )}
+          {!!task.assignee && (
+            <TaskAssignee style={styles.person} assignee={task.assignee} />
+          )}
+        </View>
+        {!!task.description && <TaskBody description={task.description} />}
+        {/*
+          The card's footer, mirrored: attribution left, date right. Provenance
+          and recency are both "where did this come from" facts, so they close
+          the card instead of interrupting it between the people and the work.
+        */}
+        <View style={styles.footer}>
           <TaskCreatedBy
+            style={styles.attribution}
             organization={task.organization}
             createdBy={task.createdBy}
             team={task.team}
           />
+          <TextRegular size="xs" color={Colors.NEUTRAL_DARK} numberOfLines={1}>
+            Updated {formatScalarDate(task.updatedAt, 'MM/dd/yyyy')}
+          </TextRegular>
         </View>
-        {!!(task.description) && <TaskBody description={task.description} />}
       </View>
       <TaskStatusBtn id={task.id} status={task.status} />
     </MainScrollContainer>
@@ -86,5 +106,23 @@ const styles = StyleSheet.create({
     padding: Spacings.sm,
     paddingTop: Spacings.md,
     gap: Spacings.sm,
+  },
+  people: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    columnGap: Spacings.sm,
+  },
+  person: {
+    flexBasis: '45%',
+    flexGrow: 1,
+  },
+  footer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacings.xs,
+  },
+  attribution: {
+    flexShrink: 1,
   },
 });

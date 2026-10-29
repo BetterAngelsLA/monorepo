@@ -36,7 +36,8 @@ appId: ${MAESTRO_APP_ID}
       # `?` is a regex quantifier in Maestro text selectors, so the raw title
       # never matches the literal "Discard draft?".
       - assertVisible: '.*Discard draft.*'
-      - tapOn: 'DISCARD'
+      - tapOn:
+          id: discard-modal-confirm
       - assertNotVisible:
           id: referral-draft-card
 

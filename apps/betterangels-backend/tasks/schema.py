@@ -24,13 +24,27 @@ from notes.models import Note
 from tasks.models import Task
 from tasks.services import task_create, task_delete, task_update
 
-from .types import CreateTaskInput, TaskOrder, TaskType, UpdateTaskInput
+from .types import CreateTaskInput, TaskAssigneeType, TaskOrder, TaskType, UpdateTaskInput
 
 
 @strawberry.type
 class Query:
     task: TaskType = strawberry_django.field(
         permission_classes=[IsAuthenticated], extensions=[HasRetvalPerm(Task.perms.VIEW)]
+    )
+
+    task_assignees: OffsetPaginated[TaskAssigneeType] = strawberry_django.offset_paginated(
+        permission_classes=[IsAuthenticated],
+        # Add *or* change: the picker is used both when creating a task and when
+        # editing one, and editing only requires `tasks.change`. Gating on add
+        # alone left a change-only role staring at an empty sheet.
+        extensions=[HasPerm([Task.perms.ADD, Task.perms.CHANGE])],
+        description=(
+            "Members the caller can assign a task to. Gated on tasks.add or "
+            "tasks.change rather than organizations.view_org_members so a "
+            "caseworker can pick an assignee without holding the org-admin "
+            "roster permission."
+        ),
     )
 
     @strawberry_django.offset_paginated(

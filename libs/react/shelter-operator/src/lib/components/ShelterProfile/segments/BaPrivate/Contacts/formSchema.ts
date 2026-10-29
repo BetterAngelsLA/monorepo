@@ -17,7 +17,10 @@ export const contactFormSchema = z.object({
     .regex(Regex.email, 'Please enter a valid email address')
     .optional()
     .or(z.literal('')),
-  contactTitle: z.string().max(255, 'Title must be 255 characters or fewer'),
+  contactTitle: z
+    .string()
+    .trim()
+    .max(255, 'Title must be 255 characters or fewer'),
   isClaimant: z.boolean(),
 });
 

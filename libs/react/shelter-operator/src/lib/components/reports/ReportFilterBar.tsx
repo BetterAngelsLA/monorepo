@@ -1,12 +1,16 @@
 import { useQuery } from '@apollo/client/react';
-import { useAtomValue } from 'jotai';
-import { Calendar, ChevronDown, Download } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useAtom } from 'jotai';
+import { Download } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { Button } from '../base-ui/buttons/buttons';
-import { Text } from '../base-ui/text/text';
 import { useToast } from '../base-ui/toast';
-import { dateRangeFilterAtom, type DateRange } from '../date-range-filter';
+import {
+  DateRangePicker,
+  DateRangePresetDropdown,
+  dateRangeFilterAtom,
+  type DateRange,
+} from '../date-range-filter';
 import { OperatorShelterSummaryDocument } from '../../graphql/__generated__/shelters.generated';
 import { useShelterOccupancyMetrics } from '../../hooks/useShelterOccupancyMetrics';
 import { ShelterReportPrint } from '../../pages/report/ShelterReportPrint';
@@ -16,33 +20,6 @@ import {
   useShelterMetricsExport,
   type ExportMetric,
 } from './useShelterMetricsExport';
-
-const fieldClassName =
-  'flex items-center gap-2 rounded-full border border-[#E5E7EB] bg-white px-4 py-2';
-
-/** Placeholder for the date-range filter — replaced by the real filtering component later. */
-function DateRangeFilterPlaceholder() {
-  return (
-    <div className={fieldClassName} aria-hidden="true">
-      <Text variant="body" textColor="text-[#9CA3AF]">
-        YYYY-MM-DD – YYYY-MM-DD
-      </Text>
-      <Calendar size={18} className="text-[#6B7280]" />
-    </div>
-  );
-}
-
-/** Placeholder for the date-range preset dropdown (e.g. "Last 30 Days"). */
-function DatePresetPlaceholder() {
-  return (
-    <div className={fieldClassName} aria-hidden="true">
-      <Text variant="body" textColor="text-[#6B7280]">
-        Last 30 Days
-      </Text>
-      <ChevronDown size={18} className="text-[#6B7280]" />
-    </div>
-  );
-}
 
 function rangeLabel({ from, to }: DateRange): string {
   if (!from || !to) {
@@ -57,15 +34,22 @@ function rangeLabel({ from, to }: DateRange): string {
 
 /**
  * Top toolbar of the reporting Overview tab: date-range + preset filters on the
- * left, export on the right. The date controls are still placeholders; the
- * range itself comes from `dateRangeFilterAtom`, the same one the charts use.
+ * left, export on the right. The range comes from `dateRangeFilterAtom`, the
+ * same one the charts use.
  */
 export function ReportFilterBar({ shelterId }: { shelterId?: string }) {
-  const { range } = useAtomValue(dateRangeFilterAtom);
+  const [{ range }, setFilter] = useAtom(dateRangeFilterAtom);
   const { exportMetrics, isExporting: isBackendExporting } =
     useShelterMetricsExport();
   const { showToast } = useToast();
   const [isExportOpen, setIsExportOpen] = useState(false);
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [previewCustom, setPreviewCustom] = useState(false);
+
+  const handleCalendarOpenChange = useCallback((open: boolean) => {
+    setIsCalendarOpen(open);
+    if (!open) setPreviewCustom(false);
+  }, []);
 
   // Refreshed each time the modal opens, so "Exported at" on the PDF reads
   // the actual generation time rather than when the tab first loaded.
@@ -196,8 +180,22 @@ export function ReportFilterBar({ shelterId }: { shelterId?: string }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div className="flex flex-wrap items-center gap-3">
-        <DateRangeFilterPlaceholder />
-        <DatePresetPlaceholder />
+        <DateRangePicker
+          className="w-80"
+          value={range}
+          open={isCalendarOpen}
+          onOpenChange={handleCalendarOpenChange}
+          onDirty={() => setPreviewCustom(true)}
+          onCommit={(next) => {
+            setFilter({ preset: 'CUSTOM', range: next });
+            setPreviewCustom(false);
+          }}
+        />
+        <DateRangePresetDropdown
+          className="w-56"
+          displayPreset={previewCustom ? 'CUSTOM' : undefined}
+          onCustomSelected={() => handleCalendarOpenChange(true)}
+        />
       </div>
 
       <Button

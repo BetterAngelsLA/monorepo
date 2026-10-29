@@ -17,6 +17,8 @@ type ComboBoxSharedProps<T extends string | number = string | number> = Omit<
   inputPlaceholder?: string;
   /** Error message for the input. */
   inputError?: string;
+  /** Max length for the conditional input. */
+  inputMaxLength?: number;
   /** Whether form is disabled. */
   disabled?: boolean;
 };
@@ -124,6 +126,7 @@ function ComboBoxInner<T extends string | number = string | number>(
     inputValue,
     onInputChange,
     inputError,
+    inputMaxLength,
     onChange,
     value,
     disabled,
@@ -165,6 +168,7 @@ function ComboBoxInner<T extends string | number = string | number>(
           label={inputLabel}
           placeholder={inputPlaceholder}
           dataType="string"
+          maxLength={inputMaxLength}
           value={inputValue ?? ''}
           onChange={(event) => {
             const v = (event.target as HTMLInputElement).value;

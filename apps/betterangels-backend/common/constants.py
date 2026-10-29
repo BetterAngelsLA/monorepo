@@ -1,6 +1,7 @@
 CALIFORNIA_ID_REGEX = r"^[a-zA-Z]\d{7}$"
 EMAIL_REGEX = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
 PHONE_NUMBER_REGEX = r"^[2-9]\d{2}[2-9]\d{6}(x\d+)?$"
+YOUTUBE_URL_REGEX = r"(?:^|[/.])(?:youtube\.com/(?:watch\?.*v=|embed/|shorts/)|youtu\.be/)[\w-]{11}(?![\w-])"
 
 DEFAULT_IMAGE_CONTENT_TYPES = frozenset(
     {

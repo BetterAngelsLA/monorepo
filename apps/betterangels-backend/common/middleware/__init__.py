@@ -1,4 +1,4 @@
-from .organization import OrganizationMiddleware
+from .history import HistoryMiddleware
 from .timezone import TimezoneMiddleware
 
-__all__ = ["OrganizationMiddleware", "TimezoneMiddleware"]
+__all__ = ["HistoryMiddleware", "TimezoneMiddleware"]

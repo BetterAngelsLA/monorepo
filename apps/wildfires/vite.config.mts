@@ -9,7 +9,7 @@ import {
 } from '../../libs/vite-utils/src/index';
 import {
   baseHrefPlugin,
-  getBranchBasePath,
+  getBuildBasePath,
 } from '../../tools/shared/get-base-path.mjs';
 
 const SERVER_PORT = 8200;
@@ -17,7 +17,7 @@ const SERVER_PORT_PREVIEW = 8201;
 const WORKSPACE_ROOT = path.resolve(import.meta.dirname, '../..');
 
 export default defineConfig(({ mode }) => {
-  const basePath = getBranchBasePath();
+  const basePath = getBuildBasePath();
   return {
     base: basePath,
     root: import.meta.dirname,

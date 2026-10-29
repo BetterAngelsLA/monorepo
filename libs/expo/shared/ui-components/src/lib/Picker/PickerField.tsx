@@ -9,6 +9,11 @@ type TProps = {
   placeholderTextColor?: string;
   items: TPickerItem[];
   onOpen: () => void;
+  /**
+   * Renders a clear (⊗) alongside the chevron once a value is selected, the
+   * same affordance the text inputs use for `onDelete`.
+   */
+  onClear?: () => void;
   selectedValue?: string | null;
   error?: string;
   label?: string;
@@ -21,6 +26,7 @@ type TProps = {
 export const PickerField = React.memo(function PickerField(props: TProps) {
   const {
     onOpen,
+    onClear,
     error,
     selectedValue,
     placeholder,
@@ -44,6 +50,8 @@ export const PickerField = React.memo(function PickerField(props: TProps) {
     <Input
       asSelect
       onPress={onOpen}
+      onDelete={onClear}
+      onDeleteAccessibilityLabel={label ? `clear ${label}` : 'clear selection'}
       style={style}
       disabled={disabled}
       required={required}

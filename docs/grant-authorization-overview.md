@@ -115,11 +115,17 @@ Review and merge **bottom-up**. What each PR delivers:
 Earlier audit **fix** links (`#2421`–`#2424`) were folded into their origin PRs and
 deleted, not merged as separate PRs.
 
-## What is gated (not in this stack)
+## What is and is not cut over
 
-- **Clients / HMIS cutover** — gated on the product decision in RFC 0002
-  (parity-first: shared read **and** shared write today; owner-tier parked).
-- **Notes / tasks / referrals cutover** — RFC 0003 design (guardian-at-creation rows
+- **Clients** — the profile + family surfaces cut over in **#2455** (RFC 0002:
+  platform-shared read, SHARED write via `can_anywhere`; owner-tier parked).
+  **Documents and imports are not:** the document surface still rides guardian object
+  rows and two upload mutations load the parent through `filter_for_user`, and imports
+  keep their legacy gate, until the CREATOR/UPLOADER tier lands.
+- **Referrals** — cut over (RFC 0003, own-org reach): the scoped `Caseworker` Role
+  carries the bundle and the legacy template carries none, so the `PermissionGroup`
+  arm is inert.
+- **Notes / tasks cutover** — RFC 0003 design (guardian-at-creation rows
   are rule-4 violations; org-role writes org-scoped via `can_obj`, shared/foreign rows
   via the object arm).
 - **Phase-5 teardown** — delete the legacy `PermissionGroup` model and collapse the

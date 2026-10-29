@@ -1,13 +1,17 @@
+from __future__ import annotations
+
 import mimetypes
 import uuid
 from dataclasses import dataclass
-from typing import TypedDict, cast
+from typing import TYPE_CHECKING, TypedDict, cast
 
 from botocore.exceptions import ClientError
 from django.conf import settings
 from django.core.files.storage import default_storage
-from mypy_boto3_s3 import S3Client
 from storages.backends.s3 import S3Storage
+
+if TYPE_CHECKING:
+    from mypy_boto3_s3 import S3Client
 
 
 def get_storage_location() -> str:
@@ -170,7 +174,7 @@ def _get_s3_client_and_bucket(*, external: bool = False) -> tuple[S3Client, str]
 
     # Use the storage's own connection which is configured with the
     # internal endpoint_url (e.g. the Docker-network local S3 address).
-    s3_client = cast(S3Client, storage.connection.meta.client)
+    s3_client = cast("S3Client", storage.connection.meta.client)
     return s3_client, bucket_name
 
 

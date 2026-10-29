@@ -21,14 +21,7 @@ from common.permissions.config import RoleDef, TemplateConfig
 
 from .emails import base_url_for
 from .groups import ORG_ADMIN
-from .models import (
-    Grant,
-    OrganizationProfile,
-    OrgTypeChoices,
-    PermissionGroup,
-    PermissionGroupTemplate,
-    Role,
-)
+from .models import Grant, OrganizationProfile, OrgTypeChoices, PermissionGroup, PermissionGroupTemplate, Role
 from .models import User as UserModel
 from .role_manager import OrgRoleManager
 from .seed import _resolve_permissions, sync_group_permissions
@@ -825,7 +818,13 @@ def grant_create(*, user: UserModel, role: Role, scope_org: Organization) -> Gra
     return grant
 
 
-def grant_delegate(*, principal_org: Organization, role: Role, scope_org: Organization) -> Grant:
+def grant_delegate(
+    *,
+    principal_org: Organization,
+    role: Role,
+    scope_org: Organization,
+    acting_user: UserModel | None = None,
+) -> Grant:
     """Org *principal_org* delegates *role* to *scope_org* (ADR 0001 §2.2, §2.4).
 
     The delegation is inherited by the principal org's people — those who are
@@ -856,20 +855,30 @@ def grant_delegate(*, principal_org: Organization, role: Role, scope_org: Organi
     ).exists():
         raise ValidationError(f"{principal_org} already delegates {role.name!r} to {scope_org}.")
     grant.save()
+    if acting_user is not None:
+        from common.permissions.selectors import invalidate_scope_cache
+
+        invalidate_scope_cache(acting_user)
     return grant
 
 
-def grant_delete(*, grant: Grant) -> None:
+def grant_delete(*, grant: Grant, acting_user: UserModel | None = None) -> None:
     """Revoke a scoped grant — the audit trail is pghistory's, not a flag.
 
-    For a user-principal grant, invalidate the user's memoized ``scopes``
-    decision so a same-request re-read never serves the revoked authority.
+    Invalidates the user principal's snapshot, plus *acting_user* when given —
+    the caller's per-request cache is on its own instance, which a database
+    reload cannot reach.
     """
+    principal_user = grant.principal_user
     grant.delete()
-    if grant.principal_user is not None:
+    if principal_user is not None:
         from common.permissions.selectors import invalidate_scope_cache
 
-        invalidate_scope_cache(grant.principal_user)
+        invalidate_scope_cache(principal_user)
+    if acting_user is not None:
+        from common.permissions.selectors import invalidate_scope_cache
+
+        invalidate_scope_cache(acting_user)
 
 
 def role_assign(*, user: UserModel, role: Role) -> None:
@@ -905,6 +914,12 @@ def role_assign(*, user: UserModel, role: Role) -> None:
         raise ValidationError(f"Role {role.name!r} is scoped; grant it via grant_create, not user.groups.")
     user.groups.add(role)
 
+    # A same-request re-read of authority for this user must see the new role —
+    # ``_authority_cache`` / ``_can_anywhere_cache`` memoize the grant snapshot per user.
+    from common.permissions.selectors import invalidate_scope_cache
+
+    invalidate_scope_cache(user)
+
 
 def role_remove(*, user: UserModel, role: Role) -> None:
     """Revoke a *global* Role from *user* — the mirror of :func:`role_assign`.
@@ -914,3 +929,9 @@ def role_remove(*, user: UserModel, role: Role) -> None:
     so removing one here is a no-op rather than an error.
     """
     user.groups.remove(role)
+
+    # A same-request re-read must stop seeing the revoked role — ``_authority_cache`` /
+    # ``_can_anywhere_cache`` memoize the grant snapshot per user.
+    from common.permissions.selectors import invalidate_scope_cache
+
+    invalidate_scope_cache(user)

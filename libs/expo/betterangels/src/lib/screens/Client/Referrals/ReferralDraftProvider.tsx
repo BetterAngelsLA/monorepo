@@ -4,7 +4,7 @@ import {
   useSyncExternalStore,
   type ReactNode,
 } from 'react';
-import type { ReferralDraftStore } from './referralDraft';
+import type { ReferralDraftStore } from '../../../draft/referralDraft';
 
 const ReferralDraftContext = createContext<ReferralDraftStore | null>(null);
 
@@ -22,10 +22,20 @@ export function ReferralDraftProvider({
   );
 }
 
-export function useReferralDraft() {
+/** Actions-only consumers must not subscribe to answer/keystroke updates. */
+export function useReferralDraftStore() {
   const store = useContext(ReferralDraftContext);
   if (!store)
     throw new Error('useReferralDraft requires ReferralDraftProvider');
+  return store;
+}
+
+export function useReferralDraft() {
+  const store = useReferralDraftStore();
   const draft = useSyncExternalStore(store.subscribe, store.getSnapshot);
-  return { draft, store };
+  const recovery = useSyncExternalStore(
+    store.subscribe,
+    store.getRecoveryState,
+  );
+  return { draft, recovery, store };
 }

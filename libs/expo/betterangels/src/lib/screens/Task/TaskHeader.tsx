@@ -6,7 +6,10 @@ import { TaskStatusEnum } from '../../apollo';
 import { useSnackbar } from '../../hooks';
 import { useModalScreen } from '../../providers';
 import { TaskForm } from '../../ui-components';
-import { TaskFormData } from '../../ui-components/TaskForm/TaskForm';
+import {
+  TaskFormData,
+  TTaskFormSubmitResult,
+} from '../../ui-components/TaskForm/TaskForm';
 import { DeleteTaskDocument } from '../../ui-components/TaskForm/__generated__/deleteTask.generated';
 import { UpdateTaskDocument } from '../../ui-components/TaskForm/__generated__/updateTask.generated';
 import { TaskQuery } from './__generated__/Task.generated';
@@ -70,7 +73,32 @@ export default function TaskHeader(props: TTaskHeaderProps) {
     },
   });
 
-  const onSubmit = async (task: TaskFormData, closeForm: () => void) => {
+  /** The API speaks model field names; the form speaks form field names. */
+  const API_FIELD_TO_FORM: Record<string, keyof TaskFormData> = {
+    assignee: 'assigneeId',
+    team: 'teamId',
+    summary: 'summary',
+    description: 'description',
+    status: 'status',
+  };
+
+  function toSubmitResult(
+    messages: { field?: string | null; message: string }[],
+  ): TTaskFormSubmitResult | void {
+    const first = messages[0];
+
+    if (!first) return;
+
+    return {
+      field: first.field ? API_FIELD_TO_FORM[first.field] : undefined,
+      message: first.message,
+    };
+  }
+
+  const onSubmit = async (
+    task: TaskFormData,
+    closeForm: () => void,
+  ): Promise<TTaskFormSubmitResult | void> => {
     if (!id) return;
 
     try {
@@ -82,12 +110,25 @@ export default function TaskHeader(props: TTaskHeaderProps) {
             description: task.description,
             status: task.status,
             teamId: task.teamId ?? undefined,
+            assigneeId: task.assigneeId || null,
           },
         },
       });
 
-      if (result.data?.updateTask.__typename === 'OperationInfo') {
-        console.log(result.data.updateTask.messages);
+      const payload = result.data?.updateTask;
+
+      if (payload?.__typename === 'OperationInfo') {
+        // A validation error (an assignee outside the task's organization, for
+        // one) arrives as data, not as a thrown error. Closing the form here
+        // would look like the save worked.
+        showSnackbar({
+          message: payload.messages[0]?.message ?? 'Could not update the task.',
+          type: 'error',
+        });
+
+        return toSubmitResult(
+          payload.messages as { field?: string | null; message: string }[],
+        );
       }
 
       closeForm();
@@ -120,9 +161,23 @@ export default function TaskHeader(props: TTaskHeaderProps) {
       presentation: 'fullScreenModal',
       renderContent: ({ close }) => (
         <TaskForm
+          organizationId={task.organization?.id ?? null}
+          selectedAssignee={
+            task.assignee
+              ? {
+                  id: task.assignee.id,
+                  firstName: task.assignee.firstName,
+                  lastName: task.assignee.lastName,
+                }
+              : null
+          }
           initialValues={{
             summary: task.summary || '',
-            teamId: task.team?.id ?? undefined,
+            // `null`, not `undefined`: every field in the task form schema is
+            // `.nullable()` but not optional, so an `undefined` team makes
+            // `zodResolver` reject the submit on a team-less task.
+            teamId: task.team?.id ?? null,
+            assigneeId: task.assignee?.id ?? '',
             description: task.description || '',
             status: task.status || TaskStatusEnum.ToDo,
           }}

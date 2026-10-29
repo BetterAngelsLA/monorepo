@@ -2,7 +2,7 @@
 #
 # Handles all setup that needs GitHub Secrets and NX monorepo tooling:
 #   1. Compute fingerprint (needs EXPO_PUBLIC_* secrets)
-#   2. Find existing preview builds (via NX build-list target)
+#   2. Find existing preview builds (via `eas build:list`)
 #   3. Publish EAS Update (via NX eas-update target)
 #   4. Trigger the EAS Maestro workflow (eas workflow:run)
 #
@@ -56,7 +56,7 @@ jobs:
     steps:
       - name: 🚀 React to comment
         if: github.event_name == 'issue_comment'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             await github.rest.reactions.createForIssueComment({
@@ -68,7 +68,7 @@ jobs:
 
       - name: 🔍 Resolve PR ref and project
         id: pr
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         env:
           INPUT_PR_NUMBER: ${{ github.event.inputs.pr_number || '0' }}
           INPUT_PROJECT: ${{ github.event.inputs.project || '' }}
@@ -103,7 +103,7 @@ jobs:
             core.setOutput('project', project.trim());
 
       - name: 🏗 Check out repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ steps.pr.outputs.sha }}
           fetch-depth: 0
@@ -140,10 +140,12 @@ jobs:
             exit 0
           fi
 
-          # Single source of truth: the API the dev/preview builds talk to.
-          API_URL="$(jq -r '.build.preview.env.EXPO_PUBLIC_API_URL // empty' apps/betterangels/eas.json)"
+          # The API the dev/preview builds talk to. The `development` EAS
+          # environment overrides this at build time with the same value; the
+          # tracked default is readable here, before EAS CLI is installed.
+          API_URL="$(sed -n 's/^EXPO_PUBLIC_API_URL=//p' apps/betterangels/.env | head -1)"
           if [ -z "${API_URL}" ]; then
-            echo "::notice::Could not read EXPO_PUBLIC_API_URL from apps/betterangels/eas.json; skipping the ffReferrals preflight."
+            echo "::notice::Could not read EXPO_PUBLIC_API_URL from apps/betterangels/.env; skipping the ffReferrals preflight."
             exit 0
           fi
 
@@ -192,10 +194,10 @@ jobs:
         run: git branch --track main origin/main || true
 
       - name: 🔧 Configure NX SHAs
-        uses: nrwl/nx-set-shas@v4
+        uses: nrwl/nx-set-shas@v5
 
       - name: ⎔ Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '22.21.1'
           cache: yarn
@@ -221,6 +223,10 @@ jobs:
         run: |
           PROJECT="${{ steps.pr.outputs.project }}"
           if [ -n "$PROJECT" ]; then
+            if ! [[ "$PROJECT" =~ ^[A-Za-z0-9_-]+$ ]]; then
+              echo "Invalid project name: $PROJECT" >&2
+              exit 1
+            fi
             yarn nx run "$PROJECT:eas-e2e"
           else
             yarn nx affected -t eas-e2e

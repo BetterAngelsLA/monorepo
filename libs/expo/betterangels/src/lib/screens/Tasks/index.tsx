@@ -112,6 +112,7 @@ export default function Tasks() {
           'teamIds',
           'taskStatus',
           'authors',
+          'assignees',
           'organizations',
         ]}
       />

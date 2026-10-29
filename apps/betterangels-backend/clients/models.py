@@ -7,6 +7,7 @@ from dateutil.relativedelta import relativedelta
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.gis.db.models import PointField
 from django.contrib.postgres.fields import ArrayField
+from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
 from django.db.models import Model, QuerySet
@@ -80,12 +81,66 @@ def get_client_profile_photo_file_path(instance: Model, filename: str) -> str:
     return os.path.join("client_profile_photos/", unique_filename)
 
 
+_UNKNOWN_PARENT = object()
+"""Baseline marker: the row was loaded without its ``client_profile_id`` column."""
+
+
+class ClientFamilyMember(models.Model):
+    """A client-family row cannot be moved to a different client.
+
+    The nested ``updateClientProfile`` path already pins the parent through
+    ``args``; this covers the direct mutations (and any other ``save()`` path)
+    so a payload cannot reparent a contact, HMIS, household, or social row.
+    The merge service moves rows with ``queryset.update()``, which bypasses
+    ``save()``, so merges are unaffected.
+
+    A ``.only()``/``.defer()`` load does not carry the FK column, so ``from_db``
+    records an unknown baseline and ``save`` reads the stored parent before
+    comparing — the guard cannot be skipped by narrowing the queryset.
+    """
+
+    class Meta:
+        abstract = True
+
+    @classmethod
+    def from_db(cls, db: Any, field_names: Any, values: Any, *args: Any, **kwargs: Any) -> "ClientFamilyMember":
+        instance = super().from_db(db, field_names, values, *args, **kwargs)
+        instance._loaded_client_profile_id = (
+            getattr(instance, "client_profile_id", None) if "client_profile_id" in field_names else _UNKNOWN_PARENT
+        )
+        return instance
+
+    def refresh_from_db(self, *args: Any, **kwargs: Any) -> None:
+        super().refresh_from_db(*args, **kwargs)
+        self._loaded_client_profile_id = getattr(self, "client_profile_id", None)
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        original = getattr(self, "_loaded_client_profile_id", None)
+        if original is _UNKNOWN_PARENT and self.pk is not None:
+            # The FK column was deferred at load time; compare against the stored
+            # parent, not the (unset) attribute, so the guard still fires. The
+            # column name comes from the field because the abstract base does not
+            # declare ``client_profile`` (the concrete subclasses do).
+            parent_field = cast(Any, type(self))._meta.get_field("client_profile")
+            original = type(self)._base_manager.filter(pk=self.pk).values_list(parent_field.attname, flat=True).first()
+        current = getattr(self, "client_profile_id", None)
+        if original is not None and current != original:
+            raise ValidationError("A client's related record cannot be moved to another client.")
+        super().save(*args, **kwargs)
+        self._loaded_client_profile_id = current
+
+
 @pghistory.track(
     pghistory.InsertEvent("hmis_profile.add"),
     pghistory.UpdateEvent("hmis_profile.update"),
     pghistory.DeleteEvent("hmis_profile.remove"),
 )
-class HmisProfile(BaseModel):
+class HmisProfile(ClientFamilyMember, OrgScoped, BaseModel):
+    # The client family rides ClientProfile's tier (RFC 0002): platform-shared
+    # for reads, SHARED for writes — any holder of the permission may act.
+    org_via = None
+    write_tier = WRITE_SHARED
+
     client_profile = models.ForeignKey("ClientProfile", on_delete=models.CASCADE, related_name="hmis_profiles")
     hmis_id = models.CharField(max_length=50)
     agency = TextChoicesField(choices_enum=HmisAgencyEnum)
@@ -274,7 +329,11 @@ class ClientDocument(Attachment):
     pghistory.UpdateEvent("social_media_profile.update"),
     pghistory.DeleteEvent("social_media_profile.remove"),
 )
-class SocialMediaProfile(BaseModel):
+class SocialMediaProfile(ClientFamilyMember, OrgScoped, BaseModel):
+    # Client family — ClientProfile's tier (RFC 0002), see HmisProfile.
+    org_via = None
+    write_tier = WRITE_SHARED
+
     client_profile = models.ForeignKey(ClientProfile, on_delete=models.CASCADE, related_name="social_media_profiles")
     platform = TextChoicesField(choices_enum=SocialMediaEnum)
     platform_user_id = models.CharField(max_length=100)
@@ -285,7 +344,11 @@ class SocialMediaProfile(BaseModel):
     pghistory.UpdateEvent("client_contact.update"),
     pghistory.DeleteEvent("client_contact.remove"),
 )
-class ClientContact(BaseModel):
+class ClientContact(ClientFamilyMember, OrgScoped, BaseModel):
+    # Client family — ClientProfile's tier (RFC 0002), see HmisProfile.
+    org_via = None
+    write_tier = WRITE_SHARED
+
     client_profile = models.ForeignKey(ClientProfile, on_delete=models.CASCADE, related_name="contacts")
     name = models.CharField(max_length=100, null=True, blank=True)
     email = models.EmailField(null=True, blank=True)
@@ -300,7 +363,11 @@ class ClientContact(BaseModel):
     pghistory.UpdateEvent("client_household_member.update"),
     pghistory.DeleteEvent("client_household_member.remove"),
 )
-class ClientHouseholdMember(BaseModel):
+class ClientHouseholdMember(ClientFamilyMember, OrgScoped, BaseModel):
+    # Client family — ClientProfile's tier (RFC 0002), see HmisProfile.
+    org_via = None
+    write_tier = WRITE_SHARED
+
     client_profile = models.ForeignKey(ClientProfile, on_delete=models.CASCADE, related_name="household_members")
     name = models.CharField(max_length=100, null=True, blank=True)
     date_of_birth = models.DateField(blank=True, null=True)

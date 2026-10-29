@@ -3,8 +3,6 @@ import {
   configureActiveOrgStorage,
   createCsrfInterceptor,
   createCsrfTokenRefresher,
-  createOrgInterceptor,
-  getActiveOrgId,
   includeCredentialsInterceptor,
   CSRF_COOKIE_NAME,
   CSRF_HEADER_NAME,
@@ -45,7 +43,7 @@ function readProxyPrefix(apiUrl?: string): {
 /**
  * Pre-composed web fetch client.
  *
- * Chains org-id injection + CSRF token refresh, backed by browser-native
+ * Chains CSRF token refresh + credential inclusion, backed by browser-native
  * localStorage and cookie APIs.  Returns a ``fetch``-compatible function.
  *
  * Pass the result to ``ApiConfigProvider`` (as ``fetch``) and to Apollo's
@@ -66,7 +64,6 @@ export const createWebFetchClient = (apiUrl?: string) => {
   const { prefix, target } = readProxyPrefix(apiUrl);
 
   return composeFetchInterceptors(
-    createOrgInterceptor(getActiveOrgId),
     createCsrfInterceptor(
       readCsrfToken,
       createCsrfTokenRefresher(),

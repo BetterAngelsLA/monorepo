@@ -1,9 +1,18 @@
 # RFC 0002 — Per-model read/write tiers & the client domain (ADR 0001 §5.1 / §7.6)
 
-**Status:** Proposed — records the per-model tiering product rule (2026-09-02) and the
-client-domain write-tier decision; the architectural prerequisite (decoupling read scope
-from write scope, § Precondition) is the work that gates the clients cutover.
-**Date:** 2026-09-02 (amended 2026-09-02)
+**Status:** Implemented (2026-09-10, amended 2026-10-27) — the client family
+(`ClientProfile`, `ClientContact`, `ClientHouseholdMember`, `HmisProfile`,
+`SocialMediaProfile`) enforces through the grant checkers: SHARED read / SHARED
+write, the root list fields carry `HasPerm(..., fail_silently=True)` so a denial
+is an empty page, and single reads and mutations refuse; `clients` joined
+`LEGACY_INERT_APPS` and `CASEWORKER_ROLE` carries the bundle.  Was: Proposed —
+records the per-model
+tiering product rule (2026-09-02) and the client-domain write-tier decision;
+the architectural prerequisite (decoupling read scope from write scope,
+§ Precondition) was the work that gated the cutover.  Remaining: client
+documents (CREATOR/UPLOADER tier), import surfaces, and the shelter-operator
+read-surface narrow (dedupe search).
+**Date:** 2026-09-02 (amended 2026-09-02, 2026-10-27)
 **Scope:** Resolves ADR 0001 §7.6 (the §5.1 client-writes design) and establishes the
 per-model read/write-tier vocabulary that the caseworker domains (RFC 0003) inherit.
 Gates the clients cutover (ADR §4 phase 4). Independent of the tier-3 FE surfacing
@@ -248,3 +257,50 @@ When product adopts org ownership/transfer, `ClientProfile` gains
   an explicit admin unshare). Add an admin "shares held by former members" review list
   as a safety net. Schema: one nullable granting-org FK on `Grant` (plus the E00x
   org-principal-forbid check, ADR §2.5); no sharing has shipped, so no backfill.
+
+## Amendment (2026-10-26) — the uploading org is captured on the row
+
+The open sub-decision above ("how `ClientDocument` CHANGE/DELETE expresses the
+creating-org tier") is now half-answered, and the half that is a data question is
+decided:
+
+- `Attachment.upload_org` records the org the upload was made on behalf of.
+  `resolve_upload` sets it from the same permission group it assigns the object
+  permissions to, so it matches the guardian row it will replace.
+- `common/0005_backfill_attachment_upload_org` fills it for historical documents
+  from `AttachmentGroupObjectPermission → PermissionGroup.organization`, skipping
+  conflicts (two orgs on one row) rather than guessing.
+- **The gate is unchanged in this step.** Guardian still authorizes, so parity is
+  preserved; the anchor is captured while the rows that record it still exist.
+- The second half — reading the anchor in `can_obj`/`writable` instead of the
+  guardian object rows — must land before the guardian teardown (#2524). The
+  object-permission tables are the only source this backfill can read, so
+  dropping them first would leave every existing document ownerless.
+
+The anchor is deliberately not an `org_via` hop: reads stay platform-shared, and
+authority is an org-scope check against the column (`can(user, perm, org=…)`), not
+an object grant. Object grants remain person-granular by E006 and are reserved for
+explicit sharing.
+
+## Amendment (2026-10-27) — nested gating and the document carve-out
+
+The clients cutover landed (profile + family grant-enforced) with two consequences
+worth recording explicitly:
+
+- **Read gates live on the root list fields, not on the types.** A type-level
+  `get_queryset` hook is a scoping hook: it applies to every occurrence of the
+  type (including nested ones) and re-evaluates once per type, which both broke
+  nested parity for profile-only roles and multiplied the permission lookups.
+  The root list fields instead carry
+  `HasPerm(..., perm_checker=can_anywhere_checker, fail_silently=True)`, which
+  returns an empty page on denial — the empty-not-error shape `main` had — and
+  shows the gate in the SDL. Nested family lists ride the parent profile's
+  `VIEW`, exactly as on `main`; per-model visibility inside a profile would be a
+  deliberate later change with its own mechanism, not a side effect.
+- **Client documents remain on the legacy gates.** They are still owned through
+  guardian object rows; the two upload mutations still load the parent through
+  `filter_for_user`, and the read fields still use `HasRetvalPerm`. `clients`
+  joining `LEGACY_INERT_APPS` therefore covers the profile/family surfaces only —
+  the document surface is the remaining legacy consumer and is listed in the
+  gating test's exemptions. The CREATOR/UPLOADER cutover (uploader-org anchor,
+  RFC 0002 decision 2) removes it.

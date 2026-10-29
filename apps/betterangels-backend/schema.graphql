@@ -88,6 +88,86 @@ enum AttachmentType {
   UNKNOWN
 }
 
+"""One cursor page of audit actions (ADR 0004 §10)."""
+type AuditActionPage {
+  results: [AuditActionType!]!
+  endCursor: String
+  hasNextPage: Boolean!
+}
+
+"""
+A group of events written under one context (one action, ADR 0004 §12).
+"""
+type AuditActionType {
+  timestamp: DateTime!
+  actor: String!
+  summary: String!
+  events: [AuditEventType!]!
+  fieldChanges: JSON!
+  truncated: Boolean!
+}
+
+"""One selectable actor for an object's audit log (ADR 0004 §21)."""
+type AuditActorType {
+  """
+  The frozen acting User.id; null for the synthetic System entry, which is selected with AuditEventFilter.systemOnly.
+  """
+  id: ID
+
+  """
+  Display label: the actor's most frequent frozen name/email, or System for the synthetic entry.
+  """
+  label: String!
+
+  """
+  True for the synthetic System entry. Key the picker on this, not on label, because a real user's frozen name can also be System.
+  """
+  isSystem: Boolean!
+}
+
+"""Filters for one object's write audit log (ADR 0004 §21)."""
+input AuditEventFilter {
+  """Inclusive lower bound on the event timestamp."""
+  dateFrom: DateTime = null
+
+  """Inclusive upper bound on the event timestamp."""
+  dateTo: DateTime = null
+
+  """The frozen acting User.id; omit to include every actor."""
+  actorId: ID = null
+
+  """
+  Keep events rendered as system (a system reason label, or no frozen name/email). ANDs with actorId: with both set, only that actor's import/clone events match.
+  """
+  systemOnly: Boolean! = false
+}
+
+enum AuditEventKind {
+  INSERT
+  UPDATE
+  DELETE
+}
+
+"""A single pghistory write event, normalized across tracked models."""
+type AuditEventType {
+  timestamp: DateTime!
+  actor: String!
+  kind: AuditEventKind!
+  action: String!
+  targetType: AuditTargetType!
+  targetId: ID!
+  fieldChanges: JSON
+  snapshot: JSON
+  summary: String
+  context: JSON
+}
+
+enum AuditTargetType {
+  SHELTER
+  ROOM
+  BED
+}
+
 type AuthResponse {
   status_code: String!
 }
@@ -425,7 +505,6 @@ type ClientProfileType {
   unhousedStartDate: Date
   veteranStatus: VeteranStatusEnum
   id: ID!
-  profilePhoto: DjangoImageType
   contacts: [ClientContactType!]
   hmisProfiles: [HmisProfileType!]
   householdMembers: [ClientHouseholdMemberType!]
@@ -436,6 +515,7 @@ type ClientProfileType {
   docReadyDocuments: [ClientDocumentType!]
   consentFormDocuments: [ClientDocumentType!]
   otherDocuments: [ClientDocumentType!]
+  profilePhoto: DjangoImageType
   displayCaseManager: String!
 }
 
@@ -606,6 +686,15 @@ union CreateHmisNoteServiceRequestPayload = ServiceRequestType | OperationInfo
 
 union CreateHmisProfilePayload = HmisProfileType | OperationInfo
 
+input CreateMediaLinkInput {
+  shelterId: ID!
+  url: NonEmptyString!
+  title: String = null
+  mediaType: MediaLinkTypeChoices! = YOUTUBE
+}
+
+union CreateMediaLinkPayload = MediaLinkType | OperationInfo
+
 input CreateNoteDataImportInput {
   sourceFile: String!
   notes: String!
@@ -648,6 +737,7 @@ input CreateNoteTaskInput {
   description: String = null
   status: Int = null
   teamId: ID
+  assigneeId: ID
 }
 
 input CreateOrganizationInput {
@@ -666,6 +756,7 @@ input CreateProfileDataImportInput {
 }
 
 input CreateReferralInput {
+  organizationId: ID
   clientProfile: ID!
   shelter: ID!
   notes: String
@@ -772,6 +863,7 @@ input CreateTaskInput {
   hmisNote: ID
   summary: String!
   teamId: ID
+  assigneeId: ID
   status: TaskStatusEnum
 }
 
@@ -864,6 +956,8 @@ union DeleteHmisNotePayload = DeletedObjectType | OperationInfo
 
 union DeleteHmisProfilePayload = HmisProfileType | OperationInfo
 
+union DeleteMediaLinksPayload = BulkDeleteResult | OperationInfo
+
 union DeleteNotePayload = NoteType | OperationInfo
 
 union DeleteReferralPayload = DeletedObjectType | OperationInfo
@@ -904,6 +998,13 @@ enum DemographicChoices {
 
 type DemographicType {
   name: DemographicChoices
+}
+
+type DensityScaleType {
+  p50: Float!
+  p90: Float!
+  p95: Float!
+  max: Int!
 }
 
 type DjangoFileType {
@@ -1410,6 +1511,22 @@ type InteractionAuthorTypeOffsetPaginated {
   results: [InteractionAuthorType!]!
 }
 
+type InteractionMapType {
+  points: [InteractionPointType!]!
+  truncated: Boolean!
+  withheld: Boolean!
+}
+
+type InteractionPointType {
+  latitude: LatitudeScalar!
+  longitude: LongitudeScalar!
+  interactedAt: DateTime!
+}
+
+type InteractionScopeType {
+  withheld: Boolean!
+}
+
 """
 The `JSON` scalar type represents JSON values as specified by [ECMA-404](https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf).
 """
@@ -1453,7 +1570,7 @@ input LocationInput {
 
 type LocationType {
   id: ID
-  address: AddressType!
+  address: AddressType
   point: Point!
   pointOfInterest: String
 }
@@ -1490,6 +1607,8 @@ type MediaLinkType {
   url: String!
   title: String!
   mediaType: MediaLinkTypeChoices!
+  createdAt: DateTime!
+  updatedAt: DateTime!
 }
 
 enum MediaLinkTypeChoices {
@@ -1518,27 +1637,27 @@ type Mutation {
   createOrganization(data: CreateOrganizationInput!): CreateOrganizationResponse!
   changeOrganizationMemberRole(data: ChangeOrganizationMemberRoleInput!): ChangeOrganizationMemberRolePayload!
   createClientContact(data: ClientContactInput!): CreateClientContactPayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientcontact"}], any: true)
-  updateClientContact(data: ClientContactInput!): UpdateClientContactPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientcontact"}], any: true)
-  deleteClientContact(data: DeleteDjangoObjectInput!): DeleteClientContactPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "delete_clientcontact"}], any: true)
+  updateClientContact(data: ClientContactInput!): UpdateClientContactPayload! @hasPerm(permissions: [{app: "clients", permission: "change_clientcontact"}], any: true)
+  deleteClientContact(data: DeleteDjangoObjectInput!): DeleteClientContactPayload! @hasPerm(permissions: [{app: "clients", permission: "delete_clientcontact"}], any: true)
   createClientHouseholdMember(data: ClientHouseholdMemberInput!): CreateClientHouseholdMemberPayload! @hasPerm(permissions: [{app: "clients", permission: "add_clienthouseholdmember"}], any: true)
-  updateClientHouseholdMember(data: ClientHouseholdMemberInput!): UpdateClientHouseholdMemberPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clienthouseholdmember"}], any: true)
-  deleteClientHouseholdMember(data: DeleteDjangoObjectInput!): DeleteClientHouseholdMemberPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "delete_clienthouseholdmember"}], any: true)
+  updateClientHouseholdMember(data: ClientHouseholdMemberInput!): UpdateClientHouseholdMemberPayload! @hasPerm(permissions: [{app: "clients", permission: "change_clienthouseholdmember"}], any: true)
+  deleteClientHouseholdMember(data: DeleteDjangoObjectInput!): DeleteClientHouseholdMemberPayload! @hasPerm(permissions: [{app: "clients", permission: "delete_clienthouseholdmember"}], any: true)
   createHmisProfile(data: HmisProfileInput!): CreateHmisProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "add_hmisprofile"}], any: true)
-  updateHmisProfile(data: HmisProfileInput!): UpdateHmisProfilePayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_hmisprofile"}], any: true)
-  deleteHmisProfile(data: DeleteDjangoObjectInput!): DeleteHmisProfilePayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "delete_hmisprofile"}], any: true)
+  updateHmisProfile(data: HmisProfileInput!): UpdateHmisProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "change_hmisprofile"}], any: true)
+  deleteHmisProfile(data: DeleteDjangoObjectInput!): DeleteHmisProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "delete_hmisprofile"}], any: true)
   createSocialMediaProfile(data: SocialMediaProfileInput!): CreateSocialMediaProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "add_socialmediaprofile"}], any: true)
-  updateSocialMediaProfile(data: SocialMediaProfileInput!): UpdateSocialMediaProfilePayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_socialmediaprofile"}], any: true)
-  deleteSocialMediaProfile(data: DeleteDjangoObjectInput!): DeleteSocialMediaProfilePayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "delete_socialmediaprofile"}], any: true)
+  updateSocialMediaProfile(data: SocialMediaProfileInput!): UpdateSocialMediaProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "change_socialmediaprofile"}], any: true)
+  deleteSocialMediaProfile(data: DeleteDjangoObjectInput!): DeleteSocialMediaProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "delete_socialmediaprofile"}], any: true)
   updateClientDocument(data: UpdateClientDocumentInput!): UpdateClientDocumentPayload! @hasRetvalPerm(permissions: [{app: "common", permission: "change_attachment"}], any: true)
   createClientProfile(data: CreateClientProfileInput!): CreateClientProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientprofile"}], any: true)
-  updateClientProfile(data: UpdateClientProfileInput!): UpdateClientProfilePayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
-  deleteClientProfile(data: DeleteDjangoObjectInput!): DeleteClientProfilePayload!
+  updateClientProfile(data: UpdateClientProfileInput!): UpdateClientProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
+  deleteClientProfile(data: DeleteDjangoObjectInput!): DeleteClientProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "delete_clientprofile"}], any: true)
   deleteClientDocument(data: DeleteDjangoObjectInput!): DeleteClientDocumentPayload! @permissionedQuerySet(permissions: [{app: "common", permission: "delete_attachment"}], any: true)
-  deleteClientProfilePhoto(clientProfileId: ID!): DeleteClientProfilePhotoPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
+  deleteClientProfilePhoto(clientProfileId: ID!): DeleteClientProfilePhotoPayload! @hasPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
   generateClientDocumentUploads(data: GenerateClientDocumentUploadsInput!): GenerateClientDocumentUploadsPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
   resolveClientDocumentUploads(data: ResolveClientDocumentUploadsInput!): ResolveClientDocumentUploadsPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
   generateClientProfilePhotoUpload(data: GenerateClientProfilePhotoUploadInput!): GenerateClientProfilePhotoUploadPayload! @hasPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
-  resolveClientProfilePhotoUpload(data: ResolveClientProfilePhotoUploadInput!): ResolveClientProfilePhotoUploadPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
+  resolveClientProfilePhotoUpload(data: ResolveClientProfilePhotoUploadInput!): ResolveClientProfilePhotoUploadPayload! @hasPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
   createClientProfileDataImport(data: CreateProfileDataImportInput!): CreateClientProfileDataImportPayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientprofileimportrecord"}], any: true)
   importClientProfile(data: ImportClientProfileInput!): ImportClientProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientprofileimportrecord"}], any: true)
   hmisLogin(email: String!, password: String!): HmisLoginSuccessHmisLoginError! @hmisDirective
@@ -1586,8 +1705,11 @@ type Mutation {
   resolveShelterPhotoUploads(data: ResolveShelterPhotoUploadsInput!): ResolveShelterPhotoUploadsPayload!
   updateShelterPhoto(data: UpdateShelterPhotoInput!): UpdateShelterPhotoPayload!
   deleteShelterPhotos(data: BulkDeleteInput!): DeleteShelterPhotosPayload!
-  createReferral(data: CreateReferralInput!): CreateReferralPayload! @hasPerm(permissions: [{app: "referrals", permission: "add_referral"}], any: true)
-  updateReferral(data: UpdateReferralInput!): UpdateReferralPayload! @permissionedQuerySet(permissions: [{app: "referrals", permission: "change_referral"}], any: true)
+  createMediaLink(data: CreateMediaLinkInput!): CreateMediaLinkPayload!
+  updateMediaLink(data: UpdateMediaLinkInput!): UpdateMediaLinkPayload!
+  deleteMediaLinks(data: BulkDeleteInput!): DeleteMediaLinksPayload!
+  createReferral(data: CreateReferralInput!): CreateReferralPayload!
+  updateReferral(data: UpdateReferralInput!): UpdateReferralPayload!
   deleteReferral(data: DeleteDjangoObjectInput!): DeleteReferralPayload!
 }
 
@@ -1803,7 +1925,6 @@ type OperatorShelterType {
   organization: OrganizationType
   otherRules: String
   otherServices: String
-  overallRating: Int
   parking: [ParkingType!]!
   pets: [PetType!]!
   phone: PhoneNumber
@@ -1824,7 +1945,6 @@ type OperatorShelterType {
   isPrivate: Boolean!
   status: StatusChoices!
   storage: [StorageType!]!
-  subjectiveReview: String
   supervisorialDistrict: Int
   totalBeds: Int
   updatedAt: DateTime!
@@ -1838,6 +1958,9 @@ type OperatorShelterType {
   distanceInMiles: Float
   bedCounts: BedCountType!
   roomCounts: RoomCountType!
+  overallRating: Int
+  subjectiveReview: String
+  declinedBaVisit: Boolean
   additionalContacts: [ShelterContactInfoType!]!
 }
 
@@ -2096,17 +2219,38 @@ type Query {
   currentUser: CurrentUserType!
   organizationMember(organizationId: String!, userId: String!): OrganizationMemberType!
   organizationMembers(organizationId: String!, ordering: [OrganizationMemberOrdering!] = null, filters: OrganizationMemberFilter = null, orgType: OrgTypeEnum = null, permissionTemplate: PermissionTemplateEnum = null, pagination: OffsetPaginationInput): OrganizationMemberTypeOffsetPaginated!
-  clientProfiles(pagination: OffsetPaginationInput, filters: ClientProfileFilter, ordering: [ClientProfileOrder!]! = []): ClientProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
+
+  """One cursor page of one object's write audit log, newest action first."""
+  objectAuditLog(targetType: AuditTargetType!, objectId: ID!, filters: AuditEventFilter = null, after: String = null, limit: Int! = 50, includeSnapshot: Boolean! = false): AuditActionPage!
+
+  """
+  Distinct actors in one object's audit log, most active first. The synthetic System entry has a null id and is selected with systemOnly.
+  """
+  objectAuditActors(
+    targetType: AuditTargetType!
+    objectId: ID!
+
+    """
+    Case-insensitive label substring; shorter than two characters returns [].
+    """
+    search: String! = ""
+
+    """
+    Maximum actors to return (1-50); out of range is an error, not a clamp.
+    """
+    limit: Int! = 20
+  ): [AuditActorType!]!
+  clientProfiles(pagination: OffsetPaginationInput, filters: ClientProfileFilter, ordering: [ClientProfileOrder!]! = []): ClientProfileTypeOffsetPaginated! @hasPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
   clientDocument(pk: ID!): ClientDocumentType! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
-  clientContact(pk: ID!): ClientContactType! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientcontact"}], any: true)
-  clientContacts(pagination: OffsetPaginationInput): ClientContactTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientcontact"}], any: true)
-  clientHouseholdMember(pk: ID!): ClientHouseholdMemberType! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clienthouseholdmember"}], any: true)
-  clientHouseholdMembers(pagination: OffsetPaginationInput): ClientHouseholdMemberTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clienthouseholdmember"}], any: true)
-  hmisProfile(pk: ID!): HmisProfileType! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_hmisprofile"}], any: true)
-  hmisProfiles(pagination: OffsetPaginationInput): HmisProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_hmisprofile"}], any: true)
-  socialMediaProfile(pk: ID!): SocialMediaProfileType! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_socialmediaprofile"}], any: true)
-  socialMediaProfiles(pagination: OffsetPaginationInput): SocialMediaProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_socialmediaprofile"}], any: true)
-  clientProfile(pk: ID!): ClientProfileType! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
+  clientContact(pk: ID!): ClientContactType! @hasPerm(permissions: [{app: "clients", permission: "view_clientcontact"}], any: true)
+  clientContacts(pagination: OffsetPaginationInput): ClientContactTypeOffsetPaginated! @hasPerm(permissions: [{app: "clients", permission: "view_clientcontact"}], any: true)
+  clientHouseholdMember(pk: ID!): ClientHouseholdMemberType! @hasPerm(permissions: [{app: "clients", permission: "view_clienthouseholdmember"}], any: true)
+  clientHouseholdMembers(pagination: OffsetPaginationInput): ClientHouseholdMemberTypeOffsetPaginated! @hasPerm(permissions: [{app: "clients", permission: "view_clienthouseholdmember"}], any: true)
+  hmisProfile(pk: ID!): HmisProfileType! @hasPerm(permissions: [{app: "clients", permission: "view_hmisprofile"}], any: true)
+  hmisProfiles(pagination: OffsetPaginationInput): HmisProfileTypeOffsetPaginated! @hasPerm(permissions: [{app: "clients", permission: "view_hmisprofile"}], any: true)
+  socialMediaProfile(pk: ID!): SocialMediaProfileType! @hasPerm(permissions: [{app: "clients", permission: "view_socialmediaprofile"}], any: true)
+  socialMediaProfiles(pagination: OffsetPaginationInput): SocialMediaProfileTypeOffsetPaginated! @hasPerm(permissions: [{app: "clients", permission: "view_socialmediaprofile"}], any: true)
+  clientProfile(pk: ID!): ClientProfileType! @hasPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
   clientDocuments(clientId: String!, filters: ClientDocumentFilter, pagination: OffsetPaginationInput): ClientDocumentTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
   bulkClientProfileImportRecords(data: ClientProfileImportRecordsBulkInput!, pagination: OffsetPaginationInput): ClientProfileImportRecordTypeOffsetPaginated! @hasPerm(permissions: [{app: "clients", permission: "view_clientprofileimportrecord"}], any: true)
   featureControls: FeatureControlData!
@@ -2121,8 +2265,18 @@ type Query {
   serviceCategories(pagination: OffsetPaginationInput, ordering: [OrganizationServiceCategoryOrdering!]! = []): OrganizationServiceCategoryTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   interactionAuthors(pagination: OffsetPaginationInput, filters: InteractionAuthorFilter, ordering: [InteractionAuthorOrder!]! = []): InteractionAuthorTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   caseworkerOrganizations(ordering: [OrganizationOrder!] = null, filters: OrganizationFilter = null, pagination: OffsetPaginationInput): OrganizationTypeOffsetPaginated!
-  reportSummary(organizationId: ID!, startDate: Date = null, endDate: Date = null): ReportSummaryType!
+  interactionsByRegion(organizationId: ID!, dimension: RegionDimension = null, startDate: Date = null, endDate: Date = null, regionCodes: [String!] = null): [RegionCountType!]!
+  interactionMap(organizationId: ID!, startDate: Date = null, endDate: Date = null, limit: Int = null, dimension: RegionDimension = null, regionCodes: [String!] = null): InteractionMapType!
+  interactionScope(organizationId: ID!, startDate: Date = null, endDate: Date = null): InteractionScopeType!
+  densityScale(organizationId: ID!, zoom: Int!, startDate: Date = null, endDate: Date = null, dimension: RegionDimension = null, regionCodes: [String!] = null): DensityScaleType
+  regionDimensions: [RegionDimensionInfo!]!
+  reportSummary(organizationId: ID!, startDate: Date = null, endDate: Date = null, dimension: RegionDimension = null, regionCodes: [String!] = null): ReportSummaryType!
   task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
+
+  """
+  Members the caller can assign a task to. Gated on tasks.add or tasks.change rather than organizations.view_org_members so a caseworker can pick an assignee without holding the org-admin roster permission.
+  """
+  taskAssignees(pagination: OffsetPaginationInput, filters: TaskAssigneeFilter, ordering: [TaskAssigneeOrder!]! = []): TaskAssigneeTypeOffsetPaginated! @hasPerm(permissions: [{app: "tasks", permission: "add_task"}, {app: "tasks", permission: "change_task"}], any: true)
   tasks(ordering: [TaskOrder!] = null, filters: TaskFilter, pagination: OffsetPaginationInput): TaskTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
   teams(filters: TeamFilter = null, pagination: OffsetPaginationInput): TeamTypeOffsetPaginated!
   operatorShelter(pk: ID!): OperatorShelterType!
@@ -2141,8 +2295,8 @@ type Query {
   shelterOrganizations(filters: OrganizationFilter, ordering: [OrganizationOrder!]! = [], pagination: OffsetPaginationInput): OrganizationTypeOffsetPaginated!
   shelterMaxStay: Int
   shelterOccupancyMetrics(shelterId: ID!, startDate: Date = null, endDate: Date = null): ShelterOccupancyMetricsType!
-  referral(pk: ID!): ReferralType! @hasRetvalPerm(permissions: [{app: "referrals", permission: "view_referral"}], any: true)
-  referrals(filters: ReferralFilter, ordering: [ReferralOrder!]! = [], pagination: OffsetPaginationInput): ReferralTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "referrals", permission: "view_referral"}], any: true)
+  referral(pk: ID!): ReferralType!
+  referrals(filters: ReferralFilter, ordering: [ReferralOrder!]! = [], pagination: OffsetPaginationInput): ReferralTypeOffsetPaginated!
 }
 
 enum RaceEnum {
@@ -2209,6 +2363,30 @@ type ReferralTypeOffsetPaginated {
 
   """List of paginated results."""
   results: [ReferralType!]!
+}
+
+type RegionCountType {
+  kind: String!
+  code: String!
+  name: String!
+  count: Int!
+  isUnassigned: Boolean!
+  unassignedReason: UnassignedReason
+}
+
+enum RegionDimension {
+  ZIP
+  CITY
+  COUNCIL_DISTRICT
+  SUPERVISORIAL_DISTRICT
+  SPA
+  COC
+}
+
+type RegionDimensionInfo {
+  value: RegionDimension!
+  label: String!
+  plural: String!
 }
 
 enum RelationshipTypeEnum {
@@ -2728,7 +2906,6 @@ type ShelterType {
   organization: OrganizationType
   otherRules: String
   otherServices: String
-  overallRating: Int
   parking: [ParkingType!]!
   pets: [PetType!]!
   phone: PhoneNumber
@@ -2749,7 +2926,6 @@ type ShelterType {
   isPrivate: Boolean!
   status: StatusChoices!
   storage: [StorageType!]!
-  subjectiveReview: String
   supervisorialDistrict: Int
   totalBeds: Int
   updatedAt: DateTime!
@@ -2853,6 +3029,38 @@ type SwitchType {
   lastModified: DateTime
 }
 
+input TaskAssigneeFilter {
+  AND: TaskAssigneeFilter
+  OR: TaskAssigneeFilter
+  NOT: TaskAssigneeFilter
+  DISTINCT: Boolean
+  organization: ID
+  search: String
+}
+
+input TaskAssigneeOrder {
+  firstName: Ordering
+  lastName: Ordering
+  id: Ordering
+}
+
+type TaskAssigneeType {
+  id: ID!
+  firstName: String
+  lastName: String
+  middleName: String
+}
+
+type TaskAssigneeTypeOffsetPaginated {
+  pageInfo: OffsetPaginationInfo!
+
+  """Total count of existing results."""
+  totalCount: Int!
+
+  """List of paginated results."""
+  results: [TaskAssigneeType!]!
+}
+
 input TaskFilter {
   clientProfile: ID
   hmisClientProfile: ID
@@ -2866,6 +3074,7 @@ input TaskFilter {
   clientProfiles: [ID!]
   hmisClientProfiles: [ID!]
   authors: [ID!]
+  assignees: [ID!]
   organizations: [ID!]
   status: [TaskStatusEnum!]
   teamIds: [ID!]
@@ -2893,6 +3102,7 @@ type TaskType {
   clientProfile: ClientProfileType
   createdAt: DateTime!
   createdBy: UserType!
+  assignee: UserType
   description: String
   note: DjangoModelType
   hmisNote: DjangoModelType
@@ -2945,6 +3155,11 @@ type TeamTypeOffsetPaginated {
 scalar Time
 
 scalar UUID
+
+enum UnassignedReason {
+  OUTSIDE_ALL_REGIONS
+  NO_LOCATION
+}
 
 input UpdateBedInput {
   id: ID!
@@ -3087,6 +3302,15 @@ union UpdateHmisNotePayload = HmisNoteType | OperationInfo
 
 union UpdateHmisProfilePayload = HmisProfileType | OperationInfo
 
+input UpdateMediaLinkInput {
+  id: ID!
+  url: NonBlankString
+  title: String
+  mediaType: MediaLinkTypeChoices
+}
+
+union UpdateMediaLinkPayload = MediaLinkType | OperationInfo
+
 input UpdateNoteInput {
   id: ID!
   purpose: NonBlankString
@@ -3170,6 +3394,8 @@ input UpdateShelterInput {
   phone: PhoneNumber
   addNotesSleepingDetails: String
   addNotesShelterDetails: String
+  totalBeds: Int
+  roomStylesOther: String
   maxStay: Int
   onSiteSecurity: Boolean
   visitorsAllowed: Boolean
@@ -3178,11 +3404,16 @@ input UpdateShelterInput {
   otherRules: String
   otherServices: String
   entryInfo: String
+  bedFees: String
+  programFees: String
   subjectiveReview: String
+  overallRating: Int
+  declinedBaVisit: Boolean
   demographicsOther: String
   shelterTypesOther: String
   cityCouncilDistrict: Int
   supervisorialDistrict: Int
+  shelterProgramsOther: String
   fundersOther: String
   accessibility: [AccessibilityChoices!]
   demographics: [DemographicChoices!]
@@ -3220,6 +3451,7 @@ input UpdateTaskInput {
   description: String
   summary: String
   teamId: ID
+  assigneeId: ID
   status: TaskStatusEnum
 }
 

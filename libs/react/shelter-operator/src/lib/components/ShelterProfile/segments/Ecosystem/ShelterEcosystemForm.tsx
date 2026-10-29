@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { mergeCss } from '@monorepo/react/shared';
-import { FunderChoices } from '@monorepo/react/shelter';
+import { FunderChoices, ShelterProgramChoices } from '@monorepo/react/shelter';
 import { useMemo } from 'react';
 import type { UseFormSetError } from 'react-hook-form';
 import { Controller, useForm } from 'react-hook-form';
@@ -246,24 +246,21 @@ export function ShelterEcosystemForm(props: TProps) {
           </Form.Block>
 
           <Form.Block columns={2}>
-            <Controller
-              name="shelterPrograms"
+            <ComboBox
               control={control}
-              render={({ field }) => (
-                <Dropdown
-                  label="Shelter Programs"
-                  isMulti={true}
-                  isSearchable={cities.length > SEARCHABLE_DROPDOWN_MIN}
-                  value={SHELTER_PROGRAMS_OPTIONS.filter((o) =>
-                    field.value.includes(o.value),
-                  )}
-                  options={SHELTER_PROGRAMS_OPTIONS}
-                  onChange={(options) => {
-                    field.onChange(options ? options.map((o) => o.value) : []);
-                  }}
-                  isViewMode={isViewMode}
-                />
-              )}
+              name="shelterPrograms"
+              inputName="shelterProgramsOther"
+              label="Shelter Programs"
+              inputLabel="Other Shelter Program"
+              isSearchable={
+                SHELTER_PROGRAMS_OPTIONS.length > SEARCHABLE_DROPDOWN_MIN
+              }
+              options={SHELTER_PROGRAMS_OPTIONS}
+              triggerValue={ShelterProgramChoices.Other}
+              inputMaxLength={255}
+              inputError={errors.shelterProgramsOther?.message}
+              isViewMode={isViewMode}
+              disabled={disabled}
             />
 
             <ComboBox
@@ -272,9 +269,10 @@ export function ShelterEcosystemForm(props: TProps) {
               inputName="fundersOther"
               label="Funders"
               inputLabel="Other Funder"
-              isSearchable={cities.length > SEARCHABLE_DROPDOWN_MIN}
+              isSearchable={FUNDERS_OPTIONS.length > SEARCHABLE_DROPDOWN_MIN}
               options={FUNDERS_OPTIONS}
               triggerValue={FunderChoices.Other}
+              inputMaxLength={255}
               inputError={errors.fundersOther?.message}
               isViewMode={isViewMode}
               disabled={disabled}

@@ -8,7 +8,7 @@ import { DeleteTaskDocument } from '../TaskForm/__generated__/deleteTask.generat
 import { UpdateTaskDocument } from '../TaskForm/__generated__/updateTask.generated';
 
 import { TaskForm } from '../TaskForm';
-import { TaskFormData } from '../TaskForm/TaskForm';
+import { TaskFormData, TTaskFormSubmitResult } from '../TaskForm/TaskForm';
 
 interface INoteTasksModalProps {
   clientProfileId?: string;
@@ -64,21 +64,26 @@ export default function NoteTasksModal(props: INoteTasksModalProps) {
     },
   });
 
-  const handleSave = async (formData: TaskFormData) => {
+  const handleSave = async (
+    formData: TaskFormData,
+  ): Promise<TTaskFormSubmitResult | void> => {
     // A. Draft Mode
     if (onSubmit) {
       onSubmit(formData, task?.id);
       closeModal();
-      return;
+      return undefined;
     }
 
     // B. Live Mode
     try {
       const cleanStatus = formData.status || undefined;
       const cleanTeamId = !formData.teamId ? null : formData.teamId;
+      const cleanAssigneeId = !formData.assigneeId ? null : formData.assigneeId;
+
+      let result;
 
       if (task?.id) {
-        await updateTask({
+        result = await updateTask({
           variables: {
             data: {
               id: task.id,
@@ -86,17 +91,19 @@ export default function NoteTasksModal(props: INoteTasksModalProps) {
               description: formData.description,
               status: cleanStatus,
               teamId: cleanTeamId,
+              assigneeId: cleanAssigneeId,
             },
           },
         });
       } else {
-        await createTask({
+        result = await createTask({
           variables: {
             data: {
               summary: formData.summary || '',
               description: formData.description,
               status: cleanStatus,
               teamId: cleanTeamId ?? teamId ?? undefined,
+              assigneeId: cleanAssigneeId,
 
               // FIX: Map IDs correctly based on which props are present
               clientProfile: clientProfileId ?? undefined,
@@ -108,6 +115,34 @@ export default function NoteTasksModal(props: INoteTasksModalProps) {
           },
         });
       }
+      // A rejected value (e.g. an assignee who is not in the task's org)
+      // comes back as OperationInfo rather than an exception; without this the
+      // sheet closed as if the save had worked.
+      const payload =
+        result.data && 'updateTask' in result.data
+          ? result.data.updateTask
+          : result.data && 'createTask' in result.data
+            ? result.data.createTask
+            : undefined;
+
+      if (payload?.__typename === 'OperationInfo') {
+        showSnackbar({
+          message: payload.messages[0]?.message ?? 'Failed to save task.',
+          type: 'error',
+        });
+
+        const first = payload.messages[0];
+        const apiField = first?.field ?? null;
+        const field =
+          apiField === 'assignee'
+            ? 'assigneeId'
+            : apiField === 'team'
+              ? 'teamId'
+              : (apiField as keyof TaskFormData | null);
+
+        return { field: field ?? undefined, message: first?.message ?? '' };
+      }
+
       refetch();
       closeModal();
     } catch (error) {
@@ -149,6 +184,7 @@ export default function NoteTasksModal(props: INoteTasksModalProps) {
     description: task?.description || '',
     status: task?.status || TaskStatusEnum.ToDo,
     teamId: task?.teamId ?? teamId ?? '',
+    assigneeId: task?.assigneeId ?? '',
   };
 
   const showDelete = !!onDelete || !!task?.id;

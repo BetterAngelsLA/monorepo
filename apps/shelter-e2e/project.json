@@ -2,9 +2,25 @@
   "name": "shelter-e2e",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "application",
-  "sourceRoot": "apps/shelter-e2e/src",
-  "tags": [],
-  "implicitDependencies": ["shelter"],
+  "sourceRoot": "apps/shelter-e2e/tests",
+  "tags": [
+    "ci-e2e"
+  ],
+  "implicitDependencies": [
+    "shelter-web"
+  ],
   "// targets": "to see all targets run: nx show project shelter-e2e --web",
-  "targets": {}
+  "targets": {
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/shelter-e2e",
+        "commands": [
+          {
+            "command": "tsc --noEmit -p tsconfig.json"
+          }
+        ]
+      }
+    }
+  }
 }

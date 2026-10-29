@@ -85,6 +85,75 @@ export enum AttachmentType {
   Video = 'VIDEO'
 }
 
+/** One cursor page of audit actions (ADR 0004 §10). */
+export type AuditActionPage = {
+  __typename: 'AuditActionPage';
+  endCursor?: Maybe<Scalars['String']['output']>;
+  hasNextPage: Scalars['Boolean']['output'];
+  results: Array<AuditActionType>;
+};
+
+/** A group of events written under one context (one action, ADR 0004 §12). */
+export type AuditActionType = {
+  __typename: 'AuditActionType';
+  actor: Scalars['String']['output'];
+  events: Array<AuditEventType>;
+  fieldChanges: Scalars['JSON']['output'];
+  summary: Scalars['String']['output'];
+  timestamp: Scalars['DateTime']['output'];
+  truncated: Scalars['Boolean']['output'];
+};
+
+/** One selectable actor for an object's audit log (ADR 0004 §21). */
+export type AuditActorType = {
+  __typename: 'AuditActorType';
+  /** The frozen acting User.id; null for the synthetic System entry, which is selected with AuditEventFilter.systemOnly. */
+  id?: Maybe<Scalars['ID']['output']>;
+  /** True for the synthetic System entry. Key the picker on this, not on label, because a real user's frozen name can also be System. */
+  isSystem: Scalars['Boolean']['output'];
+  /** Display label: the actor's most frequent frozen name/email, or System for the synthetic entry. */
+  label: Scalars['String']['output'];
+};
+
+/** Filters for one object's write audit log (ADR 0004 §21). */
+export type AuditEventFilter = {
+  /** The frozen acting User.id; omit to include every actor. */
+  actorId?: InputMaybe<Scalars['ID']['input']>;
+  /** Inclusive lower bound on the event timestamp. */
+  dateFrom?: InputMaybe<Scalars['DateTime']['input']>;
+  /** Inclusive upper bound on the event timestamp. */
+  dateTo?: InputMaybe<Scalars['DateTime']['input']>;
+  /** Keep events rendered as system (a system reason label, or no frozen name/email). ANDs with actorId: with both set, only that actor's import/clone events match. */
+  systemOnly?: Scalars['Boolean']['input'];
+};
+
+export enum AuditEventKind {
+  Delete = 'DELETE',
+  Insert = 'INSERT',
+  Update = 'UPDATE'
+}
+
+/** A single pghistory write event, normalized across tracked models. */
+export type AuditEventType = {
+  __typename: 'AuditEventType';
+  action: Scalars['String']['output'];
+  actor: Scalars['String']['output'];
+  context?: Maybe<Scalars['JSON']['output']>;
+  fieldChanges?: Maybe<Scalars['JSON']['output']>;
+  kind: AuditEventKind;
+  snapshot?: Maybe<Scalars['JSON']['output']>;
+  summary?: Maybe<Scalars['String']['output']>;
+  targetId: Scalars['ID']['output'];
+  targetType: AuditTargetType;
+  timestamp: Scalars['DateTime']['output'];
+};
+
+export enum AuditTargetType {
+  Bed = 'BED',
+  Room = 'ROOM',
+  Shelter = 'SHELTER'
+}
+
 export type AuthResponse = {
   __typename: 'AuthResponse';
   status_code: Scalars['String']['output'];
@@ -610,6 +679,15 @@ export type CreateHmisNoteServiceRequestPayload = OperationInfo | ServiceRequest
 
 export type CreateHmisProfilePayload = HmisProfileType | OperationInfo;
 
+export type CreateMediaLinkInput = {
+  mediaType?: MediaLinkTypeChoices;
+  shelterId: Scalars['ID']['input'];
+  title?: InputMaybe<Scalars['String']['input']>;
+  url: Scalars['NonEmptyString']['input'];
+};
+
+export type CreateMediaLinkPayload = MediaLinkType | OperationInfo;
+
 export type CreateNoteDataImportInput = {
   notes: Scalars['String']['input'];
   sourceFile: Scalars['String']['input'];
@@ -648,6 +726,7 @@ export type CreateNoteServiceRequestInput = {
 export type CreateNoteServiceRequestPayload = OperationInfo | ServiceRequestType;
 
 export type CreateNoteTaskInput = {
+  assigneeId?: InputMaybe<Scalars['ID']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
   status?: InputMaybe<Scalars['Int']['input']>;
   summary: Scalars['String']['input'];
@@ -673,6 +752,7 @@ export type CreateProfileDataImportInput = {
 export type CreateReferralInput = {
   clientProfile: Scalars['ID']['input'];
   notes?: InputMaybe<Scalars['String']['input']>;
+  organizationId?: InputMaybe<Scalars['ID']['input']>;
   shelter: Scalars['ID']['input'];
 };
 
@@ -770,6 +850,7 @@ export type CreateShelterPayload = OperationInfo | ShelterType;
 export type CreateSocialMediaProfilePayload = OperationInfo | SocialMediaProfileType;
 
 export type CreateTaskInput = {
+  assigneeId?: InputMaybe<Scalars['ID']['input']>;
   clientProfile?: InputMaybe<Scalars['ID']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
   hmisClientProfile?: InputMaybe<Scalars['ID']['input']>;
@@ -876,6 +957,8 @@ export type DeleteHmisNotePayload = DeletedObjectType | OperationInfo;
 
 export type DeleteHmisProfilePayload = HmisProfileType | OperationInfo;
 
+export type DeleteMediaLinksPayload = BulkDeleteResult | OperationInfo;
+
 export type DeleteNotePayload = NoteType | OperationInfo;
 
 export type DeleteReferralPayload = DeletedObjectType | OperationInfo;
@@ -918,6 +1001,14 @@ export enum DemographicChoices {
 export type DemographicType = {
   __typename: 'DemographicType';
   name?: Maybe<DemographicChoices>;
+};
+
+export type DensityScaleType = {
+  __typename: 'DensityScaleType';
+  max: Scalars['Int']['output'];
+  p50: Scalars['Float']['output'];
+  p90: Scalars['Float']['output'];
+  p95: Scalars['Float']['output'];
 };
 
 export type DjangoFileType = {
@@ -1438,6 +1529,25 @@ export type InteractionAuthorTypeOffsetPaginated = {
   totalCount: Scalars['Int']['output'];
 };
 
+export type InteractionMapType = {
+  __typename: 'InteractionMapType';
+  points: Array<InteractionPointType>;
+  truncated: Scalars['Boolean']['output'];
+  withheld: Scalars['Boolean']['output'];
+};
+
+export type InteractionPointType = {
+  __typename: 'InteractionPointType';
+  interactedAt: Scalars['DateTime']['output'];
+  latitude: Scalars['LatitudeScalar']['output'];
+  longitude: Scalars['LongitudeScalar']['output'];
+};
+
+export type InteractionScopeType = {
+  __typename: 'InteractionScopeType';
+  withheld: Scalars['Boolean']['output'];
+};
+
 export enum LanguageEnum {
   Arabic = 'ARABIC',
   Armenian = 'ARMENIAN',
@@ -1474,7 +1584,7 @@ export type LocationInput = {
 
 export type LocationType = {
   __typename: 'LocationType';
-  address: AddressType;
+  address?: Maybe<AddressType>;
   id?: Maybe<Scalars['ID']['output']>;
   point: Scalars['Point']['output'];
   pointOfInterest?: Maybe<Scalars['String']['output']>;
@@ -1507,9 +1617,11 @@ export type MaxStayInput = {
 
 export type MediaLinkType = {
   __typename: 'MediaLinkType';
+  createdAt: Scalars['DateTime']['output'];
   id: Scalars['ID']['output'];
   mediaType: MediaLinkTypeChoices;
   title: Scalars['String']['output'];
+  updatedAt: Scalars['DateTime']['output'];
   url: Scalars['String']['output'];
 };
 
@@ -1545,6 +1657,7 @@ export type Mutation = {
   createHmisNote: CreateHmisNotePayload;
   createHmisNoteServiceRequest: CreateHmisNoteServiceRequestPayload;
   createHmisProfile: CreateHmisProfilePayload;
+  createMediaLink: CreateMediaLinkPayload;
   createNote: CreateNotePayload;
   createNoteDataImport: CreateNoteDataImportPayload;
   createNoteServiceRequest: CreateNoteServiceRequestPayload;
@@ -1565,6 +1678,7 @@ export type Mutation = {
   deleteCurrentUser: DeleteCurrentUserPayload;
   deleteHmisNote: DeleteHmisNotePayload;
   deleteHmisProfile: DeleteHmisProfilePayload;
+  deleteMediaLinks: DeleteMediaLinksPayload;
   deleteNote: DeleteNotePayload;
   deleteReferral: DeleteReferralPayload;
   deleteReservations: DeleteReservationsPayload;
@@ -1601,6 +1715,7 @@ export type Mutation = {
   updateHmisNote: UpdateHmisNotePayload;
   updateHmisNoteLocation: UpdateHmisNoteLocationPayload;
   updateHmisProfile: UpdateHmisProfilePayload;
+  updateMediaLink: UpdateMediaLinkPayload;
   updateNote: UpdateNotePayload;
   updateNoteLocation: UpdateNoteLocationPayload;
   updateReferral: UpdateReferralPayload;
@@ -1683,6 +1798,11 @@ export type MutationCreateHmisNoteServiceRequestArgs = {
 
 export type MutationCreateHmisProfileArgs = {
   data: HmisProfileInput;
+};
+
+
+export type MutationCreateMediaLinkArgs = {
+  data: CreateMediaLinkInput;
 };
 
 
@@ -1778,6 +1898,11 @@ export type MutationDeleteHmisNoteArgs = {
 
 export type MutationDeleteHmisProfileArgs = {
   data: DeleteDjangoObjectInput;
+};
+
+
+export type MutationDeleteMediaLinksArgs = {
+  data: BulkDeleteInput;
 };
 
 
@@ -1954,6 +2079,11 @@ export type MutationUpdateHmisNoteLocationArgs = {
 
 export type MutationUpdateHmisProfileArgs = {
   data: HmisProfileInput;
+};
+
+
+export type MutationUpdateMediaLinkArgs = {
+  data: UpdateMediaLinkInput;
 };
 
 
@@ -2221,6 +2351,7 @@ export type OperatorShelterType = {
   city?: Maybe<CityType>;
   cityCouncilDistrict?: Maybe<Scalars['Int']['output']>;
   curfew?: Maybe<Scalars['Time']['output']>;
+  declinedBaVisit?: Maybe<Scalars['Boolean']['output']>;
   demographics: Array<DemographicType>;
   demographicsOther?: Maybe<Scalars['String']['output']>;
   description: Scalars['String']['output'];
@@ -2559,6 +2690,7 @@ export type Query = {
   clientProfile: ClientProfileType;
   clientProfiles: ClientProfileTypeOffsetPaginated;
   currentUser: CurrentUserType;
+  densityScale?: Maybe<DensityScaleType>;
   featureControls: FeatureControlData;
   hmisClientProfile: HmisClientProfileType;
   hmisClientProfiles: HmisClientProfileTypeOffsetPaginated;
@@ -2568,14 +2700,22 @@ export type Query = {
   hmisProfile: HmisProfileType;
   hmisProfiles: HmisProfileTypeOffsetPaginated;
   interactionAuthors: InteractionAuthorTypeOffsetPaginated;
+  interactionMap: InteractionMapType;
+  interactionScope: InteractionScopeType;
+  interactionsByRegion: Array<RegionCountType>;
   note: NoteType;
   notes: NoteTypeOffsetPaginated;
+  /** Distinct actors in one object's audit log, most active first. The synthetic System entry has a null id and is selected with systemOnly. */
+  objectAuditActors: Array<AuditActorType>;
+  /** One cursor page of one object's write audit log, newest action first. */
+  objectAuditLog: AuditActionPage;
   operatorShelter: OperatorShelterType;
   operatorShelters: OperatorShelterTypeOffsetPaginated;
   organizationMember: OrganizationMemberType;
   organizationMembers: OrganizationMemberTypeOffsetPaginated;
   referral: ReferralType;
   referrals: ReferralTypeOffsetPaginated;
+  regionDimensions: Array<RegionDimensionInfo>;
   reportSummary: ReportSummaryType;
   reservation: ReservationType;
   reservations: ReservationTypeOffsetPaginated;
@@ -2594,6 +2734,8 @@ export type Query = {
   socialMediaProfile: SocialMediaProfileType;
   socialMediaProfiles: SocialMediaProfileTypeOffsetPaginated;
   task: TaskType;
+  /** Members the caller can assign a task to. Gated on tasks.add or tasks.change rather than organizations.view_org_members so a caseworker can pick an assignee without holding the org-admin roster permission. */
+  taskAssignees: TaskAssigneeTypeOffsetPaginated;
   tasks: TaskTypeOffsetPaginated;
   teams: TeamTypeOffsetPaginated;
 };
@@ -2668,6 +2810,16 @@ export type QueryClientProfilesArgs = {
 };
 
 
+export type QueryDensityScaleArgs = {
+  dimension?: InputMaybe<RegionDimension>;
+  endDate?: InputMaybe<Scalars['Date']['input']>;
+  organizationId: Scalars['ID']['input'];
+  regionCodes?: InputMaybe<Array<Scalars['String']['input']>>;
+  startDate?: InputMaybe<Scalars['Date']['input']>;
+  zoom: Scalars['Int']['input'];
+};
+
+
 export type QueryHmisClientProfileArgs = {
   id: Scalars['ID']['input'];
 };
@@ -2714,6 +2866,32 @@ export type QueryInteractionAuthorsArgs = {
 };
 
 
+export type QueryInteractionMapArgs = {
+  dimension?: InputMaybe<RegionDimension>;
+  endDate?: InputMaybe<Scalars['Date']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  organizationId: Scalars['ID']['input'];
+  regionCodes?: InputMaybe<Array<Scalars['String']['input']>>;
+  startDate?: InputMaybe<Scalars['Date']['input']>;
+};
+
+
+export type QueryInteractionScopeArgs = {
+  endDate?: InputMaybe<Scalars['Date']['input']>;
+  organizationId: Scalars['ID']['input'];
+  startDate?: InputMaybe<Scalars['Date']['input']>;
+};
+
+
+export type QueryInteractionsByRegionArgs = {
+  dimension?: InputMaybe<RegionDimension>;
+  endDate?: InputMaybe<Scalars['Date']['input']>;
+  organizationId: Scalars['ID']['input'];
+  regionCodes?: InputMaybe<Array<Scalars['String']['input']>>;
+  startDate?: InputMaybe<Scalars['Date']['input']>;
+};
+
+
 export type QueryNoteArgs = {
   pk: Scalars['ID']['input'];
 };
@@ -2723,6 +2901,24 @@ export type QueryNotesArgs = {
   filters?: InputMaybe<NoteFilter>;
   ordering?: Array<NoteOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryObjectAuditActorsArgs = {
+  limit?: Scalars['Int']['input'];
+  objectId: Scalars['ID']['input'];
+  search?: Scalars['String']['input'];
+  targetType: AuditTargetType;
+};
+
+
+export type QueryObjectAuditLogArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  filters?: InputMaybe<AuditEventFilter>;
+  includeSnapshot?: Scalars['Boolean']['input'];
+  limit?: Scalars['Int']['input'];
+  objectId: Scalars['ID']['input'];
+  targetType: AuditTargetType;
 };
 
 
@@ -2767,8 +2963,10 @@ export type QueryReferralsArgs = {
 
 
 export type QueryReportSummaryArgs = {
+  dimension?: InputMaybe<RegionDimension>;
   endDate?: InputMaybe<Scalars['Date']['input']>;
   organizationId: Scalars['ID']['input'];
+  regionCodes?: InputMaybe<Array<Scalars['String']['input']>>;
   startDate?: InputMaybe<Scalars['Date']['input']>;
 };
 
@@ -2865,6 +3063,13 @@ export type QueryTaskArgs = {
 };
 
 
+export type QueryTaskAssigneesArgs = {
+  filters?: InputMaybe<TaskAssigneeFilter>;
+  ordering?: Array<TaskAssigneeOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
 export type QueryTasksArgs = {
   filters?: InputMaybe<TaskFilter>;
   ordering?: InputMaybe<Array<TaskOrder>>;
@@ -2942,6 +3147,32 @@ export type ReferralTypeOffsetPaginated = {
   results: Array<ReferralType>;
   /** Total count of existing results. */
   totalCount: Scalars['Int']['output'];
+};
+
+export type RegionCountType = {
+  __typename: 'RegionCountType';
+  code: Scalars['String']['output'];
+  count: Scalars['Int']['output'];
+  isUnassigned: Scalars['Boolean']['output'];
+  kind: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  unassignedReason?: Maybe<UnassignedReason>;
+};
+
+export enum RegionDimension {
+  City = 'CITY',
+  Coc = 'COC',
+  CouncilDistrict = 'COUNCIL_DISTRICT',
+  Spa = 'SPA',
+  SupervisorialDistrict = 'SUPERVISORIAL_DISTRICT',
+  Zip = 'ZIP'
+}
+
+export type RegionDimensionInfo = {
+  __typename: 'RegionDimensionInfo';
+  label: Scalars['String']['output'];
+  plural: Scalars['String']['output'];
+  value: RegionDimension;
 };
 
 export enum RelationshipTypeEnum {
@@ -3492,7 +3723,6 @@ export type ShelterType = {
   organization?: Maybe<OrganizationType>;
   otherRules?: Maybe<Scalars['String']['output']>;
   otherServices?: Maybe<Scalars['String']['output']>;
-  overallRating?: Maybe<Scalars['Int']['output']>;
   parking: Array<ParkingType>;
   pets: Array<PetType>;
   phone?: Maybe<Scalars['PhoneNumber']['output']>;
@@ -3513,7 +3743,6 @@ export type ShelterType = {
   specialSituationRestrictions: Array<SpecialSituationRestrictionType>;
   status: StatusChoices;
   storage: Array<StorageType>;
-  subjectiveReview?: Maybe<Scalars['String']['output']>;
   supervisorialDistrict?: Maybe<Scalars['Int']['output']>;
   totalBeds?: Maybe<Scalars['Int']['output']>;
   updatedAt: Scalars['DateTime']['output'];
@@ -3619,11 +3848,44 @@ export type SwitchType = {
   name: Scalars['String']['output'];
 };
 
+export type TaskAssigneeFilter = {
+  AND?: InputMaybe<TaskAssigneeFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<TaskAssigneeFilter>;
+  OR?: InputMaybe<TaskAssigneeFilter>;
+  organization?: InputMaybe<Scalars['ID']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type TaskAssigneeOrder = {
+  firstName?: InputMaybe<Ordering>;
+  id?: InputMaybe<Ordering>;
+  lastName?: InputMaybe<Ordering>;
+};
+
+export type TaskAssigneeType = {
+  __typename: 'TaskAssigneeType';
+  firstName?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  lastName?: Maybe<Scalars['String']['output']>;
+  middleName?: Maybe<Scalars['String']['output']>;
+};
+
+export type TaskAssigneeTypeOffsetPaginated = {
+  __typename: 'TaskAssigneeTypeOffsetPaginated';
+  pageInfo: OffsetPaginationInfo;
+  /** List of paginated results. */
+  results: Array<TaskAssigneeType>;
+  /** Total count of existing results. */
+  totalCount: Scalars['Int']['output'];
+};
+
 export type TaskFilter = {
   AND?: InputMaybe<TaskFilter>;
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<TaskFilter>;
   OR?: InputMaybe<TaskFilter>;
+  assignees?: InputMaybe<Array<Scalars['ID']['input']>>;
   authors?: InputMaybe<Array<Scalars['ID']['input']>>;
   clientProfile?: InputMaybe<Scalars['ID']['input']>;
   clientProfileLookup?: InputMaybe<IdFilterLookup>;
@@ -3655,6 +3917,7 @@ export enum TaskStatusEnum {
 
 export type TaskType = {
   __typename: 'TaskType';
+  assignee?: Maybe<UserType>;
   clientProfile?: Maybe<ClientProfileType>;
   createdAt: Scalars['DateTime']['output'];
   createdBy: UserType;
@@ -3708,6 +3971,11 @@ export type TeamTypeOffsetPaginated = {
   /** Total count of existing results. */
   totalCount: Scalars['Int']['output'];
 };
+
+export enum UnassignedReason {
+  NoLocation = 'NO_LOCATION',
+  OutsideAllRegions = 'OUTSIDE_ALL_REGIONS'
+}
 
 export type UpdateBedInput = {
   accessibility?: InputMaybe<Array<AccessibilityChoices>>;
@@ -3850,6 +4118,15 @@ export type UpdateHmisNotePayload = HmisNoteType | OperationInfo;
 
 export type UpdateHmisProfilePayload = HmisProfileType | OperationInfo;
 
+export type UpdateMediaLinkInput = {
+  id: Scalars['ID']['input'];
+  mediaType?: InputMaybe<MediaLinkTypeChoices>;
+  title?: InputMaybe<Scalars['String']['input']>;
+  url?: InputMaybe<Scalars['NonBlankString']['input']>;
+};
+
+export type UpdateMediaLinkPayload = MediaLinkType | OperationInfo;
+
 export type UpdateNoteInput = {
   id: Scalars['ID']['input'];
   interactedAt?: InputMaybe<Scalars['DateTime']['input']>;
@@ -3921,9 +4198,11 @@ export type UpdateShelterInput = {
   addNotesShelterDetails?: InputMaybe<Scalars['String']['input']>;
   addNotesSleepingDetails?: InputMaybe<Scalars['String']['input']>;
   additionalContacts?: InputMaybe<Array<ShelterContactInfoInput>>;
+  bedFees?: InputMaybe<Scalars['String']['input']>;
   citiesServedIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   cityCouncilDistrict?: InputMaybe<Scalars['Int']['input']>;
   cityId?: InputMaybe<Scalars['ID']['input']>;
+  declinedBaVisit?: InputMaybe<Scalars['Boolean']['input']>;
   demographics?: InputMaybe<Array<DemographicChoices>>;
   demographicsOther?: InputMaybe<Scalars['String']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
@@ -3945,14 +4224,18 @@ export type UpdateShelterInput = {
   onSiteSecurity?: InputMaybe<Scalars['Boolean']['input']>;
   otherRules?: InputMaybe<Scalars['String']['input']>;
   otherServices?: InputMaybe<Scalars['String']['input']>;
+  overallRating?: InputMaybe<Scalars['Int']['input']>;
   parking?: InputMaybe<Array<ParkingChoices>>;
   pets?: InputMaybe<Array<PetChoices>>;
   phone?: InputMaybe<Scalars['PhoneNumber']['input']>;
+  programFees?: InputMaybe<Scalars['String']['input']>;
   referralRequirement?: InputMaybe<Array<ReferralRequirementChoices>>;
   roomStyles?: InputMaybe<Array<RoomStyleChoices>>;
+  roomStylesOther?: InputMaybe<Scalars['String']['input']>;
   schedules?: InputMaybe<Array<ScheduleInput>>;
   services?: InputMaybe<Array<ServiceInput>>;
   shelterPrograms?: InputMaybe<Array<ShelterProgramChoices>>;
+  shelterProgramsOther?: InputMaybe<Scalars['String']['input']>;
   shelterTypes?: InputMaybe<Array<ShelterChoices>>;
   shelterTypesOther?: InputMaybe<Scalars['String']['input']>;
   spaId?: InputMaybe<Scalars['ID']['input']>;
@@ -3962,6 +4245,7 @@ export type UpdateShelterInput = {
   storage?: InputMaybe<Array<StorageChoices>>;
   subjectiveReview?: InputMaybe<Scalars['String']['input']>;
   supervisorialDistrict?: InputMaybe<Scalars['Int']['input']>;
+  totalBeds?: InputMaybe<Scalars['Int']['input']>;
   vaccinationRequirement?: InputMaybe<Array<VaccinationRequirementChoices>>;
   visitorsAllowed?: InputMaybe<Scalars['Boolean']['input']>;
   website?: InputMaybe<Scalars['String']['input']>;
@@ -3979,6 +4263,7 @@ export type UpdateShelterPhotoPayload = OperationInfo | ShelterPhotoType;
 export type UpdateSocialMediaProfilePayload = OperationInfo | SocialMediaProfileType;
 
 export type UpdateTaskInput = {
+  assigneeId?: InputMaybe<Scalars['ID']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['ID']['input'];
   status?: InputMaybe<TaskStatusEnum>;

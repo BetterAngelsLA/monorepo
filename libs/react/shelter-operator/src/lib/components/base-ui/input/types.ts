@@ -4,6 +4,7 @@ import type {
   ReactNode,
   TextareaHTMLAttributes,
 } from 'react';
+import { LabelVariant } from '../label/label';
 
 export type InputDataType =
   | 'string'
@@ -25,6 +26,7 @@ type NativeAttrsOmit =
 
 type SharedCustomProps = {
   label?: string;
+  labelVariant?: LabelVariant;
   labelSuffix?: string;
   error?: string;
   dataType?: InputDataType;

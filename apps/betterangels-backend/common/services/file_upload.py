@@ -170,12 +170,17 @@ def create_attachment_records(
     content_object: Any,
     uploads: Iterable[UploadConfirmation],
     config: AttachmentUploadConfig,
+    upload_org_id: int | None = None,
 ) -> list[Attachment]:
     """Validate upload tokens, confirm S3 objects exist, and persist Attachment rows.
 
     Calls ``validate_upload_batch`` for pre-flight validation, then opens a
     single ``transaction.atomic()`` block to create all Attachment rows.
     If any item fails validation, the entire batch is rolled back.
+
+    ``upload_org_id`` records the organization the upload was made on behalf of.
+    Only domains whose write authority is anchored on that org (client documents)
+    pass it; it stays ``None`` for the others.
 
     **Does NOT assign object-level permissions** — that is the caller's
     responsibility.
@@ -196,6 +201,7 @@ def create_attachment_records(
                 content_type=content_type,
                 object_id=content_object.id,
                 uploaded_by=user,
+                upload_org_id=upload_org_id,
             )
 
             attachment.save()

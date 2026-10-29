@@ -1,13 +1,11 @@
 import datetime
 from unittest.mock import ANY, Mock, patch
 
-import waffle
-from django.test import override_settings
+from django.test import TestCase, override_settings
+from model_bakery import baker
 from places import Places
-from waffle.testutils import override_switch
 
 from accounts.tests.baker_recipes import organization_recipe
-from common.imgproxy import IMGPROXY_SWITCH
 from common.tests.utils import GraphQLBaseTestCase
 from shelters.enums import (
     AccessibilityChoices,
@@ -34,6 +32,7 @@ from shelters.models import (
     EntryRequirement,
     ExitPolicy,
     Funder,
+    MediaLink,
     Parking,
     Pet,
     ReferralRequirement,
@@ -49,15 +48,14 @@ from shelters.models import (
 )
 from shelters.tests.baker_recipes import shelter_recipe
 from shelters.tests.graphql_helpers import ShelterGraphQLFixtureMixin
+from shelters.tests.utils import ShelterTestCase
 
 
 @override_settings(IS_LOCAL_DEV=True, STORAGES={"default": {"BACKEND": "django.core.files.storage.InMemoryStorage"}})
-@override_switch(IMGPROXY_SWITCH, active=True)
 class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
         self.setup_shelter_graphql_fixtures()
-        waffle.switch_is_active(IMGPROXY_SWITCH)
 
     @patch("common.graphql.types.build_img_url")
     def test_shelter_query(self, mock_build_img_url: Mock) -> None:
@@ -189,14 +187,12 @@ class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
             "onSiteSecurity": True,
             "otherRules": "other rules",
             "otherServices": "other services",
-            "overallRating": 3,
             "phone": "2125551212",
             "programFees": "program fees",
             "roomStylesOther": "room styles other",
             "shelterProgramsOther": "shelter programs other",
             "shelterTypesOther": "shelter types other",
             "status": StatusChoices.APPROVED.name,
-            "subjectiveReview": "subjective review",
             "supervisorialDistrict": 1,
             "totalBeds": 1,
             "website": "shelter.com",
@@ -365,17 +361,15 @@ class ShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
 
 
 class PublicShelterQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCase):
-    """The shelter directory is public: no login, no organization header.
+    """The shelter directory is public: no login, no organization.
 
-    Every other test here inherits an active organization from
-    ``GraphQLBaseTestCase.setUp``, so nothing else would notice the public
-    queries starting to require one.
+    ``setUp`` logs out so each test exercises the anonymous path — the queries
+    take no org argument and must never require one.
     """
 
     def setUp(self) -> None:
         super().setUp()
         self.graphql_client.logout()
-        self.graphql_client.defaults.pop("HTTP_X_ORGANIZATION_ID", None)
         self.shelter = shelter_recipe.make(status=StatusChoices.APPROVED)
 
     def test_shelters_query_is_public(self) -> None:
@@ -442,3 +436,31 @@ class ShelterMaxStayQueryTestCase(ShelterGraphQLFixtureMixin, GraphQLBaseTestCas
 
         self.assertIsNone(response.get("errors"))
         self.assertIsNone(response["data"]["shelterMaxStay"])
+
+
+class MediaLinkOrderingQueryTestCase(ShelterTestCase, TestCase):
+    """``MediaLink.Meta.ordering`` pins insertion order, not the DB's row order."""
+
+    OPERATOR_SHELTER_MEDIA_LINKS_QUERY = """
+        query OperatorShelterMediaLinks($pk: ID!) {
+            operatorShelter(pk: $pk) {
+                mediaLinks { id }
+            }
+        }
+    """
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.shelter = shelter_recipe.make(organization=self.org)
+        self.graphql_client.force_login(self.operator)
+
+    def test_media_links_are_returned_in_creation_order(self) -> None:
+        created = [baker.make(MediaLink, shelter=self.shelter) for _ in range(3)]
+
+        response = self.execute_graphql(self.OPERATOR_SHELTER_MEDIA_LINKS_QUERY, {"pk": str(self.shelter.pk)})
+
+        self.assertIsNone(response.get("errors"))
+        self.assertEqual(
+            [media_link["id"] for media_link in response["data"]["operatorShelter"]["mediaLinks"]],
+            [str(media_link.pk) for media_link in created],
+        )
