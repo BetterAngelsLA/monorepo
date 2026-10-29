@@ -61,7 +61,7 @@ jobs:
           RAW_BRANCH_NAME: ${{ github.head_ref }}
         run: |
           set -euo pipefail
-          BRANCH_NAME=$(echo "$RAW_BRANCH_NAME" | sed 's|/|-|g' | sed 's|[^a-zA-Z0-9_.-]||g')
+          BRANCH_NAME=$(tools/scripts/sanitize-branch-name.sh "$RAW_BRANCH_NAME")
           echo "BRANCH_NAME=$BRANCH_NAME" >> "$GITHUB_ENV"
 
       - name: 🐳 Configure AWS credentials

@@ -70,8 +70,10 @@ jobs:
           RAW_BRANCH_NAME=${{ github.head_ref || github.ref_name }}
           SHORT_SHA=$(echo $GITHUB_SHA | cut -c 1-7)
 
-          # Sanitize branch name by replacing '/' with '-' and removing any other invalid characters
-          BRANCH_NAME=$(echo $RAW_BRANCH_NAME | sed 's|/|-|g' | sed 's|[^a-zA-Z0-9_.-]||g')
+          # Sanitize branch name by replacing '/' with '-' and removing any other invalid
+          # characters. Shared with preview.yml and eas-branch-cleanup.yml, which deletes
+          # the EAS branch this name creates.
+          BRANCH_NAME=$(tools/scripts/sanitize-branch-name.sh "$RAW_BRANCH_NAME")
 
           if [ "$BRANCH_NAME" == "main" ]; then
             IMAGE_TAG_PREFIX="main"
