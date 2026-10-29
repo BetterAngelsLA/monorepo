@@ -20,7 +20,7 @@ export function browserPrivacyRules(environment: string, appVersion: string) {
       // while replacing all path content with one generic route label.
       regex: /^(https?:\/\/[^/?#]+)(?:\/[^?#]*)?(?:[?#].*)?$/i,
       replacement: '$1/[route]',
-      eventFilter: ['BrowserInteraction'],
+      eventFilter: ['BrowserInteraction', 'PageView', 'PageAction'],
     },
     {
       // Do not attempt to recognize names, notes, secrets or stack contents.
@@ -29,7 +29,12 @@ export function browserPrivacyRules(environment: string, appVersion: string) {
         `^(?!(?:${safeValues.join('|')}|https?:\\/\\/[^/?#]+\\/\\[route\\])(?![\\s\\S]))[\\s\\S]+`,
       ),
       replacement: '[redacted]',
-      eventFilter: ['BrowserInteraction', 'JavaScriptError'],
+      eventFilter: [
+        'BrowserInteraction',
+        'JavaScriptError',
+        'PageView',
+        'PageAction',
+      ],
     },
   ];
 }

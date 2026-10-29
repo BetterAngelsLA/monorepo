@@ -35,15 +35,13 @@ test('error harvest removes free text and nonempty stacks without losing counts 
       { ...agent.info.jsAttributes, actionText: secret },
     ]);
   }
-  const payload = events.get(['err']) as
-    | {
-        err: Array<{
-          metrics: { count: number };
-          params: Record<string, string>;
-          custom: Record<string, string>;
-        }>;
-      }
-    | null;
+  const payload = events.get(['err']) as {
+    err: Array<{
+      metrics: { count: number };
+      params: Record<string, string>;
+      custom: Record<string, string>;
+    }>;
+  } | null;
   assert.ok(payload);
   new Obfuscator(agent, 'JavaScriptError').traverseAndObfuscateEvents(
     payload.err,
@@ -102,7 +100,32 @@ test('exact metadata allowlist does not admit appended secrets; other events kee
   new Obfuscator(agent, 'PageView').traverseAndObfuscateEvents(page);
   assert.deepEqual(page, {
     duration: 1.25,
-    session: 'opaque-session',
-    pageUrl: 'https://test.invalid/client/[id]',
+    session: '[redacted]',
+    pageUrl: 'https://test.invalid/[route]',
   });
 });
+
+for (const eventType of ['PageView', 'PageAction']) {
+  test(`${eventType} redacts free-form text and sanitizes URL paths`, () => {
+    const obfuscator = new Obfuscator(agent, eventType);
+    const event = {
+      pageUrl: 'https://test.invalid/client/123?name=Synthetic-Person',
+      actionText: secret,
+      targetText: secret,
+      environment: 'validation',
+      appVersion: '1.2.14',
+      duration: 1.25,
+    };
+
+    obfuscator.traverseAndObfuscateEvents(event);
+
+    assert.equal(event.pageUrl, 'https://test.invalid/[route]');
+    assert.equal(event.actionText, '[redacted]');
+    assert.equal(event.targetText, '[redacted]');
+    assert.equal(event.environment, 'validation');
+    assert.equal(event.appVersion, '1.2.14');
+    assert.equal(event.duration, 1.25);
+    assert.ok(!JSON.stringify(event).includes('Synthetic-Person'));
+    assert.ok(!JSON.stringify(event).includes('FAKE_SECRET'));
+  });
+}
