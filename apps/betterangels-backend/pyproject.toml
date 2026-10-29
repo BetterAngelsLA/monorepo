@@ -40,6 +40,7 @@ dependencies = [
     "django-ses>=4.8.2,<5",
     "django-storages[s3]>=1.14.6,<2",
     "django-structlog>=11.0.0,<12",
+    "django-stubs-ext>=6.1.2,<7",
     "django-waffle>=5.0.0,<6",
     "djangorestframework>=3.18.3,<4",
     "gunicorn[gevent]>=25.1.0,<26",

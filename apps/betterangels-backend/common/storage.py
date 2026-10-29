@@ -1,12 +1,16 @@
-from typing import Any
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
 
 import boto3
 from botocore.client import Config
 from django.conf import settings
 from django.utils.encoding import filepath_to_uri
-from mypy_boto3_s3 import S3Client
 from storages.backends.s3 import S3Storage
 from storages.utils import clean_name
+
+if TYPE_CHECKING:
+    from mypy_boto3_s3 import S3Client
 
 
 class LocalS3Storage(S3Storage):
