@@ -44,7 +44,7 @@ dependencies = [
     "django-waffle>=5.0.0,<6",
     "djangorestframework>=3.18.3,<4",
     "gunicorn[gevent]>=25.1.0,<26",
-    "hiredis>=3.3.0,<4",
+    "hiredis>=3.5.0,<4",
     "newrelic",
     "psycopg>=3.3.2,<4",
     "pyjwt>=2.15.1,<3",
