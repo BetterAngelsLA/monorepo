@@ -31,7 +31,10 @@ USER betterangels
 
 # Development/CI base: the runtime plus the toolchain the dev container, CI and
 # the Playwright stages use (Docker CLI, psql, AWS CLI, Node/EAS, Chromium libs).
+# Back to root for the package installs; the stage ends as `betterangels`, which
+# is how every stage below expects to run.
 FROM runtime-base AS base
+USER root
 
 # Docker
 RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,type=cache \
@@ -193,6 +196,8 @@ RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,t
       libxfixes3 \
       libxkbcommon0 \
       libxrandr2
+
+USER betterangels
 
 # Dependency-free base for CI. The checkout and node_modules/.venv are
 # bind-mounted at runtime; ECS uses the production stage below.
