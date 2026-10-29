@@ -13,7 +13,7 @@ def test_lock_key_is_namespaced_away_from_regions() -> None:
     assert _MIGRATION_LOCK_NAMESPACE != 0x52455053
 
 
-def test_waits_then_reports_already_applied(capsys: Any) -> None:
+def test_reports_already_applied_when_plan_emptied_under_the_lock(capsys: Any) -> None:
     """Pre-check pending, lock acquired, plan empty by the time we own it."""
     cursor = MagicMock()
     cursor.__enter__.return_value = cursor
@@ -31,6 +31,32 @@ def test_waits_then_reports_already_applied(capsys: Any) -> None:
     assert "migrations already applied by another process" in capsys.readouterr().out
     executed = " ".join(str(call.args[0]) for call in cursor.execute.call_args_list)
     assert "pg_try_advisory_lock" in executed
+    assert "pg_advisory_unlock" in executed
+
+
+def test_retries_while_another_process_holds_the_lock(capsys: Any) -> None:
+    """The first try fails, the second succeeds: the loop and migrate are exercised."""
+    cursor = MagicMock()
+    cursor.__enter__.return_value = cursor
+    cursor.__exit__.return_value = False
+    cursor.fetchone.side_effect = [(False,), (True,)]
+    connection = MagicMock()
+    connection.cursor.return_value = cursor
+
+    with (
+        patch("common.management.commands.migrate_locked.connections", {"default": connection}),
+        patch("common.management.commands.migrate_locked.Command._pending", side_effect=[True, True]),
+        patch("common.management.commands.migrate_locked.call_command") as migrate,
+        patch("common.management.commands.migrate_locked.time.sleep"),
+    ):
+        call_command("migrate_locked")
+
+    out = capsys.readouterr().out
+    assert "another process holds the migration lock; waiting" in out
+    assert "applying migrations" in out
+    migrate.assert_called_once()
+    executed = " ".join(str(call.args[0]) for call in cursor.execute.call_args_list)
+    assert executed.count("pg_try_advisory_lock") == 2
     assert "pg_advisory_unlock" in executed
 
 
