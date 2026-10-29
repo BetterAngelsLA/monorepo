@@ -9,6 +9,11 @@ The lock is a session-scoped Postgres advisory lock (``pg_advisory_xact_lock``
 would be released at the first per-migration commit). Followers wait rather than
 fail on a timer: the only correct deadline is "longer than the slowest
 migration", which is not knowable here.
+
+If the holder is killed mid-migration the lock is released and a follower retries
+the plan. Transactional DDL rolls back, but a non-transactional step (e.g.
+``CREATE INDEX CONCURRENTLY``) can leave an invalid object behind, so that retry
+may need manual cleanup.
 """
 
 from __future__ import annotations
@@ -16,7 +21,7 @@ from __future__ import annotations
 import time
 from typing import Any
 
-from django.core.management import BaseCommand, call_command
+from django.core.management import BaseCommand, CommandError, call_command
 from django.db import DEFAULT_DB_ALIAS, connections
 from django.db.migrations.executor import MigrationExecutor
 
@@ -34,6 +39,9 @@ class Command(BaseCommand):
         parser.add_argument("--poll-interval", type=float, default=2.0)
 
     def handle(self, *args: Any, poll_interval: float, **options: Any) -> None:
+        if poll_interval <= 0:
+            raise CommandError("--poll-interval must be greater than 0")
+
         connection = connections[DEFAULT_DB_ALIAS]
 
         # Cheap path: every deploy with no schema change stops here, without taking a lock.
@@ -43,13 +51,19 @@ class Command(BaseCommand):
 
         with connection.cursor() as cursor:
             waiting = False
+            wait_started = time.monotonic()
+            last_log = wait_started
             while True:
                 cursor.execute("SELECT pg_try_advisory_lock(%s)", [_MIGRATION_LOCK_KEY])
                 if cursor.fetchone()[0]:
                     break
+                now = time.monotonic()
                 if not waiting:
                     self.stdout.write("another process holds the migration lock; waiting")
                     waiting = True
+                elif now - last_log >= 60:
+                    self.stdout.write(f"still waiting for the migration lock ({int(now - wait_started)}s)")
+                    last_log = now
                 time.sleep(poll_interval)
 
             try:
