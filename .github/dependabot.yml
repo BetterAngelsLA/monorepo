@@ -50,11 +50,6 @@ updates:
       interval: 'weekly'
 
   # App Level Scanning
-  - package-ecosystem: 'docker'
-    directory: '/apps/nginx'
-    schedule:
-      interval: 'weekly'
-
   - package-ecosystem: 'github-actions'
     directory: '/'
     schedule:
