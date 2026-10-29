@@ -60,7 +60,10 @@ class Command(BaseCommand):
                 else:
                     self.stdout.write("migrations already applied by another process")
             finally:
-                cursor.execute("SELECT pg_advisory_unlock(%s)", [_MIGRATION_LOCK_KEY])
+                try:
+                    cursor.execute("SELECT pg_advisory_unlock(%s)", [_MIGRATION_LOCK_KEY])
+                except Exception:  # noqa: BLE001 - never mask the migration error; the lock dies with the session
+                    pass
 
     @staticmethod
     def _pending(connection: Any) -> bool:

@@ -1,4 +1,5 @@
 from typing import Any
+from unittest.mock import MagicMock, patch
 
 import pytest
 from django.core.management import call_command
@@ -12,9 +13,20 @@ def test_lock_key_is_namespaced_away_from_regions() -> None:
     assert _MIGRATION_LOCK_NAMESPACE != 0x52455053
 
 
-@pytest.mark.django_db
-def test_no_pending_migrations_is_a_no_op(capsys: Any) -> None:
-    # pytest-django builds the test database from the migration graph, so the plan is empty.
-    call_command("migrate_locked")
+def test_no_pending_migrations_never_takes_the_lock(capsys: Any) -> None:
+    """The early exit must not even attempt the advisory lock."""
+    cursor = MagicMock()
+    cursor.__enter__.return_value = cursor
+    cursor.__exit__.return_value = False
+    connection = MagicMock()
+    connection.cursor.return_value = cursor
+
+    with (
+        patch("common.management.commands.migrate_locked.connections", {"default": connection}),
+        patch("common.management.commands.migrate_locked.Command._pending", return_value=False),
+    ):
+        call_command("migrate_locked")
 
     assert "no pending migrations" in capsys.readouterr().out
+    executed = " ".join(str(call.args[0]) for call in cursor.execute.call_args_list)
+    assert "pg_try_advisory_lock" not in executed
