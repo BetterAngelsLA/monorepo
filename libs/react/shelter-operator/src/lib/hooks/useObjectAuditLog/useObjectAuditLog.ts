@@ -75,6 +75,11 @@ export function useObjectAuditLog({
   useEffect(() => {
     generationRef.current += 1;
     pageCursorsRef.current = [];
+    // A request from the previous object may never settle (its observable is
+    // torn down by the switch), so release its in-flight ownership here; the
+    // generation checks below discard whatever that request eventually does.
+    loadMoreInFlightRef.current = false;
+    retryingRef.current = false;
     setRetryError(false);
   }, [variables]);
 
@@ -137,7 +142,10 @@ export function useObjectAuditLog({
       // payload and operation variables).
       console.error('audit_log_load_more_failed');
     } finally {
-      loadMoreInFlightRef.current = false;
+      // An older generation must not clear a newer request's ownership.
+      if (generationRef.current === generation) {
+        loadMoreInFlightRef.current = false;
+      }
     }
   }, [appendPage, endCursor]);
 
@@ -201,7 +209,10 @@ export function useObjectAuditLog({
         console.error('audit_log_reload_failed');
       }
     } finally {
-      retryingRef.current = false;
+      // An older generation must not clear a newer retry's ownership.
+      if (generationRef.current === generation) {
+        retryingRef.current = false;
+      }
     }
   }, [appendPage, refetch]);
 

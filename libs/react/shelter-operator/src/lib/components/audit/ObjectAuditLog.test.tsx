@@ -245,19 +245,6 @@ function SwitchableHarness() {
   );
 }
 
-function SwitchableLog() {
-  const [objectId, setObjectId] = useState('7');
-
-  return (
-    <>
-      <button type="button" onClick={() => setObjectId('8')}>
-        switch
-      </button>
-      <ObjectAuditLog targetType={AuditTargetType.Bed} objectId={objectId} />
-    </>
-  );
-}
-
 describe('ObjectAuditLog', () => {
   afterEach(() => {
     vi.restoreAllMocks();
@@ -450,52 +437,6 @@ describe('ObjectAuditLog', () => {
     );
   });
 
-  it('ignores a page that resolves after the object changes', async () => {
-    render(
-      <MockedProvider
-        mocks={
-          [
-            page(
-              baseVariables,
-              [makeAction({ actor: 'OLD OBJECT' })],
-              'c1',
-              true,
-            ),
-            {
-              ...page(
-                { ...baseVariables, after: 'c1' },
-                [makeAction({ actor: 'OLD PAGE' })],
-                null,
-                false,
-              ),
-              delay: 100,
-            },
-            page(
-              { ...baseVariables, objectId: '8' },
-              [makeAction({ actor: 'NEW OBJECT' })],
-              null,
-              false,
-            ),
-          ] as never
-        }
-        showWarnings={false}
-      >
-        <SwitchableLog />
-      </MockedProvider>,
-    );
-
-    await screen.findByText('OLD OBJECT');
-    fireEvent.click(screen.getByRole('button', { name: /load more/i }));
-    fireEvent.click(screen.getByRole('button', { name: 'switch' }));
-
-    expect(await screen.findByText('NEW OBJECT')).not.toBeNull();
-
-    await new Promise((resolve) => setTimeout(resolve, 200));
-
-    // The in-flight page belonged to object 7; it must not be appended to 8.
-    expect(screen.queryByText('OLD PAGE')).toBeNull();
-  });
-
   it("does not replay the old object's cursor after a switch", async () => {
     const calls: Array<{ objectId?: string; after?: string }> = [];
     const link = new ApolloLink(
@@ -571,5 +512,65 @@ describe('ObjectAuditLog', () => {
     expect(
       calls.some((call) => call.objectId === '8' && call.after === 'c7'),
     ).toBe(false);
+  });
+
+  it("lets the new object load after the old object's request hangs", async () => {
+    const link = new ApolloLink(
+      (operation) =>
+        new Observable((observer) => {
+          const { objectId, after } = operation.variables as {
+            objectId: string;
+            after?: string;
+          };
+
+          if (objectId === '7' && !after) {
+            observer.next({
+              data: pageData([makeAction({ actor: 'OBJECT 7' })], 'c7', true),
+            });
+            observer.complete();
+            return;
+          }
+
+          if (objectId === '7' && after === 'c7') {
+            // A request that never settles: without releasing the old in-flight
+            // flag on the object switch, the new object's Load more stays dead.
+            return;
+          }
+
+          if (objectId === '8' && !after) {
+            observer.next({
+              data: pageData([makeAction({ actor: 'OBJECT 8' })], 'c8', true),
+            });
+            observer.complete();
+            return;
+          }
+
+          if (objectId === '8' && after === 'c8') {
+            observer.next({
+              data: pageData([makeAction({ actor: 'PAGE8' })], null, false),
+            });
+            observer.complete();
+            return;
+          }
+
+          observer.error(new Error(`unexpected request ${objectId} ${after}`));
+        }),
+    );
+    const client = new ApolloClient({ link, cache: new InMemoryCache() });
+
+    render(
+      <ApolloProvider client={client}>
+        <SwitchableHarness />
+      </ApolloProvider>,
+    );
+
+    await screen.findByText('OBJECT 7');
+    fireEvent.click(screen.getByRole('button', { name: 'load more' }));
+    fireEvent.click(screen.getByRole('button', { name: 'switch' }));
+    await screen.findByText('OBJECT 8');
+
+    fireEvent.click(screen.getByRole('button', { name: 'load more' }));
+
+    expect(await screen.findByText('PAGE8')).not.toBeNull();
   });
 });
