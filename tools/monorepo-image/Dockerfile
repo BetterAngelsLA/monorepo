@@ -215,8 +215,9 @@ RUN yarn playwright install chromium
 # `FROM playwright` on purpose: the browser is a developer tool, so the image
 # that runs the e2e suites owns it, together with the node_modules it needs; the
 # Python venv comes from `uv-stage`. The last stage — the one ECS and CI build
-# by default — is `production`, which stops at `yarn`: the backend task never
-# launches a browser, and CI installs Chromium in the e2e step instead.
+# by default — is `production`, which carries only the Python venv and the repo:
+# the backend task never launches a browser or Node, so it does not copy the
+# yarn stage (the CI e2e step installs Chromium itself).
 FROM playwright AS development
 COPY --from=uv-stage --link /workspace /workspace
 USER root
@@ -236,7 +237,12 @@ USER betterangels
 RUN git config --global --add safe.directory "*"
 
 # Production Build
+#
+# The backend runtime is Python only (gunicorn, celery, manage.py) — it never
+# launches Node or a browser, so the yarn stage (node_modules, ~2.3 GB in this
+# monorepo) is deliberately not copied here. That is the image's largest content
+# by far; dropping it shrinks the Fargate pull and skips `yarn install` when
+# `production` is the build target.
 FROM base AS production
 COPY --from=uv-stage --link /workspace /workspace
-COPY --from=yarn --link /workspace /workspace
 COPY --chown=betterangels . /workspace
