@@ -35,7 +35,16 @@ test('error harvest removes free text and nonempty stacks without losing counts 
       { ...agent.info.jsAttributes, actionText: secret },
     ]);
   }
-  const payload = events.get(['err']);
+  const payload = events.get(['err']) as
+    | {
+        err: Array<{
+          metrics: { count: number };
+          params: Record<string, string>;
+          custom: Record<string, string>;
+        }>;
+      }
+    | null;
+  assert.ok(payload);
   new Obfuscator(agent, 'JavaScriptError').traverseAndObfuscateEvents(
     payload.err,
   );
@@ -60,7 +69,7 @@ test('real navigation serializer retains duration and route category while remov
   interaction.end = 850;
   interaction.customAttributes = { actionText: secret };
   const output = interaction.serialize(
-    undefined,
+    100,
     agent,
     new Obfuscator(agent, 'BrowserInteraction'),
     new Obfuscator(agent, 'AjaxRequest'),
