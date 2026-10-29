@@ -28,9 +28,11 @@ from accounts.headless_views import AutoCreateRequestLoginCodeView
 from betterangels_backend import settings
 
 from .schema import schema
+from .views import healthz
 
 urlpatterns = [
     path("", RedirectView.as_view(url="/admin/", permanent=False), name="home"),
+    path("healthz", healthz, name="healthz"),
     path("", include("accounts.urls")),
     path("admin/", admin.site.urls),
     path("accounts/", include("allauth.urls"), name="accounts"),
