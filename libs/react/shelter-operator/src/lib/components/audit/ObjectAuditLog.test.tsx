@@ -220,6 +220,27 @@ function DoubleLoadMore() {
   );
 }
 
+function RetryHarness() {
+  const { actions, loadMore, retry } = useObjectAuditLog({
+    targetType: AuditTargetType.Bed,
+    objectId: '7',
+  });
+
+  return (
+    <>
+      {actions.map((action, index) => (
+        <div key={index}>{action.actor}</div>
+      ))}
+      <button type="button" onClick={() => void loadMore()}>
+        load more
+      </button>
+      <button type="button" onClick={() => void retry()}>
+        retry
+      </button>
+    </>
+  );
+}
+
 function SwitchableHarness() {
   const [objectId, setObjectId] = useState('7');
   const { actions, loadMore, retry } = useObjectAuditLog({
@@ -572,5 +593,156 @@ describe('ObjectAuditLog', () => {
     fireEvent.click(screen.getByRole('button', { name: 'load more' }));
 
     expect(await screen.findByText('PAGE8')).not.toBeNull();
+  });
+
+  it('rebuilds the page chain when new activity shifts page one', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    let phase: 'initial' | 'failing' | 'new' = 'initial';
+    const calls: Array<{ phase: string; after?: string }> = [];
+    const link = new ApolloLink(
+      (operation) =>
+        new Observable((observer) => {
+          if (phase === 'failing') {
+            calls.push({ phase });
+            observer.error(new Error('network down'));
+            return;
+          }
+
+          const after = operation.variables.after as string | undefined;
+          calls.push({ phase, after });
+
+          if (!after) {
+            const actors =
+              phase === 'new'
+                ? ['NEW', 'A1', 'A2', 'A3', 'A4']
+                : ['A1', 'A2', 'A3', 'A4', 'A5'];
+            observer.next({
+              data: pageData(
+                actors.map((actor) => makeAction({ actor })),
+                phase === 'new' ? 'c1-new' : 'c1-old',
+                true,
+              ),
+            });
+            observer.complete();
+            return;
+          }
+
+          if (after === 'c1-old') {
+            observer.next({
+              data: pageData([makeAction({ actor: 'A6' })], null, false),
+            });
+            observer.complete();
+            return;
+          }
+
+          if (after === 'c1-new') {
+            observer.next({
+              data: pageData([makeAction({ actor: 'A5' })], null, false),
+            });
+            observer.complete();
+            return;
+          }
+
+          observer.error(new Error(`unexpected cursor ${after}`));
+        }),
+    );
+    const client = new ApolloClient({ link, cache: new InMemoryCache() });
+
+    render(
+      <ApolloProvider client={client}>
+        <RetryHarness />
+      </ApolloProvider>,
+    );
+
+    await screen.findByText('A1');
+    fireEvent.click(screen.getByRole('button', { name: 'load more' }));
+    await screen.findByText('A6');
+
+    phase = 'failing';
+    fireEvent.click(screen.getByRole('button', { name: 'retry' }));
+    await new Promise((resolve) => setTimeout(resolve, 20));
+
+    phase = 'new';
+    fireEvent.click(screen.getByRole('button', { name: 'retry' }));
+
+    // A5 was the last action of the old page one. It must not be skipped just
+    // because the refreshed page one now ends at A4.
+    expect(await screen.findByText('A5')).not.toBeNull();
+    expect(screen.getByText('NEW')).not.toBeNull();
+    expect(screen.queryByText('A6')).toBeNull();
+
+    // The retry must walk the fresh boundary, not replay the stale cursor that
+    // now sits before A5.
+    const newCalls = calls.filter((call) => call.phase === 'new');
+    expect(newCalls.some((call) => call.after === 'c1-new')).toBe(true);
+    expect(newCalls.some((call) => call.after === 'c1-old')).toBe(false);
+  });
+
+  it('does not replay when the refreshed first page is the last page', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    let phase: 'initial' | 'failing' | 'last' = 'initial';
+    const calls: Array<{ phase: string; after?: string }> = [];
+    const link = new ApolloLink(
+      (operation) =>
+        new Observable((observer) => {
+          const after = operation.variables.after as string | undefined;
+          calls.push({ phase, after });
+
+          if (phase === 'failing') {
+            observer.error(new Error('network down'));
+            return;
+          }
+
+          if (!after) {
+            const actors =
+              phase === 'last'
+                ? ['NEW', 'A1', 'A2', 'A3', 'A4']
+                : ['A1', 'A2', 'A3', 'A4', 'A5'];
+            observer.next({
+              data: pageData(
+                actors.map((actor) => makeAction({ actor })),
+                phase === 'last' ? 'c1-last' : 'c1-old',
+                phase !== 'last',
+              ),
+            });
+            observer.complete();
+            return;
+          }
+
+          if (after === 'c1-old') {
+            observer.next({
+              data: pageData([makeAction({ actor: 'A6' })], null, false),
+            });
+            observer.complete();
+            return;
+          }
+
+          observer.error(new Error(`unexpected cursor ${after}`));
+        }),
+    );
+    const client = new ApolloClient({ link, cache: new InMemoryCache() });
+
+    render(
+      <ApolloProvider client={client}>
+        <RetryHarness />
+      </ApolloProvider>,
+    );
+
+    await screen.findByText('A1');
+    fireEvent.click(screen.getByRole('button', { name: 'load more' }));
+    await screen.findByText('A6');
+
+    phase = 'failing';
+    fireEvent.click(screen.getByRole('button', { name: 'retry' }));
+    await new Promise((resolve) => setTimeout(resolve, 20));
+
+    phase = 'last';
+    fireEvent.click(screen.getByRole('button', { name: 'retry' }));
+    await screen.findByText('NEW');
+
+    const newCalls = calls.filter((call) => call.phase === 'last');
+    expect(newCalls).toEqual([{ phase: 'last', after: undefined }]);
   });
 });

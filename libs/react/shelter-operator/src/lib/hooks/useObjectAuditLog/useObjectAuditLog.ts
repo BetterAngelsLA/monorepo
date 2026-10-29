@@ -83,10 +83,16 @@ export function useObjectAuditLog({
     setRetryError(false);
   }, [variables]);
 
-  /** Fetch the page after *after* and append it to the cached result. */
+  /**
+   * Fetch the page after *after* and append it to the cached result.
+   *
+   * Returns the next cursor, or null when there is no further page. The retry
+   * rebuild uses it to walk a fresh chain; a page can have an endCursor even when
+   * it is the last one, so ``hasNextPage`` must gate the next request.
+   */
   const appendPage = useCallback(
-    async (after: string, generation: number) => {
-      await fetchMore({
+    async (after: string, generation: number): Promise<string | null> => {
+      const result = await fetchMore({
         variables: { ...variables, after },
         updateQuery: (previous, { fetchMoreResult }) => {
           if (!fetchMoreResult || generationRef.current !== generation) {
@@ -105,6 +111,10 @@ export function useObjectAuditLog({
           };
         },
       });
+
+      const page = result.data?.objectAuditLog;
+
+      return page?.hasNextPage ? (page.endCursor ?? null) : null;
     },
     [fetchMore, variables],
   );
@@ -169,25 +179,57 @@ export function useObjectAuditLog({
     let refreshed = false;
 
     try {
-      await refetch();
+      const result = await refetch();
       refreshed = true;
 
       if (generationRef.current !== generation) {
         return;
       }
 
-      for (const cursor of cursors) {
-        if (generationRef.current !== generation) {
-          return;
+      // A refresh while new activity arrives can move page one. Replaying the
+      // old cursors then skips every action between the new page-one boundary
+      // and the old one. Detect that shift and rebuild the same number of pages
+      // from the fresh boundary instead.
+      const freshPage = result.data?.objectAuditLog;
+      const freshCursor = freshPage?.endCursor ?? null;
+      const freshHasNext = freshPage?.hasNextPage ?? false;
+      const boundaryChanged = cursors.length > 0 && freshCursor !== cursors[0];
+
+      // If the refreshed first page is now the last page, there is nothing to
+      // replay even if the old chain held pages (e.g. retention removed them).
+      if (freshHasNext) {
+        if (boundaryChanged) {
+          let cursor = freshCursor;
+
+          for (let index = 0; index < cursors.length && cursor; index += 1) {
+            if (generationRef.current !== generation) {
+              return;
+            }
+
+            const nextCursor = await appendPage(cursor, generation);
+
+            if (generationRef.current !== generation) {
+              return;
+            }
+
+            replayed.push(cursor);
+            cursor = nextCursor;
+          }
+        } else {
+          for (const cursor of cursors) {
+            if (generationRef.current !== generation) {
+              return;
+            }
+
+            await appendPage(cursor, generation);
+
+            if (generationRef.current !== generation) {
+              return;
+            }
+
+            replayed.push(cursor);
+          }
         }
-
-        await appendPage(cursor, generation);
-
-        if (generationRef.current !== generation) {
-          return;
-        }
-
-        replayed.push(cursor);
       }
 
       pageCursorsRef.current = replayed;
