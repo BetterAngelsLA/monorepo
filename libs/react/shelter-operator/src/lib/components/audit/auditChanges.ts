@@ -10,6 +10,8 @@
  * `AuditEvent.context`, never in `fieldChanges`.
  */
 
+import { sanitizeHtml } from '@monorepo/react/shared';
+
 export type AuditScalarChange = {
   kind: 'scalar';
   field: string;
@@ -29,6 +31,72 @@ export type AuditMultiChange = {
 export type AuditChange = AuditScalarChange | AuditMultiChange;
 
 const ACTION_VERBS = new Set(['add', 'remove', 'update', 'status_change']);
+
+/** Longest rendered value; longer ones are truncated (see `truncateValue`). */
+export const MAX_VALUE_LENGTH = 140;
+
+const TEXT_BLOCK_TAGS = [
+  'p',
+  'div',
+  'br',
+  'li',
+  'ul',
+  'ol',
+  'h1',
+  'h2',
+  'h3',
+  'h4',
+  'h5',
+  'h6',
+  'blockquote',
+  'tr',
+  'td',
+  'th',
+];
+
+/** Blocks that should separate adjacent text when the markup is flattened. */
+const TEXT_BLOCK_ELEMENTS = TEXT_BLOCK_TAGS.join(',');
+
+/**
+ * Rich-text fields (a shelter description or notes) are stored as HTML. The log
+ * renders plain text, so the shared sanitizer keeps only block-level text
+ * containers (scripts and unknown markup are discarded) and the browser's HTML
+ * parser then flattens that safe subtree: entities are decoded and block
+ * boundaries become spaces so paragraphs do not run together.
+ *
+ * React escapes the result, so no HTML is injected. The no-DOM fallback uses
+ * the sanitizer's tag-free text form, which is likewise rendered as text.
+ */
+export function stripHtmlToText(value: string): string {
+  const safeHtml = sanitizeHtml(value, {
+    allowedTags: TEXT_BLOCK_TAGS,
+    allowedAttributes: {},
+  });
+
+  if (typeof DOMParser === 'undefined') {
+    return sanitizeHtml(safeHtml);
+  }
+
+  const doc = new DOMParser().parseFromString(safeHtml, 'text/html');
+
+  doc.body.querySelectorAll(TEXT_BLOCK_ELEMENTS).forEach((element) => {
+    element.append(' ');
+  });
+
+  return (doc.body.textContent ?? '').replace(/\s+/g, ' ').trim();
+}
+
+/** Shorten a rendered value for inline display; the full value stays in `title`. */
+export function truncateValue(
+  value: string,
+  maxLength = MAX_VALUE_LENGTH,
+): string {
+  if (value.length <= maxLength) {
+    return value;
+  }
+
+  return `${value.slice(0, maxLength - 1).trimEnd()}\u2026`;
+}
 
 /**
  * Fields hidden from every event. `id` churns on full-replacement saves (the
@@ -101,11 +169,19 @@ export function formatValue(value: unknown): string {
   if (typeof value === 'boolean') {
     return value ? 'Yes' : 'No';
   }
-  if (typeof value === 'string' || typeof value === 'number') {
+  if (typeof value === 'number') {
     return String(value);
   }
+  if (typeof value === 'string') {
+    const text = stripHtmlToText(value);
+
+    return text || '\u2014';
+  }
+  if (Array.isArray(value)) {
+    return value.length > 0 ? value.map(formatValue).join(', ') : '\u2014';
+  }
   try {
-    return JSON.stringify(value);
+    return JSON.stringify(value) ?? String(value);
   } catch {
     return String(value);
   }

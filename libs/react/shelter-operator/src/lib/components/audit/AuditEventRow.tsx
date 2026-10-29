@@ -28,6 +28,9 @@ const KIND_META: Record<AuditEventKind, { label: string; className: string }> =
 
 /** One low-level event within a grouped action. */
 export function AuditEventRow({ event }: { event: AuditEvent }) {
+  // Defensive fallback for a backend that adds an event kind before this client
+  // is regenerated: `KIND_META` is exhaustive over the generated enum, so the
+  // typed cases cannot reach it, but an unknown wire value can.
   const kind = KIND_META[event.kind] ?? {
     label: event.kind,
     className: 'bg-gray-100 text-gray-700',

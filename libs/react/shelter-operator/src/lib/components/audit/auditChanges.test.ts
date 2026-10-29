@@ -1,8 +1,12 @@
 import {
   displayOptionsForAction,
+  formatValue,
   hasRenderableContent,
+  MAX_VALUE_LENGTH,
   parseFieldChanges,
+  stripHtmlToText,
   subjectActionFor,
+  truncateValue,
 } from './auditChanges';
 
 describe('parseFieldChanges', () => {
@@ -130,5 +134,45 @@ describe('hasRenderableContent', () => {
         events: [],
       }),
     ).toBe(true);
+  });
+});
+
+describe('formatValue', () => {
+  it('formats booleans, empty values, and arrays', () => {
+    expect(formatValue(true)).toBe('Yes');
+    expect(formatValue(false)).toBe('No');
+    expect(formatValue(null)).toBe('\u2014');
+    expect(formatValue([])).toBe('\u2014');
+    expect(formatValue(['a'])).toBe('a');
+    expect(formatValue(['Women', 'Men'])).toBe('Women, Men');
+  });
+
+  it('renders rich text as text instead of markup', () => {
+    expect(formatValue('<p>Old <b>copy</b></p>')).toBe('Old copy');
+    expect(formatValue('<p>Old</p><p>New</p>')).toBe('Old New');
+    expect(formatValue('<p>Fish &amp; Chips</p>')).toBe('Fish & Chips');
+    expect(formatValue('&lt;tag&gt;')).toBe('<tag>');
+    expect(formatValue('<p></p>')).toBe('\u2014');
+    expect(formatValue('<p>Hi</p><script>alert(1)</script>')).toBe('Hi');
+    expect(formatValue('a<br>b')).toBe('a b');
+  });
+
+  it('leaves plain text with an angle bracket untouched', () => {
+    expect(formatValue('a < b')).toBe('a < b');
+    expect(stripHtmlToText('a < b')).toBe('a < b');
+  });
+});
+
+describe('truncateValue', () => {
+  it('leaves short values alone', () => {
+    expect(truncateValue('short')).toBe('short');
+  });
+
+  it('caps long values with an ellipsis', () => {
+    const truncated = truncateValue('x'.repeat(200));
+
+    expect(truncated.length).toBe(MAX_VALUE_LENGTH);
+    expect(truncated.endsWith('\u2026')).toBe(true);
+    expect(truncateValue('abcdef', 4)).toBe('abc\u2026');
   });
 });

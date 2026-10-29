@@ -81,4 +81,40 @@ describe('AuditEventRow', () => {
     expect(screen.getByText('Name:')).not.toBeNull();
     expect(screen.getByText('Bed B')).not.toBeNull();
   });
+
+  it('renders rich-text field changes as text, not markup', () => {
+    render(
+      <AuditEventRow
+        event={makeEvent({
+          fieldChanges: {
+            description: [
+              '<p>Old <b>copy</b></p>',
+              '<p>New &amp; improved</p>',
+            ],
+          },
+        })}
+      />,
+    );
+
+    expect(screen.getByText('Old copy')).not.toBeNull();
+    expect(screen.getByText('New & improved')).not.toBeNull();
+    expect(screen.queryByText(/<p>/)).toBeNull();
+  });
+
+  it('keeps the full value in the title while truncating the display', () => {
+    const fullValue = 'a'.repeat(200);
+
+    render(
+      <AuditEventRow
+        event={makeEvent({
+          fieldChanges: { description: ['', `<p>${fullValue}</p>`] },
+        })}
+      />,
+    );
+
+    const truncated = screen.getByTitle(fullValue);
+
+    expect(truncated.textContent?.endsWith('\u2026')).toBe(true);
+    expect(truncated.textContent?.length).toBeLessThan(fullValue.length);
+  });
 });

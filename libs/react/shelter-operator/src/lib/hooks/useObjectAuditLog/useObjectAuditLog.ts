@@ -42,6 +42,11 @@ type UseObjectAuditLogArgs = ObjectAuditLogFilters & {
  * Date/actor filters are applied server-side (ADR 0004 §21). Changing them
  * changes the query variables, which restarts at the first page — the cursor is
  * deliberately not carried across a filter change.
+ *
+ * ``retry`` re-runs the first page and then replays the cursors the user had
+ * already loaded: Apollo's ``refetch`` replaces the cached result with page one
+ * only, so replaying preserves the activity that was on screen before the
+ * failure.
  */
 export function useObjectAuditLog({
   targetType,
@@ -77,7 +82,7 @@ export function useObjectAuditLog({
     };
   }, [targetType, objectId, dateFrom, dateTo, actorId, systemOnly, pageSize]);
 
-  const { data, loading, error, fetchMore } = useQuery<
+  const { data, loading, error, fetchMore, refetch } = useQuery<
     ObjectAuditLogQuery,
     ObjectAuditLogQueryVariables
   >(ObjectAuditLogDocument, {
@@ -94,19 +99,16 @@ export function useObjectAuditLog({
   const [pageError, setPageError] = useState<Error | null>(null);
   const inFlight = useRef(false);
 
-  const loadMore = useCallback(async () => {
-    // Guard against a double click appending the same page twice, and against a
-    // retry racing the request that failed.
-    if (!endCursor || inFlight.current) {
-      return;
-    }
+  // Cursors used by `loadMore`, in page order. Kept in a ref because they are
+  // only read by `retry`; a new object/filter set starts with an empty chain.
+  const pageCursorsRef = useRef<string[]>([]);
+  const retryingRef = useRef(false);
 
-    inFlight.current = true;
-    setPageError(null);
-
-    try {
+  /** Fetch the page after *after* and append it to the cached result. */
+  const appendPage = useCallback(
+    async (after: string) => {
       await fetchMore({
-        variables: { ...variables, after: endCursor },
+        variables: { ...variables, after },
         updateQuery: (previous, { fetchMoreResult }) => {
           if (!fetchMoreResult) {
             return previous;
@@ -124,22 +126,69 @@ export function useObjectAuditLog({
           };
         },
       });
+    },
+    [fetchMore, variables],
+  );
+
+  const loadMore = useCallback(async () => {
+    // Guard against a double click appending the same page twice, and against a
+    // retry racing the request that failed.
+    if (!endCursor || inFlight.current) {
+      return;
+    }
+
+    inFlight.current = true;
+    setPageError(null);
+    const cursor = endCursor;
+
+    try {
+      await appendPage(cursor);
+      pageCursorsRef.current = [...pageCursorsRef.current, cursor];
     } catch (error) {
       // Apollo does not set the query-level ``error`` for a failed ``fetchMore``,
       // so a page failure is otherwise silent.
-      const normalized = toError(error);
-      console.error('Failed to load more audit activity', normalized);
-      setPageError(normalized);
+      // Log a stable event name, never the Apollo error (it carries the response
+      // payload and operation variables).
+      console.error('audit_log_load_more_failed');
+      setPageError(toError(error));
     } finally {
       inFlight.current = false;
     }
-  }, [endCursor, fetchMore, variables]);
+  }, [appendPage, endCursor]);
 
-  // A filter change starts a new page sequence; a failure from the previous
-  // variables must not stick to the new list.
+  // A filter change starts a new page sequence; a failure or cursor from the
+  // previous variables must not stick to the new list.
   useEffect(() => {
     setPageError(null);
+    pageCursorsRef.current = [];
   }, [variables]);
+
+  /**
+   * Re-run the first page (after a failed load), then re-append the pages that
+   * were already loaded. Failures surface through the query's `error`.
+   */
+  const retry = useCallback(async () => {
+    if (retryingRef.current) {
+      return;
+    }
+
+    retryingRef.current = true;
+    setPageError(null);
+
+    try {
+      await refetch();
+
+      for (const cursor of pageCursorsRef.current) {
+        await appendPage(cursor);
+      }
+    } catch {
+      // `refetch` rejects as well as setting `error`; swallow the rejection so an
+      // unhandled promise cannot escape from the retry button.
+      console.error('audit_log_reload_failed');
+    } finally {
+      retryingRef.current = false;
+    }
+  }, [appendPage, refetch]);
 
   return {
     actions,
@@ -149,5 +198,6 @@ export function useObjectAuditLog({
     loadMoreError: pageError,
     hasMore,
     loadMore,
+    retry,
   };
 }

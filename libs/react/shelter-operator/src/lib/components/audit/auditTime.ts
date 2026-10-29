@@ -1,17 +1,9 @@
-import { formatDistanceToNow, isValid, parseISO } from 'date-fns';
-
-function toDate(value: string | null | undefined): Date | null {
-  if (!value) {
-    return null;
-  }
-  const date = parseISO(value);
-
-  return isValid(date) ? date : null;
-}
+import { formatDistanceToNow } from 'date-fns';
+import { isoToDateSafe } from '@monorepo/shared/scalars';
 
 /** Relative timestamp for inline display, e.g. "3 hours ago". */
 export function formatAuditTimestamp(value: string | null | undefined): string {
-  const date = toDate(value);
+  const date = isoToDateSafe(value);
 
   return date ? formatDistanceToNow(date, { addSuffix: true }) : '';
 }
@@ -20,7 +12,7 @@ export function formatAuditTimestamp(value: string | null | undefined): string {
 export function formatAuditTimestampAbsolute(
   value: string | null | undefined,
 ): string {
-  const date = toDate(value);
+  const date = isoToDateSafe(value);
 
   return date ? date.toLocaleString() : '';
 }
