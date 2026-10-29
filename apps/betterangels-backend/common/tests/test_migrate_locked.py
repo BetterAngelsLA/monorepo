@@ -1,7 +1,6 @@
 from typing import Any
 from unittest.mock import MagicMock, patch
 
-import pytest
 from django.core.management import call_command
 
 from common.management.commands.migrate_locked import _MIGRATION_LOCK_KEY, _MIGRATION_LOCK_NAMESPACE
