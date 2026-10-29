@@ -175,6 +175,21 @@ jobs:
             "$MONOREPO_IMAGE:ci-base" \
             bash -lc 'yarn install --immutable && uv sync --locked'
 
+      # The slim image is built without the dev group, so a module that is only
+      # in `[dependency-groups] dev` but imported at runtime passes every other
+      # check here (they all run in the dev venv) and only fails on a deploy.
+      # Sync the production set into a throwaway venv and import the app the way
+      # the first request does.
+      - name: Runtime imports (production venv, no dev dependencies)
+        run: |
+          docker run --rm --user 1000:1000 -e CI=true -e HOME=/home/betterangels \
+            -e UV_PROJECT_ENVIRONMENT=/tmp/runtime-venv \
+            -e DJANGO_SETTINGS_MODULE=betterangels_backend.settings \
+            -v "$GITHUB_WORKSPACE:/workspace" -w /workspace \
+            "$MONOREPO_IMAGE:ci-base" \
+            bash -lc 'uv sync --quiet --no-install-project --no-dev --frozen \
+              && PYTHONPATH=/workspace/apps/betterangels-backend /tmp/runtime-venv/bin/python /workspace/tools/scripts/check_runtime_imports.py'
+
       - name: Save dependency cache
         if: steps.deps-cache.outputs.cache-matched-key == ''
         uses: actions/cache/save@v6
