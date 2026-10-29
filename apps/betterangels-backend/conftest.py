@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 from model_bakery import baker
 from organizations.fields import SlugField
-from pytest_django.fixtures import SettingsWrapper
+from pytest_django import Settings
 
 from test_utils.vcr_config import scrubbed_vcr
 
@@ -15,7 +15,7 @@ baker.generators.add(SlugField, lambda: baker.seq("org-"))  # type: ignore[no-un
 
 
 @pytest.fixture(autouse=True)
-def _no_rate_limits(settings: SettingsWrapper) -> None:
+def _no_rate_limits(settings: Settings) -> None:
     """Rate limits are a production concern and no test asserts one.
 
     Left on, allauth's login-code limits are cached and every test's login

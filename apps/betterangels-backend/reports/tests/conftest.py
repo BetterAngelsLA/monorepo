@@ -1,13 +1,13 @@
 """Shared fixtures and test configuration for reports app tests."""
 
 import pytest
-from pytest_django.fixtures import SettingsWrapper
+from pytest_django import Settings
 
 from test_utils.timezones import SITE_TIME_ZONE
 
 
 @pytest.fixture(autouse=True)
-def _site_time_zone(settings: SettingsWrapper) -> None:
+def _site_time_zone(settings: Settings) -> None:
     """Pin the site calendar for every report test.
 
     A report's days are cut on its organization's calendar, which falls back to
