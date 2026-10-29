@@ -322,6 +322,12 @@ def organization_effective_permissions(user: User) -> dict[int, list[str]]:
 
     org_ids = set(switchable_orgs(user).values_list("pk", flat=True))
     scoped = organization_permissions(user, org_ids=org_ids)
+    # App-level on purpose: the ``LEGACY_LIVE_PERMISSIONS`` carve-out (client
+    # documents and imports) is still consulted by org-agnostic checks — the
+    # document uploads' ``filter_for_user`` and the import mutations' default
+    # ``HasPerm`` checker — so a global-tier holder can exercise them at any org
+    # and folding them in is accurate.  Filtering them out would under-report.
+    # If either path ever gains an org filter, start excluding them here.
     foldable_global = [perm for perm in global_permissions(user) if perm.split(".", 1)[0] in GLOBAL_TIER_ORG_APPS]
     result = {org_id: sorted(set(foldable_global) | set(scoped.get(org_id, []))) for org_id in org_ids}
     user.__dict__["_org_effective_permissions"] = result

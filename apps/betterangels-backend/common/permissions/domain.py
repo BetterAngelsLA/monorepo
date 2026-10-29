@@ -57,8 +57,10 @@ LEGACY_LIVE_PERMISSIONS: frozenset[str] = frozenset(
     {
         # document uploads still load the parent through ``filter_for_user``
         "clients.change_clientprofile",
-        # import surfaces still gate on the legacy permission
+        # the import mutations still gate on the legacy permission
         "clients.add_clientprofileimportrecord",
+        # ``bulkClientProfileImportRecords`` still gates on the legacy read
+        "clients.view_clientprofileimportrecord",
     }
 )
 

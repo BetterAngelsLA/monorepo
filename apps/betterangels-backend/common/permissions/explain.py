@@ -365,13 +365,16 @@ def explain(
     anything already cut over to grants; the arms and notes explain how it got
     there.
 
-    Read the caveat for legacy-only domains (today: notes, clients) from the
-    module docstring — it is not repeated here in full.  In short: enforcement
-    for those domains still rides the legacy ``PermissionGroup`` arm, so the
-    verdict is what the grant model *would* answer after cutover, which is not
-    necessarily what enforcement answers today.  ``Explanation.cut_over`` and
-    the notes flag which of the two worlds a given call is in; a caller that
-    needs the live answer must consult ``user.has_perm()`` as well.
+    Read the caveat for legacy-only domains (today: notes / service-request) and
+    for the ``LEGACY_LIVE_PERMISSIONS`` carve-out in ``clients`` from the module
+    docstring — it is not repeated here in full.  In short: where a domain has
+    not cut over, enforcement still rides the legacy ``PermissionGroup`` arm, so
+    the verdict is what the grant model *would* answer after cutover; where a
+    permission is carved out, the grant verdict covers the profile/family
+    surfaces while document uploads and imports still consult the legacy row.
+    ``Explanation.cut_over`` and the notes flag which of those worlds a given
+    call is in; a caller that needs the live answer must consult
+    ``user.has_perm()`` as well.
     """
     from common.permissions.selectors import can, can_anywhere, can_obj
 
