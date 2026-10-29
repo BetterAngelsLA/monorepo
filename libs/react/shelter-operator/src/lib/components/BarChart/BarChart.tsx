@@ -206,7 +206,6 @@ export function BarChart({
     },
   } as ColumnConfig;
 
-  const hasHeader = !!(chartTitle || showViewToggle);
   const legendItems =
     colorField && domain.length
       ? domain.map((label, i) => ({
@@ -214,6 +213,9 @@ export function BarChart({
           color: range[i % range.length] ?? '#3B82F6',
         }))
       : [];
+  // A chart with a legend must keep its header even without the toggle: the
+  // legend explains the colours and lives inside the header block below.
+  const hasHeader = !!(chartTitle || legendItems.length);
 
   return (
     <div className={mergeCss(['flex flex-col w-full', className])}>

@@ -1,3 +1,4 @@
+import { mergeCss } from '@monorepo/react/shared';
 import { formatScalarDate, type DateString } from '@monorepo/shared/scalars';
 import { useMemo } from 'react';
 import type {
@@ -86,7 +87,24 @@ const STATUS_COLORS = ['#008CEE', '#05B428', '#FF7B00', '#F64949', '#8B5CF6'];
  *
  * Renders empty (no data) until `data` is provided.
  */
-export function BedStatusChart({ data }: { data?: DailyBedStatusMetrics[] }) {
+export function BedStatusChart({
+  data,
+  showViewToggle = true,
+  containerClassName,
+  forPrint = false,
+}: {
+  data?: DailyBedStatusMetrics[];
+  /** Hide the interactive Count/Percentage toggle — e.g. for the static PDF export. */
+  showViewToggle?: boolean;
+  /** Overrides the card's background/shadow — e.g. the grey PDF export tray instead of the white dashboard card. */
+  containerClassName?: string;
+  /**
+   * Render for raster capture instead of interaction: disables the enter
+   * animation, which would otherwise be caught mid-flight and produce a PDF
+   * with missing or partial bars.
+   */
+  forPrint?: boolean;
+}) {
   const countData = useMemo(
     () => (data ? toBedStatusCountData(data) : []),
     [data],
@@ -97,10 +115,14 @@ export function BedStatusChart({ data }: { data?: DailyBedStatusMetrics[] }) {
   );
 
   return (
-    <section className={chartCardClassName} data-testid="bed-status-chart">
+    <section
+      className={mergeCss([chartCardClassName, containerClassName])}
+      data-testid="bed-status-chart"
+    >
       <BarChart
         chartTitle="Bed Status"
-        showViewToggle
+        showViewToggle={showViewToggle}
+        {...(forPrint ? { animate: false } : {})}
         onViewChange={(mode: ViewMode) =>
           mode === 'percentage'
             ? {
@@ -139,8 +161,21 @@ export function BedStatusChart({ data }: { data?: DailyBedStatusMetrics[] }) {
  */
 export function DailyOccupancyChart({
   data,
+  showViewToggle = true,
+  containerClassName,
+  forPrint = false,
 }: {
   data?: DailyOccupancyMetrics[];
+  /** Hide the interactive Count/Percentage toggle — e.g. for the static PDF export. */
+  showViewToggle?: boolean;
+  /** Overrides the card's background/shadow — e.g. the grey PDF export tray instead of the white dashboard card. */
+  containerClassName?: string;
+  /**
+   * Render for raster capture instead of interaction: disables the enter
+   * animation, which would otherwise be caught mid-flight and produce a PDF
+   * with missing or partial bars.
+   */
+  forPrint?: boolean;
 }) {
   const countData = useMemo(
     () => (data ? toDailyOccupancyCountData(data) : []),
@@ -152,10 +187,14 @@ export function DailyOccupancyChart({
   );
 
   return (
-    <section className={chartCardClassName} data-testid="daily-occupancy-chart">
+    <section
+      className={mergeCss([chartCardClassName, containerClassName])}
+      data-testid="daily-occupancy-chart"
+    >
       <BarChart
         chartTitle="Daily Occupancy"
-        showViewToggle
+        showViewToggle={showViewToggle}
+        {...(forPrint ? { animate: false } : {})}
         onViewChange={(mode: ViewMode) =>
           mode === 'percentage'
             ? {
