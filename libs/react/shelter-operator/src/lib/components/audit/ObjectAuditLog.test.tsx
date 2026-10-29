@@ -35,11 +35,8 @@ function makeEvent(overrides: Record<string, unknown> = {}) {
   return {
     __typename: 'AuditEventType',
     timestamp: '2026-07-01T12:00:00Z',
-    actor: 'Ada Lovelace',
     kind: AuditEventKind.Update,
     action: 'bed.update',
-    targetType: AuditTargetType.Bed,
-    targetId: '7',
     summary: null,
     context: null,
     fieldChanges: { name: ['Bed A', 'Bed B'] },
@@ -52,41 +49,11 @@ function makeAction(overrides: Record<string, unknown> = {}) {
     __typename: 'AuditActionType',
     timestamp: '2026-07-01T12:00:00Z',
     actor: 'Ada Lovelace',
-    summary: 'Ada Lovelace modified bed 7',
     truncated: false,
     fieldChanges: { name: ['Bed A', 'Bed B'] },
     events: [makeEvent()],
     ...overrides,
   };
-}
-
-function page(
-  variables: Record<string, unknown>,
-  results: Array<Record<string, unknown>>,
-  endCursor: string | null,
-  hasNextPage: boolean,
-) {
-  return {
-    request: { query: ObjectAuditLogDocument, variables },
-    result: {
-      data: {
-        objectAuditLog: {
-          __typename: 'AuditActionPage',
-          endCursor,
-          hasNextPage,
-          results,
-        },
-      },
-    },
-  };
-}
-
-function renderLog(mocks: ReadonlyArray<unknown>) {
-  return render(
-    <MockedProvider mocks={mocks as never} showWarnings={false}>
-      <ObjectAuditLog targetType={AuditTargetType.Bed} objectId="7" />
-    </MockedProvider>,
-  );
 }
 
 function pageData(
@@ -102,6 +69,33 @@ function pageData(
       results,
     },
   };
+}
+
+function page(
+  variables: Record<string, unknown>,
+  results: Array<Record<string, unknown>>,
+  endCursor: string | null,
+  hasNextPage: boolean,
+) {
+  return {
+    request: { query: ObjectAuditLogDocument, variables },
+    result: { data: pageData(results, endCursor, hasNextPage) },
+  };
+}
+
+function errorPage(variables: Record<string, unknown>) {
+  return {
+    request: { query: ObjectAuditLogDocument, variables },
+    error: new Error('network down'),
+  };
+}
+
+function renderLog(mocks: ReadonlyArray<unknown>) {
+  return render(
+    <MockedProvider mocks={mocks as never} showWarnings={false}>
+      <ObjectAuditLog targetType={AuditTargetType.Bed} objectId="7" />
+    </MockedProvider>,
+  );
 }
 
 type ResponsePhase = 'initial' | 'failing' | 'reloaded';
@@ -209,6 +203,25 @@ function RefreshTrigger() {
 }
 
 describe('ObjectAuditLog', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('renders grouped actions with their field changes', async () => {
+    renderLog([page(baseVariables, [makeAction()], null, false)]);
+
+    expect(await screen.findByText('Ada Lovelace')).not.toBeNull();
+    expect(screen.getByText('Name:')).not.toBeNull();
+    expect(screen.getByText('Bed B')).not.toBeNull();
+    expect(screen.queryByRole('button', { name: /load more/i })).toBeNull();
+  });
+
+  it('shows the empty state when there are no actions', async () => {
+    renderLog([page(baseVariables, [], null, false)]);
+
+    await screen.findByText('No activity yet.');
+  });
+
   it('hides actions with no renderable content', async () => {
     renderLog([
       page(
@@ -248,6 +261,26 @@ describe('ObjectAuditLog', () => {
     ]);
 
     await screen.findByText('No activity yet.');
+  });
+
+  it('appends the next page instead of replacing the first one', async () => {
+    renderLog([
+      page(baseVariables, [makeAction()], 'c1', true),
+      page(
+        { ...baseVariables, after: 'c1' },
+        [makeAction({ fieldChanges: { name: ['Bed A', 'PAGE2'] } })],
+        null,
+        false,
+      ),
+    ]);
+
+    await screen.findByText('Name:');
+    fireEvent.click(screen.getByRole('button', { name: /load more/i }));
+
+    expect(await screen.findByText('PAGE2')).not.toBeNull();
+    // The first page must still be on screen; replacing it would also show PAGE2.
+    expect(screen.getByText('Bed B')).not.toBeNull();
+    expect(screen.getAllByText('Name:')).toHaveLength(2);
   });
 
   it('keeps the loaded rows and offers a retry when loading more fails', async () => {
@@ -300,6 +333,19 @@ describe('ObjectAuditLog', () => {
 
     await screen.findByText('PAGE2');
     await waitFor(() => expect(screen.getAllByText('PAGE2')).toHaveLength(1));
+  });
+
+  it('shows an error with a retry that reloads the log', async () => {
+    renderLog([
+      errorPage(baseVariables),
+      page(baseVariables, [makeAction()], null, false),
+    ]);
+
+    expect(await screen.findByText('Unable to load activity.')).not.toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+
+    expect(await screen.findByText('Ada Lovelace')).not.toBeNull();
   });
 
   it('keeps cached actions when a refresh fails, then recovers on retry', async () => {

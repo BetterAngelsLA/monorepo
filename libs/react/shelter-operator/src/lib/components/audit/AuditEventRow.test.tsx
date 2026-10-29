@@ -1,4 +1,4 @@
-import { AuditEventKind, AuditTargetType } from '@monorepo/ba-platform/types';
+import { AuditEventKind } from '@monorepo/ba-platform/types';
 import { render, screen } from '@testing-library/react';
 import type { AuditEvent } from '../../hooks';
 import { AuditEventRow } from './AuditEventRow';
@@ -7,11 +7,8 @@ function makeEvent(overrides: Partial<AuditEvent>): AuditEvent {
   return {
     __typename: 'AuditEventType',
     timestamp: '2026-07-01T12:00:00Z',
-    actor: 'Ada Lovelace',
     kind: AuditEventKind.Update,
     action: 'bed.update',
-    targetType: AuditTargetType.Bed,
-    targetId: '7',
     fieldChanges: {},
     context: null,
     summary: null,
