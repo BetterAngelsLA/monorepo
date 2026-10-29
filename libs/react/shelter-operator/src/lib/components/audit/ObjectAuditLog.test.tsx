@@ -84,44 +84,58 @@ function renderLog(mocks: ReadonlyArray<unknown>) {
   );
 }
 
-/** First request succeeds, the refresh fails, and the retry succeeds. */
+type ResponsePhase = 'initial' | 'failing' | 'reloaded';
+
+/**
+ * Responses are phase-controlled so a test can prove that Retry issued a request:
+ * the "reloaded" payload is distinguishable from the initial one, and a retry
+ * that only cleared the error banner could never produce it.
+ */
 function makeClientThatFailsOnRefresh() {
-  let calls = 0;
+  let phase: ResponsePhase = 'initial';
   const link = new ApolloLink(
     () =>
       new Observable((observer) => {
-        calls += 1;
-
-        if (calls === 2) {
+        if (phase === 'failing') {
           observer.error(new Error('network down'));
           return;
         }
 
-        observer.next({ data: pageData([makeAction()], null, false) });
+        const actor =
+          phase === 'reloaded' ? 'Ada Lovelace (reloaded)' : 'Ada Lovelace';
+
+        observer.next({ data: pageData([makeAction({ actor })], null, false) });
         observer.complete();
       }),
   );
 
-  return new ApolloClient({ link, cache: new InMemoryCache() });
+  return {
+    client: new ApolloClient({ link, cache: new InMemoryCache() }),
+    setPhase: (next: ResponsePhase) => {
+      phase = next;
+    },
+  };
 }
 
 /** Page one, page two, a failed refresh, then a retry that replays both pages. */
 function makePagedClientThatFailsOnRefresh() {
-  let pageOneCalls = 0;
+  let phase: ResponsePhase = 'initial';
   const link = new ApolloLink(
     (operation) =>
       new Observable((observer) => {
+        if (phase === 'failing') {
+          observer.error(new Error('network down'));
+          return;
+        }
+
+        const reloaded = phase === 'reloaded';
+        const actor = reloaded ? 'Ada Lovelace (reloaded)' : 'Ada Lovelace';
         const after = operation.variables.after as string | undefined;
 
         if (!after) {
-          pageOneCalls += 1;
-
-          if (pageOneCalls === 2) {
-            observer.error(new Error('network down'));
-            return;
-          }
-
-          observer.next({ data: pageData([makeAction()], 'c1', true) });
+          observer.next({
+            data: pageData([makeAction({ actor })], 'c1', true),
+          });
           observer.complete();
           return;
         }
@@ -129,7 +143,14 @@ function makePagedClientThatFailsOnRefresh() {
         if (after === 'c1') {
           observer.next({
             data: pageData(
-              [makeAction({ fieldChanges: { name: ['Bed A', 'PAGE2'] } })],
+              [
+                makeAction({
+                  actor,
+                  fieldChanges: {
+                    name: ['Bed A', reloaded ? 'PAGE2 (replayed)' : 'PAGE2'],
+                  },
+                }),
+              ],
               null,
               false,
             ),
@@ -142,7 +163,12 @@ function makePagedClientThatFailsOnRefresh() {
       }),
   );
 
-  return new ApolloClient({ link, cache: new InMemoryCache() });
+  return {
+    client: new ApolloClient({ link, cache: new InMemoryCache() }),
+    setPhase: (next: ResponsePhase) => {
+      phase = next;
+    },
+  };
 }
 
 function RefreshTrigger() {
@@ -217,15 +243,17 @@ describe('ObjectAuditLog', () => {
 
   it('keeps cached actions when a refresh fails, then recovers on retry', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const recorded = makeClientThatFailsOnRefresh();
 
     render(
-      <ApolloProvider client={makeClientThatFailsOnRefresh()}>
+      <ApolloProvider client={recorded.client}>
         <ObjectAuditLog targetType={AuditTargetType.Bed} objectId="7" />
         <RefreshTrigger />
       </ApolloProvider>,
     );
 
     await screen.findByText('Ada Lovelace');
+    recorded.setPhase('failing');
     fireEvent.click(screen.getByRole('button', { name: 'refresh' }));
 
     expect(
@@ -234,19 +262,23 @@ describe('ObjectAuditLog', () => {
     // The cached action must survive the failed refresh.
     expect(screen.getByText('Ada Lovelace')).not.toBeNull();
 
+    recorded.setPhase('reloaded');
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
 
     await waitFor(() =>
       expect(screen.queryByText('Couldn\u2019t refresh activity.')).toBeNull(),
     );
-    expect(screen.getByText('Ada Lovelace')).not.toBeNull();
+    // Retry must re-issue the request: the reloaded payload cannot come from
+    // merely clearing the error banner.
+    expect(await screen.findByText('Ada Lovelace (reloaded)')).not.toBeNull();
   });
 
   it('replays loaded pages when retrying a failed refresh', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const recorded = makePagedClientThatFailsOnRefresh();
 
     render(
-      <ApolloProvider client={makePagedClientThatFailsOnRefresh()}>
+      <ApolloProvider client={recorded.client}>
         <ObjectAuditLog targetType={AuditTargetType.Bed} objectId="7" />
         <RefreshTrigger />
       </ApolloProvider>,
@@ -256,19 +288,22 @@ describe('ObjectAuditLog', () => {
     fireEvent.click(screen.getByRole('button', { name: /load more/i }));
     expect(await screen.findByText('PAGE2')).not.toBeNull();
 
+    recorded.setPhase('failing');
     fireEvent.click(screen.getByRole('button', { name: 'refresh' }));
     expect(
       await screen.findByText('Couldn\u2019t refresh activity.'),
     ).not.toBeNull();
 
+    recorded.setPhase('reloaded');
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
 
     await waitFor(() =>
       expect(screen.queryByText('Couldn\u2019t refresh activity.')).toBeNull(),
     );
-    // Both pages are reloaded: page one, then the appended page replayed from
-    // its cursor.
-    expect(await screen.findByText('PAGE2')).not.toBeNull();
+    // Retry re-fetches page one and replays the saved page cursor; both are
+    // proved by payloads that only exist after Retry.
+    expect(await screen.findByText('Ada Lovelace (reloaded)')).not.toBeNull();
+    expect(await screen.findByText('PAGE2 (replayed)')).not.toBeNull();
     expect(screen.getByText('Bed B')).not.toBeNull();
     expect(screen.getAllByText('Name:')).toHaveLength(2);
   });
