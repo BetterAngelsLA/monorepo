@@ -104,7 +104,7 @@ class CreateNoteServiceRequestInput:
 @strawberry_django.input(models.ServiceRequest, partial=True)
 class UpdateServiceRequestInput:
     id: ID
-    service_other: Optional[str]
+    service_other: Maybe[str | None]
     status: auto
     due_by: auto
 
@@ -245,24 +245,26 @@ class CreateNoteTaskInput:
 class UpdateNoteInput:
     """
     Input for updating a note with all nested relations.
-    Omitted fields are left unchanged — UNSET for the plain ``Optional``
-    fields, absent (``None``) for the ``Maybe`` ones. Nested relation fields
-    use replace-all semantics (existing items are removed, new ones created).
+
+    Every field is a ``Maybe``: omitted fields are left unchanged, an explicit
+    ``null`` is a value (``Some(None)``) and a provided value is ``Some(value)``.
+    Nested relation fields use replace-all semantics when provided (existing
+    items are removed, new ones created).
     """
 
     id: ID
-    purpose: Optional[NonBlankString] = strawberry.UNSET
+    purpose: Maybe[NonBlankString | None]
     team_id: Maybe[ID | None]
-    public_details: Optional[str] = strawberry.UNSET
-    private_details: Optional[str] = strawberry.UNSET
-    is_submitted: Optional[bool] = strawberry.UNSET
-    interacted_at: Optional[datetime] = strawberry.UNSET
+    public_details: Maybe[str | None]
+    private_details: Maybe[str | None]
+    is_submitted: Maybe[bool | None]
+    interacted_at: Maybe[datetime | None]
 
     # Nested relations (replace-all when provided)
-    location: Optional[LocationInput] = strawberry.UNSET
-    provided_services: Optional[List[CreateNoteServiceInput]] = strawberry.UNSET
-    requested_services: Optional[List[CreateNoteServiceInput]] = strawberry.UNSET
-    tasks: Optional[List[CreateNoteTaskInput]] = strawberry.UNSET
+    location: Maybe[LocationInput | None]
+    provided_services: Maybe[List[CreateNoteServiceInput] | None]
+    requested_services: Maybe[List[CreateNoteServiceInput] | None]
+    tasks: Maybe[List[CreateNoteTaskInput] | None]
 
 
 @strawberry_django.input(models.Note)
