@@ -10,11 +10,6 @@ under a ``lock_timeout`` of ``--timeout`` seconds, so a stuck holder raises
 instead of hanging until ECS kills the task. The timeout applies to the *wait*
 only; a migration that has started is never interrupted. The session lock is
 released in ``finally`` and by Postgres when the process exits.
-
-If the holder is killed mid-migration the lock is released and a follower retries
-the plan. Transactional DDL rolls back, but a non-transactional step (e.g.
-``CREATE INDEX CONCURRENTLY``) can leave an invalid object behind, so that retry
-may need manual cleanup.
 """
 
 from __future__ import annotations
