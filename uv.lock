@@ -168,15 +168,15 @@ wheels = [
 
 [[package]]
 name = "boto3-stubs"
-version = "1.43.35"
+version = "1.43.118"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "botocore-stubs" },
     { name = "types-s3transfer" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ae/91/7d2a7264b84b4bc103b6586e39631fd5f3b1320a78eece83b09ad4f70061/boto3_stubs-1.43.35.tar.gz", hash = "sha256:241fa3ec2ebe561c90e281cd206f2aafbdd0c02959f568bf4f32aeba44cb5e91", size = 103460, upload-time = "2026-06-22T21:56:24.373Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/75/15/d5faf1c0eb6998a6b2d46598a42a00e0af02f48e89b9e02161282ecff0b4/boto3_stubs-1.43.118.tar.gz", hash = "sha256:11a39b22fabd4ac0532904b0522e7491cc54b1a710e04ead30711ceafda6ba4f", size = 105504, upload-time = "2026-10-22T19:26:41.321Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/71/25/eb3adb5798674cc984b75e58f6fa81d750173d60bd0e6c8137c866645475/boto3_stubs-1.43.35-py3-none-any.whl", hash = "sha256:14fe23d2b823b39c9a9f53cd50065589b5843c2e8eb53f28d1153cca3818c647", size = 71048, upload-time = "2026-06-22T21:56:20.226Z" },
+    { url = "https://files.pythonhosted.org/packages/cc/24/13aeefef9d1f7330692cfdacd98faae898e06b7f2d2926af4819ed0f5990/boto3_stubs-1.43.118-py3-none-any.whl", hash = "sha256:21c9fd6d24b99af97d5f04247b58b8072352f39d69233fe1c5f20676c5aa547b", size = 72011, upload-time = "2026-10-22T19:26:33.662Z" },
 ]
 
 [package.optional-dependencies]
@@ -1397,7 +1397,7 @@ requires-dist = [{ name = "betterangels-backend", editable = "apps/betterangels-
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "boto3-stubs", extras = ["essential"], specifier = ">=1.42.41,<2" },
+    { name = "boto3-stubs", extras = ["essential"], specifier = ">=1.43.118,<2" },
     { name = "celery-types", specifier = ">=0.26.0,<1" },
     { name = "django-stubs", extras = ["compatible-mypy"], specifier = ">=6.1,<7" },
     { name = "django-stubs-ext", specifier = ">=6.1.2,<7" },
