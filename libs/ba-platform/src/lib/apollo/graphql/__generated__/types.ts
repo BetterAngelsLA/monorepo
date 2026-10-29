@@ -26,7 +26,7 @@ export type Scalars = {
   /** Rejects blank input. Use for required string fields. */
   NonEmptyString: { input: string; output: string; }
   PhoneNumber: { input: PhoneNumberString; output: PhoneNumberString; }
-  /** Represents a point as `(x, y, z)` or `(x, y)`. */
+  /** Represents a point as `(x, y, z)` or `(x, y)`. Input also accepts WKT, EWKT, HEXEWKB or GeoJSON (string or object). */
   Point: { input: any; output: any; }
   /** Time (isoformat) */
   Time: { input: TimeString; output: TimeString; }
