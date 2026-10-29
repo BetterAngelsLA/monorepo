@@ -16,6 +16,7 @@ from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import TestCase
 from model_bakery import baker
+from strawberry_django.utils.query import filter_for_user
 
 from accounts.models import Grant, Role, User
 from accounts.selectors import organization_effective_permissions, organization_permissions
@@ -201,10 +202,16 @@ class ExplainPermissionTestCase(TestCase):
         for perm, surface in self.LEGACY_LIVE_CLIENT_SURFACES:
             with self.subTest(perm=perm, surface=surface):
                 group = make_permission_group(organization=self.org_a, template_name="Caseworker")
-                # set() rather than add(): one permission per iteration, so a
-                # later case cannot pass on an earlier case's row.
+                # set() rather than add(): one carve-out permission per iteration,
+                # so a later case cannot pass on an earlier case's row.  VIEW rides
+                # along as the control — a legacy row for a genuinely inert
+                # permission — so the family assertion below fails on absence and
+                # inertness alike.
                 group.permissions.set(
-                    [Permission.objects.get(content_type__app_label="clients", codename=perm.split(".", 1)[1])]
+                    [
+                        Permission.objects.get(content_type__app_label="clients", codename=perm.split(".", 1)[1]),
+                        Permission.objects.get(content_type__app_label="clients", codename="view_clientprofile"),
+                    ]
                 )
                 holder = baker.make(User)
                 self.org_a.add_user(holder)
@@ -224,23 +231,31 @@ class ExplainPermissionTestCase(TestCase):
 
                 reported = organization_permissions(holder)[self.org_a.pk]
                 self.assertIn(perm, reported)
-                self.assertNotIn(ClientProfile.perms.VIEW, reported)  # not granted, not reported
+                # VIEW is carried by the same legacy row, but it is inert — the
+                # report must not credit it.
+                self.assertNotIn(ClientProfile.perms.VIEW, reported)
 
-                # The family permission on the same app is genuinely inert for this holder.
+                # The family permission on the same app is genuinely inert for this
+                # holder: the row exists, so the arm's refusal is inertness.
                 family = explain(holder, ClientProfile.perms.VIEW, org=self.org_a)
                 self.assertTrue(family.cut_over)
-                self.assertFalse(_arm(family, "legacy rows").holds)
+                legacy_family = _arm(family, "legacy rows")
+                self.assertFalse(legacy_family.holds)
+                self.assertIn("inert for this domain", legacy_family.detail)
+                self.assertTrue(any("inert for this domain" in note for note in family.notes))
 
     def test_global_tier_carve_out_permission_folds_into_an_org_without_a_group(self) -> None:
         """A carve-out permission held globally is folded into every org entry.
 
-        The two live legacy paths are org-agnostic: ``filter_for_user`` and the
-        default ``HasPerm`` checker consult global permissions with no org
-        filter, so a global-tier holder really can exercise the document/import
-        surface at an org where they hold no ``PermissionGroup``.  The fold
-        depends on that; filtering ``LEGACY_LIVE_PERMISSIONS`` out of it would
-        under-report authority the backend honours.
+        Neither live legacy path consults the organization: the import mutations
+        go through the default ``HasPerm`` checker (``user.has_perm``), and the
+        document uploads' ``filter_for_user`` filters on global/object permission
+        with no org notion at all.  So a global-tier holder really can exercise
+        both at an org where they hold no ``PermissionGroup``, and the fold must
+        keep advertising that — filtering ``LEGACY_LIVE_PERMISSIONS`` out of it
+        would under-report authority the backend honours.
         """
+        profile = baker.make(ClientProfile, first_name="Fold")
         holder = baker.make(User)
         self.org_a.add_user(holder)
         holder.user_permissions.add(
@@ -249,7 +264,16 @@ class ExplainPermissionTestCase(TestCase):
         # Re-read so ``has_perm`` sees the new row rather than a warm perm cache.
         holder = User.objects.get(pk=holder.pk)
 
+        # Both paths the carve-out exists for, exercised at an org with no group.
         self.assertTrue(holder.has_perm(ClientProfile.perms.CHANGE))
+        self.assertEqual(
+            list(
+                filter_for_user(ClientProfile.objects.all(), holder, [ClientProfile.perms.CHANGE]).values_list(
+                    "pk", flat=True
+                )
+            ),
+            [profile.pk],
+        )
         self.assertIn(ClientProfile.perms.CHANGE, organization_effective_permissions(holder)[self.org_a.pk])
 
     def test_legacy_only_holder_denied_in_object_mode(self) -> None:
