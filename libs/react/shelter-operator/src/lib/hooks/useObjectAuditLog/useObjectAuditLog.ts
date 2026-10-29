@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@apollo/client/react';
 import {
   ObjectAuditLogDocument,
@@ -64,18 +64,27 @@ export function useObjectAuditLog({
   // only read by `retry`; a new object starts with an empty chain.
   const pageCursorsRef = useRef<string[]>([]);
   const retryingRef = useRef(false);
+  const loadMoreInFlightRef = useRef(false);
+
+  // Bumped on every object/variables change. Async work captures the value it
+  // started with, so a page that resolves after the switch cannot append itself
+  // to the new object's cache or cursor chain.
+  const generationRef = useRef(0);
+  const [retryError, setRetryError] = useState(false);
 
   useEffect(() => {
+    generationRef.current += 1;
     pageCursorsRef.current = [];
+    setRetryError(false);
   }, [variables]);
 
   /** Fetch the page after *after* and append it to the cached result. */
   const appendPage = useCallback(
-    async (after: string) => {
+    async (after: string, generation: number) => {
       await fetchMore({
         variables: { ...variables, after },
         updateQuery: (previous, { fetchMoreResult }) => {
-          if (!fetchMoreResult) {
+          if (!fetchMoreResult || generationRef.current !== generation) {
             return previous;
           }
 
@@ -96,46 +105,101 @@ export function useObjectAuditLog({
   );
 
   const loadMore = useCallback(async () => {
-    if (!endCursor) {
+    if (
+      !endCursor ||
+      loadMoreInFlightRef.current ||
+      retryingRef.current ||
+      pageCursorsRef.current.includes(endCursor)
+    ) {
       return;
     }
 
     const cursor = endCursor;
+    const generation = generationRef.current;
+    loadMoreInFlightRef.current = true;
 
     try {
-      await appendPage(cursor);
+      await appendPage(cursor, generation);
+      if (generationRef.current !== generation) {
+        return;
+      }
       pageCursorsRef.current = [...pageCursorsRef.current, cursor];
+      // A successful page restores the part a failed retry replay lost.
+      setRetryError(false);
     } catch {
+      if (generationRef.current !== generation) {
+        return;
+      }
       // Apollo does not set the query-level ``error`` for a failed ``fetchMore``.
       // NOTE: the activity-log hardening follow-up adds a visible load-more
       // error state; until then a failed page load is logged only.
       // Log a stable event name, never the Apollo error (it carries the response
       // payload and operation variables).
       console.error('audit_log_load_more_failed');
+    } finally {
+      loadMoreInFlightRef.current = false;
     }
   }, [appendPage, endCursor]);
 
   /**
    * Re-run the first page (after a failed load), then re-append the pages that
-   * were already loaded. Failures surface through the query's `error`.
+   * were already loaded. A refetch failure surfaces through the query's `error`;
+   * a replay failure has no Apollo query error, so it sets `retryError` and
+   * keeps only the pages that actually came back.
    */
   const retry = useCallback(async () => {
-    if (retryingRef.current) {
+    if (retryingRef.current || loadMoreInFlightRef.current) {
       return;
     }
 
     retryingRef.current = true;
+    setRetryError(false);
+
+    const generation = generationRef.current;
+    const cursors = [...pageCursorsRef.current];
+    const replayed: string[] = [];
+    let refreshed = false;
 
     try {
       await refetch();
+      refreshed = true;
 
-      for (const cursor of pageCursorsRef.current) {
-        await appendPage(cursor);
+      if (generationRef.current !== generation) {
+        return;
       }
+
+      for (const cursor of cursors) {
+        if (generationRef.current !== generation) {
+          return;
+        }
+
+        await appendPage(cursor, generation);
+
+        if (generationRef.current !== generation) {
+          return;
+        }
+
+        replayed.push(cursor);
+      }
+
+      pageCursorsRef.current = replayed;
     } catch {
-      // `refetch` rejects as well as setting `error`; swallow the rejection so an
-      // unhandled promise cannot escape from the retry button.
-      console.error('audit_log_reload_failed');
+      if (generationRef.current !== generation) {
+        return;
+      }
+
+      if (refreshed) {
+        // The first page came back, but a replayed page did not. Keeping the
+        // successful prefix keeps the cursor chain in step with the cache; the
+        // failed cursor is the cache's endCursor, so Load more can retry it.
+        pageCursorsRef.current = replayed;
+        setRetryError(true);
+        console.error('audit_log_replay_failed');
+      } else {
+        // `refetch` rejects as well as setting `error`; swallow the rejection so
+        // an unhandled promise cannot escape from the retry button.
+        console.error('audit_log_reload_failed');
+      }
     } finally {
       retryingRef.current = false;
     }
@@ -146,6 +210,7 @@ export function useObjectAuditLog({
     loading: loading && !data,
     loadingMore: loading && Boolean(data),
     error,
+    retryError,
     hasMore,
     loadMore,
     retry,

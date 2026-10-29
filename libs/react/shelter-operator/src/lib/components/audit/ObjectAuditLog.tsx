@@ -37,10 +37,19 @@ export function ObjectAuditLog({
   objectId,
   className,
 }: ObjectAuditLogProps) {
-  const { actions, loading, loadingMore, error, hasMore, loadMore, retry } =
-    useObjectAuditLog({ targetType, objectId });
+  const {
+    actions,
+    loading,
+    loadingMore,
+    error,
+    retryError,
+    hasMore,
+    loadMore,
+    retry,
+  } = useObjectAuditLog({ targetType, objectId });
 
   const hasActions = actions.length > 0;
+  const hasRefreshError = Boolean(error || retryError);
 
   const renderContent = () => {
     if (loading) {
@@ -49,7 +58,7 @@ export function ObjectAuditLog({
 
     // Only replace the list with an error when there is nothing cached to show:
     // a failed refresh must not hide activity that is still usable.
-    if (error && !hasActions) {
+    if (hasRefreshError && !hasActions) {
       return (
         <div
           role="alert"
@@ -67,7 +76,7 @@ export function ObjectAuditLog({
 
     return (
       <div className="flex flex-col gap-3">
-        {error && hasActions && (
+        {hasRefreshError && hasActions && (
           <div
             role="alert"
             className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-3"

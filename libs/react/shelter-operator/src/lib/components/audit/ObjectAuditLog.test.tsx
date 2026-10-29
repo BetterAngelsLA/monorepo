@@ -8,7 +8,9 @@ import { ApolloProvider, useApolloClient } from '@apollo/client/react';
 import { MockedProvider } from '@apollo/client/testing/react';
 import { AuditEventKind, AuditTargetType } from '@monorepo/ba-platform/types';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { useState } from 'react';
 import { ObjectAuditLog } from './ObjectAuditLog';
+import { useObjectAuditLog } from '../../hooks';
 import { ObjectAuditLogDocument } from '../../hooks/useObjectAuditLog/__generated__/useObjectAuditLog.generated';
 
 const baseVariables = {
@@ -84,7 +86,7 @@ function renderLog(mocks: ReadonlyArray<unknown>) {
   );
 }
 
-type ResponsePhase = 'initial' | 'failing' | 'reloaded';
+type ResponsePhase = 'initial' | 'failing' | 'replay-failing' | 'reloaded';
 
 /**
  * Responses are phase-controlled so a test can prove that Retry issued a request:
@@ -128,7 +130,7 @@ function makePagedClientThatFailsOnRefresh() {
           return;
         }
 
-        const reloaded = phase === 'reloaded';
+        const reloaded = phase === 'reloaded' || phase === 'replay-failing';
         const actor = reloaded ? 'Ada Lovelace (reloaded)' : 'Ada Lovelace';
         const after = operation.variables.after as string | undefined;
 
@@ -141,6 +143,11 @@ function makePagedClientThatFailsOnRefresh() {
         }
 
         if (after === 'c1') {
+          if (phase === 'replay-failing') {
+            observer.error(new Error('replay down'));
+            return;
+          }
+
           observer.next({
             data: pageData(
               [
@@ -185,6 +192,69 @@ function RefreshTrigger() {
     >
       refresh
     </button>
+  );
+}
+
+/** A component that calls `loadMore` twice in one click, bypassing the button. */
+function DoubleLoadMore() {
+  const { actions, loadMore } = useObjectAuditLog({
+    targetType: AuditTargetType.Bed,
+    objectId: '7',
+  });
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => {
+          void loadMore();
+          void loadMore();
+        }}
+      >
+        double load
+      </button>
+      {actions.map((action, index) => (
+        <div key={index}>{action.actor}</div>
+      ))}
+    </div>
+  );
+}
+
+function SwitchableHarness() {
+  const [objectId, setObjectId] = useState('7');
+  const { actions, loadMore, retry } = useObjectAuditLog({
+    targetType: AuditTargetType.Bed,
+    objectId,
+  });
+
+  return (
+    <>
+      {actions.map((action, index) => (
+        <div key={index}>{action.actor}</div>
+      ))}
+      <button type="button" onClick={() => void loadMore()}>
+        load more
+      </button>
+      <button type="button" onClick={() => setObjectId('8')}>
+        switch
+      </button>
+      <button type="button" onClick={() => void retry()}>
+        retry
+      </button>
+    </>
+  );
+}
+
+function SwitchableLog() {
+  const [objectId, setObjectId] = useState('7');
+
+  return (
+    <>
+      <button type="button" onClick={() => setObjectId('8')}>
+        switch
+      </button>
+      <ObjectAuditLog targetType={AuditTargetType.Bed} objectId={objectId} />
+    </>
   );
 }
 
@@ -306,5 +376,200 @@ describe('ObjectAuditLog', () => {
     expect(await screen.findByText('PAGE2 (replayed)')).not.toBeNull();
     expect(screen.getByText('Bed B')).not.toBeNull();
     expect(screen.getAllByText('Name:')).toHaveLength(2);
+  });
+
+  it('does not start a second load-more while one is in flight', async () => {
+    const pageTwo = () =>
+      page(
+        { ...baseVariables, after: 'c1' },
+        [makeAction({ actor: 'PAGE2' })],
+        null,
+        false,
+      );
+
+    render(
+      <MockedProvider
+        mocks={
+          [
+            page(baseVariables, [makeAction({ actor: 'PAGE1' })], 'c1', true),
+            { ...pageTwo(), delay: 50 },
+            { ...pageTwo(), delay: 50 },
+          ] as never
+        }
+        showWarnings={false}
+      >
+        <DoubleLoadMore />
+      </MockedProvider>,
+    );
+
+    await screen.findByText('PAGE1');
+    fireEvent.click(screen.getByRole('button', { name: 'double load' }));
+
+    expect(await screen.findByText('PAGE2')).not.toBeNull();
+    await waitFor(() => expect(screen.getAllByText('PAGE2')).toHaveLength(1));
+  });
+
+  it('surfaces a replay failure instead of clearing the refresh error', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const recorded = makePagedClientThatFailsOnRefresh();
+
+    render(
+      <ApolloProvider client={recorded.client}>
+        <ObjectAuditLog targetType={AuditTargetType.Bed} objectId="7" />
+        <RefreshTrigger />
+      </ApolloProvider>,
+    );
+
+    await screen.findByText('Bed B');
+    fireEvent.click(screen.getByRole('button', { name: /load more/i }));
+    expect(await screen.findByText('PAGE2')).not.toBeNull();
+
+    recorded.setPhase('failing');
+    fireEvent.click(screen.getByRole('button', { name: 'refresh' }));
+    expect(
+      await screen.findByText('Couldn’t refresh activity.'),
+    ).not.toBeNull();
+
+    recorded.setPhase('replay-failing');
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+
+    // Page one came back, but the replayed page did not. The error must stay
+    // visible; clearing it would make a failed retry look successful.
+    expect(await screen.findByText('Ada Lovelace (reloaded)')).not.toBeNull();
+    expect(screen.getByText('Couldn’t refresh activity.')).not.toBeNull();
+    expect(screen.queryByText('PAGE2')).toBeNull();
+
+    // The failed cursor is the cache's end cursor, and the cursor chain was
+    // trimmed to the successful prefix, so Load more can retry it.
+    recorded.setPhase('reloaded');
+    fireEvent.click(screen.getByRole('button', { name: /load more/i }));
+
+    expect(await screen.findByText('PAGE2 (replayed)')).not.toBeNull();
+    await waitFor(() =>
+      expect(screen.queryByText('Couldn’t refresh activity.')).toBeNull(),
+    );
+  });
+
+  it('ignores a page that resolves after the object changes', async () => {
+    render(
+      <MockedProvider
+        mocks={
+          [
+            page(
+              baseVariables,
+              [makeAction({ actor: 'OLD OBJECT' })],
+              'c1',
+              true,
+            ),
+            {
+              ...page(
+                { ...baseVariables, after: 'c1' },
+                [makeAction({ actor: 'OLD PAGE' })],
+                null,
+                false,
+              ),
+              delay: 100,
+            },
+            page(
+              { ...baseVariables, objectId: '8' },
+              [makeAction({ actor: 'NEW OBJECT' })],
+              null,
+              false,
+            ),
+          ] as never
+        }
+        showWarnings={false}
+      >
+        <SwitchableLog />
+      </MockedProvider>,
+    );
+
+    await screen.findByText('OLD OBJECT');
+    fireEvent.click(screen.getByRole('button', { name: /load more/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'switch' }));
+
+    expect(await screen.findByText('NEW OBJECT')).not.toBeNull();
+
+    await new Promise((resolve) => setTimeout(resolve, 200));
+
+    // The in-flight page belonged to object 7; it must not be appended to 8.
+    expect(screen.queryByText('OLD PAGE')).toBeNull();
+  });
+
+  it("does not replay the old object's cursor after a switch", async () => {
+    const calls: Array<{ objectId?: string; after?: string }> = [];
+    const link = new ApolloLink(
+      (operation) =>
+        new Observable((observer) => {
+          const { objectId, after } = operation.variables as {
+            objectId: string;
+            after?: string;
+          };
+
+          calls.push({ objectId, after });
+
+          if (after === 'c7') {
+            if (objectId === '8') {
+              observer.error(new Error('stale cursor'));
+              return;
+            }
+
+            setTimeout(() => {
+              observer.next({
+                data: pageData(
+                  [makeAction({ actor: 'OLD PAGE' })],
+                  null,
+                  false,
+                ),
+              });
+              observer.complete();
+            }, 75);
+            return;
+          }
+
+          if (!after) {
+            observer.next({
+              data: pageData(
+                [
+                  makeAction({
+                    actor: objectId === '7' ? 'OBJECT 7' : 'OBJECT 8',
+                  }),
+                ],
+                objectId === '7' ? 'c7' : 'c8',
+                true,
+              ),
+            });
+            observer.complete();
+            return;
+          }
+
+          observer.error(new Error(`unexpected cursor ${after}`));
+        }),
+    );
+    const client = new ApolloClient({ link, cache: new InMemoryCache() });
+
+    render(
+      <ApolloProvider client={client}>
+        <SwitchableHarness />
+      </ApolloProvider>,
+    );
+
+    await screen.findByText('OBJECT 7');
+    fireEvent.click(screen.getByRole('button', { name: 'load more' }));
+    fireEvent.click(screen.getByRole('button', { name: 'switch' }));
+    await screen.findByText('OBJECT 8');
+
+    // Let the in-flight page for object 7 resolve after the switch.
+    await new Promise((resolve) => setTimeout(resolve, 150));
+
+    calls.length = 0;
+    fireEvent.click(screen.getByRole('button', { name: 'retry' }));
+    await waitFor(() => expect(calls.length).toBeGreaterThan(0));
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    // Retry on object 8 must not replay the old object's cursor.
+    expect(
+      calls.some((call) => call.objectId === '8' && call.after === 'c7'),
+    ).toBe(false);
   });
 });
