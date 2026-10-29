@@ -231,6 +231,13 @@
     "build-list": {
       "executor": "@nx/expo:build-list",
       "cache": false
+    },
+    "verify-app-links": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "options": {
+        "command": "node tools/deploy/verify-app-links.mjs"
+      }
     }
   }
 }

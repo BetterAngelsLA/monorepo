@@ -127,3 +127,7 @@ libs/expo/modules/*/android/build/
 # Playwright browser binaries (installed into the workspace: the default
 # ~/Library/Caches/ms-playwright is outside the writable workspace).
 .pw-browsers/
+
+# App signing material. Never commit these.
+apps/*/credentials.json
+apps/*/*.keystore

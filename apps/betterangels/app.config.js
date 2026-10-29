@@ -24,13 +24,20 @@ if (
   );
 }
 
-const HOSTNAME = IS_PRODUCTION
-  ? 'api.prod.betterangels.la' // TODO: We should adjust this to be app.betterangels.la
-  : 'api.dev.betterangels.la'; // TODO: We should adjust this to be app.dev.betterangels.la
-
 const BUNDLE_IDENTIFIER = IS_PRODUCTION
   ? 'la.betterangels.app'
   : 'la.betterangels.dev.app';
+
+/*
+ * Universal Links / App Links are claimed on the web app's own host, not the
+ * API host: the verification files are served from the outreach-web bucket at
+ * /.well-known/ (see apps/betterangels/well-known/). The entitlement, the
+ * intent filter and those files must all agree, or the OS silently opens the
+ * browser instead of the app.
+ */
+const LINK_HOST = IS_PRODUCTION
+  ? 'outreach.betterangels.la'
+  : 'outreach.dev.betterangels.la';
 
 export default {
   expo: {
@@ -51,7 +58,7 @@ export default {
       supportsTablet: true,
       bundleIdentifier: BUNDLE_IDENTIFIER,
       buildNumber: '1.2.16',
-      associatedDomains: [`applinks:${HOSTNAME}`],
+      associatedDomains: [`applinks:${LINK_HOST}`],
       config: {
         usesNonExemptEncryption: false,
       },
@@ -75,11 +82,16 @@ export default {
       intentFilters: [
         {
           action: 'VIEW',
+          // Without autoVerify Android never checks assetlinks.json, so links
+          // open in the browser and the app is never offered.
+          autoVerify: true,
           data: [
             {
               scheme: 'https',
-              host: HOSTNAME,
-              pathPrefix: '/',
+              host: LINK_HOST,
+              // Claim the task route only. pathPrefix would also match /tasks,
+              // the list screen, which is not a shareable task link.
+              pathPattern: '/task/.+',
             },
           ],
           category: ['BROWSABLE', 'DEFAULT'],
