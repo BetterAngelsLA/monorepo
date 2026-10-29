@@ -295,7 +295,7 @@ export function ShelterBasicInfoForm(props: TProps) {
             />
           </Form.Block>
 
-          {!!updatedAt && (
+          {!!updatedAt && isViewMode && (
             <Form.Meta>
               <Text variant="caption" className="text-gray-500">
                 Last updated:{' '}

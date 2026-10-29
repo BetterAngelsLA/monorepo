@@ -101,6 +101,7 @@ describe('ShelterBasicInfoForm', () => {
           onSubmit={onSubmitNoop}
           updatedAt="2026-07-01T12:00:00Z"
           shelterId="shelter-1"
+          isViewMode
         />
       </MemoryRouter>,
     );
@@ -118,9 +119,24 @@ describe('ShelterBasicInfoForm', () => {
         values={{ name: 'Alpha House' }}
         onSubmit={onSubmitNoop}
         updatedAt="2026-07-01T12:00:00Z"
+        isViewMode
       />,
     );
 
+    expect(screen.queryByRole('link', { name: 'View activity' })).toBeNull();
+  });
+
+  it('hides the last-updated footer while editing', () => {
+    render(
+      <ShelterBasicInfoForm
+        values={{ name: 'Alpha House' }}
+        onSubmit={onSubmitNoop}
+        updatedAt="2026-07-01T12:00:00Z"
+        shelterId="shelter-1"
+      />,
+    );
+
+    expect(screen.queryByText(/Last updated/)).toBeNull();
     expect(screen.queryByRole('link', { name: 'View activity' })).toBeNull();
   });
 
