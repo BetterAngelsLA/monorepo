@@ -100,12 +100,12 @@ test('exact metadata allowlist does not admit appended secrets; other events kee
   new Obfuscator(agent, 'PageView').traverseAndObfuscateEvents(page);
   assert.deepEqual(page, {
     duration: 1.25,
-    session: '[redacted]',
+    session: 'opaque-session',
     pageUrl: 'https://test.invalid/[route]',
   });
 });
 
-for (const eventType of ['PageView', 'PageAction']) {
+for (const eventType of ['PageAction']) {
   test(`${eventType} redacts free-form text and sanitizes URL paths`, () => {
     const obfuscator = new Obfuscator(agent, eventType);
     const event = {
@@ -127,5 +127,39 @@ for (const eventType of ['PageView', 'PageAction']) {
     assert.equal(event.duration, 1.25);
     assert.ok(!JSON.stringify(event).includes('Synthetic-Person'));
     assert.ok(!JSON.stringify(event).includes('FAKE_SECRET'));
+  });
+}
+
+for (const eventType of ['PageView', 'AjaxRequest', 'PageViewTiming']) {
+  test(`${eventType} masks URL content while retaining timing and session fields`, () => {
+    const obfuscator = new Obfuscator(agent, eventType);
+    for (const url of [
+      'https://test.invalid/clients/Synthetic-Person?token=FAKE_SECRET#private',
+      'https://fakeuser:fakepassword@test.invalid/?name=Synthetic-Person',
+      '/clients/Synthetic-Person?token=FAKE_SECRET',
+      'test.invalid/clients/Synthetic-Person?token=FAKE_SECRET',
+    ]) {
+      const event = {
+        url,
+        duration: 1.25,
+        session: '053135a581efa3c3',
+        timingName: 'largestContentfulPaint',
+        httpMethod: 'POST',
+        environment: 'validation',
+        appVersion: '1.2.14',
+      };
+      obfuscator.traverseAndObfuscateEvents(event);
+      assert.deepEqual(event, {
+        url: url.startsWith('https://')
+          ? 'https://test.invalid/[route]'
+          : '[route]',
+        duration: 1.25,
+        session: '053135a581efa3c3',
+        timingName: 'largestContentfulPaint',
+        httpMethod: 'POST',
+        environment: 'validation',
+        appVersion: '1.2.14',
+      });
+    }
   });
 }

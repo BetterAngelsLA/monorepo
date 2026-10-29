@@ -5,6 +5,18 @@ export function browserPrivacyRules(environment: string, appVersion: string) {
   );
 
   return [
+    {
+      // Strip URL credentials before the generic email rule can alter them.
+      regex: /^(https?:\/\/)[^/?#]*@/i,
+      replacement: '$1',
+    },
+    {
+      // AJAX serializers also emit relative paths and scheme-less request URLs.
+      // Leave opaque session values, timing names and HTTP methods intact.
+      regex: /^(?!https?:\/\/)[^\s]*[/?#][\s\S]*$/i,
+      replacement: '[route]',
+      eventFilter: ['PageView', 'AjaxRequest', 'PageViewTiming'],
+    },
     { regex: /\/\d+(?=[/?#\s]|$)/g, replacement: '/[id]' },
     {
       regex:
@@ -20,7 +32,13 @@ export function browserPrivacyRules(environment: string, appVersion: string) {
       // while replacing all path content with one generic route label.
       regex: /^(https?:\/\/[^/?#]+)(?:\/[^?#]*)?(?:[?#].*)?$/i,
       replacement: '$1/[route]',
-      eventFilter: ['BrowserInteraction', 'PageView', 'PageAction'],
+      eventFilter: [
+        'BrowserInteraction',
+        'PageView',
+        'PageAction',
+        'AjaxRequest',
+        'PageViewTiming',
+      ],
     },
     {
       // Do not attempt to recognize names, notes, secrets or stack contents.
@@ -29,12 +47,7 @@ export function browserPrivacyRules(environment: string, appVersion: string) {
         `^(?!(?:${safeValues.join('|')}|https?:\\/\\/[^/?#]+\\/\\[route\\])(?![\\s\\S]))[\\s\\S]+`,
       ),
       replacement: '[redacted]',
-      eventFilter: [
-        'BrowserInteraction',
-        'JavaScriptError',
-        'PageView',
-        'PageAction',
-      ],
+      eventFilter: ['BrowserInteraction', 'JavaScriptError', 'PageAction'],
     },
   ];
 }
