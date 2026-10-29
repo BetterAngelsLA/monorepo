@@ -442,7 +442,7 @@ describe('ObjectAuditLog', () => {
     // The failed cursor is the cache's end cursor, and the cursor chain was
     // trimmed to the successful prefix, so Load more can retry it.
     recorded.setPhase('reloaded');
-    fireEvent.click(screen.getByRole('button', { name: /load more/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
 
     expect(await screen.findByText('PAGE2 (replayed)')).not.toBeNull();
     await waitFor(() =>

@@ -89,7 +89,16 @@ export function ObjectAuditLog({
               color="blue"
               disabled={loadingMore}
               onClick={() => {
-                void retry();
+                // A replay failure leaves the failed page as the cache's next
+                // cursor; retrying it must load that page, not run a full
+                // refetch that only replays the pages that already succeeded.
+                if (error) {
+                  void retry();
+                } else if (retryError) {
+                  void loadMore();
+                } else {
+                  void retry();
+                }
               }}
             >
               Retry
