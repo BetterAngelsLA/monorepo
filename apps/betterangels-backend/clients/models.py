@@ -250,15 +250,15 @@ class ClientProfile(OrgScoped, AbstractClientProfile):
 
     @model_property
     def doc_ready_documents(self: "ClientProfile") -> List[Attachment]:
-        return self.documents.filter(namespace__in=DOC_READY_NAMESPACES) or []
+        return self.documents.filter(namespace__in=DOC_READY_NAMESPACES).order_by("id") or []
 
     @model_property
     def consent_form_documents(self: "ClientProfile") -> List[Attachment]:
-        return self.documents.filter(namespace__in=CONSENT_FORM_NAMESPACES) or []
+        return self.documents.filter(namespace__in=CONSENT_FORM_NAMESPACES).order_by("id") or []
 
     @model_property
     def other_documents(self: "ClientProfile") -> List[Attachment]:
-        return self.documents.filter(namespace=ClientDocumentNamespaceEnum.OTHER_CLIENT_DOCUMENT) or []
+        return self.documents.filter(namespace=ClientDocumentNamespaceEnum.OTHER_CLIENT_DOCUMENT).order_by("id") or []
 
     @model_property
     def age(self) -> Optional[int]:
