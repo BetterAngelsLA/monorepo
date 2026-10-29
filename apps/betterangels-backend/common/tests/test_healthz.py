@@ -9,5 +9,10 @@ class HealthzTests(SimpleTestCase):
         self.assertEqual(response.content, b"ok")
         self.assertEqual(response["Content-Type"], "text/plain")
 
-    def test_rejects_non_get(self) -> None:
+    def test_accepts_head(self) -> None:
+        response = self.client.head("/healthz")
+
+        self.assertEqual(response.status_code, 200)
+
+    def test_rejects_non_safe_methods(self) -> None:
         self.assertEqual(self.client.post("/healthz").status_code, 405)
