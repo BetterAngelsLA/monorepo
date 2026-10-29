@@ -47,7 +47,7 @@ def test_retries_while_another_process_holds_the_lock(capsys: Any) -> None:
         patch("common.management.commands.migrate_locked.connections", {"default": connection}),
         patch("common.management.commands.migrate_locked.Command._pending", side_effect=[True, True]),
         patch("common.management.commands.migrate_locked.call_command") as migrate,
-        patch("common.management.commands.migrate_locked.time.sleep"),
+        patch("common.management.commands.migrate_locked.time.sleep") as sleep,
     ):
         call_command("migrate_locked")
 
@@ -55,6 +55,9 @@ def test_retries_while_another_process_holds_the_lock(capsys: Any) -> None:
     assert "another process holds the migration lock; waiting" in out
     assert "applying migrations" in out
     migrate.assert_called_once()
+    assert migrate.call_args.kwargs["interactive"] is False
+    assert migrate.call_args.kwargs["verbosity"] == 1
+    sleep.assert_called_once_with(2.0)
     executed = " ".join(str(call.args[0]) for call in cursor.execute.call_args_list)
     assert executed.count("pg_try_advisory_lock") == 2
     assert "pg_advisory_unlock" in executed
