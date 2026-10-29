@@ -12,6 +12,7 @@ node_modules
 !.yarn/patches
 dist
 reports
+**/.env
 **/.venv
 **/.mypy_cache
 **/.pytest_cache
