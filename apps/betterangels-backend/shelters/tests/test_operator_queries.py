@@ -1006,8 +1006,8 @@ class OperatorShelterBAReviewTestCase(GraphQLBaseTestCase, ParametrizedTestCase)
     @parametrize(
         "viewer, expected_query_count",
         [
-            ("global", 4),
-            ("grant", 9),
+            ("global", 5),
+            ("grant", 5),
         ],
     )
     def test_operator_shelters_review_fields_query_count(self, viewer: str, expected_query_count: int) -> None:

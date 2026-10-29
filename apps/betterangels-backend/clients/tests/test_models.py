@@ -1,9 +1,10 @@
+from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.test import TestCase
 from model_bakery import baker
 
 from clients.enums import HmisAgencyEnum, PronounEnum
-from clients.models import ClientProfile, HmisProfile
+from clients.models import ClientContact, ClientProfile, HmisProfile
 
 
 class ClientProfileModelTestCase(TestCase):
@@ -51,3 +52,33 @@ class HmisProfileModelTestCase(TestCase):
 
         with self.assertRaises(IntegrityError):
             baker.make(HmisProfile, hmis_id="HMISid1", agency=HmisAgencyEnum.LAHSA)
+
+
+class ClientFamilyMemberReparentGuardTestCase(TestCase):
+    def test_reparent_guard_covers_deferred_loads(self) -> None:
+        """The guard covers a reparent through a ``.only()``/``.defer()`` load.
+
+        ``from_db`` cannot record the parent when the FK column is not in
+        ``field_names``, so it records an unknown baseline and ``save()`` reads
+        the stored parent before comparing.  Without that, ``original`` stays
+        ``None`` and the update silently reparents the row.
+        """
+        original_parent = baker.make(ClientProfile)
+        other_parent = baker.make(ClientProfile)
+        contact = baker.make(ClientContact, client_profile=original_parent, name="original")
+
+        # Control: the fully-loaded path is already guarded.
+        loaded = ClientContact.objects.get(pk=contact.pk)
+        loaded.client_profile = other_parent
+        with self.assertRaises(ValidationError):
+            loaded.save()
+
+        # The path that used to escape: the same reparent through a deferred instance.
+        deferred = ClientContact.objects.only("name").get(pk=contact.pk)
+        self.assertNotIn("client_profile_id", deferred.__dict__)  # sanity: the FK column really is deferred
+
+        deferred.client_profile = other_parent
+        with self.assertRaises(ValidationError):
+            deferred.save()
+
+        self.assertEqual(ClientContact.objects.get(pk=contact.pk).client_profile_id, original_parent.pk)

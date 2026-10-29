@@ -374,7 +374,6 @@ class ClientProfileBaseType:
 @strawberry_django.type(ClientProfile, filters=ClientProfileFilter, ordering=ClientProfileOrder, pagination=True)
 class ClientProfileType(ClientProfileBaseType):
     id: ID
-    profile_photo: auto
     contacts: Optional[List[ClientContactType]]
     hmis_profiles: Optional[List[HmisProfileType]]
     household_members: Optional[List[ClientHouseholdMemberType]]
@@ -394,6 +393,8 @@ class ClientProfileType(ClientProfileBaseType):
             return str(case_managers[-1].name)
 
         return "Not Assigned"
+
+    profile_photo: auto
 
 
 @strawberry_django.input(ClientProfile, partial=True)

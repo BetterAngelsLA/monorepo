@@ -12,9 +12,12 @@ that fed it are then walked one by one:
 * **legacy rows** — ``PermissionGroup`` membership, with the domain's live/inert
   posture (``common.permissions.domain``).
 
-Legacy-only domains (notes/clients) have not cut over: enforcement today rides
+Notes are a legacy-only domain and have not cut over: enforcement today rides
 the legacy arm, and the verdict here is what the grant model would answer — the
-difference between the two is exactly the cutover's remaining surface.
+difference between the two is exactly the cutover's remaining surface.  Clients
+cut over for the profile/family surfaces; the document and import permissions
+listed in ``LEGACY_LIVE_PERMISSIONS`` keep their legacy consumer, so
+``cut_over`` is per permission, not per app.
 """
 
 from __future__ import annotations
@@ -23,7 +26,7 @@ from dataclasses import dataclass
 from difflib import get_close_matches
 from typing import TYPE_CHECKING, Any, Optional
 
-from common.permissions.domain import LEGACY_INERT_APPS
+from common.permissions.domain import LEGACY_LIVE_PERMISSIONS, is_cut_over
 
 if TYPE_CHECKING:
     from django.db.models import Model
@@ -256,11 +259,15 @@ def _legacy_arm(
         qs = qs.filter(organization=org)
     rows = list(qs.select_related("organization").distinct())
 
-    posture = (
-        "inert for this domain (grant-only — never consulted)"
-        if cut_over
-        else "live for this domain (the current authority — not cut over)"
-    )
+    if cut_over:
+        posture = "inert for this domain (grant-only — never consulted)"
+    elif perm in LEGACY_LIVE_PERMISSIONS:
+        posture = (
+            "live for the document/import path only — the profile/family surfaces "
+            "are grant-only (this permission is shared by both)"
+        )
+    else:
+        posture = "live for this domain (the current authority — not cut over)"
     if rows:
         labels = [f"{row.label} @ {row.organization.name}" for row in rows]
         detail = f"{_names(labels)} — {posture}"
@@ -309,10 +316,18 @@ def _notes(
 
     if not cut_over:
         app_label = _split_perm(perm)[0]
-        notes.append(
-            f"domain {app_label!r} has not cut over — enforcement today rides the legacy arm; "
-            "the verdict above is the grant model's (post-cutover) answer"
-        )
+        if perm in LEGACY_LIVE_PERMISSIONS:
+            notes.append(
+                f"{app_label!r} is cut over for the profile/family surfaces (grants are the authority); "
+                "this permission still has a legacy consumer — document uploads load the parent through "
+                "filter_for_user and imports use the legacy check — so the legacy row(s) below stay live "
+                "for that path, not for profile/family writes"
+            )
+        else:
+            notes.append(
+                f"domain {app_label!r} has not cut over — enforcement today rides the legacy arm; "
+                "the verdict above is the grant model's (post-cutover) answer"
+            )
     elif not verdict:
         app_label, codename = _split_perm(perm)
         if PermissionGroup.objects.filter(user=user, **_legacy_carries(app_label, codename)).exists():
@@ -324,7 +339,7 @@ def _notes(
     # Only meaningful against a reference org: in anywhere/object mode there is
     # no "this org" for the others to be other than.
     if org is not None and s is not ALL:
-        other_ids = [pk for pk in s.values_list("scope_org", flat=True) if pk != org.pk]
+        other_ids = [pk for pk in s if pk != org.pk]
         if other_ids:
             from organizations.models import Organization
 
@@ -350,13 +365,16 @@ def explain(
     anything already cut over to grants; the arms and notes explain how it got
     there.
 
-    Read the caveat for legacy-only domains (today: notes, clients) from the
-    module docstring — it is not repeated here in full.  In short: enforcement
-    for those domains still rides the legacy ``PermissionGroup`` arm, so the
-    verdict is what the grant model *would* answer after cutover, which is not
-    necessarily what enforcement answers today.  ``Explanation.cut_over`` and
-    the notes flag which of the two worlds a given call is in; a caller that
-    needs the live answer must consult ``user.has_perm()`` as well.
+    Read the caveat for legacy-only domains (today: notes / service-request) and
+    for the ``LEGACY_LIVE_PERMISSIONS`` carve-out in ``clients`` from the module
+    docstring — it is not repeated here in full.  In short: where a domain has
+    not cut over, enforcement still rides the legacy ``PermissionGroup`` arm, so
+    the verdict is what the grant model *would* answer after cutover; where a
+    permission is carved out, the grant verdict covers the profile/family
+    surfaces while document uploads and imports still consult the legacy row.
+    ``Explanation.cut_over`` and the notes flag which of those worlds a given
+    call is in; a caller that needs the live answer must consult
+    ``user.has_perm()`` as well.
     """
     from common.permissions.selectors import can, can_anywhere, can_obj
 
@@ -364,7 +382,7 @@ def explain(
     if org is not None and obj is not None:
         raise ValueError("pass at most one of org= / obj=")
     mode = "object" if obj is not None else "org" if org is not None else "anywhere"
-    cut_over = app_label in LEGACY_INERT_APPS
+    cut_over = is_cut_over(perm)
 
     if obj is not None:
         verdict = can_obj(user, perm, obj)
