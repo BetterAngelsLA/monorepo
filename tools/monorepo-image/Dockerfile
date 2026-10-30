@@ -1,14 +1,11 @@
 # syntax=docker/dockerfile:1
 
-# Runtime base: the Python app plus the system libraries GeoDjango needs
-# (libpq for psycopg, the GDAL/GEOS/PROJ shared libraries). Deliberately free of
-# Docker, AWS CLI, Node, EAS, psql and the Playwright libraries: the production
-# stage builds from here, and none of that is on the request path.
+# Runtime base: Python plus the system libraries GeoDjango needs (libpq for
+# psycopg, GDAL/GEOS/PROJ). No Docker, AWS CLI, Node, EAS, psql or Playwright
+# libraries — none of it is on the production request path.
 #
-# `-slim-trixie` rather than `trixie`: the full image is buildpack-deps (gcc,
-# git, subversion, imagemagick, mysql client dev…) to *compile* CPython. Nothing
-# here compiles anything — wheels arrive from `uv-runtime` — so that layer is
-# 1.4 GB of build tooling that every Fargate task would pull on start.
+# `-slim-trixie`, not `trixie`: the full image is buildpack-deps, which exists to
+# compile CPython. This image only installs wheels.
 FROM python:3.14.8-slim-trixie AS slim-base
 
 ENV PYTHONUNBUFFERED=1
@@ -23,17 +20,10 @@ RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,t
       libproj25 \
       proj-data \
     && rm -rf /var/lib/apt/lists/* \
-    # PROJ ships datum-shift grids next to the CRS registry: the CHENYX06
-    # family alone is 10 MB of Swiss grids. The registry (`proj.db`) is what
-    # EPSG lookups and `transform()` use; grids are only consulted for datum
-    # shifts, which this app never performs — `import_regions` asks the
-    # publisher for 4326 and PostGIS stores 4326. Verified after removal:
-    # 4326→3857 and 4326→32611 still resolve, and DataSource still reads.
+    # Keep `proj.db` (the CRS registry); drop the datum-shift grids. Nothing here
+    # transforms on the client — `import_regions` requests 4326, PostGIS stores 4326.
     && rm -f /usr/share/proj/*.gsb /usr/share/proj/*.gtx /usr/share/proj/*.tif \
-    # Stdlib pieces nothing here uses, removed in this same layer so the bytes
-    # are not left in an earlier one: `uv` replaces pip end to end (no `pip`
-    # invocation exists in the repo), and idle/tkinter/pydoc are interactive
-    # and documentation tooling.
+    # `uv` replaces pip end to end; idle/tkinter/pydoc are interactive tooling.
     && PYLIB="$(ls -d /usr/local/lib/python3.* | head -1)" \
     && rm -rf "$PYLIB"/ensurepip "$PYLIB"/idlelib "$PYLIB"/tkinter "$PYLIB"/pydoc_data \
               "$PYLIB"/site-packages/pip* "$PYLIB"/site-packages/setuptools*
@@ -64,11 +54,9 @@ USER root
 
 # Docker
 #
-# `unzip`, `xz-utils` and `lsb-release` are explicit because `slim-base` is
-# `-slim-trixie`: the full `trixie` base carried them as part of buildpack-deps.
-# They are needed *below* this point in the stage — the AWS CLI installer unpacks
-# a zip, the Node tarball is `.tar.xz`, and the PGDG apt script keys off
-# lsb_release — so they have to be installed here, before those steps run.
+# `unzip`, `xz-utils` and `lsb-release` came with buildpack-deps in the full base.
+# They are needed below this point: the AWS CLI unpacks a zip, Node ships
+# `.tar.xz`, and the PGDG apt script keys off `lsb_release`.
 RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,type=cache \
     rm -f /etc/apt/apt.conf.d/docker-clean \
     && apt-get update \
@@ -258,10 +246,8 @@ COPY --chown=betterangels --parents \
   /workspace/
 RUN --mount=type=cache,uid=1000,gid=1000,target=/home/betterangels/.cache/uv \
     uv sync --no-install-project --no-dev \
-    # `*.map` files are for browser devtools and are never fetched in
-    # production. Dropping them here (and not after the copy into `production`)
-    # is what makes the saving real: a later layer would only add whiteouts and
-    # the bytes would still be shipped.
+    # Devtools-only, and swept here rather than after the copy so the bytes are
+    # not left in an earlier layer.
     && find /workspace/.venv -name '*.map' -type f -delete
 
 FROM base AS yarn
@@ -329,8 +315,7 @@ COPY --chown=betterangels apps/betterangels-backend /workspace/apps/betterangels
 # (The preview deploy exercises the same imports end to end.)
 RUN python -c "import ctypes.util, django, psycopg; missing = [n for n in ('gdal', 'geos_c', 'proj') if not ctypes.util.find_library(n)]; assert not missing, missing; print('runtime libs ok')"
 
-# `collectstatic` and the source-map sweep share one layer: deleting in a
-# later RUN would leave the maps in this layer and they would still be pulled.
+# Same layer as collectstatic: a later RUN would only white out the maps.
 RUN cd apps/betterangels-backend \
   && python manage.py collectstatic --noinput \
   && find staticfiles -name '*.map' -type f -delete
