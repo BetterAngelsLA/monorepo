@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { ShelterBasicInfoForm } from './ShelterBasicInfoForm';
 
 // TipTap needs a real contenteditable environment; this spec is about how the
@@ -90,6 +91,53 @@ describe('ShelterBasicInfoForm', () => {
         screen.queryByText('Please enter a valid email address'),
       ).toBeNull(),
     );
+  });
+
+  it('links the last-updated footer to the activity log', () => {
+    render(
+      <MemoryRouter>
+        <ShelterBasicInfoForm
+          values={{ name: 'Alpha House' }}
+          onSubmit={onSubmitNoop}
+          updatedAt="2026-07-01T12:00:00Z"
+          shelterId="shelter-1"
+          isViewMode
+        />
+      </MemoryRouter>,
+    );
+
+    const link = screen.getByRole('link', { name: 'View activity' });
+
+    expect(link.getAttribute('href')).toBe(
+      '/operator/shelter/shelter-1/profile/activity',
+    );
+  });
+
+  it('does not render the activity link without a shelter id', () => {
+    render(
+      <ShelterBasicInfoForm
+        values={{ name: 'Alpha House' }}
+        onSubmit={onSubmitNoop}
+        updatedAt="2026-07-01T12:00:00Z"
+        isViewMode
+      />,
+    );
+
+    expect(screen.queryByRole('link', { name: 'View activity' })).toBeNull();
+  });
+
+  it('hides the last-updated footer while editing', () => {
+    render(
+      <ShelterBasicInfoForm
+        values={{ name: 'Alpha House' }}
+        onSubmit={onSubmitNoop}
+        updatedAt="2026-07-01T12:00:00Z"
+        shelterId="shelter-1"
+      />,
+    );
+
+    expect(screen.queryByText(/Last updated/)).toBeNull();
+    expect(screen.queryByRole('link', { name: 'View activity' })).toBeNull();
   });
 
   it('restores the values prop on cancel', async () => {
