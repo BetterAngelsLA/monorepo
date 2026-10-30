@@ -7,11 +7,8 @@ import {
 } from '../../../lib';
 
 /**
- * The header on the sign-in page. The rules live in `../../../lib`; this file
- * only proves they hold here, because the header is shared by every page.
- *
- * Composition only — the flyout's interactions (open/close/mask/navigate) are
- * shell behaviour and are covered once in `pages/home/nav.spec.ts`.
+ * The header on the sign-in page: composition only, since the rules are
+ * `lib/navigation`'s and the flyout's interactions run in `layout/nav.spec.ts`.
  */
 test.describe('header nav (desktop)', () => {
   test.use({ viewport: VIEWPORTS.DESKTOP });

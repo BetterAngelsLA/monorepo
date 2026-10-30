@@ -1,13 +1,11 @@
 import { CloseIcon } from '@monorepo/react/icons';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { signInPath } from '../../constants';
-
-const STORAGE_KEY = 'shelter-login-banner-dismissed';
+import { LOGIN_BANNER_STORAGE_KEY, signInPath } from '../../constants';
 
 export function LoginBanner() {
   const [dismissed, setDismissed] = useState(
-    () => localStorage.getItem(STORAGE_KEY) === 'true',
+    () => localStorage.getItem(LOGIN_BANNER_STORAGE_KEY) === 'true',
   );
 
   if (dismissed) {
@@ -15,12 +13,15 @@ export function LoginBanner() {
   }
 
   function handleDismiss() {
-    localStorage.setItem(STORAGE_KEY, 'true');
+    localStorage.setItem(LOGIN_BANNER_STORAGE_KEY, 'true');
     setDismissed(true);
   }
 
   return (
-    <div className="absolute top-2 left-4 right-4 z-10 flex items-center justify-between gap-3 bg-primary-95 px-4 py-3 rounded-lg shadow-md">
+    <div
+      data-testid="login-banner"
+      className="absolute top-2 left-4 right-4 z-10 flex items-center justify-between gap-3 bg-primary-95 px-4 py-3 rounded-lg shadow-md"
+    >
       <p className="text-sm text-primary-20">
         <Link to={signInPath} className="font-semibold underline">
           Sign in
@@ -28,6 +29,7 @@ export function LoginBanner() {
         with your Better Angels account to access privately shared shelters.
       </p>
       <button
+        data-testid="login-banner-dismiss"
         onClick={handleDismiss}
         aria-label="Dismiss sign-in notification"
         className="shrink-0 p-1"
