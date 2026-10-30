@@ -38,6 +38,7 @@
     "@graphql-typed-document-node/core": "^3.2.0",
     "@hookform/resolvers": "^5.2.1",
     "@likashefqet/react-native-image-zoom": "^4.2.1",
+    "@newrelic/browser-agent": "^1.324.1",
     "@portabletext/react": "^3.2.0",
     "@preeternal/react-native-cookie-manager": "^6.3.0",
     "@react-native-async-storage/async-storage": "2.2.0",
