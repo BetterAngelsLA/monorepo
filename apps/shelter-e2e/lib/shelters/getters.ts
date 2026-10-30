@@ -19,12 +19,20 @@ export function getResultsSource(page: Page): Locator {
     .first();
 }
 
-/** A shelter card, addressed by the name it shows. */
+/** A shelter card, matched by the name it shows. */
 export function getShelterCard(page: Page, name: string): Locator {
   return page
-    .getByText(name, { exact: true })
-    .filter({ visible: true })
+    .getByTestId('shelter-card')
+    .filter({ visible: true, hasText: name })
     .first();
+}
+
+/** The names of the cards currently rendered, in order. */
+export async function getShelterCardNames(page: Page): Promise<string[]> {
+  return page
+    .getByTestId('shelter-card-name')
+    .filter({ visible: true })
+    .allInnerTexts();
 }
 
 /** The list's empty state, shown when a response carries no results. */

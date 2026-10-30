@@ -115,11 +115,10 @@ Anonymous, client-side flows so far:
     that its controls drive it. The map's own behaviour belongs with the
     component in the lib.
   - `pages/home/shelterSearch.spec.ts`: the search entry (which opens
-    `/search`), the results count/source line against live data, and — in a
-    separate `with the shelters response stubbed` block — the list itself
-    against a fixture. Those tests click the map's **Search this area** control
-    to fire the query: a fresh load stays in the panel's pre-search state, so
-    there is nothing to stub until a search runs.
+    `/search`), the map-area search, a name search re-deriving a listed shelter,
+    and the empty state for a name the server does not match. Expectations come
+    from the environment's own data — `fetchShelters` in `lib/shelters/api.ts`
+    asks the API directly — so the same specs run against local, DEV and prod.
   - `pages/sign-in/form.spec.ts`: sign-in form enable/disable logic.
 - `tests/layout/` — widgets `MainLayout` renders on every page, named after the
   widget rather than the page (`libs/react/shelter/src/lib/layout/` is their
@@ -130,7 +129,9 @@ Anonymous, client-side flows so far:
   `lib/navigation`.
 - `lib/` is imported through `lib/index.ts` (e.g.
   `import { VIEWPORTS, assertInlineNav } from '../../../lib'`):
-  `framework/constants.ts` holds `VIEWPORTS`;
+  `framework/constants.ts` holds `VIEWPORTS`; `framework/baApi.ts` is the Better
+  Angels API seam (`postGraphQL`, posting through the browser context so cookies
+  and `csrftoken` match the app);
   `framework/localStorage/` is the storage seam — `presetLocalStorage.ts` seeds
   any key for the next navigation, and `utils/presetLoginBannerDismissed.ts`
   applies it to the banner's key (which comes from the app, via
@@ -141,9 +142,10 @@ Anonymous, client-side flows so far:
   `assertFlyoutNav`); `map/` holds the control names and ids (`constants.ts`),
   the getters (`getters.ts`), the drag and camera seam (`interactions.ts`) and
   the assertions (`assertions.ts`: `assertMapUi`, `assertCurrentLocation`);
-  `shelters/` holds the results-panel stub (`mock.ts`: `mockPublicShelters`,
-  `makeShelter`) and its getters (`getters.ts`: `getResultCount`,
-  `getResultsSource`, `getShelterCard`, `getEmptyList`).
+  `shelters/` holds the query the suite asks on its own (`api.ts`:
+  `fetchShelters`) and the panel getters (`getters.ts`: `getResultCount`,
+  `getResultsSource`, `getShelterCard`, `getShelterCardNames`,
+  `getEmptyList`).
 
 Specs must not create data or submit forms unless the flow explicitly requires it.
 
@@ -153,17 +155,16 @@ Environment notes for the home specs:
   `VITE_SHELTER_API_URL` (see `apps/shelter-web/.env.local`). With the local
   backend not running the panel stays in its pre-search state — the specs
   tolerate both states.
-- The results line depends on the environment's data — `0 locations` +
-  `(based on search area)` before a search resolves, `N of M locations` +
-  `(based on map area)` after — so the live-data tests assert tolerant patterns
-  rather than exact strings. The stubbed tests supply the data, so they can
-  assert exact strings.
-- Exact copy is only asserted where the suite owns the data: the component test
-  `SheltersDisplay.test.tsx` in `libs/react/shelter` covers the response shapes
-  (counts, cards, empty state) with mocked Apollo, and the stubbed block here
-  does the same through the real app. Whether an environment's searched area
-  actually holds public shelters is data, not code, so the live-data tests keep
-  asserting shape only.
+- The results line depends on the environment's data, so the specs never
+  hardcode it: they ask the API the same question (`fetchShelters`) and compare
+  the panel to the answer. `SHELTER_API_URL` selects the API — defaults to
+  `http://localhost:8000`; pass the environment's API for DEV/preview
+  (`https://api.dev.betterangels.la`) or prod runs.
+- Response-shaped behaviour — exact counts for a fixture, short pages, card
+  field mapping — is asserted in `SheltersDisplay.test.tsx` in
+  `libs/react/shelter`, next to the component. Nothing here fakes the API: a
+  stubbed response cannot catch a GraphQL contract change, which is the one
+  thing only an e2e run against the real server can.
 
 ## Troubleshooting
 
