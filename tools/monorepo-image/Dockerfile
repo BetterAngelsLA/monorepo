@@ -1,10 +1,15 @@
 # syntax=docker/dockerfile:1
 
 # Runtime base: the Python app plus the system libraries GeoDjango needs
-# (libpq for psycopg, gdal-bin for GDAL/GEOS/PROJ). Deliberately free of Docker,
-# AWS CLI, Node, EAS, psql and the Playwright libraries: the production stage
-# builds from here, and none of that is on the request path.
-FROM python:3.14.8-trixie AS slim-base
+# (libpq for psycopg, the GDAL/GEOS/PROJ shared libraries). Deliberately free of
+# Docker, AWS CLI, Node, EAS, psql and the Playwright libraries: the production
+# stage builds from here, and none of that is on the request path.
+#
+# `-slim-trixie` rather than `trixie`: the full image is buildpack-deps (gcc,
+# git, subversion, imagemagick, mysql client dev…) to *compile* CPython. Nothing
+# here compiles anything — wheels arrive from `uv-runtime` — so that layer is
+# 1.4 GB of build tooling that every Fargate task would pull on start.
+FROM python:3.14.8-slim-trixie AS slim-base
 
 ENV PYTHONUNBUFFERED=1
 RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,type=cache \
@@ -13,7 +18,10 @@ RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,t
       ca-certificates \
       curl \
       libpq5 \
-      gdal-bin \
+      libgdal36 \
+      libgeos-c1t64 \
+      libproj25 \
+      proj-data \
     && rm -rf /var/lib/apt/lists/*
 
 RUN groupadd --gid 1000 betterangels \
@@ -41,6 +49,12 @@ FROM runtime-base AS base
 USER root
 
 # Docker
+#
+# `unzip`, `xz-utils` and `lsb-release` are explicit because `slim-base` is
+# `-slim-trixie`: the full `trixie` base carried them as part of buildpack-deps.
+# They are needed *below* this point in the stage — the AWS CLI installer unpacks
+# a zip, the Node tarball is `.tar.xz`, and the PGDG apt script keys off
+# lsb_release — so they have to be installed here, before those steps run.
 RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,type=cache \
     rm -f /etc/apt/apt.conf.d/docker-clean \
     && apt-get update \
@@ -48,6 +62,9 @@ RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,t
       ca-certificates \
       curl \
       gnupg \
+      lsb-release \
+      unzip \
+      xz-utils \
     && install -m 0755 -d /etc/apt/keyrings \
     && curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg \
     && chmod a+r /etc/apt/keyrings/docker.gpg \
