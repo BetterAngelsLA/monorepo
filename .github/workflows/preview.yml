@@ -135,9 +135,8 @@ jobs:
           APP_ENV_EXPORTS="$(node tools/scripts/write-eas-env.mjs --project betterangels --profile preview --print)" || exit 1
           eval "$APP_ENV_EXPORTS"
 
-          # export-web computes its own base path inline; nginx is the ECS proxy,
-          # which a preview deploys the app behind rather than redeploys.
-          yarn nx affected -t export-web deploy post-pr-preview --configuration preview --parallel=6 --exclude=nginx
+          # export-web computes its own base path inline.
+          yarn nx affected -t export-web deploy post-pr-preview --configuration preview --parallel=6
 
       - name: 🧪 E2E (Playwright)
         if: github.event.pull_request.head.repo.fork == false

@@ -505,7 +505,6 @@ type ClientProfileType {
   unhousedStartDate: Date
   veteranStatus: VeteranStatusEnum
   id: ID!
-  profilePhoto: DjangoImageType
   contacts: [ClientContactType!]
   hmisProfiles: [HmisProfileType!]
   householdMembers: [ClientHouseholdMemberType!]
@@ -516,6 +515,7 @@ type ClientProfileType {
   docReadyDocuments: [ClientDocumentType!]
   consentFormDocuments: [ClientDocumentType!]
   otherDocuments: [ClientDocumentType!]
+  profilePhoto: DjangoImageType
   displayCaseManager: String!
 }
 
@@ -1636,30 +1636,30 @@ type Mutation {
   removeOrganizationMember(data: RemoveOrganizationMemberInput!): RemoveOrganizationMemberPayload!
   createOrganization(data: CreateOrganizationInput!): CreateOrganizationResponse!
   changeOrganizationMemberRole(data: ChangeOrganizationMemberRoleInput!): ChangeOrganizationMemberRolePayload!
-  createClientContact(data: ClientContactInput!): CreateClientContactPayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientcontact"}], any: true)
-  updateClientContact(data: ClientContactInput!): UpdateClientContactPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientcontact"}], any: true)
-  deleteClientContact(data: DeleteDjangoObjectInput!): DeleteClientContactPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "delete_clientcontact"}], any: true)
-  createClientHouseholdMember(data: ClientHouseholdMemberInput!): CreateClientHouseholdMemberPayload! @hasPerm(permissions: [{app: "clients", permission: "add_clienthouseholdmember"}], any: true)
-  updateClientHouseholdMember(data: ClientHouseholdMemberInput!): UpdateClientHouseholdMemberPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clienthouseholdmember"}], any: true)
-  deleteClientHouseholdMember(data: DeleteDjangoObjectInput!): DeleteClientHouseholdMemberPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "delete_clienthouseholdmember"}], any: true)
-  createHmisProfile(data: HmisProfileInput!): CreateHmisProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "add_hmisprofile"}], any: true)
-  updateHmisProfile(data: HmisProfileInput!): UpdateHmisProfilePayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_hmisprofile"}], any: true)
-  deleteHmisProfile(data: DeleteDjangoObjectInput!): DeleteHmisProfilePayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "delete_hmisprofile"}], any: true)
-  createSocialMediaProfile(data: SocialMediaProfileInput!): CreateSocialMediaProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "add_socialmediaprofile"}], any: true)
-  updateSocialMediaProfile(data: SocialMediaProfileInput!): UpdateSocialMediaProfilePayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_socialmediaprofile"}], any: true)
-  deleteSocialMediaProfile(data: DeleteDjangoObjectInput!): DeleteSocialMediaProfilePayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "delete_socialmediaprofile"}], any: true)
-  updateClientDocument(data: UpdateClientDocumentInput!): UpdateClientDocumentPayload! @hasRetvalPerm(permissions: [{app: "common", permission: "change_attachment"}], any: true)
-  createClientProfile(data: CreateClientProfileInput!): CreateClientProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientprofile"}], any: true)
-  updateClientProfile(data: UpdateClientProfileInput!): UpdateClientProfilePayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
-  deleteClientProfile(data: DeleteDjangoObjectInput!): DeleteClientProfilePayload!
-  deleteClientDocument(data: DeleteDjangoObjectInput!): DeleteClientDocumentPayload! @permissionedQuerySet(permissions: [{app: "common", permission: "delete_attachment"}], any: true)
-  deleteClientProfilePhoto(clientProfileId: ID!): DeleteClientProfilePhotoPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
-  generateClientDocumentUploads(data: GenerateClientDocumentUploadsInput!): GenerateClientDocumentUploadsPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
-  resolveClientDocumentUploads(data: ResolveClientDocumentUploadsInput!): ResolveClientDocumentUploadsPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
-  generateClientProfilePhotoUpload(data: GenerateClientProfilePhotoUploadInput!): GenerateClientProfilePhotoUploadPayload! @hasPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
-  resolveClientProfilePhotoUpload(data: ResolveClientProfilePhotoUploadInput!): ResolveClientProfilePhotoUploadPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
-  createClientProfileDataImport(data: CreateProfileDataImportInput!): CreateClientProfileDataImportPayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientprofileimportrecord"}], any: true)
-  importClientProfile(data: ImportClientProfileInput!): ImportClientProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientprofileimportrecord"}], any: true)
+  createClientContact(data: ClientContactInput!): CreateClientContactPayload! @hasPerm(permissions: [{ app: "clients", permission: "add_clientcontact" }], any: true)
+  updateClientContact(data: ClientContactInput!): UpdateClientContactPayload! @hasPerm(permissions: [{ app: "clients", permission: "change_clientcontact" }], any: true)
+  deleteClientContact(data: DeleteDjangoObjectInput!): DeleteClientContactPayload! @hasPerm(permissions: [{ app: "clients", permission: "delete_clientcontact" }], any: true)
+  createClientHouseholdMember(data: ClientHouseholdMemberInput!): CreateClientHouseholdMemberPayload! @hasPerm(permissions: [{ app: "clients", permission: "add_clienthouseholdmember" }], any: true)
+  updateClientHouseholdMember(data: ClientHouseholdMemberInput!): UpdateClientHouseholdMemberPayload! @hasPerm(permissions: [{ app: "clients", permission: "change_clienthouseholdmember" }], any: true)
+  deleteClientHouseholdMember(data: DeleteDjangoObjectInput!): DeleteClientHouseholdMemberPayload! @hasPerm(permissions: [{ app: "clients", permission: "delete_clienthouseholdmember" }], any: true)
+  createHmisProfile(data: HmisProfileInput!): CreateHmisProfilePayload! @hasPerm(permissions: [{ app: "clients", permission: "add_hmisprofile" }], any: true)
+  updateHmisProfile(data: HmisProfileInput!): UpdateHmisProfilePayload! @hasPerm(permissions: [{ app: "clients", permission: "change_hmisprofile" }], any: true)
+  deleteHmisProfile(data: DeleteDjangoObjectInput!): DeleteHmisProfilePayload! @hasPerm(permissions: [{ app: "clients", permission: "delete_hmisprofile" }], any: true)
+  createSocialMediaProfile(data: SocialMediaProfileInput!): CreateSocialMediaProfilePayload! @hasPerm(permissions: [{ app: "clients", permission: "add_socialmediaprofile" }], any: true)
+  updateSocialMediaProfile(data: SocialMediaProfileInput!): UpdateSocialMediaProfilePayload! @hasPerm(permissions: [{ app: "clients", permission: "change_socialmediaprofile" }], any: true)
+  deleteSocialMediaProfile(data: DeleteDjangoObjectInput!): DeleteSocialMediaProfilePayload! @hasPerm(permissions: [{ app: "clients", permission: "delete_socialmediaprofile" }], any: true)
+  updateClientDocument(data: UpdateClientDocumentInput!): UpdateClientDocumentPayload! @hasRetvalPerm(permissions: [{ app: "common", permission: "change_attachment" }], any: true)
+  createClientProfile(data: CreateClientProfileInput!): CreateClientProfilePayload! @hasPerm(permissions: [{ app: "clients", permission: "add_clientprofile" }], any: true)
+  updateClientProfile(data: UpdateClientProfileInput!): UpdateClientProfilePayload! @hasPerm(permissions: [{ app: "clients", permission: "change_clientprofile" }], any: true)
+  deleteClientProfile(data: DeleteDjangoObjectInput!): DeleteClientProfilePayload! @hasPerm(permissions: [{ app: "clients", permission: "delete_clientprofile" }], any: true)
+  deleteClientDocument(data: DeleteDjangoObjectInput!): DeleteClientDocumentPayload! @permissionedQuerySet(permissions: [{ app: "common", permission: "delete_attachment" }], any: true)
+  deleteClientProfilePhoto(clientProfileId: ID!): DeleteClientProfilePhotoPayload! @hasPerm(permissions: [{ app: "clients", permission: "change_clientprofile" }], any: true)
+  generateClientDocumentUploads(data: GenerateClientDocumentUploadsInput!): GenerateClientDocumentUploadsPayload! @hasPerm(permissions: [{ app: "common", permission: "add_attachment" }], any: true)
+  resolveClientDocumentUploads(data: ResolveClientDocumentUploadsInput!): ResolveClientDocumentUploadsPayload! @hasPerm(permissions: [{ app: "common", permission: "add_attachment" }], any: true)
+  generateClientProfilePhotoUpload(data: GenerateClientProfilePhotoUploadInput!): GenerateClientProfilePhotoUploadPayload! @hasPerm(permissions: [{ app: "clients", permission: "change_clientprofile" }], any: true)
+  resolveClientProfilePhotoUpload(data: ResolveClientProfilePhotoUploadInput!): ResolveClientProfilePhotoUploadPayload! @hasPerm(permissions: [{ app: "clients", permission: "change_clientprofile" }], any: true)
+  createClientProfileDataImport(data: CreateProfileDataImportInput!): CreateClientProfileDataImportPayload! @hasPerm(permissions: [{ app: "clients", permission: "add_clientprofileimportrecord" }], any: true)
+  importClientProfile(data: ImportClientProfileInput!): ImportClientProfilePayload! @hasPerm(permissions: [{ app: "clients", permission: "add_clientprofileimportrecord" }], any: true)
   hmisLogin(email: String!, password: String!): HmisLoginSuccessHmisLoginError! @hmisDirective
   createHmisClientProfile(data: CreateHmisClientProfileInput!): CreateHmisClientProfilePayload! @hmisDirective @isHmisAuthenticated
   updateHmisClientProfile(data: UpdateHmisClientProfileInput!): UpdateHmisClientProfilePayload! @hmisDirective @isHmisAuthenticated
@@ -1670,19 +1670,19 @@ type Mutation {
   updateHmisNoteLocation(data: UpdateHmisNoteLocationInput!): UpdateHmisNoteLocationPayload! @hmisDirective @isHmisAuthenticated
   createHmisNoteServiceRequest(data: CreateHmisNoteServiceRequestInput!): CreateHmisNoteServiceRequestPayload! @hmisDirective @isHmisAuthenticated
   removeHmisNoteServiceRequest(data: RemoveHmisNoteServiceRequestInput!): RemoveHmisNoteServiceRequestPayload! @hmisDirective @isHmisAuthenticated
-  createNote(data: CreateNoteInput!): CreateNotePayload! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
-  updateNote(data: UpdateNoteInput!): UpdateNotePayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
-  updateNoteLocation(data: UpdateNoteLocationInput!): UpdateNoteLocationPayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
-  revertNote(data: RevertNoteInput!): RevertNotePayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
-  deleteNote(data: DeleteDjangoObjectInput!): DeleteNotePayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "delete_note"}], any: true)
-  createNoteServiceRequest(data: CreateNoteServiceRequestInput!): CreateNoteServiceRequestPayload! @hasPerm(permissions: [{app: "notes", permission: "add_servicerequest"}], any: true) @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
-  deleteServiceRequest(data: DeleteDjangoObjectInput!): DeleteServiceRequestPayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "delete_servicerequest"}], any: true)
-  createNoteDataImport(data: CreateNoteDataImportInput!): CreateNoteDataImportPayload! @hasPerm(permissions: [{app: "notes", permission: "add_noteimportrecord"}], any: true)
-  importNote(data: ImportNoteInput!): ImportNotePayload! @hasPerm(permissions: [{app: "notes", permission: "add_noteimportrecord"}], any: true)
-  generateNoteFileUploads(data: GenerateNoteAttachmentUploadsInput!): GenerateNoteFileUploadsPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true) @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
-  resolveNoteFileUploads(data: ResolveNoteAttachmentUploadsInput!): ResolveNoteFileUploadsPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true) @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
-  createTask(data: CreateTaskInput!): CreateTaskPayload! @hasPerm(permissions: [{app: "tasks", permission: "add_task"}], any: true)
-  updateTask(data: UpdateTaskInput!): UpdateTaskPayload! @permissionedQuerySet(permissions: [{app: "tasks", permission: "change_task"}], any: true)
+  createNote(data: CreateNoteInput!): CreateNotePayload! @hasPerm(permissions: [{ app: "notes", permission: "add_note" }], any: true)
+  updateNote(data: UpdateNoteInput!): UpdateNotePayload! @permissionedQuerySet(permissions: [{ app: "notes", permission: "change_note" }], any: true)
+  updateNoteLocation(data: UpdateNoteLocationInput!): UpdateNoteLocationPayload! @permissionedQuerySet(permissions: [{ app: "notes", permission: "change_note" }], any: true)
+  revertNote(data: RevertNoteInput!): RevertNotePayload! @permissionedQuerySet(permissions: [{ app: "notes", permission: "change_note" }], any: true)
+  deleteNote(data: DeleteDjangoObjectInput!): DeleteNotePayload! @permissionedQuerySet(permissions: [{ app: "notes", permission: "delete_note" }], any: true)
+  createNoteServiceRequest(data: CreateNoteServiceRequestInput!): CreateNoteServiceRequestPayload! @hasPerm(permissions: [{ app: "notes", permission: "add_servicerequest" }], any: true) @permissionedQuerySet(permissions: [{ app: "notes", permission: "change_note" }], any: true)
+  deleteServiceRequest(data: DeleteDjangoObjectInput!): DeleteServiceRequestPayload! @permissionedQuerySet(permissions: [{ app: "notes", permission: "delete_servicerequest" }], any: true)
+  createNoteDataImport(data: CreateNoteDataImportInput!): CreateNoteDataImportPayload! @hasPerm(permissions: [{ app: "notes", permission: "add_noteimportrecord" }], any: true)
+  importNote(data: ImportNoteInput!): ImportNotePayload! @hasPerm(permissions: [{ app: "notes", permission: "add_noteimportrecord" }], any: true)
+  generateNoteFileUploads(data: GenerateNoteAttachmentUploadsInput!): GenerateNoteFileUploadsPayload! @hasPerm(permissions: [{ app: "common", permission: "add_attachment" }], any: true) @permissionedQuerySet(permissions: [{ app: "notes", permission: "change_note" }], any: true)
+  resolveNoteFileUploads(data: ResolveNoteAttachmentUploadsInput!): ResolveNoteFileUploadsPayload! @hasPerm(permissions: [{ app: "common", permission: "add_attachment" }], any: true) @permissionedQuerySet(permissions: [{ app: "notes", permission: "change_note" }], any: true)
+  createTask(data: CreateTaskInput!): CreateTaskPayload! @hasPerm(permissions: [{ app: "tasks", permission: "add_task" }], any: true)
+  updateTask(data: UpdateTaskInput!): UpdateTaskPayload! @permissionedQuerySet(permissions: [{ app: "tasks", permission: "change_task" }], any: true)
   deleteTask(data: DeleteDjangoObjectInput!): DeleteTaskPayload!
   createTeam(data: CreateTeamInput!): CreateTeamPayload!
   updateTeam(data: UpdateTeamInput!): UpdateTeamPayload!
@@ -2130,6 +2130,19 @@ type ParkingType {
   name: ParkingChoices
 }
 
+"""Permission definition for schema directives."""
+input PermDefinition {
+  """
+  The app to which we are requiring permission. If this is empty that means that we are checking the permission directly.
+  """
+  app: String
+
+  """
+  The permission itself. If this is empty that means that we are checking for any permission for the given app.
+  """
+  permission: String
+}
+
 enum PermissionTemplateEnum {
   CASEWORKER
   SHELTER_OPERATOR
@@ -2163,7 +2176,9 @@ type PhoneNumberType {
   isPrimary: Boolean
 }
 
-"""Represents a point as `(x, y, z)` or `(x, y)`."""
+"""
+Represents a point as `(x, y, z)` or `(x, y)`. Input also accepts WKT, EWKT, HEXEWKB or GeoJSON (string or object).
+"""
 scalar Point
 
 enum PreferredCommunicationEnum {
@@ -2240,30 +2255,30 @@ type Query {
     """
     limit: Int! = 20
   ): [AuditActorType!]!
-  clientProfiles(pagination: OffsetPaginationInput, filters: ClientProfileFilter, ordering: [ClientProfileOrder!]! = []): ClientProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
-  clientDocument(pk: ID!): ClientDocumentType! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
-  clientContact(pk: ID!): ClientContactType! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientcontact"}], any: true)
-  clientContacts(pagination: OffsetPaginationInput): ClientContactTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientcontact"}], any: true)
-  clientHouseholdMember(pk: ID!): ClientHouseholdMemberType! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clienthouseholdmember"}], any: true)
-  clientHouseholdMembers(pagination: OffsetPaginationInput): ClientHouseholdMemberTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clienthouseholdmember"}], any: true)
-  hmisProfile(pk: ID!): HmisProfileType! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_hmisprofile"}], any: true)
-  hmisProfiles(pagination: OffsetPaginationInput): HmisProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_hmisprofile"}], any: true)
-  socialMediaProfile(pk: ID!): SocialMediaProfileType! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_socialmediaprofile"}], any: true)
-  socialMediaProfiles(pagination: OffsetPaginationInput): SocialMediaProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_socialmediaprofile"}], any: true)
-  clientProfile(pk: ID!): ClientProfileType! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
-  clientDocuments(clientId: String!, filters: ClientDocumentFilter, pagination: OffsetPaginationInput): ClientDocumentTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
-  bulkClientProfileImportRecords(data: ClientProfileImportRecordsBulkInput!, pagination: OffsetPaginationInput): ClientProfileImportRecordTypeOffsetPaginated! @hasPerm(permissions: [{app: "clients", permission: "view_clientprofileimportrecord"}], any: true)
+  clientProfiles(pagination: OffsetPaginationInput, filters: ClientProfileFilter, ordering: [ClientProfileOrder!]! = []): ClientProfileTypeOffsetPaginated! @hasPerm(permissions: [{ app: "clients", permission: "view_clientprofile" }], any: true)
+  clientDocument(pk: ID!): ClientDocumentType! @hasRetvalPerm(permissions: [{ app: "common", permission: "view_attachment" }], any: true)
+  clientContact(pk: ID!): ClientContactType! @hasPerm(permissions: [{ app: "clients", permission: "view_clientcontact" }], any: true)
+  clientContacts(pagination: OffsetPaginationInput): ClientContactTypeOffsetPaginated! @hasPerm(permissions: [{ app: "clients", permission: "view_clientcontact" }], any: true)
+  clientHouseholdMember(pk: ID!): ClientHouseholdMemberType! @hasPerm(permissions: [{ app: "clients", permission: "view_clienthouseholdmember" }], any: true)
+  clientHouseholdMembers(pagination: OffsetPaginationInput): ClientHouseholdMemberTypeOffsetPaginated! @hasPerm(permissions: [{ app: "clients", permission: "view_clienthouseholdmember" }], any: true)
+  hmisProfile(pk: ID!): HmisProfileType! @hasPerm(permissions: [{ app: "clients", permission: "view_hmisprofile" }], any: true)
+  hmisProfiles(pagination: OffsetPaginationInput): HmisProfileTypeOffsetPaginated! @hasPerm(permissions: [{ app: "clients", permission: "view_hmisprofile" }], any: true)
+  socialMediaProfile(pk: ID!): SocialMediaProfileType! @hasPerm(permissions: [{ app: "clients", permission: "view_socialmediaprofile" }], any: true)
+  socialMediaProfiles(pagination: OffsetPaginationInput): SocialMediaProfileTypeOffsetPaginated! @hasPerm(permissions: [{ app: "clients", permission: "view_socialmediaprofile" }], any: true)
+  clientProfile(pk: ID!): ClientProfileType! @hasPerm(permissions: [{ app: "clients", permission: "view_clientprofile" }], any: true)
+  clientDocuments(clientId: String!, filters: ClientDocumentFilter, pagination: OffsetPaginationInput): ClientDocumentTypeOffsetPaginated! @hasRetvalPerm(permissions: [{ app: "common", permission: "view_attachment" }], any: true)
+  bulkClientProfileImportRecords(data: ClientProfileImportRecordsBulkInput!, pagination: OffsetPaginationInput): ClientProfileImportRecordTypeOffsetPaginated! @hasPerm(permissions: [{ app: "clients", permission: "view_clientprofileimportrecord" }], any: true)
   featureControls: FeatureControlData!
   hmisClientProfiles(pagination: OffsetPaginationInput, filters: HmisClientProfileFilter, ordering: [HmisClientProfileOrdering!]! = []): HmisClientProfileTypeOffsetPaginated! @hmisDirective @isHmisAuthenticated
   hmisNotes(pagination: OffsetPaginationInput, filters: HmisNoteFilter, ordering: [HmisNoteOrdering!]! = []): HmisNoteTypeOffsetPaginated! @hmisDirective @isHmisAuthenticated
   hmisClientProfile(id: ID!): HmisClientProfileType! @hmisDirective @isHmisAuthenticated
   hmisNote(id: ID!): HmisNoteType! @hmisDirective @isHmisAuthenticated
   hmisClientPrograms(clientId: ID!): [HmisClientProgramType!]! @hmisDirective @isHmisAuthenticated
-  note(pk: ID!): NoteType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
-  notes(pagination: OffsetPaginationInput, filters: NoteFilter, ordering: [NoteOrder!]! = []): NoteTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
-  services(pagination: OffsetPaginationInput, ordering: [OrganizationServiceOrdering!]! = []): OrganizationServiceTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
-  serviceCategories(pagination: OffsetPaginationInput, ordering: [OrganizationServiceCategoryOrdering!]! = []): OrganizationServiceCategoryTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
-  interactionAuthors(pagination: OffsetPaginationInput, filters: InteractionAuthorFilter, ordering: [InteractionAuthorOrder!]! = []): InteractionAuthorTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
+  note(pk: ID!): NoteType! @hasRetvalPerm(permissions: [{ app: "notes", permission: "view_note" }], any: true)
+  notes(pagination: OffsetPaginationInput, filters: NoteFilter, ordering: [NoteOrder!]! = []): NoteTypeOffsetPaginated! @hasRetvalPerm(permissions: [{ app: "notes", permission: "view_note" }], any: true)
+  services(pagination: OffsetPaginationInput, ordering: [OrganizationServiceOrdering!]! = []): OrganizationServiceTypeOffsetPaginated! @hasPerm(permissions: [{ app: "notes", permission: "add_note" }], any: true)
+  serviceCategories(pagination: OffsetPaginationInput, ordering: [OrganizationServiceCategoryOrdering!]! = []): OrganizationServiceCategoryTypeOffsetPaginated! @hasPerm(permissions: [{ app: "notes", permission: "add_note" }], any: true)
+  interactionAuthors(pagination: OffsetPaginationInput, filters: InteractionAuthorFilter, ordering: [InteractionAuthorOrder!]! = []): InteractionAuthorTypeOffsetPaginated! @hasPerm(permissions: [{ app: "notes", permission: "add_note" }], any: true)
   caseworkerOrganizations(ordering: [OrganizationOrder!] = null, filters: OrganizationFilter = null, pagination: OffsetPaginationInput): OrganizationTypeOffsetPaginated!
   interactionsByRegion(organizationId: ID!, dimension: RegionDimension = null, startDate: Date = null, endDate: Date = null, regionCodes: [String!] = null): [RegionCountType!]!
   interactionMap(organizationId: ID!, startDate: Date = null, endDate: Date = null, limit: Int = null, dimension: RegionDimension = null, regionCodes: [String!] = null): InteractionMapType!
@@ -2271,13 +2286,16 @@ type Query {
   densityScale(organizationId: ID!, zoom: Int!, startDate: Date = null, endDate: Date = null, dimension: RegionDimension = null, regionCodes: [String!] = null): DensityScaleType
   regionDimensions: [RegionDimensionInfo!]!
   reportSummary(organizationId: ID!, startDate: Date = null, endDate: Date = null, dimension: RegionDimension = null, regionCodes: [String!] = null): ReportSummaryType!
-  task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
+  task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{ app: "tasks", permission: "view_task" }], any: true)
 
   """
   Members the caller can assign a task to. Gated on tasks.add or tasks.change rather than organizations.view_org_members so a caseworker can pick an assignee without holding the org-admin roster permission.
   """
-  taskAssignees(pagination: OffsetPaginationInput, filters: TaskAssigneeFilter, ordering: [TaskAssigneeOrder!]! = []): TaskAssigneeTypeOffsetPaginated! @hasPerm(permissions: [{app: "tasks", permission: "add_task"}, {app: "tasks", permission: "change_task"}], any: true)
-  tasks(ordering: [TaskOrder!] = null, filters: TaskFilter, pagination: OffsetPaginationInput): TaskTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
+  taskAssignees(pagination: OffsetPaginationInput, filters: TaskAssigneeFilter, ordering: [TaskAssigneeOrder!]! = []): TaskAssigneeTypeOffsetPaginated! @hasPerm(permissions: [
+  { app: "tasks", permission: "add_task" }
+  { app: "tasks", permission: "change_task" }
+], any: true)
+  tasks(ordering: [TaskOrder!] = null, filters: TaskFilter, pagination: OffsetPaginationInput): TaskTypeOffsetPaginated! @hasRetvalPerm(permissions: [{ app: "tasks", permission: "view_task" }], any: true)
   teams(filters: TeamFilter = null, pagination: OffsetPaginationInput): TeamTypeOffsetPaginated!
   operatorShelter(pk: ID!): OperatorShelterType!
   operatorShelters(pagination: OffsetPaginationInput, filters: OperatorShelterFilter, ordering: [ShelterOrder!]! = []): OperatorShelterTypeOffsetPaginated!
@@ -3511,17 +3529,4 @@ enum VeteranStatusEnum {
   NO
   PREFER_NOT_TO_SAY
   OTHER_THAN_HONORABLE
-}
-
-"""Permission definition for schema directives."""
-input PermDefinition {
-  """
-  The app to which we are requiring permission. If this is empty that means that we are checking the permission directly.
-  """
-  app: String
-
-  """
-  The permission itself. If this is empty that means that we are checking for any permission for the given app.
-  """
-  permission: String
 }

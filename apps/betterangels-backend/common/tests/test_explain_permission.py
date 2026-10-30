@@ -16,11 +16,14 @@ from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import TestCase
 from model_bakery import baker
+from strawberry_django.utils.query import filter_for_user
 
 from accounts.models import Grant, Role, User
+from accounts.selectors import organization_effective_permissions, organization_permissions
 from accounts.services import grant_create, grant_delegate, role_assign, sync_roles
 from accounts.tests.baker_recipes import organization_recipe
-from clients.models import ClientProfile
+from clients.models import ClientProfile, ClientProfileImportRecord
+from common.permissions.domain import LEGACY_LIVE_PERMISSIONS
 from common.permissions.explain import Arm, Explanation, explain
 from common.permissions.selectors import can, can_anywhere, can_obj
 from common.tests.utils import add_legacy_membership, make_permission_group
@@ -173,6 +176,106 @@ class ExplainPermissionTestCase(TestCase):
         self.assertIn("live", legacy.detail)
         self.assertTrue(any("has not cut over" in note for note in result.notes))
 
+    #: The ``clients.*`` permissions with a live legacy consumer today, each with
+    #: the surface that still consults the legacy row.  The test asserts this set
+    #: equals the ``clients.*`` entries of ``LEGACY_LIVE_PERMISSIONS``, so adding
+    #: a carve-out permission without a surface here fails loudly.
+    LEGACY_LIVE_CLIENT_SURFACES: tuple[tuple[str, str], ...] = (
+        (ClientProfile.perms.CHANGE, "document uploads (filter_for_user)"),
+        (ClientProfileImportRecord.perms.ADD, "the import mutations"),
+        (ClientProfileImportRecord.perms.VIEW, "bulkClientProfileImportRecords"),
+    )
+
+    def test_client_document_and_import_permissions_stay_live_after_the_cut_over(self) -> None:
+        """The carve-out: ``clients`` is inert per app, but docs and imports still read legacy.
+
+        ``change_clientprofile`` is the parent-load permission the two document
+        upload mutations check through ``filter_for_user``; the import pair gates
+        the import mutations and the bulk lookup through the default ``HasPerm``
+        checker (``user.has_perm``).  A legacy-only holder really does carry all
+        three, so reporting them as inert would make both the explanation and
+        the per-org report understate live authority.
+        """
+        clients_carve_outs = {perm for perm in LEGACY_LIVE_PERMISSIONS if perm.startswith("clients.")}
+        self.assertEqual({perm for perm, _ in self.LEGACY_LIVE_CLIENT_SURFACES}, clients_carve_outs)
+
+        for perm, surface in self.LEGACY_LIVE_CLIENT_SURFACES:
+            with self.subTest(perm=perm, surface=surface):
+                group = make_permission_group(organization=self.org_a, template_name="Caseworker")
+                # set() rather than add(): one carve-out permission per iteration,
+                # so a later case cannot pass on an earlier case's row.  VIEW rides
+                # along as the control — a legacy row for a genuinely inert
+                # permission — so the family assertion below fails on absence and
+                # inertness alike.
+                group.permissions.set(
+                    [
+                        Permission.objects.get(content_type__app_label="clients", codename=perm.split(".", 1)[1]),
+                        Permission.objects.get(content_type__app_label="clients", codename="view_clientprofile"),
+                    ]
+                )
+                holder = baker.make(User)
+                self.org_a.add_user(holder)
+                add_legacy_membership(holder, group=group)
+
+                result = explain(holder, perm, org=self.org_a)
+
+                self.assertFalse(result.cut_over, f"{perm} must not read as inert")
+                self.assertFalse(result.verdict)  # grant model: no Grant, so no grant verdict
+                legacy = _arm(result, "legacy rows")
+                self.assertTrue(legacy.holds, surface)
+                self.assertIn("document/import path only", legacy.detail)
+                # The caveat names the surface, not "this domain has not cut over" —
+                # the profile/family writes on these apps are grant-enforced.
+                self.assertTrue(any("legacy consumer" in note for note in result.notes))
+                self.assertFalse(any("has not cut over" in note for note in result.notes))
+
+                reported = organization_permissions(holder)[self.org_a.pk]
+                self.assertIn(perm, reported)
+                # VIEW is carried by the same legacy row, but it is inert — the
+                # report must not credit it.
+                self.assertNotIn(ClientProfile.perms.VIEW, reported)
+
+                # The family permission on the same app is genuinely inert for this
+                # holder: the row exists, so the arm's refusal is inertness.
+                family = explain(holder, ClientProfile.perms.VIEW, org=self.org_a)
+                self.assertTrue(family.cut_over)
+                legacy_family = _arm(family, "legacy rows")
+                self.assertFalse(legacy_family.holds)
+                self.assertIn("inert for this domain", legacy_family.detail)
+                self.assertTrue(any("inert for this domain" in note for note in family.notes))
+
+    def test_global_tier_carve_out_permission_folds_into_an_org_without_a_group(self) -> None:
+        """A carve-out permission held globally is folded into every org entry.
+
+        Neither live legacy path consults the organization: the import mutations
+        go through the default ``HasPerm`` checker (``user.has_perm``), and the
+        document uploads' ``filter_for_user`` filters on global/object permission
+        with no org notion at all.  So a global-tier holder really can exercise
+        both at an org where they hold no ``PermissionGroup``, and the fold must
+        keep advertising that — filtering ``LEGACY_LIVE_PERMISSIONS`` out of it
+        would under-report authority the backend honours.
+        """
+        profile = baker.make(ClientProfile, first_name="Fold")
+        holder = baker.make(User)
+        self.org_a.add_user(holder)
+        holder.user_permissions.add(
+            Permission.objects.get(content_type__app_label="clients", codename="change_clientprofile")
+        )
+        # Re-read so ``has_perm`` sees the new row rather than a warm perm cache.
+        holder = User.objects.get(pk=holder.pk)
+
+        # Both paths the carve-out exists for, exercised at an org with no group.
+        self.assertTrue(holder.has_perm(ClientProfile.perms.CHANGE))
+        self.assertEqual(
+            list(
+                filter_for_user(ClientProfile.objects.all(), holder, [ClientProfile.perms.CHANGE]).values_list(
+                    "pk", flat=True
+                )
+            ),
+            [profile.pk],
+        )
+        self.assertIn(ClientProfile.perms.CHANGE, organization_effective_permissions(holder)[self.org_a.pk])
+
     def test_legacy_only_holder_denied_in_object_mode(self) -> None:
         """The divergence that makes the caveat load-bearing.
 
@@ -318,6 +421,21 @@ class ExplainPermissionTestCase(TestCase):
         self.assertIn("unknown permission", message)
         self.assertIn("shelters.view_shelterx", message)
         self.assertIn("shelters.view_shelter", message)  # the close match it suggests
+
+    def test_non_canonical_permission_spelling_is_rejected(self) -> None:
+        """Validation runs first, so a differently-cased carve-out perm never reaches an arm.
+
+        ``_split_perm`` rejects anything outside the modeled registry, so the
+        raw-string ``LEGACY_LIVE_PERMISSIONS`` membership tests in ``_legacy_arm``
+        and ``_notes`` cannot be bypassed with a re-typed spelling: the call
+        fails as an unknown permission rather than misreporting the surface.
+        """
+        user = baker.make(User)
+
+        with self.assertRaises(ValueError) as ctx:
+            explain(user, "clients.CHANGE_CLIENTPROFILE", org=self.org_a)
+
+        self.assertIn("unknown permission", str(ctx.exception))
 
     def test_unknown_permission_carries_no_suggestion_when_nothing_is_close(self) -> None:
         user = baker.make(User)

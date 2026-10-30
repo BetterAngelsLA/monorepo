@@ -44,7 +44,10 @@ class DelegationTestCase(TestCase):
 
     def _scoped_orgs(self, user: User, perm: str) -> set[int]:
         """Org ids from ``scopes`` — the union yields ``{"scope_org": id}`` rows."""
-        return {row["scope_org"] for row in scopes(user, perm)}
+        s = scopes(user, perm)
+        if s is ALL:
+            raise AssertionError("unexpected global scope in a scoped-org assertion")
+        return set(s)
 
     def _visible_pks(self, user: User, perm: str) -> list[int]:
         return list(visible(Shelter.objects.all(), user, perm).values_list("pk", flat=True))
@@ -166,6 +169,37 @@ class DelegationTestCase(TestCase):
         self.assertIn(self.org_b.pk, scoped)  # the direct grant at B remains
         self.assertNotIn(self.shelter_c.pk, self._visible_pks(bob, Shelter.perms.VIEW))
 
+    def test_membership_change_drops_the_delegation_on_the_next_request(self) -> None:
+        """M9: the authority snapshot is request-scoped, not cross-request.
+
+        ``_authority`` snapshots org membership for the delegation arm, and no
+        membership write invalidates it — the through model is third-party and
+        the caller's user instance is unreachable from a signal, so only the
+        grant/role services invalidate.  The contract is therefore next-request:
+        the instance that served the request keeps the delegated scope until the
+        request ends, and a fresh instance (the next request) re-reads the
+        database and drops it.
+
+        This asserts both halves: the same-instance staleness is named as the
+        accepted limit, and the fresh instance pins the behaviour that actually
+        matters — a removed member does not keep the delegated org on their next
+        request.  The previous per-``scopes()`` ``EXISTS`` was fresher within the
+        request; that freshness is the thing the snapshot traded away.
+        """
+        grant_delegate(principal_org=self.org_b, role=self.shelter_role, scope_org=self.org_c)
+        bob = self._acting_member(self.org_b)
+        self.assertIn(self.org_c.pk, self._scoped_orgs(bob, Shelter.perms.VIEW))  # snapshot warmed
+
+        self.org_b.remove_user(bob)
+
+        # Accepted limit: the instance serving this request keeps the snapshot.
+        self.assertIn(self.org_c.pk, self._scoped_orgs(bob, Shelter.perms.VIEW))
+
+        # The next request builds a fresh user; the revocation is visible there.
+        bob = User.objects.get(pk=bob.pk)
+        self.assertNotIn(self.org_c.pk, self._scoped_orgs(bob, Shelter.perms.VIEW))
+        self.assertNotIn(self.shelter_c.pk, self._visible_pks(bob, Shelter.perms.VIEW))
+
     def test_inherited_authority_powers_writes_at_the_delegated_org(self) -> None:
         """Delegation reaches the write checks (can ADD/CHANGE at C), not just reads."""
         grant_delegate(principal_org=self.org_b, role=self.shelter_role, scope_org=self.org_c)
@@ -271,8 +305,24 @@ class DelegationTestCase(TestCase):
         user = baker.make(User)
         grant = grant_create(user=user, role=self.shelter_role, scope_org=self.org_b)
         scopes(user, Shelter.perms.VIEW)  # memoizes the decision on the instance
-        self.assertIn("_scope_cache", user.__dict__)
+        self.assertIn("_authority_cache", user.__dict__)
 
         grant_delete(grant=grant)
 
-        self.assertNotIn("_scope_cache", user.__dict__)
+        self.assertNotIn("_authority_cache", user.__dict__)
+
+    def test_delegation_write_invalidates_the_acting_users_snapshot(self) -> None:
+        """A delegation write clears the caller's request cache, not a DB reload."""
+        bob = self._acting_member(self.org_b)
+        self.assertNotIn(self.org_c.pk, self._scoped_orgs(bob, Shelter.perms.VIEW))
+
+        delegation = grant_delegate(
+            principal_org=self.org_b,
+            role=self.shelter_role,
+            scope_org=self.org_c,
+            acting_user=bob,
+        )
+        self.assertIn(self.org_c.pk, self._scoped_orgs(bob, Shelter.perms.VIEW))
+
+        grant_delete(grant=delegation, acting_user=bob)
+        self.assertNotIn(self.org_c.pk, self._scoped_orgs(bob, Shelter.perms.VIEW))
