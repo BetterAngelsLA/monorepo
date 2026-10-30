@@ -115,10 +115,10 @@ Anonymous, client-side flows so far:
     that its controls drive it. The map's own behaviour belongs with the
     component in the lib.
   - `pages/home/shelterSearch.spec.ts`: the search entry (which opens
-    `/search`), the map-area search, a name search re-deriving a listed shelter,
-    and the empty state for a name the server does not match. Expectations come
-    from the environment's own data — `fetchShelters` in `lib/shelters/api.ts`
-    asks the API directly — so the same specs run against local, DEV and prod.
+    `/search`), the map-area search reporting a count and its source, a name
+    search re-deriving a shelter that is already listed, and the empty state for
+    a name nothing matches. Inputs come from the page itself, so the same specs
+    run against local, DEV and prod.
   - `pages/sign-in/form.spec.ts`: sign-in form enable/disable logic.
 - `tests/layout/` — widgets `MainLayout` renders on every page, named after the
   widget rather than the page (`libs/react/shelter/src/lib/layout/` is their
@@ -129,9 +129,7 @@ Anonymous, client-side flows so far:
   `lib/navigation`.
 - `lib/` is imported through `lib/index.ts` (e.g.
   `import { VIEWPORTS, assertInlineNav } from '../../../lib'`):
-  `framework/constants.ts` holds `VIEWPORTS`; `framework/baApi.ts` is the Better
-  Angels API seam (`postGraphQL`, posting through the browser context so cookies
-  and `csrftoken` match the app);
+  `framework/constants.ts` holds `VIEWPORTS`;
   `framework/localStorage/` is the storage seam — `presetLocalStorage.ts` seeds
   any key for the next navigation, and `utils/presetLoginBannerDismissed.ts`
   applies it to the banner's key (which comes from the app, via
@@ -142,8 +140,7 @@ Anonymous, client-side flows so far:
   `assertFlyoutNav`); `map/` holds the control names and ids (`constants.ts`),
   the getters (`getters.ts`), the drag and camera seam (`interactions.ts`) and
   the assertions (`assertions.ts`: `assertMapUi`, `assertCurrentLocation`);
-  `shelters/` holds the query the suite asks on its own (`api.ts`:
-  `fetchShelters`) and the panel getters (`getters.ts`: `getResultCount`,
+  `shelters/` holds the panel getters (`getters.ts`: `getResultCount`,
   `getResultsSource`, `getShelterCard`, `getShelterCardNames`,
   `getEmptyList`).
 
@@ -156,10 +153,8 @@ Environment notes for the home specs:
   backend not running the panel stays in its pre-search state — the specs
   tolerate both states.
 - The results line depends on the environment's data, so the specs never
-  hardcode it: they ask the API the same question (`fetchShelters`) and compare
-  the panel to the answer. `SHELTER_API_URL` selects the API — defaults to
-  `http://localhost:8000`; pass the environment's API for DEV/preview
-  (`https://api.dev.betterangels.la`) or prod runs.
+  hardcode it: the map-area search asserts the count line's shape, and the name
+  search derives its term from a shelter the page already lists.
 - Response-shaped behaviour — exact counts for a fixture, short pages, card
   field mapping — is asserted in `SheltersDisplay.test.tsx` in
   `libs/react/shelter`, next to the component. Nothing here fakes the API: a

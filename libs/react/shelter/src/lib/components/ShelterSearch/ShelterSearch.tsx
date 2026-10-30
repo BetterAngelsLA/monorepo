@@ -132,7 +132,7 @@ export function ShelterSearch(props: TProps) {
 
       <FilterPills className="mt-2" filters={filters} />
       <SheltersDisplay
-        className="mt-8 border-2 border-blue-500"
+        className="mt-8"
         mapBoundsFilter={mapBoundsFilter}
         propertyFilters={filters}
         nameSearchPinFitRequestId={nameSearchPinFitRequestId}
