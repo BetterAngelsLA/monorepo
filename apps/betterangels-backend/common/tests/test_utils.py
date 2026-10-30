@@ -1,11 +1,40 @@
 import uuid
 
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
 from unittest_parametrize import ParametrizedTestCase, parametrize
 
-from common.files.utils import canonicalise_filename
+from common.enums import AttachmentType
+from common.files.utils import canonicalise_filename, infer_attachment_type
 from common.utils import can_match, matchable_values
 from notes.models import Note, NoteImportRecord
+
+
+class InferAttachmentTypeTestCase(ParametrizedTestCase, SimpleTestCase):
+    @parametrize(
+        "mime_type, expected_type",
+        [
+            ("image/jpeg", AttachmentType.IMAGE),
+            ("image/png", AttachmentType.IMAGE),
+            ("audio/mpeg", AttachmentType.AUDIO),
+            ("audio/wav", AttachmentType.AUDIO),
+            ("video/mp4", AttachmentType.VIDEO),
+            ("video/webm", AttachmentType.VIDEO),
+            ("IMAGE/JPEG", AttachmentType.IMAGE),
+            ("Audio/MPEG", AttachmentType.AUDIO),
+            ("Video/MP4", AttachmentType.VIDEO),
+            ("image/svg+xml", AttachmentType.IMAGE),
+            ("audio/ogg; codecs=opus", AttachmentType.AUDIO),
+            ("application/pdf", AttachmentType.DOCUMENT),
+            ("application/octet-stream", AttachmentType.DOCUMENT),
+            ("text/plain", AttachmentType.DOCUMENT),
+            ("unknown/subtype", AttachmentType.DOCUMENT),
+            ("invalid_mime_type", AttachmentType.DOCUMENT),
+            ("", AttachmentType.DOCUMENT),
+            (None, AttachmentType.DOCUMENT),
+        ],
+    )
+    def test_infer_attachment_type(self, mime_type: str | None, expected_type: AttachmentType) -> None:
+        self.assertEqual(infer_attachment_type(mime_type), expected_type)
 
 
 class CommonUtilsTestCase(ParametrizedTestCase, TestCase):
