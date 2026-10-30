@@ -26,7 +26,10 @@ RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,t
     # `uv` replaces pip end to end; idle/tkinter/pydoc are interactive tooling.
     && PYLIB="$(ls -d /usr/local/lib/python3.* | head -1)" \
     && rm -rf "$PYLIB"/ensurepip "$PYLIB"/idlelib "$PYLIB"/tkinter "$PYLIB"/pydoc_data \
-              "$PYLIB"/site-packages/pip* "$PYLIB"/site-packages/setuptools*
+              "$PYLIB"/site-packages/pip* "$PYLIB"/site-packages/setuptools* \
+    # The console scripts too, or `pip`/`idle` stay on PATH and fail with
+    # "No module named …", which is worse than not having them.
+    && rm -f /usr/local/bin/pip /usr/local/bin/pip3* /usr/local/bin/idle /usr/local/bin/idle3*
 
 RUN groupadd --gid 1000 betterangels \
   && useradd --uid 1000 --gid betterangels --shell /bin/bash --create-home betterangels
