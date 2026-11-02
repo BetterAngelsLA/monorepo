@@ -13,9 +13,13 @@ export type AuditEvent = AuditAction['events'][number];
 const DEFAULT_PAGE_SIZE = 25;
 
 export type ObjectAuditLogFilters = {
-  /** Inclusive lower bound (ISO datetime). */
+  /**
+   * Inclusive lower bound (ISO datetime). ``null`` and ``undefined`` both mean
+   * "unbounded"; the hook normalizes them so the two cannot produce different
+   * query identities.
+   */
   dateFrom?: string | null;
-  /** Inclusive upper bound (ISO datetime). */
+  /** Inclusive upper bound (ISO datetime); ``null`` means "unbounded". */
   dateTo?: string | null;
 };
 
@@ -43,8 +47,11 @@ export function useObjectAuditLog({
   targetType,
   objectId,
   pageSize = DEFAULT_PAGE_SIZE,
-  dateFrom,
-  dateTo,
+  // Defaulted rather than left optional: `undefined` and `null` mean the same
+  // thing here, and letting both reach the memo's dependency list would rebuild
+  // an identical `variables` object and reset the cursor chain for no reason.
+  dateFrom = null,
+  dateTo = null,
 }: UseObjectAuditLogArgs) {
   const variables = useMemo<ObjectAuditLogQueryVariables>(() => {
     const filters: NonNullable<ObjectAuditLogQueryVariables['filters']> = {};

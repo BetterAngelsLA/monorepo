@@ -1,42 +1,44 @@
-import { endOfDay, startOfDay } from 'date-fns';
 import { useCallback, useMemo, useState } from 'react';
 import type { ObjectAuditLogFilters } from '../../hooks';
-import { Dropdown, type DropdownOption } from '../base-ui/dropdown';
+import {
+  Dropdown,
+  toDropdownOptions,
+  type DropdownOption,
+} from '../base-ui/dropdown';
 import {
   DateRangePicker,
   PRESET_LABELS,
-  resolvePreset,
   type DateRange,
-  type DateRangePreset,
 } from '../date-range-filter';
-
-type AuditDatePreset = 'ALL' | DateRangePreset;
+import {
+  DEFAULT_AUDIT_PRESET,
+  presetRange,
+  rangeToFilters,
+  type AuditDatePreset,
+} from './auditFilters';
 
 const DATE_PRESET_OPTIONS: ReadonlyArray<DropdownOption<AuditDatePreset>> = [
   { value: 'ALL', label: 'All time' },
-  ...(Object.entries(PRESET_LABELS) as Array<[DateRangePreset, string]>).map(
-    ([value, label]) => ({ value, label }),
-  ),
+  ...toDropdownOptions(PRESET_LABELS),
 ];
-
-function rangeToFilters(range: DateRange): ObjectAuditLogFilters {
-  return {
-    dateFrom: range.from ? startOfDay(range.from).toISOString() : null,
-    dateTo: range.to ? endOfDay(range.to).toISOString() : null,
-  };
-}
 
 /**
  * Date-range filters for the audit log. Emits the derived
  * `dateFrom`/`dateTo` filter object on every change.
+ *
+ * The bar opens on {@link DEFAULT_AUDIT_PRESET}, and the caller seeds its own
+ * filter state from the same constant, so the label is never out of step with
+ * the query. Uncommitted calendar edits only preview "Custom".
  */
 export function AuditFilterBar({
   onChange,
 }: {
   onChange: (filters: ObjectAuditLogFilters) => void;
 }) {
-  const [preset, setPreset] = useState<AuditDatePreset>('ALL');
-  const [range, setRange] = useState<DateRange>({ from: null, to: null });
+  const [preset, setPreset] = useState<AuditDatePreset>(DEFAULT_AUDIT_PRESET);
+  const [range, setRange] = useState<DateRange>(() =>
+    presetRange(DEFAULT_AUDIT_PRESET),
+  );
   const [previewCustom, setPreviewCustom] = useState(false);
   const [isPickerOpen, setIsPickerOpen] = useState(false);
 
@@ -48,6 +50,8 @@ export function AuditFilterBar({
 
   const handlePresetChange = useCallback(
     (option: DropdownOption<AuditDatePreset> | null) => {
+      // The dropdown toggles: clicking the selected preset clears it back to
+      // "All time", the unfiltered view.
       const next = option?.value ?? 'ALL';
 
       if (next === 'CUSTOM') {
@@ -56,8 +60,7 @@ export function AuditFilterBar({
         return;
       }
 
-      const nextRange: DateRange =
-        next === 'ALL' ? { from: null, to: null } : resolvePreset(next);
+      const nextRange = presetRange(next);
 
       setPreset(next);
       setPreviewCustom(false);

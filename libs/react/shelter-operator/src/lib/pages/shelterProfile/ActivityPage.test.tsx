@@ -3,12 +3,16 @@ import { AuditEventKind, AuditTargetType } from '@monorepo/ba-platform/types';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { ObjectAuditLogDocument } from '../../hooks/useObjectAuditLog/__generated__/useObjectAuditLog.generated';
+import { initialAuditFilters } from '../../components/audit/auditFilters';
 import { ShelterActivityPage } from './ActivityPage';
 
 const variables = {
   targetType: AuditTargetType.Shelter,
   objectId: 'shelter-1',
   limit: 25,
+  // The log opens on its default date window, so the page's first query
+  // includes those bounds.
+  filters: initialAuditFilters(),
 };
 
 const page = {

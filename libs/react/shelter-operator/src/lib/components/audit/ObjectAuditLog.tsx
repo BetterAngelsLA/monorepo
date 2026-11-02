@@ -7,6 +7,7 @@ import { Button } from '../base-ui/buttons';
 import { Text } from '../base-ui/text/text';
 import { AuditActionRow } from './AuditActionRow';
 import { AuditFilterBar } from './AuditFilterBar';
+import { hasDateFilters, initialAuditFilters } from './auditFilters';
 
 type ObjectAuditLogProps = {
   targetType: AuditTargetType;
@@ -39,7 +40,10 @@ export function ObjectAuditLog({
   objectId,
   className,
 }: ObjectAuditLogProps) {
-  const [filters, setFilters] = useState<ObjectAuditLogFilters>({});
+  // Seeded from the bar's own default so the first query already carries the
+  // range the bar displays (an empty state here would issue a second request).
+  const [filters, setFilters] =
+    useState<ObjectAuditLogFilters>(initialAuditFilters);
   const {
     actions,
     loading,
@@ -129,7 +133,9 @@ export function ObjectAuditLog({
         {!hasActions && !hasMore && (
           <div className="py-16 text-center">
             <Text variant="body" textColor="text-neutral-50">
-              No activity yet.
+              {hasDateFilters(filters)
+                ? 'No activity in the selected date range.'
+                : 'No activity yet.'}
             </Text>
           </div>
         )}

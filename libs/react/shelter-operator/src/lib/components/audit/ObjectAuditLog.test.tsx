@@ -10,14 +10,35 @@ import { AuditEventKind, AuditTargetType } from '@monorepo/ba-platform/types';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { useState } from 'react';
 import { ObjectAuditLog } from './ObjectAuditLog';
+import { initialAuditFilters } from './auditFilters';
 import { useObjectAuditLog } from '../../hooks';
 import { ObjectAuditLogDocument } from '../../hooks/useObjectAuditLog/__generated__/useObjectAuditLog.generated';
 
+/** Variables for the hook in isolation: no filters unless a harness passes them. */
 const baseVariables = {
   targetType: AuditTargetType.Bed,
   objectId: '7',
   limit: 25,
 };
+
+/**
+ * Variables an `ObjectAuditLog` render sends: the bar opens on the default
+ * preset, so the first query already carries its bounds. Derived from the same
+ * helper the component uses (the window is relative to "today").
+ */
+const logVariables = {
+  ...baseVariables,
+  filters: initialAuditFilters(),
+};
+
+// jsdom has no ResizeObserver; the preset dropdown measures its anchor on open.
+class ResizeObserverStub {
+  observe = vi.fn();
+  unobserve = vi.fn();
+  disconnect = vi.fn();
+}
+(globalThis as unknown as { ResizeObserver: unknown }).ResizeObserver =
+  ResizeObserverStub;
 
 function makeEvent(overrides: Record<string, unknown> = {}) {
   return {
@@ -272,7 +293,7 @@ describe('ObjectAuditLog', () => {
   });
 
   it('renders grouped actions with their field changes', async () => {
-    renderLog([page(baseVariables, [makeAction()], null, false)]);
+    renderLog([page(logVariables, [makeAction()], null, false)]);
 
     expect(await screen.findByText('Ada Lovelace')).not.toBeNull();
     expect(screen.getByText('Name:')).not.toBeNull();
@@ -280,17 +301,31 @@ describe('ObjectAuditLog', () => {
     expect(screen.queryByRole('button', { name: /load more/i })).toBeNull();
   });
 
-  it('shows the empty state when there are no actions', async () => {
-    renderLog([page(baseVariables, [], null, false)]);
+  it('shows the filtered empty state when the range has no activity', async () => {
+    renderLog([page(logVariables, [], null, false)]);
+
+    await screen.findByText('No activity in the selected date range.');
+  });
+
+  it('falls back to "No activity yet." once the range is cleared', async () => {
+    renderLog([
+      page(logVariables, [makeAction()], null, false),
+      page(baseVariables, [], null, false),
+    ]);
+
+    await screen.findByText('Ada Lovelace');
+
+    fireEvent.click(screen.getByRole('combobox'));
+    fireEvent.click(await screen.findByText('All time'));
 
     await screen.findByText('No activity yet.');
   });
 
   it('appends the next page instead of replacing the first one', async () => {
     renderLog([
-      page(baseVariables, [makeAction()], 'c1', true),
+      page(logVariables, [makeAction()], 'c1', true),
       page(
-        { ...baseVariables, after: 'c1' },
+        { ...logVariables, after: 'c1' },
         [makeAction({ fieldChanges: { name: ['Bed A', 'PAGE2'] } })],
         null,
         false,
@@ -308,8 +343,8 @@ describe('ObjectAuditLog', () => {
 
   it('shows an error with a retry that reloads the log', async () => {
     renderLog([
-      errorPage(baseVariables),
-      page(baseVariables, [makeAction()], null, false),
+      errorPage(logVariables),
+      page(logVariables, [makeAction()], null, false),
     ]);
 
     expect(await screen.findByText('Unable to load activity.')).not.toBeNull();
