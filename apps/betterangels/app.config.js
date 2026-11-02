@@ -24,8 +24,6 @@ if (
   );
 }
 
-// Universal links and Android App Links are verified against the host that
-// serves the web export, so this is the outreach site and not the API host.
 const HOSTNAME = IS_PRODUCTION
   ? 'outreach.betterangels.la'
   : 'outreach.dev.betterangels.la';
