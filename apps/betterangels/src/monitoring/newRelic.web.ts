@@ -6,7 +6,7 @@ const licenseKey = process.env.EXPO_PUBLIC_NEW_RELIC_WEB_LICENSE_KEY;
 const environment = process.env.EXPO_PUBLIC_APP_ENV;
 const appVersion = Constants.expoConfig?.version ?? 'unknown';
 const monitoringGlobal = globalThis as typeof globalThis & {
-  outreachBrowserAgent?: BrowserAgent;
+  browserAgentGlobal?: BrowserAgent;
 };
 
 // Static exports run in Node. Missing configuration leaves monitoring disabled.
@@ -15,9 +15,9 @@ if (
   typeof window !== 'undefined' &&
   licenseKey &&
   environment &&
-  !monitoringGlobal.outreachBrowserAgent
+  !monitoringGlobal.browserAgentGlobal
 ) {
-  monitoringGlobal.outreachBrowserAgent = new BrowserAgent({
+  monitoringGlobal.browserAgentGlobal = new BrowserAgent({
     info: {
       applicationID: '601687499',
       beacon: 'bam.nr-data.net',
@@ -39,12 +39,6 @@ if (
     },
     init: {
       ajax: { deny_list: ['bam.nr-data.net'], capture_payloads: 'none' },
-      // Deliberate: data is collected without a consent signal (New Relic's
-      // documented meaning of `false`). Turning this on would suspend harvests
-      // until `consent()` is called, so it needs a consent UI first. Document it
-      // in docs/react-native-monitoring.md; the decision belongs to the privacy
-      // owner, not to this initializer.
-      browser_consent_mode: { enabled: false },
       // Off until the API approves the trace headers. The web app calls the API
       // cross-origin, where the agent adds no tracing headers unless the origin
       // is approved in New Relic AND the API allows `traceparent`/`tracestate`/

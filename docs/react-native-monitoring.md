@@ -49,10 +49,13 @@ AJAX timing, and SPA soft navigations.
 Disabled in `init`: session replay, session traces, console logging, user
 actions, performance marks/measures/detail, and AJAX payload capture.
 
-Cookies stay enabled for session measurement (`privacy.cookies_enabled`), and
-`browser_consent_mode` is explicitly **off**, which per New Relic means data is
-collected unconditionally. Both are deliberate settings that need an owner if
-the app's privacy posture changes.
+Cookies stay enabled so sessions can be counted (`privacy.cookies_enabled`).
+Collection is **not** gated by New Relic's consent mode: the app asks every user
+to accept the privacy policy at sign-in (`<apiUrl>/legal/privacy-policy`, also
+linked from the consent modal), and that acceptance is treated as covering
+monitoring. `browser_consent_mode` is therefore left at its default (off). If the
+policy ever requires a separate analytics opt-in, set `browser_consent_mode` and
+call `consent()` — with it on, nothing is harvested until that call.
 
 Distributed tracing is disabled. The web app calls the API cross-origin, and the
 agent only adds `traceparent`/`tracestate`/`newrelic` to an approved origin whose
