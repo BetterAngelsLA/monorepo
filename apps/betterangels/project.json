@@ -139,7 +139,10 @@
       ],
       "options": {
         "passWithNoTests": true
-      }
+      },
+      "dependsOn": [
+        "privacy-test"
+      ]
     },
     "typecheck": {
       "executor": "nx:run-commands",
@@ -237,6 +240,20 @@
     "build-list": {
       "executor": "@nx/expo:build-list",
       "cache": false
+    },
+    "privacy-test": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "command": "esbuild apps/betterangels/src/monitoring/privacy.node-test.ts --bundle --platform=node --outfile=dist/apps/betterangels/privacy.node-test.cjs && node --test dist/apps/betterangels/privacy.node-test.cjs"
+      },
+      "outputs": [
+        "{workspaceRoot}/dist/apps/betterangels/privacy.node-test.cjs"
+      ],
+      "inputs": [
+        "production",
+        "^production"
+      ]
     }
   }
 }

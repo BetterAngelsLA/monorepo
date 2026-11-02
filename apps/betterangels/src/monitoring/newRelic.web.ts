@@ -39,8 +39,17 @@ if (
     },
     init: {
       ajax: { deny_list: ['bam.nr-data.net'], capture_payloads: 'none' },
+      // Deliberate: data is collected without a consent signal (New Relic's
+      // documented meaning of `false`). Turning this on would suspend harvests
+      // until `consent()` is called, so it needs a consent UI first. Document it
+      // in docs/react-native-monitoring.md; the decision belongs to the privacy
+      // owner, not to this initializer.
       browser_consent_mode: { enabled: false },
-      distributed_tracing: { enabled: true },
+      // Off until the API approves the trace headers. The web app calls the API
+      // cross-origin, where the agent adds no tracing headers unless the origin
+      // is approved in New Relic AND the API allows `traceparent`/`tracestate`/
+      // `newrelic` in CORS_ALLOW_HEADERS. Enabling only one side breaks requests.
+      distributed_tracing: { enabled: false },
       performance: {
         capture_detail: false,
         capture_marks: false,

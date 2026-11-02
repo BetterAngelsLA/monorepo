@@ -54,10 +54,11 @@ Cookies stay enabled for session measurement (`privacy.cookies_enabled`), and
 collected unconditionally. Both are deliberate settings that need an owner if
 the app's privacy posture changes.
 
-Distributed tracing is enabled, but the web app calls the API cross-origin and no
-origin is approved in New Relic, so no `traceparent`/`newrelic` headers are sent
-yet. Enabling it requires the API to allow those headers in `CORS_ALLOW_HEADERS`
-first; doing one without the other breaks every API call.
+Distributed tracing is disabled. The web app calls the API cross-origin, and the
+agent only adds `traceparent`/`tracestate`/`newrelic` to an approved origin whose
+server also allows those headers. To turn it on: add the origin in New Relic, add
+the three headers to the API's `CORS_ALLOW_HEADERS`, then enable
+`distributed_tracing` here. Doing one without the others breaks every API call.
 
 ## Privacy: route-level masking
 
@@ -102,13 +103,18 @@ Run the privacy assertions against the installed agent (no network calls, no
 agent started) after any dependency bump:
 
 ```sh
-yarn esbuild apps/betterangels/src/monitoring/privacy.spec.ts --bundle --platform=node --outfile=/tmp/privacy-test.cjs
-node --test /tmp/privacy-test.cjs
+nx run betterangels:privacy-test
 ```
+
+The `privacy-test` target bundles the spec with esbuild and runs it under
+`node --test`; `nx test betterangels` depends on it, so `nx affected -t test` in CI
+fails when a rule regresses. It is excluded from the vitest include on purpose.
 
 The spec intentionally deep-imports `@newrelic/browser-agent/src/...` so it
 exercises the real obfuscator, error aggregator and interaction serialiser. Those
-paths are not public API; a version bump can move them.
+paths are not public API; a version bump can move them. The file is named
+`privacy.node-test.ts` rather than `*.spec.ts` so the vitest runner does not load
+it twice.
 
 ## Dashboard
 
@@ -126,6 +132,16 @@ FACET environment, appVersion SINCE 30 minutes ago
 ```sql
 FROM PageView SELECT uniques(environment) WHERE appId = 601687499 SINCE 7 days ago
 ```
+
+Per-route load time works because paths keep their shape:
+
+```sql
+FROM PageView SELECT average(duration), percentile(duration, 95)
+WHERE appId = 601687499 FACET pageUrl SINCE 1 day ago
+```
+
+Routes render as `/clients/[id]/edit`, so facet on `pageUrl` and read the
+skeleton; do not expect raw client ids in the results.
 
 Two widget definitions are approximations, not exact measurements:
 
