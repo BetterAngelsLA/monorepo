@@ -24,19 +24,10 @@ if (
   );
 }
 
-// The host the app claims for universal links and App Links. Set per EAS
-// profile (the tracked .env covers local runs); there is no fallback. `extra`
-// exposes the same value to the share URL so the entitlement and the link
-// cannot disagree.
-//
-// Nx evaluates this file to build its project graph without an environment, so
-// an absent value must not throw there — the claim arrays are simply empty.
-// `write-eas-env.mjs` refuses to write a build's env without it, and a
-// production build must not point at the dev host.
+// Link host for universal links / App Links; set per EAS profile.
 const HOSTNAME = process.env.EXPO_PUBLIC_OUTREACH_HOST?.trim();
 
-// EAS applies the profile env before this file is evaluated, so a hosted build
-// with no host is a misconfiguration, not a local run.
+// A hosted build without a host is a misconfiguration, not a local run.
 if (process.env.EAS_BUILD && !HOSTNAME) {
   throw new Error(
     'EXPO_PUBLIC_OUTREACH_HOST is required for EAS builds (set it in eas.json)',
