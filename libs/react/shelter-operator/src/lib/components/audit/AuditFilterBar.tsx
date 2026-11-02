@@ -39,7 +39,6 @@ export function AuditFilterBar({
   return (
     <DateRangeFilter
       includeAll
-      presetLabel="Date range"
       presetClassName="w-56"
       pickerClassName="w-80"
       value={range}
