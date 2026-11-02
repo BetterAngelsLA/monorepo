@@ -24,9 +24,15 @@ if (
   );
 }
 
-const HOSTNAME = IS_PRODUCTION
-  ? 'outreach.betterangels.la'
-  : 'outreach.dev.betterangels.la';
+// The host the app claims for universal links and App Links. Set per EAS
+// profile (and in the tracked .env for local runs); `extra` exposes the same
+// value to the share URL so the entitlement and the link cannot disagree.
+const HOSTNAME = process.env.EXPO_PUBLIC_OUTREACH_HOST;
+if (!HOSTNAME) {
+  throw new Error(
+    'EXPO_PUBLIC_OUTREACH_HOST is not set (expected e.g. outreach.dev.betterangels.la).',
+  );
+}
 
 const BUNDLE_IDENTIFIER = IS_PRODUCTION
   ? 'la.betterangels.app'
