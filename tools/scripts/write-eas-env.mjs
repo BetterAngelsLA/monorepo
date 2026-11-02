@@ -49,13 +49,6 @@ if (!env.get('EXPO_PUBLIC_API_URL')) {
   process.exit(1);
 }
 
-// The app-link host is compiled into the native entitlement and intent filter;
-// a build without it would publish a binary that claims nothing.
-if (!env.get('EXPO_PUBLIC_OUTREACH_HOST')) {
-  console.error(`No EXPO_PUBLIC_OUTREACH_HOST resolved for ${argv.profile}`);
-  process.exit(1);
-}
-
 // The tracked `.env` ships inside the EAS archive; `.env.local` does not travel.
 // `--print` also emits `export` lines: Nx fills a task's env before its
 // dependencies run and never overrides what is set.

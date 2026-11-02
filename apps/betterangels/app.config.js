@@ -35,6 +35,14 @@ if (
 // production build must not point at the dev host.
 const HOSTNAME = process.env.EXPO_PUBLIC_OUTREACH_HOST?.trim();
 
+// EAS applies the profile env before this file is evaluated, so a hosted build
+// with no host is a misconfiguration, not a local run.
+if (process.env.EAS_BUILD && !HOSTNAME) {
+  throw new Error(
+    'EXPO_PUBLIC_OUTREACH_HOST is required for EAS builds (set it in eas.json)',
+  );
+}
+
 if (IS_PRODUCTION && (!HOSTNAME || HOSTNAME.includes('dev'))) {
   throw new Error(
     `EXPO_PUBLIC_OUTREACH_HOST is ${HOSTNAME ?? 'unset'} for a production build`,
