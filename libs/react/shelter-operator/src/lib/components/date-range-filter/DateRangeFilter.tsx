@@ -25,12 +25,15 @@ export interface DateRangeFilterProps {
 }
 
 /**
- * Preset dropdown + custom-range calendar, wired together.
+ * Date-range calendar + preset dropdown, wired together.
  *
  * The two controls are a single interaction: choosing "Custom" opens the
  * calendar, touching a date previews the "Custom" label, and closing without
  * saving reverts the preview. That state is small but easy to get subtly wrong,
  * so it lives here once instead of in every toolbar that filters by date.
+ *
+ * The calendar comes first: the concrete range is what the user reads, and the
+ * preset is a shortcut for choosing it.
  *
  * Controlled: the caller owns `value`/`preset` and decides what a toggle-off
  * means for it (with `includeAll` it reports `ALL`).
@@ -61,8 +64,7 @@ export function DateRangeFilter({
 
   const handlePresetChange = useCallback(
     (next: DateRangePresetValue | null) => {
-      // The dropdown normally routes CUSTOM to `onCustomSelected`; treat it as
-      // the same request so the two paths cannot diverge.
+      // The Custom entry is a request to pick a range, not a value to commit.
       if (next === 'CUSTOM') {
         openPicker();
         return;
@@ -105,15 +107,6 @@ export function DateRangeFilter({
 
   return (
     <div className={mergeCss(['flex flex-wrap items-end gap-3', className])}>
-      <DateRangePresetDropdown
-        className={presetClassName}
-        label={presetLabel}
-        includeAll={includeAll}
-        value={previewCustom ? 'CUSTOM' : preset}
-        onChange={handlePresetChange}
-        onCustomSelected={openPicker}
-      />
-
       <DateRangePicker
         className={pickerClassName}
         value={value}
@@ -121,6 +114,14 @@ export function DateRangeFilter({
         onOpenChange={handlePickerOpenChange}
         onDirty={() => setPreviewCustom(true)}
         onCommit={handleCommit}
+      />
+
+      <DateRangePresetDropdown
+        className={presetClassName}
+        label={presetLabel}
+        includeAll={includeAll}
+        value={previewCustom ? 'CUSTOM' : preset}
+        onChange={handlePresetChange}
       />
     </div>
   );

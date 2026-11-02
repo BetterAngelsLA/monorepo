@@ -35,40 +35,30 @@ describe('DateRangePresetDropdown', () => {
     vi.stubGlobal('ResizeObserver', NoopResizeObserver);
   });
 
-  it('emits the selected preset and never a custom range itself', () => {
+  it('emits the selected preset', () => {
     const onChange = vi.fn();
-    const onCustomSelected = vi.fn();
     render(
-      <DateRangePresetDropdown
-        value="LAST_30_DAYS"
-        onChange={onChange}
-        onCustomSelected={onCustomSelected}
-      />,
+      <DateRangePresetDropdown value="LAST_30_DAYS" onChange={onChange} />,
     );
 
     openMenu();
     fireEvent.click(option('Last 7 Days'));
 
     expect(onChange).toHaveBeenCalledWith('LAST_7_DAYS');
-    expect(onCustomSelected).not.toHaveBeenCalled();
   });
 
-  it('asks for a custom range instead of emitting a value', () => {
+  it('reports CUSTOM like any other entry', () => {
     const onChange = vi.fn();
-    const onCustomSelected = vi.fn();
     render(
-      <DateRangePresetDropdown
-        value="LAST_30_DAYS"
-        onChange={onChange}
-        onCustomSelected={onCustomSelected}
-      />,
+      <DateRangePresetDropdown value="LAST_30_DAYS" onChange={onChange} />,
     );
 
     openMenu();
     fireEvent.click(option('Custom'));
 
-    expect(onCustomSelected).toHaveBeenCalledTimes(1);
-    expect(onChange).not.toHaveBeenCalled();
+    // The widget assigns no meaning to CUSTOM; the caller decides.
+    expect(onChange).toHaveBeenCalledWith('CUSTOM');
+    expect(onChange).toHaveBeenCalledTimes(1);
   });
 
   it('reports a toggle-off as null so the caller decides', () => {

@@ -10,13 +10,12 @@ export interface DateRangePresetDropdownProps {
   /** The preset the filter currently shows (`CUSTOM` while a range previews). */
   value: DateRangePresetValue;
   /**
-   * Emitted on selection. `null` means the active entry was toggled off, which
-   * the caller decides whether to honour (it widens to `ALL` in a filter that
-   * offers "All time", and is ignored otherwise).
+   * Emitted on selection, including `CUSTOM` — the caller decides what that
+   * means (the composed `DateRangeFilter` opens its calendar). `null` means the
+   * active entry was toggled off, which the caller also decides: it widens to
+   * `ALL` in a filter that offers "All time" and is ignored otherwise.
    */
   onChange: (value: DateRangePresetValue | null) => void;
-  /** Called instead of `onChange` when the user asks for a custom range. */
-  onCustomSelected?: () => void;
   /** Offer the "All time" entry, i.e. let the filter be unfiltered. */
   includeAll?: boolean;
   label?: string;
@@ -31,16 +30,16 @@ const PRESET_OPTIONS_WITH_ALL: ReadonlyArray<
 > = toDropdownOptions(PRESET_VALUE_LABELS);
 
 /**
- * Selects a shared date-range preset, or asks for a custom range.
+ * Selects a shared date-range preset or the Custom entry.
  *
- * Presentational and controlled: it holds no filter state and writes nothing
- * itself, so a toolbar backed by shared state (reports) and a component with
- * local state (the activity log) can both use it.
+ * Presentational and controlled: it holds no filter state, writes nothing, and
+ * assigns no meaning to any value — `CUSTOM` is reported like any other, so a
+ * toolbar backed by shared state (reports) and a component with local state
+ * (the activity log) can both use it.
  */
 export function DateRangePresetDropdown({
   value,
   onChange,
-  onCustomSelected,
   includeAll = false,
   label,
   className,
@@ -49,17 +48,7 @@ export function DateRangePresetDropdown({
   const selected = options.find((option) => option.value === value) ?? null;
 
   function handleChange(option: DropdownOption<DateRangePresetValue> | null) {
-    if (!option) {
-      onChange(null);
-      return;
-    }
-
-    if (option.value === 'CUSTOM') {
-      onCustomSelected?.();
-      return;
-    }
-
-    onChange(option.value);
+    onChange(option?.value ?? null);
   }
 
   return (

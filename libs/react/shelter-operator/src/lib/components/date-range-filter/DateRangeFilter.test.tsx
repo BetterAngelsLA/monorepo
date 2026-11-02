@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 import { fireEvent, render, screen } from '@testing-library/react';
-import { endOfDay, startOfDay, subDays } from 'date-fns';
+import { endOfDay, format, startOfDay, subDays } from 'date-fns';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DateRangeFilter } from './DateRangeFilter';
 import { resolvePresetValue } from './presets';
@@ -62,6 +62,22 @@ describe('DateRangeFilter', () => {
     vi.stubGlobal('ResizeObserver', NoopResizeObserver);
   });
 
+  it('puts the calendar before the preset chooser', () => {
+    renderFilter();
+
+    const start = screen.getByLabelText('Start date');
+    const preset = screen.getByRole('combobox');
+
+    // The concrete range is what the user reads; the preset is a shortcut for
+    // choosing it, so it follows. Pinned because the order is easy to flip.
+    expect(
+      Boolean(
+        start.compareDocumentPosition(preset) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ),
+    ).toBe(true);
+  });
+
   it('commits the preset and its resolved range', () => {
     const onChange = renderFilter();
 
@@ -119,6 +135,26 @@ describe('DateRangeFilter', () => {
     fireEvent.keyDown(document, { key: 'Escape' });
 
     expect(trigger.textContent).toContain('Last 30 Days');
+  });
+
+  it('previews Custom when a day is clicked, before Save', () => {
+    renderFilter();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Toggle calendar' }));
+
+    const today = format(new Date(), 'yyyy-MM-dd');
+    const cell = document.querySelector(`[data-day="${today}"]`);
+    if (!cell) throw new Error('today is not rendered');
+
+    fireEvent.click(cell.querySelector('button') as HTMLButtonElement);
+
+    // A calendar edit is a custom range in progress, even though nothing has
+    // been committed and the Custom entry was never chosen.
+    expect(screen.getByRole('combobox').textContent).toContain('Custom');
+
+    fireEvent.keyDown(document, { key: 'Escape' });
+
+    expect(screen.getByRole('combobox').textContent).toContain('Last 30 Days');
   });
 
   it('commits a custom range with day-aligned bounds', async () => {
