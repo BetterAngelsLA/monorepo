@@ -1,5 +1,5 @@
-import { resolvePreset } from './presets';
-import type { DateRange, DateRangePreset } from './types';
+import { resolvePreset, resolvePresetValue } from './presets';
+import type { DateRange, DateRangePreset, DateRangePresetValue } from './types';
 
 const TODAY = new Date(2026, 5, 27);
 const d = (year: number, monthIndex: number, day: number) =>
@@ -40,5 +40,33 @@ describe('resolvePreset', () => {
     const { from, to } = resolvePreset('LAST_7_DAYS');
     expect(from).toBeInstanceOf(Date);
     expect(to).toBeInstanceOf(Date);
+  });
+});
+
+describe('resolvePresetValue', () => {
+  it('maps ALL to unbounded', () => {
+    expect(resolvePresetValue('ALL')).toEqual({ from: null, to: null });
+  });
+
+  it('defers every other value to resolvePreset', () => {
+    const cases: DateRangePresetValue[] = [
+      'LAST_7_DAYS',
+      'MONTH_TO_DATE',
+      'CUSTOM',
+    ];
+
+    for (const value of cases) {
+      expect(resolvePresetValue(value, TODAY)).toEqual(
+        resolvePreset(value as DateRangePreset, TODAY),
+      );
+    }
+  });
+
+  it('resolves a relative value against the supplied day', () => {
+    // Presets keep the time of `today`; callers day-align when they need to.
+    expect(resolvePresetValue('LAST_30_DAYS', TODAY)).toEqual({
+      from: new Date(2026, 4, 29),
+      to: TODAY,
+    });
   });
 });

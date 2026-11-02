@@ -1,5 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { subDays } from 'date-fns';
 import { getDefaultStore } from 'jotai';
+import { toDateString } from '@monorepo/shared/scalars';
 import { dateRangeFilterAtom } from '../date-range-filter';
 import { ReportFilterBar } from './ReportFilterBar';
 
@@ -135,6 +137,29 @@ describe('ReportFilterBar export', () => {
       ),
     );
     expect(HTMLAnchorElement.prototype.click).not.toHaveBeenCalled();
+  });
+
+  it('feeds a preset selection into the shared range the export uses', async () => {
+    fetchMock.mockResolvedValue(exportResponse());
+    render(<ReportFilterBar shelterId="7" />);
+
+    fireEvent.click(screen.getByRole('combobox'));
+    fireEvent.click(screen.getByText('Last 7 Days'));
+
+    // The toolbar writes the atom the charts read, so a preset pick must land
+    // there rather than only in the toolbar's own state.
+    expect(store.get(dateRangeFilterAtom).preset).toBe('LAST_7_DAYS');
+
+    openModalAndExport();
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+
+    const url = new URL(fetchMock.mock.calls[0][0], 'https://example.test');
+
+    expect(url.searchParams.get('start_date')).toBe(
+      toDateString(subDays(new Date(), 6)),
+    );
+    expect(url.searchParams.get('end_date')).toBe(toDateString(new Date()));
   });
 
   it('cannot export before the shelter is known', () => {

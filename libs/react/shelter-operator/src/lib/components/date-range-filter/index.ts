@@ -1,5 +1,17 @@
-export type { DateRange, DateRangePreset, DateRangeFilterState } from './types';
-export { PRESET_LABELS, DEFAULT_PRESET, resolvePreset } from './presets';
+export type {
+  DateRange,
+  DateRangePreset,
+  DateRangePresetValue,
+  DateRangeFilterState,
+} from './types';
+export {
+  ALL_TIME_LABEL,
+  PRESET_LABELS,
+  PRESET_VALUE_LABELS,
+  DEFAULT_PRESET,
+  resolvePreset,
+  resolvePresetValue,
+} from './presets';
 export {
   dateRangeFilterAtom,
   initialDateRangeFilter,
@@ -15,3 +27,5 @@ export { DateRangePresetDropdown } from './DateRangePresetDropdown';
 export type { DateRangePresetDropdownProps } from './DateRangePresetDropdown';
 export { DateRangePicker } from './DateRangePicker';
 export type { DateRangePickerProps } from './DateRangePicker';
+export { DateRangeFilter } from './DateRangeFilter';
+export type { DateRangeFilterProps } from './DateRangeFilter';

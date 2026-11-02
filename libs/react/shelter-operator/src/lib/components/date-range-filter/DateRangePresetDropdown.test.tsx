@@ -2,15 +2,8 @@
  * @vitest-environment jsdom
  */
 import { fireEvent, render, screen } from '@testing-library/react';
-import { getDefaultStore } from 'jotai';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  dateRangeFilterAtom,
-  initialDateRangeFilter,
-} from './dateRangeFilterAtom';
 import { DateRangePresetDropdown } from './DateRangePresetDropdown';
-
-const store = getDefaultStore();
 
 // The dropdown positions its portal with usePortalPosition, which jsdom has no
 // ResizeObserver for.
@@ -30,39 +23,91 @@ function openMenu() {
   fireEvent.click(screen.getByRole('combobox'));
 }
 
+function option(name: string) {
+  const options = screen.getAllByText(name);
+  // The trigger also renders the selected label; the menu item is the later
+  // node (the menu is portalled to the end of the document).
+  return options[options.length - 1];
+}
+
 describe('DateRangePresetDropdown', () => {
   beforeEach(() => {
     vi.stubGlobal('ResizeObserver', NoopResizeObserver);
-    store.set(dateRangeFilterAtom, initialDateRangeFilter);
   });
 
-  it('reports a Custom selection without touching the shared filter', () => {
+  it('emits the selected preset and never a custom range itself', () => {
+    const onChange = vi.fn();
     const onCustomSelected = vi.fn();
-    render(<DateRangePresetDropdown onCustomSelected={onCustomSelected} />);
+    render(
+      <DateRangePresetDropdown
+        value="LAST_30_DAYS"
+        onChange={onChange}
+        onCustomSelected={onCustomSelected}
+      />,
+    );
 
     openMenu();
-    fireEvent.click(screen.getByText('Custom'));
+    fireEvent.click(option('Last 7 Days'));
+
+    expect(onChange).toHaveBeenCalledWith('LAST_7_DAYS');
+    expect(onCustomSelected).not.toHaveBeenCalled();
+  });
+
+  it('asks for a custom range instead of emitting a value', () => {
+    const onChange = vi.fn();
+    const onCustomSelected = vi.fn();
+    render(
+      <DateRangePresetDropdown
+        value="LAST_30_DAYS"
+        onChange={onChange}
+        onCustomSelected={onCustomSelected}
+      />,
+    );
+
+    openMenu();
+    fireEvent.click(option('Custom'));
 
     expect(onCustomSelected).toHaveBeenCalledTimes(1);
-    expect(store.get(dateRangeFilterAtom)).toEqual(initialDateRangeFilter);
+    expect(onChange).not.toHaveBeenCalled();
   });
 
-  it('commits a non-custom preset to the shared filter', () => {
-    const onCustomSelected = vi.fn();
-    render(<DateRangePresetDropdown onCustomSelected={onCustomSelected} />);
+  it('reports a toggle-off as null so the caller decides', () => {
+    const onChange = vi.fn();
+    render(<DateRangePresetDropdown value="LAST_7_DAYS" onChange={onChange} />);
 
     openMenu();
-    fireEvent.click(screen.getByText('Last 7 Days'));
+    fireEvent.click(option('Last 7 Days'));
 
-    expect(onCustomSelected).not.toHaveBeenCalled();
-    expect(store.get(dateRangeFilterAtom).preset).toBe('LAST_7_DAYS');
+    expect(onChange).toHaveBeenCalledWith(null);
   });
 
-  it('does not throw when Custom is selected with no handler', () => {
-    render(<DateRangePresetDropdown />);
+  it('offers "All time" only when asked', () => {
+    const { unmount } = render(
+      <DateRangePresetDropdown value="LAST_30_DAYS" onChange={vi.fn()} />,
+    );
 
     openMenu();
-    expect(() => fireEvent.click(screen.getByText('Custom'))).not.toThrow();
-    expect(store.get(dateRangeFilterAtom)).toEqual(initialDateRangeFilter);
+    expect(screen.queryByText('All time')).toBeNull();
+    unmount();
+
+    render(
+      <DateRangePresetDropdown value="ALL" includeAll onChange={vi.fn()} />,
+    );
+
+    expect(screen.getByRole('combobox').textContent).toContain('All time');
+  });
+
+  it('labels the control when a label is given', () => {
+    render(
+      <DateRangePresetDropdown
+        value="LAST_30_DAYS"
+        onChange={vi.fn()}
+        label="Date range"
+      />,
+    );
+
+    // The visible label is the caller's; the combobox itself is named by the
+    // shared Dropdown, which this widget only forwards the label to.
+    expect(screen.getByText('Date range')).not.toBeNull();
   });
 });

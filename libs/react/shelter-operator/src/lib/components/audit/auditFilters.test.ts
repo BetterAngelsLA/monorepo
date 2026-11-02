@@ -1,33 +1,15 @@
-import { endOfDay, startOfDay, subDays } from 'date-fns';
+import { endOfDay, startOfDay } from 'date-fns';
+import { resolvePresetValue } from '../date-range-filter';
 import {
   DEFAULT_AUDIT_PRESET,
   hasDateFilters,
   initialAuditFilters,
-  presetRange,
   rangeToFilters,
 } from './auditFilters';
 
 // Local wall-clock time, deliberately mid-day: a boundary bug shows up as the
 // wrong local hour, not as a timezone-dependent ISO string.
 const TODAY = new Date(2026, 5, 27, 14, 30);
-
-describe('presetRange', () => {
-  it('maps ALL to unbounded', () => {
-    expect(presetRange('ALL')).toEqual({ from: null, to: null });
-  });
-
-  it('resolves a relative preset against the supplied day', () => {
-    // Presets keep the time of `today`; `rangeToFilters` is what day-aligns.
-    expect(presetRange('LAST_30_DAYS', TODAY)).toEqual({
-      from: subDays(TODAY, 29),
-      to: TODAY,
-    });
-  });
-
-  it('resolves CUSTOM to unbounded (it is only a calendar label)', () => {
-    expect(presetRange('CUSTOM')).toEqual({ from: null, to: null });
-  });
-});
 
 describe('rangeToFilters', () => {
   it('aligns both ends to local day boundaries', () => {
@@ -86,7 +68,7 @@ describe('initialAuditFilters', () => {
   it('opens the log on the 30-day default', () => {
     expect(DEFAULT_AUDIT_PRESET).toBe('LAST_30_DAYS');
     expect(initialAuditFilters()).toEqual(
-      rangeToFilters(presetRange(DEFAULT_AUDIT_PRESET)),
+      rangeToFilters(resolvePresetValue(DEFAULT_AUDIT_PRESET)),
     );
   });
 });
