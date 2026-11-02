@@ -78,7 +78,7 @@ test('real navigation serializer retains duration and route category while remov
   assert.ok(output.includes('[redacted]'));
   assert.ok(output.includes('validation'));
   assert.ok(!output.includes('FAKE_SECRET'));
-  assert.ok(output.includes('https://test.invalid/[route]'));
+  assert.ok(output.includes('https://test.invalid/client/[id]'));
   assert.ok(!output.includes('/client/123'));
 });
 
@@ -101,7 +101,7 @@ test('exact metadata allowlist does not admit appended secrets; other events kee
   assert.deepEqual(page, {
     duration: 1.25,
     session: 'opaque-session',
-    pageUrl: 'https://test.invalid/[route]',
+    pageUrl: 'https://test.invalid/client/[id]',
   });
 });
 
@@ -119,7 +119,7 @@ for (const eventType of ['PageAction']) {
 
     obfuscator.traverseAndObfuscateEvents(event);
 
-    assert.equal(event.pageUrl, 'https://test.invalid/[route]');
+    assert.equal(event.pageUrl, 'https://test.invalid/client/[id]');
     assert.equal(event.actionText, '[redacted]');
     assert.equal(event.targetText, '[redacted]');
     assert.equal(event.environment, 'validation');
@@ -130,15 +130,40 @@ for (const eventType of ['PageAction']) {
   });
 }
 
+const uuid = '550e8400-e29b-41d4-a716-446655440000';
+
+// Route shape per event type: the app's dynamic segments are integer ids
+// (accounts) or UUIDs (clients, notes), so the route skeleton survives and only
+// the identifiers are replaced. This is what makes per-route dashboards possible
+// without shipping client ids to New Relic.
 for (const eventType of ['PageView', 'AjaxRequest', 'PageViewTiming']) {
-  test(`${eventType} masks URL content while retaining timing and session fields`, () => {
+  test(`${eventType} keeps the route skeleton and masks ids, query and fragment`, () => {
     const obfuscator = new Obfuscator(agent, eventType);
-    for (const url of [
-      'https://test.invalid/clients/Synthetic-Person?token=FAKE_SECRET#private',
-      'https://fakeuser:fakepassword@test.invalid/?name=Synthetic-Person',
-      '/clients/Synthetic-Person?token=FAKE_SECRET',
-      'test.invalid/clients/Synthetic-Person?token=FAKE_SECRET',
-    ]) {
+    for (const [url, expected] of [
+      [
+        'https://test.invalid/clients/123/edit?token=FAKE_SECRET#private',
+        'https://test.invalid/clients/[id]/edit',
+      ],
+      [
+        `https://test.invalid/client/${uuid}?name=Synthetic-Person`,
+        'https://test.invalid/client/[id]',
+      ],
+      [
+        'https://fakeuser:fakepassword@test.invalid/?name=Synthetic-Person',
+        'https://test.invalid/',
+      ],
+      [
+        '/clients/123/relations/456/edit?token=FAKE_SECRET',
+        '/clients/[id]/relations/[id]/edit',
+      ],
+      [
+        'test.invalid/clients/123?token=FAKE_SECRET',
+        'test.invalid/clients/[id]',
+      ],
+      // Static segments survive so API endpoints stay distinguishable.
+      ['/graphql', '/graphql'],
+      ['http://localhost:8081/__api/graphql', 'http://localhost:8081/__api/graphql'],
+    ] as Array<[string, string]>) {
       const event = {
         url,
         duration: 1.25,
@@ -150,9 +175,7 @@ for (const eventType of ['PageView', 'AjaxRequest', 'PageViewTiming']) {
       };
       obfuscator.traverseAndObfuscateEvents(event);
       assert.deepEqual(event, {
-        url: url.startsWith('https://')
-          ? 'https://test.invalid/[route]'
-          : '[route]',
+        url: expected,
         duration: 1.25,
         session: '053135a581efa3c3',
         timingName: 'largestContentfulPaint',
@@ -163,3 +186,30 @@ for (const eventType of ['PageView', 'AjaxRequest', 'PageViewTiming']) {
     }
   });
 }
+
+test('KNOWN LIMITATION: a non-id path segment is preserved verbatim', () => {
+  // Route-level masking trades the old blanket "[route]" for a route skeleton.
+  // That is only safe while every dynamic segment is an id. If a route ever
+  // starts carrying a name or slug, this test is the tripwire: it will keep
+  // passing, but the value below shows exactly what would ship.
+  const obfuscator = new Obfuscator(agent, 'PageView');
+  const event = { pageUrl: 'https://test.invalid/clients/Synthetic-Person' };
+  obfuscator.traverseAndObfuscateEvents(event);
+  assert.equal(event.pageUrl, 'https://test.invalid/clients/Synthetic-Person');
+});
+
+test('JavaScriptError keeps the route for request_uri but redacts free text', () => {
+  const obfuscator = new Obfuscator(agent, 'JavaScriptError');
+  assert.equal(obfuscator.obfuscateString('/client/123'), '/client/[id]');
+  assert.equal(obfuscator.obfuscateString('https://test.invalid/client/123'), 'https://test.invalid/client/[id]');
+  assert.equal(obfuscator.obfuscateString(secret), '[redacted]');
+  // A URL that is the entire message keeps its route; query is dropped.
+  assert.equal(
+    obfuscator.obfuscateString('https://test.invalid/client/123?token=FAKE_SECRET'),
+    'https://test.invalid/client/[id]',
+  );
+  assert.equal(
+    obfuscator.obfuscateString(`Error: ${secret}\n at f (https://test.invalid/client/123:2:3)`),
+    '[redacted]',
+  );
+});

@@ -17,7 +17,7 @@
       ],
       "options": {
         "cwd": "apps/betterangels",
-        "command": "EXPO_WEB_BASE_URL=$(node ../../tools/shared/print-base-path.mjs) npx expo export --platform web --output-dir ../../dist/apps/betterangels --clear"
+        "command": "node ../../tools/scripts/require-web-monitoring-env.mjs && EXPO_WEB_BASE_URL=$(node ../../tools/shared/print-base-path.mjs) npx expo export --platform web --output-dir ../../dist/apps/betterangels --clear"
       },
       "outputs": [
         "{workspaceRoot}/dist/apps/betterangels"
@@ -61,6 +61,9 @@
           "env": "EXPO_PUBLIC_NEW_RELIC_WEB_LICENSE_KEY"
         },
         {
+          "fileset": "{workspaceRoot}/tools/scripts/require-web-monitoring-env.mjs"
+        },
+        {
           "env": "EXPO_PUBLIC_SHELTER_WEB_URL"
         },
         {
@@ -80,26 +83,8 @@
         }
       ],
       "configurations": {
-        "preview": {
-          "env": {
-            "EXPO_PUBLIC_APP_ENV": "development",
-            "EXPO_PUBLIC_API_URL": "https://api.dev.betterangels.la",
-            "EXPO_PUBLIC_DEMO_API_URL": "https://api.dev.betterangels.la",
-            "EXPO_PUBLIC_LOCAL_API_URL": "",
-            "EXPO_PUBLIC_SHELTER_WEB_URL": "https://shelter.dev.betterangels.la"
-          }
-        },
-        "production": {
-          "env": {
-            "APP_VARIANT": "production",
-            "EXPO_PUBLIC_APP_ENV": "production",
-            "EXPO_PUBLIC_NEW_RELIC_LOG_LEVEL": "WARN",
-            "EXPO_PUBLIC_API_URL": "https://api.prod.betterangels.la",
-            "EXPO_PUBLIC_DEMO_API_URL": "https://api.dev.betterangels.la",
-            "EXPO_PUBLIC_LOCAL_API_URL": "",
-            "EXPO_PUBLIC_SHELTER_WEB_URL": "https://shelter.betterangels.la"
-          }
-        }
+        "preview": {},
+        "production": {}
       }
     },
     "deploy": {
