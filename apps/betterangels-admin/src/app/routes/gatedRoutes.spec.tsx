@@ -9,7 +9,7 @@ import { UserProvider } from '@monorepo/ba-platform';
 import { TeamPermissions } from '@monorepo/ba-platform/permissions';
 import { AuthProvider } from '@monorepo/react/betterangels-admin';
 import { render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router';
 import { describe, expect, it } from 'vitest';
 
 import { AppLayout } from '../Layout/AppLayout';

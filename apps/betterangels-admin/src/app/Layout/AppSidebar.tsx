@@ -13,7 +13,7 @@ import {
 } from '@monorepo/react/icons';
 import { mergeCss } from '@monorepo/react/shared';
 import { useEffect, useRef, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router';
 
 type IProps = {
   className?: string;

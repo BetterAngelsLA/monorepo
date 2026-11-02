@@ -1,6 +1,6 @@
 import { mergeCss } from '@monorepo/react/shared';
 import { MouseEventHandler, PropsWithChildren } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { Button } from '../../../../shared/components/button/Button';
 
 interface IBaseButton extends PropsWithChildren {

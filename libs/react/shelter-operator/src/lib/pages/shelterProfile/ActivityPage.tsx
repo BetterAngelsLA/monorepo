@@ -1,5 +1,5 @@
 import { AuditTargetType } from '@monorepo/ba-platform/types';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router';
 import { ObjectAuditLog } from '../../components/audit';
 import { profileRouteConfig, shelterProfileRoute } from '../../routing';
 

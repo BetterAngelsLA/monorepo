@@ -1,6 +1,6 @@
 import { CloseIcon } from '@monorepo/react/icons';
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { signInPath } from '../../constants';
 
 const STORAGE_KEY = 'shelter-login-banner-dismissed';

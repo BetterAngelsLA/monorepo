@@ -1,6 +1,6 @@
 import { MockedProvider } from '@apollo/client/testing/react';
 import { render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router';
 import { GetShelterOperatorOverviewDocument } from '../../components/overview/__generated__/overview.generated';
 import { ShelterReportPage } from './ShelterReportPage';
 

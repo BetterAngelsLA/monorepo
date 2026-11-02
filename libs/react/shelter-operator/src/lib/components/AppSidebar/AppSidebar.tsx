@@ -4,7 +4,7 @@ import { Divider, Sidebar } from '@monorepo/react/components';
 import { mergeCss } from '@monorepo/react/shared';
 import { operatorPath } from '@monorepo/react/shelter';
 import { useState } from 'react';
-import { useLocation, useParams } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router';
 import { isShelterRoute, paths } from '../../routing';
 import { ShelterMgmtLinks } from './ShelterMgmtLinks';
 import { ShelterProfileLinks } from './ShelterProfileLinks';

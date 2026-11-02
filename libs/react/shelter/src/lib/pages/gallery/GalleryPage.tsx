@@ -3,7 +3,7 @@ import { VideoEmbed } from '@monorepo/react/components';
 import { ArrowLeftIcon } from '@monorepo/react/icons';
 import { mapMediaLinksToVideos } from '@monorepo/react/shared';
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { groupBy } from 'remeda';
 import { ShelterPhotoTypeChoices } from '../../apollo';
 import { MediaLightbox } from '../../components';

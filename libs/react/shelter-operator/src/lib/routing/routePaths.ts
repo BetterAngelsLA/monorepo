@@ -1,4 +1,4 @@
-import { generatePath, matchPath } from 'react-router-dom';
+import { generatePath, matchPath } from 'react-router';
 import { TShelterMgmtSegment, TShelterProfileSegment } from './types';
 
 const OPERATOR_BASE = '/operator';

@@ -1,5 +1,5 @@
 import { mergeCss } from '@monorepo/react/shared';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import {
   aboutPagePath,
   contactPagePath,

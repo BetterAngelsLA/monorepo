@@ -1,7 +1,7 @@
 import { useActiveOrg } from '@monorepo/ba-platform';
 import type { PermissionEnum } from '@monorepo/ba-platform/permissions';
 import type { ReactNode } from 'react';
-import { Navigate, useParams } from 'react-router-dom';
+import { Navigate, useParams } from 'react-router';
 import { useBaPrivatePermissions } from '../../hooks';
 import {
   profileRouteConfig,
