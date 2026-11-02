@@ -32,6 +32,9 @@ yarn shelter
 # A single test by name
 yarn playwright test -c apps/shelter-e2e -g "renders the form"
 
+# A single spec file — path is relative to the repo root
+yarn playwright test -c apps/shelter-e2e apps/shelter-e2e/tests/pages/home/map.spec.ts
+
 # List discovered tests without running them
 yarn playwright test -c apps/shelter-e2e --list
 
@@ -91,15 +94,19 @@ Anonymous, client-side flows so far:
   Deliberately not the e2e generator's `src/`: the directory is what keeps
   shared code out of the run, and `project.json`'s `sourceRoot` points at
   `tests/` to match. Everything else about this project is generated shape —
-  `projectType: "application"`, `tags: []` like `betterangels-admin-e2e`,
-  `implicitDependencies: ["shelter-web"]`, and plugin-inferred targets.
+  `projectType: "application"`, `implicitDependencies: ["shelter-web"]`, and
+  plugin-inferred targets. The one non-generated addition is the
+  `scope:shelter-web` tag: the home search spec imports the app's
+  `@monorepo/react/shelter/constants` (the banner's storage key), and
+  `@nx/enforce-module-boundaries` refuses to let an untagged project depend on a
+  library.
 - `lib/` stays a **sibling** of `tests/`, not a child of it. Outside `testDir`
   the runner cannot reach it structurally, which keeps `testMatch` a second
   guard instead of the only one. Nesting it would trade that for a shorter
   import path — not worth it.
 - `tests/pages/<page>/` — one file per page feature:
   - `nav.spec.ts`, one per page, each with a describe per breakpoint band,
-    calling the helpers in `lib/navigation/`: `pages/home/nav.spec.ts` (which
+    calling the helpers in `lib/navigation/`: `layout/nav.spec.ts` (which
     also owns the flyout's interactions, since those are shell behaviour worth
     running once) and `pages/sign-in/nav.spec.ts` (composition only). A page
     whose header differs overrides the rule there rather than forking the
@@ -107,18 +114,35 @@ Anonymous, client-side flows so far:
   - `pages/home/map.spec.ts`: the map as mounted on home — that it renders and
     that its controls drive it. The map's own behaviour belongs with the
     component in the lib.
-  - `pages/home/shelter-search.spec.ts`: the search entry (which opens
-    `/search`) and the results count/source line.
+  - `pages/home/shelterSearch.spec.ts`: the search entry (which opens
+    `/search`), the map-area search reporting a count and its source, a name
+    search re-deriving a shelter that is already listed, and the empty state for
+    a name nothing matches. Inputs come from the page itself, so the same specs
+    run against local, DEV and prod.
   - `pages/sign-in/form.spec.ts`: sign-in form enable/disable logic.
+- `tests/layout/` — widgets `MainLayout` renders on every page, named after the
+  widget rather than the page (`libs/react/shelter/src/lib/layout/` is their
+  source): `loginBanner.spec.ts` (visible to an anonymous session, gone once
+  dismissed) and `footer.spec.ts` (its links and copyright). They run against
+  home unless a spec says otherwise. Header nav is _not_ here: it is
+  composition, so each page keeps its own thin `nav.spec.ts` over
+  `lib/navigation`.
 - `lib/` is imported through `lib/index.ts` (e.g.
   `import { VIEWPORTS, assertInlineNav } from '../../../lib'`):
-  `framework/constants.ts` holds `VIEWPORTS`; `navigation/` holds the link set
-  (`constants.ts`), the header queries (`queries.ts`: `navLink`, `navToggle`,
-  `expectedHref`) and the two band assertions (`inline-nav.ts`
-  `assertInlineNav`; `flyout-nav.ts` `assertCollapsedNav`, `assertFlyoutNav`);
-  `map/` holds the control names and ids (`constants.ts`), the drag and camera
-  seam (`interactions.ts`), the element queries (`queries.ts`) and `assertMapUi`
-  / `assertCurrentLocation` (`ui.ts`).
+  `framework/constants.ts` holds `VIEWPORTS`;
+  `framework/localStorage/` is the storage seam — `presetLocalStorage.ts` seeds
+  any key for the next navigation, and `utils/presetLoginBannerDismissed.ts`
+  applies it to the banner's key (which comes from the app, via
+  `@monorepo/react/shelter/constants`);
+  `navigation/` holds the link set (`constants.ts`), the DOM getters
+  (`getters.ts`: `getNavLink`, `getNavToggle`), `expectedHref` in `utils/`, and
+  the band assertions (`assertions.ts`: `assertInlineNav`, `assertCollapsedNav`,
+  `assertFlyoutNav`); `map/` holds the control names and ids (`constants.ts`),
+  the getters (`getters.ts`), the drag and camera seam (`interactions.ts`) and
+  the assertions (`assertions.ts`: `assertMapUi`, `assertCurrentLocation`);
+  `shelters/` holds the panel getters (`getters.ts`: `getResultCount`,
+  `getResultsSource`, `getShelterCard`, `getShelterCardNames`,
+  `getEmptyList`).
 
 Specs must not create data or submit forms unless the flow explicitly requires it.
 
@@ -128,14 +152,14 @@ Environment notes for the home specs:
   `VITE_SHELTER_API_URL` (see `apps/shelter-web/.env.local`). With the local
   backend not running the panel stays in its pre-search state — the specs
   tolerate both states.
-- The results line depends on the environment's data — `0 locations` +
-  `(based on search area)` before a search resolves, `N of M locations` +
-  `(based on map area)` after — so the specs assert tolerant patterns rather
-  than exact strings.
-- Exact empty-state copy is not asserted anywhere. Whether a searched area holds
-  public shelters is data, not code, and asserting it made the suite depend on
-  what a given environment happens to contain; that belongs to a component test
-  with a mocked response.
+- The results line depends on the environment's data, so the specs never
+  hardcode it: the map-area search asserts the count line's shape, and the name
+  search derives its term from a shelter the page already lists.
+- Response-shaped behaviour — exact counts for a fixture, short pages, card
+  field mapping — is asserted in `SheltersDisplay.test.tsx` in
+  `libs/react/shelter`, next to the component. Nothing here fakes the API: a
+  stubbed response cannot catch a GraphQL contract change, which is the one
+  thing only an e2e run against the real server can.
 
 ## Troubleshooting
 

@@ -1,16 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-/**
- * Sign-in form behaviour — anonymous and client-side only. The form is never
- * submitted, so no login/API side effects occur.
- *
- * The header on this page is covered in `nav.spec.ts`. Runs against the dev
- * server the test run starts locally, or against any deployed base URL via
- * `BASE_URL` (see playwright.config.ts).
- *
- * Run just this file:
- *   yarn playwright test -c apps/shelter-e2e sign-in/form
- */
+/** Anonymous and client-side only: the form is never submitted, so nothing is logged in and no API is written. */
 test('renders the form with a disabled submit button', async ({ page }) => {
   await page.goto('sign-in');
 

@@ -80,7 +80,11 @@ export function ShelterCard(props: TShelterCard) {
   };
 
   return (
-    <div className={mergeCss(parentCss)} onClick={onNavigate}>
+    <div
+      data-testid="shelter-card"
+      className={mergeCss(parentCss)}
+      onClick={onNavigate}
+    >
       <div className={mergeCss(bodyCss)}>
         <div className="relative w-full md:w-96 md:mr-4 md:shrink-0">
           <ShelterCardHero
@@ -92,7 +96,10 @@ export function ShelterCard(props: TShelterCard) {
         </div>
 
         <div className={mergeCss(contentCss)}>
-          <div className="font-semibold md:text-lg leading-4.5 tracking-[.03125rem] wrap-anywhere hyphens-auto">
+          <div
+            data-testid="shelter-card-name"
+            className="font-semibold md:text-lg leading-4.5 tracking-[.03125rem] wrap-anywhere hyphens-auto"
+          >
             {name}
           </div>
 
