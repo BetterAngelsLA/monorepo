@@ -6049,6 +6049,7 @@ __metadata:
     "@hookform/resolvers": "npm:^5.2.1"
     "@iarna/toml": "npm:^2.2.5"
     "@likashefqet/react-native-image-zoom": "npm:^4.2.1"
+    "@newrelic/browser-agent": "npm:^1.324.1"
     "@nx-tools/container-metadata": "npm:^7.3.0"
     "@nx-tools/nx-container": "npm:7.3.0"
     "@nx/devkit": "npm:23.3.0"
@@ -6465,6 +6466,65 @@ __metadata:
   version: 1.0.0
   resolution: "@neoconfetti/react@npm:1.0.0"
   checksum: 10/71a623f2df79c773b6693fab3a252ee2d7bb1da4a8986c2d15b5ef25493835c1de64f2e44637faf823970d43d63f32227b09a6605ad23f39bc82c14d810e45cd
+  languageName: node
+  linkType: hard
+
+"@newrelic/browser-agent@npm:^1.324.1":
+  version: 1.324.1
+  resolution: "@newrelic/browser-agent@npm:1.324.1"
+  dependencies:
+    "@newrelic/rrweb": "npm:^1.1.2"
+    fflate: "npm:0.8.3"
+    web-vitals: "npm:6.2.1"
+  checksum: 10/548b886d53635b699da14c084de1eac2b3999e050fece539ec4488f10688f444a82baf0061c8eb25f4b211ef8589ef07d441a8707b2a113f4ec1af3d26df7031
+  languageName: node
+  linkType: hard
+
+"@newrelic/rrdom@npm:^1.1.2":
+  version: 1.1.2
+  resolution: "@newrelic/rrdom@npm:1.1.2"
+  dependencies:
+    "@newrelic/rrweb-snapshot": "npm:^1.1.2"
+  checksum: 10/caffa1c4518535920f075b6097890912bcc2bf9430b3658bc861aeb185defba0bd54301bea6c3d1646f1ebe1ae85859818a4a82cbaf5f7591133f223cf56c507
+  languageName: node
+  linkType: hard
+
+"@newrelic/rrweb-snapshot@npm:^1.1.2":
+  version: 1.1.2
+  resolution: "@newrelic/rrweb-snapshot@npm:1.1.2"
+  dependencies:
+    postcss: "npm:^8.4.38"
+  checksum: 10/3ecd53a1ee51861b7e2184f4421714d912e5930bda42c243882f2b873d28154e2e73b4e2b010d943fcaf2f793a0b534c3d5af3749d86da3a568c80bbf960b9f9
+  languageName: node
+  linkType: hard
+
+"@newrelic/rrweb-types@npm:^1.1.2":
+  version: 1.1.2
+  resolution: "@newrelic/rrweb-types@npm:1.1.2"
+  checksum: 10/81e2ba8ae426cb6b7d22b5fd52a2c418f2bb52fc6341dea80a7388400f59291d81d43eb6da0be924f15853a0fb4a7a48d7e4c5fdc80ed7ca4c60be327d6a14bc
+  languageName: node
+  linkType: hard
+
+"@newrelic/rrweb-utils@npm:^1.1.2":
+  version: 1.1.2
+  resolution: "@newrelic/rrweb-utils@npm:1.1.2"
+  checksum: 10/5c35c5467b73d7c4d763a95e831bfb222179b1454c6b52722eb1a8ba7bc49e754b916a497dd3a8e3bc1016d0eca1a170f222bf5f5a2bb59058dd548749661a9c
+  languageName: node
+  linkType: hard
+
+"@newrelic/rrweb@npm:^1.1.2":
+  version: 1.1.2
+  resolution: "@newrelic/rrweb@npm:1.1.2"
+  dependencies:
+    "@newrelic/rrdom": "npm:^1.1.2"
+    "@newrelic/rrweb-snapshot": "npm:^1.1.2"
+    "@newrelic/rrweb-types": "npm:^1.1.2"
+    "@newrelic/rrweb-utils": "npm:^1.1.2"
+    "@types/css-font-loading-module": "npm:0.0.7"
+    "@xstate/fsm": "npm:^1.4.0"
+    base64-arraybuffer: "npm:^1.0.1"
+    mitt: "npm:^3.0.0"
+  checksum: 10/5fb140472e05a4d5010a1a7d18252100a01e13f6105867ffe7d1199d2ebc9af49b4af2309317e598a316707d3c6d26cb634e5105a87663eee9a9460fa7836789
   languageName: node
   linkType: hard
 
@@ -11067,6 +11127,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/css-font-loading-module@npm:0.0.7":
+  version: 0.0.7
+  resolution: "@types/css-font-loading-module@npm:0.0.7"
+  checksum: 10/f70b9098ee3b2e006f5f6d5cecc627dcc7b898f266bfc594e73a8720636f1a3bc5f8c38fa0e8f7e5b7878038b46fd70da0c797c3288e072af984097210f4c056
+  languageName: node
+  linkType: hard
+
 "@types/d3-array@npm:^3.2.1":
   version: 3.2.2
   resolution: "@types/d3-array@npm:3.2.2"
@@ -12509,6 +12576,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@xstate/fsm@npm:^1.4.0":
+  version: 1.6.5
+  resolution: "@xstate/fsm@npm:1.6.5"
+  checksum: 10/deae1501169d41d5395ce1581d7b08bde17911b7dec1533eacd5bee17060d22273055d6d6bc7e8f32222a502e4dcf510cd29064a5c9c5fa5aa2ced0ad60b2512
+  languageName: node
+  linkType: hard
+
 "@xtuc/ieee754@npm:^1.2.0":
   version: 1.2.0
   resolution: "@xtuc/ieee754@npm:1.2.0"
@@ -13896,7 +13970,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"base64-arraybuffer@npm:^1.0.2":
+"base64-arraybuffer@npm:^1.0.1, base64-arraybuffer@npm:^1.0.2":
   version: 1.0.2
   resolution: "base64-arraybuffer@npm:1.0.2"
   checksum: 10/15e6400d2d028bf18be4ed97702b11418f8f8779fb8c743251c863b726638d52f69571d4cc1843224da7838abef0949c670bde46936663c45ad078e89fee5c62
@@ -18389,7 +18463,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fflate@npm:^0.8.1, fflate@npm:^0.8.3":
+"fflate@npm:0.8.3, fflate@npm:^0.8.1, fflate@npm:^0.8.3":
   version: 0.8.3
   resolution: "fflate@npm:0.8.3"
   checksum: 10/6ebf528dc9c56e78e715eac615b009b25dc33e15c1920b11ebba44e6d76181c647756a81a23e19247907496b93aa99928514c53090579a65109e026ac2824aa7
@@ -22952,6 +23026,13 @@ __metadata:
   dependencies:
     minipass: "npm:^7.1.2"
   checksum: 10/f47365cc2cb7f078cbe7e046eb52655e2e7e97f8c0a9a674f4da60d94fb0624edfcec9b5db32e8ba5a99a5f036f595680ae6fe02a262beaa73026e505cc52f99
+  languageName: node
+  linkType: hard
+
+"mitt@npm:^3.0.0":
+  version: 3.0.1
+  resolution: "mitt@npm:3.0.1"
+  checksum: 10/287c70d8e73ffc25624261a4989c783768aed95ecb60900f051d180cf83e311e3e59865bfd6e9d029cdb149dc20ba2f128a805e9429c5c4ce33b1416c65bbd14
   languageName: node
   linkType: hard
 
@@ -29146,6 +29227,13 @@ __metadata:
   version: 0.20.8
   resolution: "web-tree-sitter@npm:0.20.8"
   checksum: 10/a97c947486d333004f912eafe12f70a98e97849526c6ee8dc705d9768f63cc91fdd85d2229a045f6d88a6d982a62f970e988055f878a458a02b583b86681592a
+  languageName: node
+  linkType: hard
+
+"web-vitals@npm:6.2.1":
+  version: 6.2.1
+  resolution: "web-vitals@npm:6.2.1"
+  checksum: 10/bde1b9f39da7718d966fe60f8be4d17d571f381243b69a83cce29f04bd6076a9de20d3129ae9a483e711b94b767e3db9a37a0191890c043dbf121f55c96999c4
   languageName: node
   linkType: hard
 
