@@ -32,14 +32,7 @@ export function outreachWebHost(): string {
 }
 
 export function taskShareUrl(taskId: string): string {
-  // Local runs can point the link at the web export they are actually running
-  // (e.g. http://localhost:8081) without changing the host the binary claims.
-  const configuredBase = process.env['EXPO_PUBLIC_OUTREACH_WEB_URL']?.trim();
-  const base = configuredBase
-    ? configuredBase.replace(/\/+$/, '')
-    : `https://${outreachWebHost()}`;
-
-  return `${base}/task/${encodeURIComponent(taskId)}`;
+  return `https://${outreachWebHost()}/task/${encodeURIComponent(taskId)}`;
 }
 
 /**

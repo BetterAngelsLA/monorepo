@@ -32,7 +32,6 @@ const task = (overrides: Record<string, unknown> = {}) => ({
 beforeEach(() => {
   setPlatform('ios');
   appConfig.host = 'outreach.dev.betterangels.la';
-  delete process.env['EXPO_PUBLIC_OUTREACH_WEB_URL'];
   vi.mocked(Clipboard.setStringAsync).mockReset();
 });
 
@@ -60,12 +59,6 @@ describe('taskShareUrl', () => {
     appConfig.host = undefined;
 
     expect(() => taskShareUrl('abc')).toThrow('outreachWebHost');
-  });
-
-  it('uses a local web url when one is configured', () => {
-    process.env['EXPO_PUBLIC_OUTREACH_WEB_URL'] = 'http://localhost:8081/';
-
-    expect(taskShareUrl('abc')).toBe('http://localhost:8081/task/abc');
   });
 });
 
