@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router';
 import { ShelterEcosystem } from '../../components/ShelterProfile';
 
 export function ShelterEcosystemPage() {

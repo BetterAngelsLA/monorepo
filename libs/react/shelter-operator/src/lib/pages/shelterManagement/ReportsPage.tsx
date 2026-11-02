@@ -1,5 +1,5 @@
 import { FileText } from 'lucide-react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router';
 import { Button } from '../../components/base-ui/buttons/buttons';
 import { ReportsView } from '../../components/reports/ReportsView';
 import { shelterReportRoute } from '../../routing';

@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter } from 'react-router';
 import { ShelterBasicInfoForm } from './ShelterBasicInfoForm';
 
 // TipTap needs a real contenteditable environment; this spec is about how the

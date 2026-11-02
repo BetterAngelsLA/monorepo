@@ -1,7 +1,7 @@
 import { useQuery } from '@apollo/client/react';
 import { Download } from 'lucide-react';
 import { useRef } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router';
 import { Button } from '../../components/base-ui/buttons/buttons';
 import { Text } from '../../components/base-ui/text/text';
 import { GetShelterOperatorOverviewDocument } from '../../components/overview/__generated__/overview.generated';

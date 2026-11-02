@@ -5,7 +5,7 @@ import {
   ShelterPermissions,
 } from '@monorepo/ba-platform/permissions';
 import { operatorPath } from '@monorepo/react/shelter';
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes } from 'react-router';
 import { CreateShelterProfile } from './components/ShelterProfile';
 import {
   BaPrivateGate,

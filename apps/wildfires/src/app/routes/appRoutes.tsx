@@ -1,4 +1,4 @@
-import { RouteObject } from 'react-router-dom';
+import { RouteObject } from 'react-router';
 import Policy from '../pages/Policy';
 import About from '../pages/about';
 import Contact from '../pages/contact';

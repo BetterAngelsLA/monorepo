@@ -1,6 +1,6 @@
 import { useApolloClient, useMutation } from '@apollo/client/react';
 import { useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { clearActiveOrgId, LogoutDocument } from '@monorepo/ba-platform';
 import { useUser } from './UserProvider';
 
