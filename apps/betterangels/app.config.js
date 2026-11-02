@@ -24,9 +24,11 @@ if (
   );
 }
 
+// Universal links and Android App Links are verified against the host that
+// serves the web export, so this is the outreach site and not the API host.
 const HOSTNAME = IS_PRODUCTION
-  ? 'api.prod.betterangels.la' // TODO: We should adjust this to be app.betterangels.la
-  : 'api.dev.betterangels.la'; // TODO: We should adjust this to be app.dev.betterangels.la
+  ? 'outreach.betterangels.la'
+  : 'outreach.dev.betterangels.la';
 
 const BUNDLE_IDENTIFIER = IS_PRODUCTION
   ? 'la.betterangels.app'
@@ -75,6 +77,9 @@ export default {
       intentFilters: [
         {
           action: 'VIEW',
+          // Without this Android shows a browser/chooser instead of opening the
+          // app, even when assetlinks.json verifies the domain.
+          autoVerify: true,
           data: [
             {
               scheme: 'https',
