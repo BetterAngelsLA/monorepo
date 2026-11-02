@@ -1,7 +1,20 @@
-import { resolvePreset, resolvePresetValue } from './presets';
-import type { DateRange, DateRangePreset, DateRangePresetValue } from './types';
+import { PRESET_LABELS, resolvePreset, resolvePresetValue } from './presets';
+import type { DateRange, DateRangePreset } from './types';
 
 const TODAY = new Date(2026, 5, 27);
+
+/**
+ * Every preset `resolvePresetValue` must delegate to `resolvePreset`. Kept in
+ * lock step with `PRESET_LABELS` by the coverage assertion below, so adding a
+ * preset cannot leave the delegation loop silently short.
+ */
+const NON_ALL_PRESETS: DateRangePreset[] = [
+  'LAST_7_DAYS',
+  'LAST_30_DAYS',
+  'MONTH_TO_DATE',
+  'YEAR_TO_DATE',
+  'CUSTOM',
+];
 const d = (year: number, monthIndex: number, day: number) =>
   new Date(year, monthIndex, day);
 
@@ -48,16 +61,14 @@ describe('resolvePresetValue', () => {
     expect(resolvePresetValue('ALL')).toEqual({ from: null, to: null });
   });
 
-  it('defers every other value to resolvePreset', () => {
-    const cases: DateRangePresetValue[] = [
-      'LAST_7_DAYS',
-      'MONTH_TO_DATE',
-      'CUSTOM',
-    ];
+  it('covers every preset the shared labels define', () => {
+    expect(NON_ALL_PRESETS).toEqual(Object.keys(PRESET_LABELS));
+  });
 
-    for (const value of cases) {
+  it('defers every non-ALL value to resolvePreset', () => {
+    for (const value of NON_ALL_PRESETS) {
       expect(resolvePresetValue(value, TODAY)).toEqual(
-        resolvePreset(value as DateRangePreset, TODAY),
+        resolvePreset(value, TODAY),
       );
     }
   });

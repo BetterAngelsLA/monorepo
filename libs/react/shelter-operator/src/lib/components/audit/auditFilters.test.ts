@@ -10,21 +10,23 @@ import {
 // Local wall-clock time, deliberately mid-day: a boundary bug shows up as the
 // wrong local hour, not as a timezone-dependent ISO string.
 const TODAY = new Date(2026, 5, 27, 14, 30);
+// Distinct endpoints: a bound derived from the wrong end of the range passes
+// when both ends sit on the same day.
+const FROM = new Date(2026, 5, 21, 14, 30);
+const TO = new Date(2026, 5, 27, 9, 10);
 
 describe('rangeToFilters', () => {
   it('aligns both ends to local day boundaries', () => {
-    const { dateFrom, dateTo } = rangeToFilters({ from: TODAY, to: TODAY });
+    const { dateFrom, dateTo } = rangeToFilters({ from: FROM, to: TO });
 
     expect(new Date(dateFrom as string).getTime()).toBe(
-      startOfDay(TODAY).getTime(),
+      startOfDay(FROM).getTime(),
     );
-    expect(new Date(dateTo as string).getTime()).toBe(
-      endOfDay(TODAY).getTime(),
-    );
+    expect(new Date(dateTo as string).getTime()).toBe(endOfDay(TO).getTime());
   });
 
   it('sends local midnight and the last local millisecond, not UTC bounds', () => {
-    const { dateFrom, dateTo } = rangeToFilters({ from: TODAY, to: TODAY });
+    const { dateFrom, dateTo } = rangeToFilters({ from: FROM, to: TO });
 
     const from = new Date(dateFrom as string);
     expect([
@@ -43,13 +45,17 @@ describe('rangeToFilters', () => {
     ]).toEqual([23, 59, 59, 999]);
   });
 
-  it('uses null, not undefined, for an open end', () => {
+  it('uses null, not undefined, for either open end', () => {
     expect(rangeToFilters({ from: null, to: null })).toEqual({
       dateFrom: null,
       dateTo: null,
     });
     expect(rangeToFilters({ from: null, to: TODAY })).toHaveProperty(
       'dateFrom',
+      null,
+    );
+    expect(rangeToFilters({ from: TODAY, to: null })).toHaveProperty(
+      'dateTo',
       null,
     );
   });
@@ -61,6 +67,7 @@ describe('hasDateFilters', () => {
     expect(hasDateFilters({ dateFrom: null, dateTo: null })).toBe(false);
     expect(hasDateFilters(initialAuditFilters())).toBe(true);
     expect(hasDateFilters({ dateFrom: '2026-06-01T07:00:00.000Z' })).toBe(true);
+    expect(hasDateFilters({ dateTo: '2026-06-30T07:00:00.000Z' })).toBe(true);
   });
 });
 

@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DateRangePresetDropdown } from './DateRangePresetDropdown';
 
@@ -71,20 +71,27 @@ describe('DateRangePresetDropdown', () => {
     expect(onChange).toHaveBeenCalledWith(null);
   });
 
-  it('offers "All time" only when asked', () => {
+  it('offers "All time" in the menu only when asked', () => {
     const { unmount } = render(
       <DateRangePresetDropdown value="LAST_30_DAYS" onChange={vi.fn()} />,
     );
 
     openMenu();
-    expect(screen.queryByText('All time')).toBeNull();
+    expect(
+      within(screen.getByRole('listbox')).queryByText('All time'),
+    ).toBeNull();
     unmount();
 
     render(
       <DateRangePresetDropdown value="ALL" includeAll onChange={vi.fn()} />,
     );
 
-    expect(screen.getByRole('combobox').textContent).toContain('All time');
+    // The trigger would read "All time" from `value` alone, so the menu entry
+    // is what proves `includeAll` added it.
+    openMenu();
+    expect(
+      within(screen.getByRole('listbox')).getByText('All time'),
+    ).not.toBeNull();
   });
 
   it('labels the control when a label is given', () => {
