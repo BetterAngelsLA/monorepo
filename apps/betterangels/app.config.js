@@ -6,12 +6,7 @@
 // developer override: it never travels, and dotenv applies it last so it still
 // wins locally.
 import dotenv from 'dotenv';
-// This file is evaluated from two working directories: the app directory
-// (Expo CLI) and the workspace root (Nx builds its project graph there).
-// Resolve the app's env first so both see the same values.
-dotenv.config({ path: 'apps/betterangels/.env' });
 dotenv.config();
-dotenv.config({ path: 'apps/betterangels/.env.local', override: true });
 dotenv.config({ path: '.env.local', override: true });
 
 const IS_PRODUCTION = process.env.APP_VARIANT === 'production';
@@ -32,12 +27,17 @@ if (
 // The host the app claims for universal links and App Links. Set per EAS
 // profile (and in the tracked .env for local runs); `extra` exposes the same
 // value to the share URL so the entitlement and the link cannot disagree.
-const HOSTNAME = process.env.EXPO_PUBLIC_OUTREACH_HOST;
-if (!HOSTNAME) {
+//
+// Nx evaluates this file to build its project graph without an environment, so
+// an unset value falls back to the dev host rather than failing there. A
+// production build, which does have an environment, must set it.
+const configuredHost = process.env.EXPO_PUBLIC_OUTREACH_HOST?.trim();
+if (IS_PRODUCTION && !configuredHost) {
   throw new Error(
-    'EXPO_PUBLIC_OUTREACH_HOST is not set (expected e.g. outreach.dev.betterangels.la).',
+    'EXPO_PUBLIC_OUTREACH_HOST is required for production builds',
   );
 }
+const HOSTNAME = configuredHost || 'outreach.dev.betterangels.la';
 
 const BUNDLE_IDENTIFIER = IS_PRODUCTION
   ? 'la.betterangels.app'
