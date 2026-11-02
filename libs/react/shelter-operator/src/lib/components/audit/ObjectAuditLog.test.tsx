@@ -638,7 +638,11 @@ describe('ObjectAuditLog', () => {
 
           if (after === 'c1-new') {
             observer.next({
-              data: pageData([makeAction({ actor: 'A5' })], null, false),
+              data: pageData(
+                [makeAction({ actor: 'A5 (replayed)' })],
+                null,
+                false,
+              ),
             });
             observer.complete();
             return;
@@ -667,8 +671,10 @@ describe('ObjectAuditLog', () => {
     fireEvent.click(screen.getByRole('button', { name: 'retry' }));
 
     // A5 was the last action of the old page one. It must not be skipped just
-    // because the refreshed page one now ends at A4.
-    expect(await screen.findByText('A5')).not.toBeNull();
+    // because the refreshed page one now ends at A4. Use a distinct label:
+    // asserting plain A5 could resolve on the stale pre-retry node and pass
+    // even if the replayed page was never merged.
+    expect(await screen.findByText('A5 (replayed)')).not.toBeNull();
     expect(screen.getByText('NEW')).not.toBeNull();
     expect(screen.queryByText('A6')).toBeNull();
 
