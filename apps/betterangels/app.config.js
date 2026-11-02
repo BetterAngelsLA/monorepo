@@ -6,7 +6,12 @@
 // developer override: it never travels, and dotenv applies it last so it still
 // wins locally.
 import dotenv from 'dotenv';
+// This file is evaluated from two working directories: the app directory
+// (Expo CLI) and the workspace root (Nx builds its project graph there).
+// Resolve the app's env first so both see the same values.
+dotenv.config({ path: 'apps/betterangels/.env' });
 dotenv.config();
+dotenv.config({ path: 'apps/betterangels/.env.local', override: true });
 dotenv.config({ path: '.env.local', override: true });
 
 const IS_PRODUCTION = process.env.APP_VARIANT === 'production';
