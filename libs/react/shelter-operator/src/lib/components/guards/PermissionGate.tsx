@@ -23,7 +23,15 @@ export function PermissionGate({
   fallbackPath,
   children,
 }: PermissionGateProps) {
-  const { hasPermission } = useActiveOrg();
+  const { activeOrg, organizations, hasPermission } = useActiveOrg();
+
+  // Same window as the admin's PermissionGuard: `activeOrg` is briefly
+  // undefined right after the org list arrives, and v7 lets the redirect below
+  // win, bouncing a permitted user to `fallbackPath`. An org-less user still
+  // redirects.
+  if (!activeOrg && organizations.length > 0) {
+    return null;
+  }
 
   if (!hasPermission(permission)) {
     return <Navigate to={fallbackPath} replace />;

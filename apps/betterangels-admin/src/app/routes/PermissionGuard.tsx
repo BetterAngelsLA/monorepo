@@ -10,12 +10,10 @@ type IProps = {
 export function PermissionGuard({ permission, children }: IProps) {
   const { activeOrg, organizations, hasPermission } = useActiveOrg();
 
-  // The store's active-org selection lands one commit after the org list:
-  // ``activeOrg`` is undefined on the first render even when the user does
-  // belong to an organization. Treating that as a denial redirects a permitted
-  // user to ``/`` — React Router 7 made that window observable, where v6 had
-  // rendered the children by then. Only the org-less case (no organizations at
-  // all) keeps the redirect below, which is the behaviour it had before.
+  // The active-org selection lands one commit after the org list, so
+  // `activeOrg` is briefly undefined for a user who does have an org.
+  // Redirecting then bounces a permitted user to `/` (React Router 7 made
+  // that window observable); an org-less user still redirects.
   if (!activeOrg && organizations.length > 0) {
     return null;
   }
