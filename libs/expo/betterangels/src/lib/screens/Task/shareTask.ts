@@ -1,3 +1,4 @@
+import Constants from 'expo-constants';
 import * as Clipboard from 'expo-clipboard';
 import { Platform, Share } from 'react-native';
 
@@ -14,20 +15,24 @@ export type TaskShareOutcome = 'shared' | 'copied' | 'dismissed';
 /**
  * The host that serves the web export and its app-link files.
  *
- * Set per profile in `eas.json`; the `APP_ENV` fallback keeps a local
- * `expo start` working when `.env` has not been regenerated.
+ * `app.config.js` sets this from the same `HOSTNAME` that drives the
+ * `associatedDomains` entitlement and the Android intent filter, so the three
+ * cannot disagree about which domain the app claims.
  */
-export function outreachWebUrl(): string {
-  const configured = process.env['EXPO_PUBLIC_OUTREACH_WEB_URL']?.trim();
-  if (configured) return configured.replace(/\/+$/, '');
+export function outreachWebHost(): string {
+  const host = Constants.expoConfig?.extra?.['outreachWebHost'] as
+    | string
+    | undefined;
 
-  return process.env['EXPO_PUBLIC_APP_ENV'] === 'production'
-    ? 'https://outreach.betterangels.la'
-    : 'https://outreach.dev.betterangels.la';
+  if (!host) {
+    throw new Error('outreachWebHost is missing from app config');
+  }
+
+  return host.replace(/\/+$/, '');
 }
 
 export function taskShareUrl(taskId: string): string {
-  return `${outreachWebUrl()}/task/${encodeURIComponent(taskId)}`;
+  return `https://${outreachWebHost()}/task/${encodeURIComponent(taskId)}`;
 }
 
 /**

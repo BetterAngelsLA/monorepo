@@ -2,6 +2,22 @@ import * as Clipboard from 'expo-clipboard';
 import { Platform, Share } from 'react-native';
 import { shareTask, taskShareMessage, taskShareUrl } from './shareTask';
 
+const appConfig = vi.hoisted(() => ({
+  host: 'outreach.dev.betterangels.la' as string | undefined,
+}));
+
+vi.mock('expo-constants', () => ({
+  default: {
+    expoConfig: {
+      extra: {
+        get outreachWebHost() {
+          return appConfig.host;
+        },
+      },
+    },
+  },
+}));
+
 vi.mock('expo-clipboard', () => ({ setStringAsync: vi.fn() }));
 
 const setPlatform = (os: string) =>
@@ -15,9 +31,7 @@ const task = (overrides: Record<string, unknown> = {}) => ({
 
 beforeEach(() => {
   setPlatform('ios');
-  process.env['EXPO_PUBLIC_OUTREACH_WEB_URL'] =
-    'https://outreach.dev.betterangels.la';
-  delete process.env['EXPO_PUBLIC_APP_ENV'];
+  appConfig.host = 'outreach.dev.betterangels.la';
   vi.mocked(Clipboard.setStringAsync).mockReset();
 });
 
@@ -33,22 +47,18 @@ describe('taskShareUrl', () => {
     );
   });
 
-  it('tolerates a trailing slash on the host', () => {
-    process.env['EXPO_PUBLIC_OUTREACH_WEB_URL'] =
-      'https://outreach.dev.betterangels.la/';
-
-    expect(taskShareUrl('abc')).toBe(
-      'https://outreach.dev.betterangels.la/task/abc',
-    );
-  });
-
-  it('falls back to the app environment when the url is not configured', () => {
-    delete process.env['EXPO_PUBLIC_OUTREACH_WEB_URL'];
-    process.env['EXPO_PUBLIC_APP_ENV'] = 'production';
+  it('follows the host the app claims, not a second setting', () => {
+    appConfig.host = 'outreach.betterangels.la';
 
     expect(taskShareUrl('abc')).toBe(
       'https://outreach.betterangels.la/task/abc',
     );
+  });
+
+  it('fails loudly when app config has no host', () => {
+    appConfig.host = undefined;
+
+    expect(() => taskShareUrl('abc')).toThrow('outreachWebHost');
   });
 });
 
