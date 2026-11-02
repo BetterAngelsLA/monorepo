@@ -2,7 +2,7 @@ import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { LoadingView, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { formatScalarDate } from '@monorepo/shared/scalars';
 import { router, useNavigation } from 'expo-router';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { MainScrollContainer, TaskStatusBtn } from '../../ui-components';
 import { useUser } from '../../hooks';
@@ -33,18 +33,32 @@ export default function Task({
   const task = data?.task;
   const clientProfileId = task?.clientProfile?.id;
 
+  const taskId = task?.id;
+  const taskSummary = task?.summary;
+  const taskHasClient = !!task?.clientProfile;
+
+  // The header only needs these fields, and a stable target keeps the effect
+  // from re-running (and the header from re-rendering) on every cache update.
+  const shareTarget = useMemo(
+    () =>
+      taskId
+        ? { id: taskId, summary: taskSummary, hasClient: taskHasClient }
+        : null,
+    [taskId, taskSummary, taskHasClient],
+  );
+
   const navigation = useNavigation();
 
   // Sharing is a screen action: one nav-bar button, not a second icon crowding
   // the task title. It is set here because the header is configured by the
   // stack while the task data lives in this screen.
   useEffect(() => {
-    if (!task) return;
+    if (!shareTarget) return;
 
     navigation.setOptions({
-      headerRight: () => <ShareTaskButton task={task} />,
+      headerRight: () => <ShareTaskButton task={shareTarget} />,
     });
-  }, [navigation, task]);
+  }, [navigation, shareTarget]);
 
   const handleClientPress = useCallback(() => {
     // `/client/[id]` resolves to the HMIS client screen for HMIS users; this

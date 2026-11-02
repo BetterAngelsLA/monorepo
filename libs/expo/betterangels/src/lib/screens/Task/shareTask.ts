@@ -6,8 +6,8 @@ import { Platform, Share } from 'react-native';
 export type ShareableTask = {
   id: string;
   summary?: string | null;
-  clientProfile?: { id: string } | null;
-  hmisClientProfile?: { id: string } | null;
+  /** True when the task is attached to a client, whose name the summary may carry. */
+  hasClient?: boolean;
 };
 
 export type TaskShareOutcome = 'shared' | 'copied' | 'dismissed';
@@ -32,7 +32,14 @@ export function outreachWebHost(): string {
 }
 
 export function taskShareUrl(taskId: string): string {
-  return `https://${outreachWebHost()}/task/${encodeURIComponent(taskId)}`;
+  // Local runs can point the link at the web export they are actually running
+  // (e.g. http://localhost:8081) without changing the host the binary claims.
+  const configuredBase = process.env['EXPO_PUBLIC_OUTREACH_WEB_URL']?.trim();
+  const base = configuredBase
+    ? configuredBase.replace(/\/+$/, '')
+    : `https://${outreachWebHost()}`;
+
+  return `${base}/task/${encodeURIComponent(taskId)}`;
 }
 
 /**
@@ -41,9 +48,8 @@ export function taskShareUrl(taskId: string): string {
  */
 export function taskShareMessage(task: ShareableTask, url: string): string {
   const summary = task.summary?.trim();
-  const hasClient = !!(task.clientProfile || task.hmisClientProfile);
 
-  return hasClient || !summary ? url : `${summary} — ${url}`;
+  return task.hasClient || !summary ? url : `${summary} — ${url}`;
 }
 
 export async function shareTask(

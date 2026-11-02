@@ -25,19 +25,21 @@ if (
 }
 
 // The host the app claims for universal links and App Links. Set per EAS
-// profile (and in the tracked .env for local runs); `extra` exposes the same
-// value to the share URL so the entitlement and the link cannot disagree.
+// profile (the tracked .env covers local runs); there is no fallback. `extra`
+// exposes the same value to the share URL so the entitlement and the link
+// cannot disagree.
 //
 // Nx evaluates this file to build its project graph without an environment, so
-// an unset value falls back to the dev host rather than failing there. A
-// production build, which does have an environment, must set it.
-const configuredHost = process.env.EXPO_PUBLIC_OUTREACH_HOST?.trim();
-if (IS_PRODUCTION && !configuredHost) {
+// an absent value must not throw there — the claim arrays are simply empty.
+// `write-eas-env.mjs` refuses to write a build's env without it, and a
+// production build must not point at the dev host.
+const HOSTNAME = process.env.EXPO_PUBLIC_OUTREACH_HOST?.trim();
+
+if (IS_PRODUCTION && (!HOSTNAME || HOSTNAME.includes('dev'))) {
   throw new Error(
-    'EXPO_PUBLIC_OUTREACH_HOST is required for production builds',
+    `EXPO_PUBLIC_OUTREACH_HOST is ${HOSTNAME ?? 'unset'} for a production build`,
   );
 }
-const HOSTNAME = configuredHost || 'outreach.dev.betterangels.la';
 
 const BUNDLE_IDENTIFIER = IS_PRODUCTION
   ? 'la.betterangels.app'
@@ -62,7 +64,7 @@ export default {
       supportsTablet: true,
       bundleIdentifier: BUNDLE_IDENTIFIER,
       buildNumber: '1.2.17',
-      associatedDomains: [`applinks:${HOSTNAME}`],
+      associatedDomains: HOSTNAME ? [`applinks:${HOSTNAME}`] : [],
       config: {
         usesNonExemptEncryption: false,
       },
@@ -83,20 +85,22 @@ export default {
       ], // https://github.com/expo/expo/issues/25361#issuecomment-2363699975
       softwareKeyboardLayoutMode: 'pan',
       package: BUNDLE_IDENTIFIER,
-      intentFilters: [
-        {
-          action: 'VIEW',
-          autoVerify: true,
-          data: [
+      intentFilters: HOSTNAME
+        ? [
             {
-              scheme: 'https',
-              host: HOSTNAME,
-              pathPrefix: '/',
+              action: 'VIEW',
+              autoVerify: true,
+              data: [
+                {
+                  scheme: 'https',
+                  host: HOSTNAME,
+                  pathPrefix: '/',
+                },
+              ],
+              category: ['BROWSABLE', 'DEFAULT'],
             },
-          ],
-          category: ['BROWSABLE', 'DEFAULT'],
-        },
-      ],
+          ]
+        : [],
       config: {},
       versionCode: 89,
     },

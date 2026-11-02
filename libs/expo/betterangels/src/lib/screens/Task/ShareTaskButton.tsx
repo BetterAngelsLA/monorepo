@@ -1,5 +1,6 @@
 import { ShareIcon } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
+import { useRef } from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 import { useSnackbar } from '../../hooks';
 import { HeaderSlot } from '../../navigation';
@@ -10,8 +11,13 @@ const TOUCH_TARGET = 44;
 
 export function ShareTaskButton({ task }: { task: ShareableTask }) {
   const { showSnackbar } = useSnackbar();
+  // The sheet is not instant; a second tap would open a second sheet.
+  const busy = useRef(false);
 
   const onPress = async () => {
+    if (busy.current) return;
+    busy.current = true;
+
     try {
       const outcome = await shareTask(task);
 
@@ -21,6 +27,8 @@ export function ShareTaskButton({ task }: { task: ShareableTask }) {
     } catch (error) {
       console.error(error);
       showSnackbar({ message: "Couldn't share this task", type: 'error' });
+    } finally {
+      busy.current = false;
     }
   };
 
