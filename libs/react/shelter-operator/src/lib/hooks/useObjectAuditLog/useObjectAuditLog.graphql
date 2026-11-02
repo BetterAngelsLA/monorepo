@@ -1,0 +1,37 @@
+query ObjectAuditLog(
+  $targetType: AuditTargetType!
+  $objectId: ID!
+  # Wired by the activity-log date-range and actor-filter follow-ups.
+  $filters: AuditEventFilter
+  $limit: Int!
+  $after: String
+) {
+  objectAuditLog(
+    targetType: $targetType
+    objectId: $objectId
+    filters: $filters
+    limit: $limit
+    after: $after
+  ) {
+    endCursor
+    hasNextPage
+    results {
+      timestamp
+      actor
+      # The server capped this bulk action's event list; rendered by the
+      # activity-log hardening follow-up.
+      truncated
+      fieldChanges
+      events {
+        timestamp
+        kind
+        action
+        summary
+        # A synthesized event's unchanged identity (e.g. a netted schedule
+        # slot's day/type); rendered by the readability follow-up.
+        context
+        fieldChanges
+      }
+    }
+  }
+}

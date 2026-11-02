@@ -4,7 +4,9 @@ import { mergeCss } from '@monorepo/react/shared';
 import { enumStatusChoices } from '@monorepo/react/shelter';
 import { useMemo } from 'react';
 import { Controller, UseFormSetError, useForm } from 'react-hook-form';
+import { Link } from 'react-router-dom';
 import { LocationPicker } from '../../../../pages/dashboard/components/LocationPicker';
+import { profileRouteConfig, shelterProfileRoute } from '../../../../routing';
 import {
   Dropdown,
   DropdownChip,
@@ -51,6 +53,9 @@ type TProps = {
    * bottom of the form — used for admin info such as the last-updated
    * timestamp. */
   updatedAt?: string | null;
+  /** Existing shelter id; with ``updatedAt`` this adds the activity-log link to
+   * the last-updated meta block. Omitted by the create form. */
+  shelterId?: string;
 };
 
 export function ShelterBasicInfoForm(props: TProps) {
@@ -64,6 +69,7 @@ export function ShelterBasicInfoForm(props: TProps) {
     className,
     organizationField,
     updatedAt,
+    shelterId,
   } = props;
 
   const initialValues = useMemo(
@@ -289,11 +295,25 @@ export function ShelterBasicInfoForm(props: TProps) {
             />
           </Form.Block>
 
-          {!!updatedAt && (
+          {!!updatedAt && isViewMode && (
             <Form.Meta>
               <Text variant="caption" className="text-gray-500">
                 Last updated:{' '}
                 <FormattedDate value={updatedAt} appendRelative={true} />
+                {shelterId && (
+                  <>
+                    {' · '}
+                    <Link
+                      to={shelterProfileRoute(
+                        shelterId,
+                        profileRouteConfig.children.activity,
+                      )}
+                      className="font-medium text-blue-600 underline hover:text-blue-800"
+                    >
+                      View activity
+                    </Link>
+                  </>
+                )}
               </Text>
             </Form.Meta>
           )}

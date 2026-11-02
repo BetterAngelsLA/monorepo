@@ -1,4 +1,5 @@
 export { BaPrivatePage } from './BaPrivatePage';
+export { ShelterActivityPage } from './ActivityPage';
 export { ShelterBasicInfoPage } from './BasicInfoPage';
 export { ShelterDetailsPage } from './DetailsPage';
 export { ShelterEcosystemPage } from './EcosystemPage';
