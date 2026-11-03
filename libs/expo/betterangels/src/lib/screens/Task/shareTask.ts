@@ -1,4 +1,3 @@
-import Constants from 'expo-constants';
 import * as Clipboard from 'expo-clipboard';
 import { Platform, Share } from 'react-native';
 
@@ -15,17 +14,15 @@ export type TaskShareOutcome = 'shared' | 'copied' | 'dismissed';
 /**
  * The host that serves the web export and its app-link files.
  *
- * `app.config.js` sets this from the same `HOSTNAME` that drives the
- * `associatedDomains` entitlement and the Android intent filter, so the three
- * cannot disagree about which domain the app claims.
+ * Read from the same `EXPO_PUBLIC_OUTREACH_HOST` that `app.config.js` used for
+ * the entitlement and intent filter; Expo inlines the value into the bundle at
+ * build time, so the two cannot disagree about which domain the app claims.
  */
 export function outreachWebHost(): string {
-  const host = Constants.expoConfig?.extra?.['outreachWebHost'] as
-    | string
-    | undefined;
+  const host = process.env.EXPO_PUBLIC_OUTREACH_HOST?.trim();
 
   if (!host) {
-    throw new Error('outreachWebHost is missing from app config');
+    throw new Error('EXPO_PUBLIC_OUTREACH_HOST is not set');
   }
 
   return host.replace(/\/+$/, '');

@@ -201,10 +201,6 @@ export default {
       eas: {
         projectId: '53171ba4-60ca-40cb-b3e6-b0c2393677b8',
       },
-      // The host ordinary links point at: universal links, Android App Links,
-      // and the task-share URL. Exposed here so runtime code does not repeat
-      // the dev/prod switch.
-      outreachWebHost: HOSTNAME,
       iosGoogleMapsApiKey: process.env.EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY,
       androidGoogleMapsApiKey:
         process.env.EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY,

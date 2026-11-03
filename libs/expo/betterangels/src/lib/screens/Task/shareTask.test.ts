@@ -2,22 +2,6 @@ import * as Clipboard from 'expo-clipboard';
 import { Platform, Share } from 'react-native';
 import { shareTask, taskShareMessage, taskShareUrl } from './shareTask';
 
-const appConfig = vi.hoisted(() => ({
-  host: 'outreach.dev.betterangels.la' as string | undefined,
-}));
-
-vi.mock('expo-constants', () => ({
-  default: {
-    expoConfig: {
-      extra: {
-        get outreachWebHost() {
-          return appConfig.host;
-        },
-      },
-    },
-  },
-}));
-
 vi.mock('expo-clipboard', () => ({ setStringAsync: vi.fn() }));
 
 const setPlatform = (os: string) =>
@@ -31,13 +15,14 @@ const task = (overrides: Record<string, unknown> = {}) => ({
 
 beforeEach(() => {
   setPlatform('ios');
-  appConfig.host = 'outreach.dev.betterangels.la';
+  vi.stubEnv('EXPO_PUBLIC_OUTREACH_HOST', 'outreach.dev.betterangels.la');
   vi.mocked(Clipboard.setStringAsync).mockReset();
 });
 
 afterEach(() => {
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
   setPlatform('ios');
 });
 
@@ -48,10 +33,10 @@ describe('taskShareUrl', () => {
     );
   });
 
-  it('fails loudly when app config has no host', () => {
-    appConfig.host = undefined;
+  it('fails loudly when the host is not configured', () => {
+    vi.stubEnv('EXPO_PUBLIC_OUTREACH_HOST', '');
 
-    expect(() => taskShareUrl('abc')).toThrow('outreachWebHost');
+    expect(() => taskShareUrl('abc')).toThrow('EXPO_PUBLIC_OUTREACH_HOST');
   });
 
   it('follows a branch preview base path on web', () => {
