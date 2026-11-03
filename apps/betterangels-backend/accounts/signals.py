@@ -170,7 +170,9 @@ def mirror_group_membership_grants(
     invariant, and reverse writes
     (``permission_group.user_set.add/remove/clear``) are handled too.  Writers
     that bypass the m2m manager (``through.objects.bulk_create``, raw SQL,
-    ``loaddata``, ``queryset.update()``) are the documented exception.  A
+    ``queryset.update()``) are the documented exception.  ``loaddata`` is not
+    one: it applies m2m data through the manager (``set_base(raw=True)``) and
+    therefore mirrors like any other write.  A
     signal is deliberately the seam here: it is the only one every real writer
     shares, so the invariant cannot be lost by a service-level refactor (ADR
     0001 §4 phase 2 — a sanctioned exception to the "no logic in signals"

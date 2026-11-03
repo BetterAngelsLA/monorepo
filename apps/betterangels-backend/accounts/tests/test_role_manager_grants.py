@@ -7,7 +7,7 @@ that is authoritative for the cut-over domains.  The mirror is enforced at the
 not just ``OrgRoleManager``.
 """
 
-from typing import Any
+from typing import Any, cast
 
 from django.test import TestCase
 from model_bakery import baker
@@ -214,3 +214,52 @@ class MembershipEdgeMirrorTestCase(TestCase):
         self.user.groups.remove(self.group)
 
         self.assertFalse(self._mirrors().exists())
+
+    def test_reconcile_leaves_an_expected_groups_grant_alone(self) -> None:
+        self.user.groups.add(self.group)
+        reconcile_org_groups(self.org)  # outreach is still expected — nothing is stale
+
+        self.assertTrue(self._mirrors().exists())
+        self.assertTrue(PermissionGroup.objects.filter(pk=self.group.pk).exists())
+
+    def test_reconcile_unmirrors_every_member_of_a_stale_group(self) -> None:
+        others = [baker.make(User) for _ in range(2)]
+        for other in others:
+            self.org.add_user(other)
+            other.groups.add(self.group)
+        self.user.groups.add(self.group)
+
+        OrganizationProfile.objects.filter(organization=self.org).update(org_types=["shelter"])
+        reconcile_org_groups(self.org)
+
+        for user in [self.user, *others]:
+            self.assertFalse(
+                Grant.objects.filter(principal_user=user, role=self.role, scope_org=self.org).exists(),
+                f"grant survived for {user.pk}",
+            )
+
+    def test_reconcile_does_not_touch_the_same_role_in_another_org(self) -> None:
+        other_org = organization_recipe.make(preset_names=["outreach"], owner_roles=())
+        other_org.add_user(self.user)
+        other_group = PermissionGroup.objects.get(organization=other_org, template__name=CASEWORKER.name)
+        self.user.groups.add(self.group, other_group)
+
+        OrganizationProfile.objects.filter(organization=self.org).update(org_types=["shelter"])
+        reconcile_org_groups(self.org)
+
+        self.assertFalse(Grant.objects.filter(principal_user=self.user, role=self.role, scope_org=self.org).exists())
+        self.assertTrue(Grant.objects.filter(principal_user=self.user, role=self.role, scope_org=other_org).exists())
+
+    def test_reconcile_leaves_a_direct_grant_without_a_membership_alone(self) -> None:
+        Grant.objects.create(principal_user=self.user, role=self.role, scope_org=self.org)
+
+        OrganizationProfile.objects.filter(organization=self.org).update(org_types=["shelter"])
+        reconcile_org_groups(self.org)
+
+        self.assertTrue(self._mirrors().exists())
+
+    def test_a_raw_m2m_write_still_mirrors(self) -> None:
+        """``loaddata`` applies m2m rows this way — it is not a bypass."""
+        cast(Any, self.user.groups).set_base([self.group], raw=True)
+
+        self.assertTrue(self._mirrors().exists())

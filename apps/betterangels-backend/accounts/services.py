@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import logging
 import uuid
+from collections.abc import Iterable
 from typing import TYPE_CHECKING, Any
 
 from django.contrib.auth.models import Group
@@ -23,7 +24,7 @@ from .emails import base_url_for
 from .groups import ORG_ADMIN
 from .models import Grant, OrganizationProfile, OrgTypeChoices, PermissionGroup, PermissionGroupTemplate, Role
 from .models import User as UserModel
-from .role_manager import OrgRoleManager, unmirror_membership_grants
+from .role_manager import OrgRoleManager, unmirror_group_members
 from .seed import _resolve_permissions, sync_group_permissions
 
 if TYPE_CHECKING:
@@ -275,6 +276,40 @@ def create_organization_with_presets(
 # ── Group reconciliation ──────────────────────────────────────────────
 
 
+def derived_template_names() -> set[str]:
+    """Template names reconciliation considers (everything except hand-managed)."""
+    unscoped = {template_config.name for template_config in REGISTRY.unscoped}
+    return {name for name in REGISTRY.template_names() if name not in unscoped}
+
+
+def dual_write_template_names() -> set[str]:
+    """Template names whose Grants mirror a membership (excludes grant-only roles).
+
+    ``legacy_inert`` roles (ORG_ADMIN/ORG_SUPERUSER) are granted directly, not
+    derived from a group, so config cleanup must not treat their Grants as
+    stale mirrors.
+    """
+    return {
+        name
+        for name in derived_template_names()
+        if (template := REGISTRY.template(name)) is not None and not template.legacy_inert
+    }
+
+
+def expected_template_names(org_types: Iterable[Any]) -> set[str]:
+    """Template names the given org types grant, excluding grant-only roles."""
+    expected: set[str] = set()
+    for org_type_value in org_types:
+        org_config = REGISTRY.org_type(org_type_value.value)
+        if org_config is None:
+            continue
+        for template_config in org_config.templates:
+            if template_config.legacy_inert:
+                continue
+            expected.add(template_config.name)
+    return expected
+
+
 @transaction.atomic
 def reconcile_org_groups(org: Organization) -> None:
     """Create missing and delete stale ``PermissionGroup`` records for *org*.
@@ -312,15 +347,7 @@ def reconcile_org_groups(org: Organization) -> None:
     org_types = OrganizationProfile.objects.values_list("org_types", flat=True).filter(organization=org).first()
 
     if org_types is not None:
-        expected: set[str] = set()
-        for org_type_value in org_types:
-            org_config = REGISTRY.org_type(org_type_value.value)
-            if org_config is None:
-                continue
-            for template_config in org_config.templates:
-                if template_config.legacy_inert:
-                    continue
-                expected.add(template_config.name)
+        expected = expected_template_names(org_types)
 
         for template_name in expected:
             permission_group_template, _ = PermissionGroupTemplate.objects.get_or_create(
@@ -331,23 +358,29 @@ def reconcile_org_groups(org: Organization) -> None:
                 template=permission_group_template,
             )
 
-        unscoped = {template_config.name for template_config in REGISTRY.unscoped}
-        derived = {name for name in REGISTRY.template_names() if name not in unscoped}
-
         # Config cleanup revokes the mirrored authority (finding F1): the org's
         # current types no longer grant this role, so its Grant goes with the
         # row.  Unlike a teardown delete — which deliberately leaves Grants
         # standing — reconcile knows these are stale derived rows, so their
-        # members are unmirrored before the delete.
+        # members are unmirrored before the delete.  The rows are locked for the
+        # pass so a membership cannot slip in between the read and the delete.
         stale = list(
             PermissionGroup.objects.filter(
                 organization=org,
-                template__name__in=derived - expected,
-            ).prefetch_related("user_set")
+                template__name__in=dual_write_template_names() - expected,
+            )
+            .select_for_update()
+            .prefetch_related("user_set")
         )
-        for permission_group in stale:
-            for member in permission_group.user_set.all():
-                unmirror_membership_grants(member, [permission_group])
+        if stale:
+            revoked = unmirror_group_members(stale)
+            logger.info(
+                "reconcile_org_groups(%s): retiring %d stale role group(s) %s; revoked %d mirrored grant(s)",
+                org.pk,
+                len(stale),
+                sorted(permission_group.label for permission_group in stale),
+                revoked,
+            )
         PermissionGroup.objects.filter(pk__in=[permission_group.pk for permission_group in stale]).delete()
 
     _refresh_group_names(org)

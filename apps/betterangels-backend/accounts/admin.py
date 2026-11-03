@@ -43,7 +43,7 @@ from .models import (
     Role,
     User,
 )
-from .role_manager import scoped_roles_for_groups
+from .role_manager import scoped_roles_for_groups, unmirror_group_members
 from .selectors import member_role_names, role_names_by_organization
 from .services import (
     invitation_role,
@@ -642,7 +642,21 @@ class CustomOrganizationAdmin(MemberInviteAdminMixin, admin.ModelAdmin):
     ROLE_LOSS_CONFIRMED = "_confirm_role_loss"
 
     def save_related(self, request: HttpRequest, form: Any, formsets: Any, change: bool) -> None:
-        """Reconcile permission groups once the profile's org types are saved."""
+        """Reconcile permission groups once the profile's org types are saved.
+
+        The mirrors are revoked *before* the inlines run: deleting a stale row
+        in this same save removes it from under ``reconcile_org_groups``, which
+        can only unmirror rows it can still see.  The change view is atomic, so
+        a failed save rolls these revocations back.
+        """
+        losing = self._losing_template_names(form.instance, request.POST)
+        if losing:
+            unmirror_group_members(
+                PermissionGroup.objects.filter(
+                    organization=form.instance,
+                    template__name__in=sorted(losing),
+                ).prefetch_related("user_set")
+            )
         super().save_related(request, form, formsets, change)
         reconcile_org_groups(form.instance)
 
@@ -677,9 +691,11 @@ class CustomOrganizationAdmin(MemberInviteAdminMixin, admin.ModelAdmin):
         type, and ticking Delete on a permission group row.  Both delete
         ``PermissionGroup`` rows, and the delete tears out each row's
         ``auth.Group`` — the structural MTI cascade — dropping its memberships
-        with it.  The org-type route also revokes the members' mirrored Grants
-        (``reconcile_org_groups`` unmirrors stale derived rows); a plain row
-        delete leaves Grants standing, per the teardown asymmetry.
+        with it.  The org-type route also revokes the members' Grants — before
+        the inline delete, so deleting the row in the same save cannot hide it
+        from reconciliation.  A plain row delete leaves Grants standing, per the
+        teardown asymmetry.  Either way a Grant is one row whether it came from
+        the membership or was granted directly, so both go together.
 
         Interposed here rather than in the form because the form cannot re-render
         the whole change view, and because a ``clean()`` error would be the wrong
@@ -689,16 +705,21 @@ class CustomOrganizationAdmin(MemberInviteAdminMixin, admin.ModelAdmin):
         """
         if request.method == "POST" and self.ROLE_LOSS_CONFIRMED not in request.POST:
             organization = self.get_object(request, unquote(object_id))
-            if (
-                organization is not None
-                and self.has_change_permission(request, organization)
-                and (losses := self._roles_lost_to_save(organization, request.POST))
-            ):
-                return self._confirm_role_loss_response(request, organization, losses)
+            if organization is not None and self.has_change_permission(request, organization):
+                by_type = self._roles_lost_to_org_type_removal(organization, request.POST)
+                by_delete = self._roles_lost_to_row_deletion(organization, request.POST)
+                losses = sorted(set(by_type) | set(by_delete))
+                if losses:
+                    return self._confirm_role_loss_response(request, organization, losses, revokes_grants=bool(by_type))
         return super().change_view(request, object_id, form_url, extra_context)
 
     def _confirm_role_loss_response(
-        self, request: HttpRequest, organization: Organization, losses: list[tuple[str, int]]
+        self,
+        request: HttpRequest,
+        organization: Organization,
+        losses: list[tuple[str, int]],
+        *,
+        revokes_grants: bool,
     ) -> HttpResponse:
         """Re-offer the submitted save, spelling out what it revokes."""
         context = {
@@ -706,6 +727,7 @@ class CustomOrganizationAdmin(MemberInviteAdminMixin, admin.ModelAdmin):
             "opts": self.model._meta,
             "organization": organization,
             "losses": losses,
+            "revokes_grants": revokes_grants,
             "posted": [(key, value) for key in request.POST for value in request.POST.getlist(key)],
             "confirm_field": self.ROLE_LOSS_CONFIRMED,
             "title": f"Revoke roles in {organization.name}?",
@@ -714,36 +736,35 @@ class CustomOrganizationAdmin(MemberInviteAdminMixin, admin.ModelAdmin):
         return TemplateResponse(request, "admin/organizations/organization/confirm_role_loss.html", context)
 
     @classmethod
-    def _roles_lost_to_save(cls, organization: Organization, posted: Any) -> list[tuple[str, int]]:
-        """Every role *posted* would take from someone, with how many hold each.
+    def _losing_template_names(cls, organization: Organization, posted: Any) -> set[str]:
+        """Template names the posted org types stop granting.
 
-        Empty when nothing is lost, which is most saves.  A prompt that always
-        fires stops being read.
+        Used both to word the confirmation and to revoke the mirrors before the
+        inlines can delete the stale rows.
         """
-        return sorted(
-            set(cls._roles_lost_to_org_type_removal(organization, posted))
-            | set(cls._roles_lost_to_row_deletion(organization, posted))
-        )
-
-    @classmethod
-    def _roles_lost_to_org_type_removal(cls, organization: Organization, posted: Any) -> list[tuple[str, int]]:
-        """Roles reconciliation will delete because the type granting them is dropped."""
         profile_prefix = next(
             (key.rsplit("-", 1)[0] for key in posted if key.endswith("-org_types")),
             None,
         )
         if profile_prefix is None:
-            return []
+            return set()
 
         submitted = set(posted.getlist(f"{profile_prefix}-org_types"))
-        current = (
-            {org_type.value for org_type in organization.profile.org_types}
-            if hasattr(organization, "profile")
-            else set()
-        )
+        # Read the stored types, not ``organization.profile``: by the time the
+        # change view saves, the inline's instance may already sit on that cache
+        # with the posted values, which would make the diff look empty.
+        current = {
+            org_type.value
+            for org_type in (
+                OrganizationProfile.objects.filter(organization=organization)
+                .values_list("org_types", flat=True)
+                .first()
+                or []
+            )
+        }
         removed = current - submitted
         if not removed:
-            return []
+            return set()
 
         kept_templates = {
             template.name
@@ -756,8 +777,15 @@ class CustomOrganizationAdmin(MemberInviteAdminMixin, admin.ModelAdmin):
             for org_type in removed
             if (config := REGISTRY.org_type(org_type)) is not None
             for template in config.templates
-        } - kept_templates
+        }
+        return losing - kept_templates
 
+    @classmethod
+    def _roles_lost_to_org_type_removal(cls, organization: Organization, posted: Any) -> list[tuple[str, int]]:
+        """Roles reconciliation will delete because the type granting them is dropped."""
+        losing = cls._losing_template_names(organization, posted)
+        if not losing:
+            return []
         return cls._held_by(
             PermissionGroup.objects.filter(organization=organization, template__name__in=sorted(losing))
         )
