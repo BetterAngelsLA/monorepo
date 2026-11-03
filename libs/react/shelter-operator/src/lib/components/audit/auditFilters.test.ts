@@ -1,9 +1,8 @@
-import { endOfDay, startOfDay } from 'date-fns';
-import { resolvePresetValue } from '../date-range-filter';
+import { endOfDay, startOfDay, subDays } from 'date-fns';
 import {
   DEFAULT_AUDIT_PRESET,
   hasDateBounds,
-  initialAuditFilters,
+  initialAuditFilter,
   rangeToFilters,
 } from './auditFilters';
 
@@ -65,17 +64,22 @@ describe('hasDateBounds', () => {
   it('is false only when neither bound is set', () => {
     expect(hasDateBounds({})).toBe(false);
     expect(hasDateBounds({ dateFrom: null, dateTo: null })).toBe(false);
-    expect(hasDateBounds(initialAuditFilters())).toBe(true);
+    expect(hasDateBounds(initialAuditFilter().filters)).toBe(true);
     expect(hasDateBounds({ dateFrom: '2026-06-01T07:00:00.000Z' })).toBe(true);
     expect(hasDateBounds({ dateTo: '2026-06-30T07:00:00.000Z' })).toBe(true);
   });
 });
 
-describe('initialAuditFilters', () => {
-  it('opens the log on the 30-day default', () => {
+describe('initialAuditFilter', () => {
+  it('opens the log on the 30-day default, from one clock read', () => {
     expect(DEFAULT_AUDIT_PRESET).toBe('LAST_30_DAYS');
-    expect(initialAuditFilters()).toEqual(
-      rangeToFilters(resolvePresetValue(DEFAULT_AUDIT_PRESET)),
-    );
+
+    const { preset, range, filters } = initialAuditFilter(TODAY);
+
+    expect(preset).toBe('LAST_30_DAYS');
+    expect(range).toEqual({ from: subDays(TODAY, 29), to: TODAY });
+    // The query bounds are derived from the very range the bar displays, so
+    // the two cannot be seeded from different instants.
+    expect(filters).toEqual(rangeToFilters(range));
   });
 });

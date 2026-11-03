@@ -12,19 +12,24 @@ import { DEFAULT_AUDIT_PRESET, rangeToFilters } from './auditFilters';
  * Date-range filters for the audit log. Emits the derived
  * `dateFrom`/`dateTo` filter object on every change.
  *
- * The bar opens on {@link DEFAULT_AUDIT_PRESET}, and the caller seeds its own
- * filter state from the same constant, so the label is never out of step with
- * the query.
+ * The caller passes the preset and range it seeded its query with, so the bar
+ * and the query come from one clock read. The props default to
+ * {@link DEFAULT_AUDIT_PRESET} for standalone use.
  */
 export function AuditFilterBar({
   onChange,
+  initialPreset = DEFAULT_AUDIT_PRESET,
+  initialRange,
 }: {
   onChange: (filters: ObjectAuditLogFilters) => void;
+  /** Preset the caller seeded its filters with. */
+  initialPreset?: DateRangePresetValue;
+  /** Range the caller's filters represent; resolved from the preset if absent. */
+  initialRange?: DateRange;
 }) {
-  const [preset, setPreset] =
-    useState<DateRangePresetValue>(DEFAULT_AUDIT_PRESET);
-  const [range, setRange] = useState<DateRange>(() =>
-    resolvePresetValue(DEFAULT_AUDIT_PRESET),
+  const [preset, setPreset] = useState<DateRangePresetValue>(initialPreset);
+  const [range, setRange] = useState<DateRange>(
+    () => initialRange ?? resolvePresetValue(initialPreset),
   );
 
   const handleChange = useCallback(

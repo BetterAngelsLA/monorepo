@@ -169,6 +169,30 @@ describe('ReportFilterBar export', () => {
     expect(url.searchParams.get('end_date')).toBe(toDateString(PINNED_NOW));
   });
 
+  it('re-opens the calendar for a committed custom range instead of clearing it', async () => {
+    const customRange = {
+      from: new Date(2026, 5, 1),
+      to: new Date(2026, 5, 30),
+    };
+    store.set(dateRangeFilterAtom, { preset: 'CUSTOM', range: customRange });
+
+    render(<ReportFilterBar shelterId="7" />);
+
+    fireEvent.click(screen.getByRole('combobox'));
+    // The trigger also reads "Custom"; the menu item is the later node.
+    const options = await screen.findAllByText('Custom');
+    fireEvent.click(options[options.length - 1]);
+
+    expect(
+      await screen.findByRole('dialog', { name: 'Select date range' }),
+    ).not.toBeNull();
+    // Editing the dates, not throwing them away.
+    expect(store.get(dateRangeFilterAtom)).toEqual({
+      preset: 'CUSTOM',
+      range: customRange,
+    });
+  });
+
   it('cannot export before the shelter is known', () => {
     render(<ReportFilterBar />);
 

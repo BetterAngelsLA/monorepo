@@ -29,15 +29,32 @@ export function rangeToFilters(range: DateRange): ObjectAuditLogFilters {
   };
 }
 
+export type InitialAuditFilter = {
+  /** The preset the bar displays as selected. */
+  preset: DateRangePresetValue;
+  /** The range the bar's fields show. */
+  range: DateRange;
+  /** The bounds the first query carries. */
+  filters: ObjectAuditLogFilters;
+};
+
 /**
- * Filters the log opens with; ``ObjectAuditLog`` seeds its state from this so
- * the first query already carries the range the bar displays.
+ * Everything the log opens with, from a single clock read: the preset, the
+ * range the bar displays, and the query bounds. Splitting these into separate
+ * reads lets the bar and the query drift apart across a local midnight.
  */
-export function initialAuditFilters(): ObjectAuditLogFilters {
-  return rangeToFilters(resolvePresetValue(DEFAULT_AUDIT_PRESET));
+export function initialAuditFilter(today?: Date): InitialAuditFilter {
+  const preset = DEFAULT_AUDIT_PRESET;
+  const range = resolvePresetValue(preset, today);
+
+  return { preset, range, filters: rangeToFilters(range) };
 }
 
-/** True when at least one date bound is set (an "All Time" view is unfiltered). */
+/**
+ * True when at least one date bound is set. Drives the empty-state copy: a date
+ * filter (with or without other filters) says "in the selected date range",
+ * while no filter or a non-date-only filter says simply "No activity".
+ */
 export function hasDateBounds(filters: ObjectAuditLogFilters): boolean {
   return Boolean(filters.dateFrom || filters.dateTo);
 }

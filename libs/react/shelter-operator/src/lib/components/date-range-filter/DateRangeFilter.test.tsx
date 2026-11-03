@@ -134,6 +134,21 @@ describe('DateRangeFilter', () => {
     },
   );
 
+  it('stays unfiltered when the All Time entry is re-selected', () => {
+    const onChange = renderFilter({
+      includeAll: true,
+      preset: 'ALL',
+      value: { from: null, to: null },
+    });
+
+    openMenu();
+    fireEvent.click(option('All Time'));
+
+    // Already unfiltered: re-selecting is idempotent rather than reaching for
+    // some other state.
+    expect(onChange).toHaveBeenCalledWith({ from: null, to: null }, 'ALL');
+  });
+
   it('previews "Custom" while the calendar is open and reverts on cancel', async () => {
     renderFilter();
 

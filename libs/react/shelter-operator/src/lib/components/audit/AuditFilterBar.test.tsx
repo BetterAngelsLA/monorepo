@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { endOfDay, startOfDay, subDays } from 'date-fns';
+import { resolvePresetValue } from '../date-range-filter';
 import { AuditFilterBar } from './AuditFilterBar';
 
 class ResizeObserverStub {
@@ -36,6 +37,25 @@ describe('AuditFilterBar', () => {
     // The caller seeds its own filter state from the same default, so the bar
     // must not emit a second copy (that would issue a duplicate first query).
     expect(screen.getByRole('combobox').textContent).toContain('Last 30 Days');
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('displays the seeded preset and range without re-emitting', () => {
+    const onChange = vi.fn();
+    const initialRange = resolvePresetValue('LAST_7_DAYS');
+
+    render(
+      <AuditFilterBar
+        initialPreset="LAST_7_DAYS"
+        initialRange={initialRange}
+        onChange={onChange}
+      />,
+    );
+
+    expect(screen.getByRole('combobox').textContent).toContain('Last 7 Days');
+    expect(
+      (screen.getByLabelText('Start date') as HTMLInputElement).value,
+    ).not.toBe('');
     expect(onChange).not.toHaveBeenCalled();
   });
 

@@ -7,7 +7,7 @@ import { Button } from '../base-ui/buttons';
 import { Text } from '../base-ui/text/text';
 import { AuditActionRow } from './AuditActionRow';
 import { AuditFilterBar } from './AuditFilterBar';
-import { hasDateBounds, initialAuditFilters } from './auditFilters';
+import { hasDateBounds, initialAuditFilter } from './auditFilters';
 
 type ObjectAuditLogProps = {
   targetType: AuditTargetType;
@@ -40,10 +40,12 @@ export function ObjectAuditLog({
   objectId,
   className,
 }: ObjectAuditLogProps) {
-  // Seeded from the bar's own default so the first query already carries the
-  // range the bar displays (an empty state here would issue a second request).
-  const [filters, setFilters] =
-    useState<ObjectAuditLogFilters>(initialAuditFilters);
+  // One clock read seeds both the query and the bar, so the window they show
+  // and the window they request cannot disagree.
+  const [initial] = useState(initialAuditFilter);
+  const [filters, setFilters] = useState<ObjectAuditLogFilters>(
+    initial.filters,
+  );
   const {
     actions,
     loading,
@@ -160,7 +162,11 @@ export function ObjectAuditLog({
 
   return (
     <div className={mergeCss(['flex flex-col gap-4', className])}>
-      <AuditFilterBar onChange={handleFilterChange} />
+      <AuditFilterBar
+        initialPreset={initial.preset}
+        initialRange={initial.range}
+        onChange={handleFilterChange}
+      />
       {renderContent()}
     </div>
   );

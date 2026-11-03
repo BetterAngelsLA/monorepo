@@ -8,7 +8,7 @@ import { ApolloProvider, useApolloClient } from '@apollo/client/react';
 import { MockedProvider } from '@apollo/client/testing/react';
 import { AuditEventKind, AuditTargetType } from '@monorepo/ba-platform/types';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { endOfDay, startOfDay, subDays } from 'date-fns';
+import { endOfDay, format, startOfDay, subDays } from 'date-fns';
 import { useState } from 'react';
 import { ObjectAuditLog } from './ObjectAuditLog';
 import { useObjectAuditLog } from '../../hooks';
@@ -332,6 +332,23 @@ describe('ObjectAuditLog', () => {
     fireEvent.click(await screen.findByText('All Time'));
 
     await screen.findByText('No activity');
+  });
+
+  it('shows the same window it queries', async () => {
+    renderLog([page(logVariables, [makeAction()], null, false)]);
+
+    await screen.findByText('Ada Lovelace');
+
+    const { dateFrom, dateTo } = logVariables.filters as {
+      dateFrom: string;
+      dateTo: string;
+    };
+    const value = (label: string) =>
+      (screen.getByLabelText(label) as HTMLInputElement).value;
+
+    // Both come from one clock read, so the fields and the request agree.
+    expect(value('Start date')).toBe(format(new Date(dateFrom), 'MM/dd/yyyy'));
+    expect(value('End date')).toBe(format(new Date(dateTo), 'MM/dd/yyyy'));
   });
 
   it('re-queries with the new bounds and replaces the rows on a preset change', async () => {
