@@ -57,9 +57,12 @@ describe('ShareTaskButton', () => {
         type: 'error',
       }),
     );
-    expect(consoleError).toHaveBeenCalledWith('share_task_failed', {
-      taskId: 'task-1',
-    });
+    // `toHaveBeenCalledWith` passes on any single matching call, so it would
+    // stay green if the component also logged the raw error. Pin the whole call
+    // list instead: exactly one call carrying nothing but the task id.
+    expect(consoleError.mock.calls).toStrictEqual([
+      ['share_task_failed', { taskId: 'task-1' }],
+    ]);
   });
 
   it('disables the button while a share is pending', async () => {

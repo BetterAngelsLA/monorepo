@@ -7,7 +7,21 @@ vi.mock('expo-clipboard', () => ({ setStringAsync: vi.fn() }));
 const setPlatform = (os: string) =>
   Object.defineProperty(Platform, 'OS', { configurable: true, value: os });
 
-const task = () => ({ id: 'task-1' });
+// The fixture carries the content the feature promises never to share, so every
+// payload assertion also proves it is dropped. A bare `{ id }` fixture could not
+// tell link-only sharing from a conditional leak when a summary is present.
+// `overrides` lets a case pin its own wording.
+const task = (
+  overrides: Partial<{
+    summary: string;
+    clientProfile: { firstName: string; lastName: string };
+  }> = {},
+) => ({
+  id: 'task-1',
+  summary: 'Follow up with Jordan Rivera about housing',
+  clientProfile: { firstName: 'Jordan', lastName: 'Rivera' },
+  ...overrides,
+});
 
 beforeEach(() => {
   setPlatform('ios');
@@ -93,6 +107,27 @@ describe('shareTask', () => {
       },
       expect.objectContaining({ subject: 'Task' }),
     );
+  });
+
+  it('never puts the summary or the client name in the shared message', async () => {
+    vi.spyOn(Share, 'share').mockResolvedValue({ action: 'sharedAction' });
+    const share = vi.mocked(Share.share);
+
+    await shareTask(
+      task({
+        summary: 'Call Jordan Rivera about the housing application',
+      }),
+    );
+
+    const [content] = share.mock.calls[0];
+    // Exact shape: the message is the URL alone, and nothing from the task
+    // rides along in any other field.
+    expect(content).toStrictEqual({
+      title: 'Task',
+      message: 'https://outreach.dev.betterangels.la/task/task-1',
+    });
+    expect(JSON.stringify(content)).not.toContain('Jordan Rivera');
+    expect(JSON.stringify(content)).not.toContain('Call Jordan');
   });
 
   it('anchors the iOS sheet when given a source node', async () => {
