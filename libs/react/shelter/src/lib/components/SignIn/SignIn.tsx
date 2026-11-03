@@ -1,6 +1,6 @@
 import { Input, Regex, useAllauthLogin } from '@monorepo/react/shared';
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useApiConfig, useUser } from '../../providers';
 import './SignIn.css';
 

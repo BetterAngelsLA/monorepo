@@ -5,7 +5,7 @@ import {
   Routes,
   useLocation,
   useParams,
-} from 'react-router-dom';
+} from 'react-router';
 import { ReportsPage } from './ReportsPage';
 
 // The charts and their metrics query are this tab's existing content, not what

@@ -1,6 +1,6 @@
 import { mergeCss } from '@monorepo/react/shared';
 import { useLayoutEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { Text } from '../../../components/base-ui/text/text';
 
 export type SliderTabItem = {

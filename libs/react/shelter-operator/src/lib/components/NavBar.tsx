@@ -6,7 +6,7 @@ import { operatorPath, useSignOut, useUser } from '@monorepo/react/shelter';
 import { Plus, User, UserCog } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useCallback, useMemo } from 'react';
-import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router';
 import { useShelterOperatorProfile, useShelterPermissions } from '../hooks';
 import { isShelterRoute, paths } from '../routing';
 import { Button } from './base-ui/buttons';

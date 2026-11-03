@@ -2,7 +2,7 @@ import { MockedProvider } from '@apollo/client/testing/react';
 import { AuditEventKind, AuditTargetType } from '@monorepo/ba-platform/types';
 import { render, screen } from '@testing-library/react';
 import { endOfDay, startOfDay, subDays } from 'date-fns';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router';
 import { ObjectAuditLogDocument } from '../../hooks/useObjectAuditLog/__generated__/useObjectAuditLog.generated';
 import { ShelterActivityPage } from './ActivityPage';
 

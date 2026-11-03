@@ -17,7 +17,7 @@
       ],
       "options": {
         "cwd": "apps/betterangels",
-        "command": "EXPO_WEB_BASE_URL=$(node ../../tools/shared/print-base-path.mjs) npx expo export --platform web --output-dir ../../dist/apps/betterangels --clear"
+        "command": "node ../../tools/scripts/require-web-monitoring-env.mjs && EXPO_WEB_BASE_URL=$(node ../../tools/shared/print-base-path.mjs) npx expo export --platform web --output-dir ../../dist/apps/betterangels --clear"
       },
       "outputs": [
         "{workspaceRoot}/dist/apps/betterangels"
@@ -56,6 +56,12 @@
         },
         {
           "env": "EXPO_PUBLIC_NEW_RELIC_LOG_LEVEL"
+        },
+        {
+          "env": "EXPO_PUBLIC_NEW_RELIC_WEB_LICENSE_KEY"
+        },
+        {
+          "fileset": "{workspaceRoot}/tools/scripts/require-web-monitoring-env.mjs"
         },
         {
           "env": "EXPO_PUBLIC_SHELTER_WEB_URL"
@@ -133,7 +139,10 @@
       ],
       "options": {
         "passWithNoTests": true
-      }
+      },
+      "dependsOn": [
+        "privacy-test"
+      ]
     },
     "typecheck": {
       "executor": "nx:run-commands",
@@ -231,6 +240,25 @@
     "build-list": {
       "executor": "@nx/expo:build-list",
       "cache": false
+    },
+    "privacy-test": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "command": "esbuild apps/betterangels/src/monitoring/privacy.node-test.ts --bundle --platform=node --outfile=dist/apps/betterangels/privacy.node-test.cjs && node --test dist/apps/betterangels/privacy.node-test.cjs"
+      },
+      "outputs": [
+        "{workspaceRoot}/dist/apps/betterangels/privacy.node-test.cjs"
+      ],
+      "inputs": [
+        "production",
+        "^production",
+        {
+          "externalDependencies": [
+            "@newrelic/browser-agent"
+          ]
+        }
+      ]
     }
   }
 }

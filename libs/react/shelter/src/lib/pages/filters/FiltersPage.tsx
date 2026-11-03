@@ -1,7 +1,7 @@
 import { CloseIcon } from '@monorepo/react/icons';
 import { useAtom, useSetAtom } from 'jotai';
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import {
   nullShelterPropertyFilters,
   shelterPropertyFiltersAtom,

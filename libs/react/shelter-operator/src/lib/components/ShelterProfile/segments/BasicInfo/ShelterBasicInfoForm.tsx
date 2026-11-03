@@ -4,7 +4,7 @@ import { mergeCss } from '@monorepo/react/shared';
 import { enumStatusChoices } from '@monorepo/react/shelter';
 import { useMemo } from 'react';
 import { Controller, UseFormSetError, useForm } from 'react-hook-form';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { LocationPicker } from '../../../../pages/dashboard/components/LocationPicker';
 import { profileRouteConfig, shelterProfileRoute } from '../../../../routing';
 import {

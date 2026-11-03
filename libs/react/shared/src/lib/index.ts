@@ -1,4 +1,3 @@
-export * from './auth';
 export * from './components';
 export * from './featureControls';
 export * from './hooks';

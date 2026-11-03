@@ -1,7 +1,7 @@
 import { useQuery } from '@apollo/client/react';
 import { Button, Card } from '@monorepo/react/components';
 import { format } from 'date-fns';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { ViewShelterDocument } from './__generated__/shelter.generated';
 import { WysiwygSection } from './common';
 import {
