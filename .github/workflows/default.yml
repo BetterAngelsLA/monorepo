@@ -66,9 +66,11 @@ jobs:
         uses: nrwl/nx-set-shas@v5
 
       - name: 🔧 Set Environment Variables
+        # A fork PR controls head_ref, so never interpolate it into the script.
+        env:
+          RAW_BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
         run: |
-          RAW_BRANCH_NAME=${{ github.head_ref || github.ref_name }}
-          SHORT_SHA=$(echo $GITHUB_SHA | cut -c 1-7)
+          SHORT_SHA=$(echo "$GITHUB_SHA" | cut -c 1-7)
 
           # Sanitize branch name by replacing '/' with '-' and removing any other invalid
           # characters. Shared with preview.yml and eas-branch-cleanup.yml, which deletes
@@ -106,11 +108,20 @@ jobs:
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
         uses: aws-actions/amazon-ecr-login@v2.1.7
 
+      # Only the production leg publishes images. Keeping Buildx out of the
+      # preview/PR legs also keeps its post-job cleanup out of them.
       - name: 🐳 Set up Docker Buildx
         id: buildx
+        if: matrix.environment == 'production'
         uses: docker/setup-buildx-action@v4.4.1
+        with:
+          # GitHub-hosted runners are discarded when the job ends; removing the
+          # builder in the post step costs ~13 s per run and buys nothing.
+          # Revisit if this ever runs on a persistent runner.
+          cleanup: false
 
       - name: Export Buildx builder
+        if: matrix.environment == 'production'
         run: echo "BUILDX_BUILDER=${{ steps.buildx.outputs.name }}" >> "$GITHUB_ENV"
 
       # Dependencies live in the Actions cache, not in the CI image. The image
