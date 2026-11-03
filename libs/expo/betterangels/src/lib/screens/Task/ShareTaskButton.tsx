@@ -1,6 +1,6 @@
 import { ShareIcon } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import {
   findNodeHandle,
   GestureResponderEvent,
@@ -15,16 +15,18 @@ import { shareTask, type ShareableTask } from './shareTask';
 // 44 is the iOS minimum touch target and above Material's 40 dp icon button.
 const TOUCH_TARGET = 44;
 
+// Only one system share sheet can be presented at a time, so the lock is
+// module-level rather than per-component; a ref would let two mounted buttons
+// race for the same sheet.
+const inFlightShares = new Set<string>();
+
 export function ShareTaskButton({ task }: { task: ShareableTask }) {
   const { showSnackbar } = useSnackbar();
-  // State drives the disabled UI; this ref closes the same-tick window state
-  // cannot (two presses before React re-renders would both call shareTask).
-  const busy = useRef(false);
   const [sharing, setSharing] = useState(false);
 
   const onPress = async (event: GestureResponderEvent) => {
-    if (busy.current) return;
-    busy.current = true;
+    if (inFlightShares.has(task.id)) return;
+    inFlightShares.add(task.id);
     setSharing(true);
 
     try {
@@ -44,7 +46,7 @@ export function ShareTaskButton({ task }: { task: ShareableTask }) {
       console.error('share_task_failed', { taskId: task.id });
       showSnackbar({ message: "Couldn't share this task", type: 'error' });
     } finally {
-      busy.current = false;
+      inFlightShares.delete(task.id);
       setSharing(false);
     }
   };
