@@ -8,9 +8,9 @@ import { ApolloProvider, useApolloClient } from '@apollo/client/react';
 import { MockedProvider } from '@apollo/client/testing/react';
 import { AuditEventKind, AuditTargetType } from '@monorepo/ba-platform/types';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { endOfDay, startOfDay, subDays } from 'date-fns';
 import { useState } from 'react';
 import { ObjectAuditLog } from './ObjectAuditLog';
-import { initialAuditFilters } from './auditFilters';
 import { useObjectAuditLog } from '../../hooks';
 import { ObjectAuditLogDocument } from '../../hooks/useObjectAuditLog/__generated__/useObjectAuditLog.generated';
 
@@ -22,14 +22,27 @@ const baseVariables = {
 };
 
 /**
- * Variables an `ObjectAuditLog` render sends: the bar opens on the default
- * preset, so the first query already carries its bounds. Derived from the same
- * helper the component uses (the window is relative to "today").
+ * The log opens on the default 30-day preset, so its first query carries those
+ * bounds. The clock is pinned (below) so the window is exact, and the expected
+ * bounds are computed here rather than by calling the component's own helper.
  */
+const PINNED_NOW = new Date(2026, 5, 15, 12, 0, 0);
+
 const logVariables = {
   ...baseVariables,
-  filters: initialAuditFilters(),
+  filters: {
+    dateFrom: startOfDay(subDays(PINNED_NOW, 29)).toISOString(),
+    dateTo: endOfDay(PINNED_NOW).toISOString(),
+  },
 };
+
+beforeEach(() => {
+  vi.setSystemTime(PINNED_NOW);
+});
+
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 // jsdom has no ResizeObserver; the preset dropdown measures its anchor on open.
 class ResizeObserverStub {
@@ -307,7 +320,7 @@ describe('ObjectAuditLog', () => {
     await screen.findByText('No activity in the selected date range.');
   });
 
-  it('falls back to "No activity yet." once the range is cleared', async () => {
+  it('falls back to "No activity" once the range is cleared', async () => {
     renderLog([
       page(logVariables, [makeAction()], null, false),
       page(baseVariables, [], null, false),
@@ -316,9 +329,41 @@ describe('ObjectAuditLog', () => {
     await screen.findByText('Ada Lovelace');
 
     fireEvent.click(screen.getByRole('combobox'));
-    fireEvent.click(await screen.findByText('All time'));
+    fireEvent.click(await screen.findByText('All Time'));
 
-    await screen.findByText('No activity yet.');
+    await screen.findByText('No activity');
+  });
+
+  it('re-queries with the new bounds and replaces the rows on a preset change', async () => {
+    const sevenDays = {
+      dateFrom: startOfDay(subDays(PINNED_NOW, 6)).toISOString(),
+      dateTo: endOfDay(PINNED_NOW).toISOString(),
+    };
+
+    renderLog([
+      page(
+        logVariables,
+        [makeAction({ actor: 'DEFAULT WINDOW' })],
+        null,
+        false,
+      ),
+      page(
+        { ...baseVariables, filters: sevenDays },
+        [makeAction({ actor: 'LAST SEVEN' })],
+        null,
+        false,
+      ),
+    ]);
+
+    await screen.findByText('DEFAULT WINDOW');
+
+    fireEvent.click(screen.getByRole('combobox'));
+    fireEvent.click(await screen.findByText('Last 7 Days'));
+
+    // The mock only matches the seven-day bounds, so rendering these rows
+    // proves the request carried them; the old rows must be gone.
+    expect(await screen.findByText('LAST SEVEN')).not.toBeNull();
+    expect(screen.queryByText('DEFAULT WINDOW')).toBeNull();
   });
 
   it('appends the next page instead of replacing the first one', async () => {

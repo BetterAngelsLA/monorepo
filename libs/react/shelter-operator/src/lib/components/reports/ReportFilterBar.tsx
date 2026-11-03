@@ -34,12 +34,13 @@ export function ReportFilterBar({ shelterId }: { shelterId?: string }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
       <DateRangeFilter
+        presetAriaLabel="Date range"
         presetClassName="w-56"
         pickerClassName="w-80"
         value={range}
         preset={preset}
         onChange={(nextRange, nextPreset) => {
-          // Reports has no "All time" entry, so `ALL` is unreachable here; the
+          // Reports has no "All Time" entry, so `ALL` is unreachable here; the
           // atom's state shape stays date-range-only.
           if (nextPreset === 'ALL') {
             return;

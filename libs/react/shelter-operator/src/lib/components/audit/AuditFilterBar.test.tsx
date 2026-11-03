@@ -10,6 +10,16 @@ class ResizeObserverStub {
 (globalThis as unknown as { ResizeObserver: unknown }).ResizeObserver =
   ResizeObserverStub;
 
+const PINNED_NOW = new Date(2026, 5, 15, 12, 0, 0);
+
+beforeEach(() => {
+  vi.setSystemTime(PINNED_NOW);
+});
+
+afterEach(() => {
+  vi.useRealTimers();
+});
+
 function renderBar(onChange: (filters: unknown) => void = () => undefined) {
   return render(<AuditFilterBar onChange={onChange} />);
 }
@@ -38,8 +48,8 @@ describe('AuditFilterBar', () => {
 
     expect(onChange).toHaveBeenCalledWith(
       expect.objectContaining({
-        dateFrom: startOfDay(subDays(new Date(), 6)).toISOString(),
-        dateTo: endOfDay(new Date()).toISOString(),
+        dateFrom: startOfDay(subDays(PINNED_NOW, 6)).toISOString(),
+        dateTo: endOfDay(PINNED_NOW).toISOString(),
       }),
     );
   });
@@ -57,7 +67,7 @@ describe('AuditFilterBar', () => {
     expect(onChange).toHaveBeenCalledWith(
       expect.objectContaining({ dateFrom: null, dateTo: null }),
     );
-    expect(screen.getByRole('combobox').textContent).toContain('All time');
+    expect(screen.getByRole('combobox').textContent).toContain('All Time');
   });
 
   it('opens the shared date picker for a custom range', async () => {
@@ -69,6 +79,34 @@ describe('AuditFilterBar', () => {
     expect(
       await screen.findByRole('dialog', { name: 'Select date range' }),
     ).not.toBeNull();
+  });
+
+  it('re-opens the calendar instead of clearing a committed custom range', async () => {
+    const onChange = vi.fn();
+    renderBar(onChange);
+
+    fireEvent.click(screen.getByRole('combobox'));
+    fireEvent.click(await screen.findByText('Custom'));
+    fireEvent.change(dateInput('Start date'), {
+      target: { value: '06/01/2026' },
+    });
+    fireEvent.change(dateInput('End date'), {
+      target: { value: '06/15/2026' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(onChange).toHaveBeenCalledTimes(1);
+
+    // Re-selecting the Custom entry must offer the dates back for editing, not
+    // reset the filter to All Time.
+    fireEvent.click(screen.getByRole('combobox'));
+    const options = await screen.findAllByText('Custom');
+    fireEvent.click(options[options.length - 1]);
+
+    expect(
+      await screen.findByRole('dialog', { name: 'Select date range' }),
+    ).not.toBeNull();
+    expect(onChange).toHaveBeenCalledTimes(1);
   });
 
   it('emits the committed custom range as day-aligned bounds', async () => {

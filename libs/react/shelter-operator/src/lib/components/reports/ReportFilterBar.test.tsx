@@ -22,6 +22,8 @@ vi.mock('../base-ui/toast', () => ({
 // mocking jotai out from under them.
 const store = getDefaultStore();
 
+const PINNED_NOW = new Date(2026, 5, 15, 12, 0, 0);
+
 function exportResponse(filename = '20260601_20260630_shelter_report.zip') {
   return {
     ok: true,
@@ -42,6 +44,7 @@ function openModalAndExport() {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.setSystemTime(PINNED_NOW);
   store.set(dateRangeFilterAtom, {
     preset: 'LAST_30_DAYS',
     range: { from: new Date(2026, 5, 1), to: new Date(2026, 5, 30) },
@@ -64,6 +67,10 @@ beforeEach(() => {
     unobserve = vi.fn();
     disconnect = vi.fn();
   };
+});
+
+afterEach(() => {
+  vi.useRealTimers();
 });
 
 describe('ReportFilterBar export', () => {
@@ -157,9 +164,9 @@ describe('ReportFilterBar export', () => {
     const url = new URL(fetchMock.mock.calls[0][0], 'https://example.test');
 
     expect(url.searchParams.get('start_date')).toBe(
-      toDateString(subDays(new Date(), 6)),
+      toDateString(subDays(PINNED_NOW, 6)),
     );
-    expect(url.searchParams.get('end_date')).toBe(toDateString(new Date()));
+    expect(url.searchParams.get('end_date')).toBe(toDateString(PINNED_NOW));
   });
 
   it('cannot export before the shelter is known', () => {

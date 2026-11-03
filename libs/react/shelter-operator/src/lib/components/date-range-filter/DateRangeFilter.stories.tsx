@@ -23,7 +23,7 @@ function Harness({ includeAll }: { includeAll?: boolean }) {
     <div className="w-[44rem] space-y-3 p-4">
       <DateRangeFilter
         includeAll={includeAll}
-        presetLabel="Date range"
+        presetAriaLabel="Date range"
         presetClassName="w-56"
         pickerClassName="w-80"
         value={state.range}
@@ -41,5 +41,5 @@ function Harness({ includeAll }: { includeAll?: boolean }) {
 /** The reports toolbar: presets only, no way to clear the range. */
 export const Default = () => <Harness />;
 
-/** The activity log: adds the "All time" entry, so toggling clears the range. */
+/** The activity log: adds the "All Time" entry, so toggling clears the range. */
 export const WithAllTime = () => <Harness includeAll />;

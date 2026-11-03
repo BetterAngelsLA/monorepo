@@ -71,14 +71,14 @@ describe('DateRangePresetDropdown', () => {
     expect(onChange).toHaveBeenCalledWith(null);
   });
 
-  it('offers "All time" in the menu only when asked', () => {
+  it('offers "All Time" in the menu only when asked', () => {
     const { unmount } = render(
       <DateRangePresetDropdown value="LAST_30_DAYS" onChange={vi.fn()} />,
     );
 
     openMenu();
     expect(
-      within(screen.getByRole('listbox')).queryByText('All time'),
+      within(screen.getByRole('listbox')).queryByText('All Time'),
     ).toBeNull();
     unmount();
 
@@ -86,25 +86,25 @@ describe('DateRangePresetDropdown', () => {
       <DateRangePresetDropdown value="ALL" includeAll onChange={vi.fn()} />,
     );
 
-    // The trigger would read "All time" from `value` alone, so the menu entry
+    // The trigger would read "All Time" from `value` alone, so the menu entry
     // is what proves `includeAll` added it.
     openMenu();
     expect(
-      within(screen.getByRole('listbox')).getByText('All time'),
+      within(screen.getByRole('listbox')).getByText('All Time'),
     ).not.toBeNull();
   });
 
-  it('labels the control when a label is given', () => {
+  it('names the control without showing a label', () => {
     render(
       <DateRangePresetDropdown
         value="LAST_30_DAYS"
         onChange={vi.fn()}
-        label="Date range"
+        ariaLabel="Date range"
       />,
     );
 
-    // The visible label is the caller's; the combobox itself is named by the
-    // shared Dropdown, which this widget only forwards the label to.
-    expect(screen.getByText('Date range')).not.toBeNull();
+    // The name is for assistive tech; these dropdowns show no visible label.
+    expect(screen.getByRole('combobox', { name: 'Date range' })).not.toBeNull();
+    expect(screen.queryByText('Date range')).toBeNull();
   });
 });

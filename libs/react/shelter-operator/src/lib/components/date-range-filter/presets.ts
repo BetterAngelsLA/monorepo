@@ -10,12 +10,15 @@ export const PRESET_LABELS: Record<DateRangePreset, string> = {
 };
 
 /** The explicit "no range" entry, offered only by filters that can be unfiltered. */
-export const ALL_TIME_LABEL = 'All time';
+export const ALL_TIME_LABEL = 'All Time';
 
-/** Labels for every selectable value, with `ALL` first. */
+/**
+ * Labels for every selectable value: the reports order, with the extra "no
+ * range" entry last so the numbered presets keep their familiar neighbours.
+ */
 export const PRESET_VALUE_LABELS: Record<DateRangePresetValue, string> = {
-  ALL: ALL_TIME_LABEL,
   ...PRESET_LABELS,
+  ALL: ALL_TIME_LABEL,
 };
 
 export const DEFAULT_PRESET: DateRangePreset = 'LAST_30_DAYS';

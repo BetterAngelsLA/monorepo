@@ -9,7 +9,7 @@ import {
 
 /**
  * The window the activity log opens on. Deliberately the shared default rather
- * than "All time": the label in the filter bar and the query must agree on the
+ * than "All Time": the label in the filter bar and the query must agree on the
  * first render, so both derive their state from this constant.
  */
 export const DEFAULT_AUDIT_PRESET: DateRangePresetValue = DEFAULT_PRESET;
@@ -37,7 +37,7 @@ export function initialAuditFilters(): ObjectAuditLogFilters {
   return rangeToFilters(resolvePresetValue(DEFAULT_AUDIT_PRESET));
 }
 
-/** True when at least one date bound is set (an "All time" view is unfiltered). */
-export function hasDateFilters(filters: ObjectAuditLogFilters): boolean {
+/** True when at least one date bound is set (an "All Time" view is unfiltered). */
+export function hasDateBounds(filters: ObjectAuditLogFilters): boolean {
   return Boolean(filters.dateFrom || filters.dateTo);
 }

@@ -13,12 +13,13 @@ export interface DateRangePresetDropdownProps {
    * Emitted on selection, including `CUSTOM` — the caller decides what that
    * means (the composed `DateRangeFilter` opens its calendar). `null` means the
    * active entry was toggled off, which the caller also decides: it widens to
-   * `ALL` in a filter that offers "All time" and is ignored otherwise.
+   * `ALL` in a filter that offers "All Time" and is ignored otherwise.
    */
   onChange: (value: DateRangePresetValue | null) => void;
-  /** Offer the "All time" entry, i.e. let the filter be unfiltered. */
+  /** Offer the "All Time" entry, i.e. let the filter be unfiltered. */
   includeAll?: boolean;
-  label?: string;
+  /** Accessible name for the trigger; the control shows no visible label. */
+  ariaLabel?: string;
   className?: string;
 }
 
@@ -41,7 +42,7 @@ export function DateRangePresetDropdown({
   value,
   onChange,
   includeAll = false,
-  label,
+  ariaLabel,
   className,
 }: DateRangePresetDropdownProps) {
   const options = includeAll ? PRESET_OPTIONS_WITH_ALL : PRESET_OPTIONS;
@@ -53,7 +54,7 @@ export function DateRangePresetDropdown({
 
   return (
     <Dropdown<DateRangePresetValue>
-      label={label}
+      ariaLabel={ariaLabel}
       options={options}
       value={selected}
       onChange={handleChange}

@@ -5,7 +5,6 @@ export type {
   DateRangeFilterState,
 } from './types';
 export {
-  ALL_TIME_LABEL,
   PRESET_LABELS,
   PRESET_VALUE_LABELS,
   DEFAULT_PRESET,

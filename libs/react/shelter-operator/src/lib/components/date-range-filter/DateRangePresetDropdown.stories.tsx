@@ -24,7 +24,7 @@ export const Controlled = () => {
   return (
     <div className="w-[20rem] space-y-3 p-4">
       <DateRangePresetDropdown
-        label="Date range"
+        ariaLabel="Date range"
         includeAll
         value={value}
         onChange={(next) => setValue(next ?? 'ALL')}

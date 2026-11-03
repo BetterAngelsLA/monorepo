@@ -7,7 +7,7 @@ import { Button } from '../base-ui/buttons';
 import { Text } from '../base-ui/text/text';
 import { AuditActionRow } from './AuditActionRow';
 import { AuditFilterBar } from './AuditFilterBar';
-import { hasDateFilters, initialAuditFilters } from './auditFilters';
+import { hasDateBounds, initialAuditFilters } from './auditFilters';
 
 type ObjectAuditLogProps = {
   targetType: AuditTargetType;
@@ -133,9 +133,9 @@ export function ObjectAuditLog({
         {!hasActions && !hasMore && (
           <div className="py-16 text-center">
             <Text variant="body" textColor="text-neutral-50">
-              {hasDateFilters(filters)
+              {hasDateBounds(filters)
                 ? 'No activity in the selected date range.'
-                : 'No activity yet.'}
+                : 'No activity'}
             </Text>
           </div>
         )}

@@ -8,6 +8,11 @@ export interface DropdownOption<T extends string | number = string | number> {
 
 interface DropdownBaseProps<T extends string | number = string | number> {
   label?: string;
+  /**
+   * Accessible name for the trigger when no visible label is wanted (or in
+   * addition to it). Defaults to `label` when that is set.
+   */
+  ariaLabel?: string;
   labelVariant?: LabelVariant;
   placeholder?: string;
   options: ReadonlyArray<DropdownOption<T>>;

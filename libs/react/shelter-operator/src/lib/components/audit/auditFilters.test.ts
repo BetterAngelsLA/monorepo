@@ -2,7 +2,7 @@ import { endOfDay, startOfDay } from 'date-fns';
 import { resolvePresetValue } from '../date-range-filter';
 import {
   DEFAULT_AUDIT_PRESET,
-  hasDateFilters,
+  hasDateBounds,
   initialAuditFilters,
   rangeToFilters,
 } from './auditFilters';
@@ -61,13 +61,13 @@ describe('rangeToFilters', () => {
   });
 });
 
-describe('hasDateFilters', () => {
+describe('hasDateBounds', () => {
   it('is false only when neither bound is set', () => {
-    expect(hasDateFilters({})).toBe(false);
-    expect(hasDateFilters({ dateFrom: null, dateTo: null })).toBe(false);
-    expect(hasDateFilters(initialAuditFilters())).toBe(true);
-    expect(hasDateFilters({ dateFrom: '2026-06-01T07:00:00.000Z' })).toBe(true);
-    expect(hasDateFilters({ dateTo: '2026-06-30T07:00:00.000Z' })).toBe(true);
+    expect(hasDateBounds({})).toBe(false);
+    expect(hasDateBounds({ dateFrom: null, dateTo: null })).toBe(false);
+    expect(hasDateBounds(initialAuditFilters())).toBe(true);
+    expect(hasDateBounds({ dateFrom: '2026-06-01T07:00:00.000Z' })).toBe(true);
+    expect(hasDateBounds({ dateTo: '2026-06-30T07:00:00.000Z' })).toBe(true);
   });
 });
 

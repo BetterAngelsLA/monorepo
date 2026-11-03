@@ -15,10 +15,13 @@ export interface DateRangeFilterProps {
    * range, or a toggle-off (which empties the range and emits `ALL`).
    */
   onChange: (range: DateRange, preset: DateRangePresetValue) => void;
-  /** Offer the "All time" entry, i.e. allow the filter to be cleared. */
+  /** Offer the "All Time" entry, i.e. allow the filter to be cleared. */
   includeAll?: boolean;
-  /** Label for the preset dropdown (the picker's fields label themselves). */
-  presetLabel?: string;
+  /**
+   * Accessible name for the preset trigger. The picker's fields name
+   * themselves; the preset control shows no visible label.
+   */
+  presetAriaLabel?: string;
   className?: string;
   presetClassName?: string;
   pickerClassName?: string;
@@ -43,7 +46,7 @@ export function DateRangeFilter({
   preset,
   onChange,
   includeAll = false,
-  presetLabel,
+  presetAriaLabel,
   className,
   presetClassName,
   pickerClassName,
@@ -71,8 +74,15 @@ export function DateRangeFilter({
       }
 
       // The dropdown toggles: re-selecting the active entry clears it. Only a
-      // filter that offers "All time" has somewhere to go.
+      // filter that offers "All Time" has somewhere to go.
       if (!next) {
+        // ...except the custom range, whose entry means "edit this range".
+        // Clearing it there would throw away the dates the user picked.
+        if (preset === 'CUSTOM') {
+          openPicker();
+          return;
+        }
+
         if (!includeAll) {
           return;
         }
@@ -85,7 +95,7 @@ export function DateRangeFilter({
       settle();
       onChange(resolvePresetValue(next), next);
     },
-    [includeAll, onChange, openPicker, settle],
+    [includeAll, onChange, openPicker, preset, settle],
   );
 
   const handlePickerOpenChange = useCallback((isOpen: boolean) => {
@@ -118,7 +128,7 @@ export function DateRangeFilter({
 
       <DateRangePresetDropdown
         className={presetClassName}
-        label={presetLabel}
+        ariaLabel={presetAriaLabel}
         includeAll={includeAll}
         value={previewCustom ? 'CUSTOM' : preset}
         onChange={handlePresetChange}

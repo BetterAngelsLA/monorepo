@@ -47,7 +47,7 @@ function renderFilter({
   render(
     <DateRangeFilter
       includeAll={includeAll}
-      presetLabel="Date range"
+      presetAriaLabel="Date range"
       value={value}
       preset={preset}
       onChange={onChange}
@@ -100,7 +100,7 @@ describe('DateRangeFilter', () => {
     );
   });
 
-  it('ignores a toggle-off when there is no "All time" entry', () => {
+  it('ignores a toggle-off when there is no "All Time" entry', () => {
     const onChange = renderFilter();
 
     openMenu();
@@ -109,7 +109,7 @@ describe('DateRangeFilter', () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
-  it('clears to "All time" on toggle-off when the entry exists', () => {
+  it('clears to "All Time" on toggle-off when the entry exists', () => {
     const onChange = renderFilter({ includeAll: true });
 
     openMenu();
@@ -117,6 +117,22 @@ describe('DateRangeFilter', () => {
 
     expect(onChange).toHaveBeenCalledWith({ from: null, to: null }, 'ALL');
   });
+
+  it.each([true, false])(
+    're-selecting a committed custom range opens the calendar (includeAll=%s)',
+    async (includeAll) => {
+      const onChange = renderFilter({ includeAll, preset: 'CUSTOM' });
+
+      openMenu();
+      fireEvent.click(option('Custom'));
+
+      // The Custom entry means "edit these dates"; it must never clear them.
+      expect(
+        await screen.findByRole('dialog', { name: 'Select date range' }),
+      ).not.toBeNull();
+      expect(onChange).not.toHaveBeenCalled();
+    },
+  );
 
   it('previews "Custom" while the calendar is open and reverts on cancel', async () => {
     renderFilter();
