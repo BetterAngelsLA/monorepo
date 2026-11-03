@@ -1,7 +1,6 @@
 import * as Clipboard from 'expo-clipboard';
 import { Platform, Share } from 'react-native';
 
-/** The task identity the share sheet needs. */
 export type ShareableTask = {
   id: string;
 };

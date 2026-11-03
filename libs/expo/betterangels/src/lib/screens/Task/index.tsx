@@ -41,9 +41,8 @@ export default function Task({
 
   const navigation = useNavigation();
 
-  // Sharing is a screen action: one nav-bar button, not a second icon crowding
-  // the task title. It is set here because the header is configured by the
-  // stack while the task data lives in this screen.
+  // Set here, not in the layout: the stack owns the header, the task data lives
+  // in this screen.
   useEffect(() => {
     if (!shareTarget) return;
 

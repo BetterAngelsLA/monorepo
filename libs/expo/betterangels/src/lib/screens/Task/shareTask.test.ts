@@ -7,10 +7,7 @@ vi.mock('expo-clipboard', () => ({ setStringAsync: vi.fn() }));
 const setPlatform = (os: string) =>
   Object.defineProperty(Platform, 'OS', { configurable: true, value: os });
 
-// The fixture carries the content the feature promises never to share, so every
-// payload assertion also proves it is dropped. A bare `{ id }` fixture could not
-// tell link-only sharing from a conditional leak when a summary is present.
-// `overrides` lets a case pin its own wording.
+// Carries a summary and a client so a conditional leak can't pass as link-only.
 const task = (
   overrides: Partial<{
     summary: string;
@@ -120,8 +117,6 @@ describe('shareTask', () => {
     );
 
     const [content] = share.mock.calls[0];
-    // Exact shape: the message is the URL alone, and nothing from the task
-    // rides along in any other field.
     expect(content).toStrictEqual({
       title: 'Task',
       message: 'https://outreach.dev.betterangels.la/task/task-1',

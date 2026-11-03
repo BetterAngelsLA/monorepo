@@ -57,9 +57,7 @@ describe('ShareTaskButton', () => {
         type: 'error',
       }),
     );
-    // `toHaveBeenCalledWith` passes on any single matching call, so it would
-    // stay green if the component also logged the raw error. Pin the whole call
-    // list instead: exactly one call carrying nothing but the task id.
+    // Not `toHaveBeenCalledWith`: that passes if a second call leaks the error.
     expect(consoleError.mock.calls).toStrictEqual([
       ['share_task_failed', { taskId: 'task-1' }],
     ]);
