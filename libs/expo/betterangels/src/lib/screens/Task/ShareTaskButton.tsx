@@ -3,10 +3,10 @@ import { Colors } from '@monorepo/expo/shared/static';
 import { useRef, useState } from 'react';
 import {
   findNodeHandle,
+  GestureResponderEvent,
   Platform,
   Pressable,
   StyleSheet,
-  View,
 } from 'react-native';
 import { useSnackbar } from '../../hooks';
 import { HeaderSlot } from '../../navigation';
@@ -17,21 +17,23 @@ const TOUCH_TARGET = 44;
 
 export function ShareTaskButton({ task }: { task: ShareableTask }) {
   const { showSnackbar } = useSnackbar();
-  // Two overlapping Share.share calls reject on iOS ("already presenting").
+  // State drives the disabled UI; this ref closes the same-tick window state
+  // cannot (two presses before React re-renders would both call shareTask).
   const busy = useRef(false);
-  const anchorRef = useRef<View>(null);
   const [sharing, setSharing] = useState(false);
 
-  const onPress = async () => {
+  const onPress = async (event: GestureResponderEvent) => {
     if (busy.current) return;
     busy.current = true;
     setSharing(true);
 
     try {
-      // iPad presents the sheet as a popover and needs a source view.
+      // iPad presents the sheet as a popover. `currentTarget` is the
+      // Pressable's host instance; findNodeHandle's type omits host instances,
+      // but it resolves one at runtime, so no ref is needed.
       const anchor =
         Platform.OS === 'ios'
-          ? (findNodeHandle(anchorRef.current) ?? undefined)
+          ? (findNodeHandle(event.currentTarget as never) ?? undefined)
           : undefined;
       const outcome = await shareTask(task, anchor);
 
@@ -50,7 +52,6 @@ export function ShareTaskButton({ task }: { task: ShareableTask }) {
   return (
     <HeaderSlot side="right">
       <Pressable
-        ref={anchorRef}
         testID="share-task"
         accessibilityRole="button"
         accessibilityLabel="Share task"
