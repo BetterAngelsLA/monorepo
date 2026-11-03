@@ -31,8 +31,32 @@ export function outreachWebHost(): string {
   return host.replace(/\/+$/, '');
 }
 
+/**
+ * The deployment serving the current web page: the origin at the root, or
+ * origin + `/branches/<branch>` on a preview. `null` outside the browser.
+ */
+function webShareBase(): string | null {
+  if (
+    Platform.OS !== 'web' ||
+    typeof window === 'undefined' ||
+    !window.location
+  ) {
+    return null;
+  }
+
+  const { origin, pathname } = window.location;
+  // The share action lives on `/task/<id>`; everything before it is the base,
+  // which is '' at the root and `/branches/<branch>` on a preview deploy.
+  const route = '/task/';
+  const index = pathname.lastIndexOf(route);
+
+  return index === -1 ? origin : `${origin}${pathname.slice(0, index)}`;
+}
+
 export function taskShareUrl(taskId: string): string {
-  return `https://${outreachWebHost()}/task/${encodeURIComponent(taskId)}`;
+  const base = webShareBase() ?? `https://${outreachWebHost()}`;
+
+  return `${base}/task/${encodeURIComponent(taskId)}`;
 }
 
 /**

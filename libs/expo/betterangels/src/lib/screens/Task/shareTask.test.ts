@@ -37,6 +37,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
   setPlatform('ios');
 });
 
@@ -59,6 +60,34 @@ describe('taskShareUrl', () => {
     appConfig.host = undefined;
 
     expect(() => taskShareUrl('abc')).toThrow('outreachWebHost');
+  });
+
+  it('follows the root deployment on web', () => {
+    setPlatform('web');
+    vi.stubGlobal('window', {
+      location: {
+        origin: 'https://outreach.dev.betterangels.la',
+        pathname: '/task/task-1',
+      },
+    });
+
+    expect(taskShareUrl('task-2')).toBe(
+      'https://outreach.dev.betterangels.la/task/task-2',
+    );
+  });
+
+  it('follows a branch preview base path on web', () => {
+    setPlatform('web');
+    vi.stubGlobal('window', {
+      location: {
+        origin: 'https://outreach.dev.betterangels.la',
+        pathname: '/branches/feature-x/task/task-1',
+      },
+    });
+
+    expect(taskShareUrl('task-2')).toBe(
+      'https://outreach.dev.betterangels.la/branches/feature-x/task/task-2',
+    );
   });
 });
 
