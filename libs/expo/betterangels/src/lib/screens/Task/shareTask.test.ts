@@ -1,6 +1,6 @@
 import * as Clipboard from 'expo-clipboard';
 import { Platform, Share } from 'react-native';
-import { shareTask, taskShareMessage, taskShareUrl } from './shareTask';
+import { shareTask, taskShareUrl } from './shareTask';
 
 vi.mock('expo-clipboard', () => ({ setStringAsync: vi.fn() }));
 
@@ -54,6 +54,21 @@ describe('taskShareUrl', () => {
     );
   });
 
+  it('keeps a branch base on another betterangels.la host', () => {
+    setPlatform('web');
+    vi.stubGlobal('window', {
+      location: {
+        origin: 'https://preview.betterangels.la',
+        host: 'preview.betterangels.la',
+        pathname: '/branches/feature-x/task/task-1',
+      },
+    });
+
+    expect(taskShareUrl('task-2')).toBe(
+      'https://preview.betterangels.la/branches/feature-x/task/task-2',
+    );
+  });
+
   it('falls back to the configured host when the page is served elsewhere', () => {
     setPlatform('web');
     vi.stubGlobal('window', {
@@ -70,34 +85,28 @@ describe('taskShareUrl', () => {
   });
 });
 
-describe('taskShareMessage', () => {
-  const url = 'https://outreach.dev.betterangels.la/task/task-1';
-
-  it('includes the summary when no client is attached', () => {
-    expect(taskShareMessage(task(), url)).toBe(
-      `Follow up on TAP card — ${url}`,
-    );
-  });
-
-  it('shares only the link for a client-attached task', () => {
-    expect(taskShareMessage(task({ hasClient: true }), url)).toBe(url);
-  });
-
-  it('shares only the link when the summary is blank', () => {
-    expect(taskShareMessage(task({ summary: '   ' }), url)).toBe(url);
-  });
-});
-
 describe('shareTask', () => {
-  it('shares the message and reports success', async () => {
+  it('shares only the link and reports success', async () => {
     vi.spyOn(Share, 'share').mockResolvedValue({ action: 'sharedAction' });
 
     await expect(shareTask(task())).resolves.toBe('shared');
     expect(Share.share).toHaveBeenCalledWith(
-      expect.objectContaining({
-        message: expect.stringContaining('/task/task-1'),
-      }),
+      {
+        title: 'Task',
+        message: 'https://outreach.dev.betterangels.la/task/task-1',
+      },
+      expect.objectContaining({ subject: 'Task' }),
+    );
+  });
+
+  it('anchors the iOS sheet when given a source node', async () => {
+    vi.spyOn(Share, 'share').mockResolvedValue({ action: 'sharedAction' });
+
+    await shareTask(task(), 42);
+
+    expect(Share.share).toHaveBeenCalledWith(
       expect.anything(),
+      expect.objectContaining({ anchor: 42 }),
     );
   });
 

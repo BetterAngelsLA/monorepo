@@ -34,18 +34,10 @@ export default function Task({
   const clientProfileId = task?.clientProfile?.id;
 
   const taskId = task?.id;
-  const taskSummary = task?.summary;
-  const taskHasClient = !!task?.clientProfile;
 
-  // The header only needs these fields, and a stable target keeps the effect
-  // from re-running (and the header from re-rendering) on every cache update.
-  const shareTarget = useMemo(
-    () =>
-      taskId
-        ? { id: taskId, summary: taskSummary, hasClient: taskHasClient }
-        : null,
-    [taskId, taskSummary, taskHasClient],
-  );
+  // A stable target keeps the effect from re-running (and the header from
+  // re-rendering) on every cache update.
+  const shareTarget = useMemo(() => (taskId ? { id: taskId } : null), [taskId]);
 
   const navigation = useNavigation();
 

@@ -34,7 +34,7 @@ if (process.env.EAS_BUILD && !HOSTNAME) {
   );
 }
 
-if (IS_PRODUCTION && (!HOSTNAME || HOSTNAME.includes('dev'))) {
+if (IS_PRODUCTION && (!HOSTNAME || /(^|\.)dev\./.test(HOSTNAME))) {
   throw new Error(
     `EXPO_PUBLIC_OUTREACH_HOST is ${HOSTNAME ?? 'unset'} for a production build`,
   );

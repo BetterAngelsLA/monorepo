@@ -1,7 +1,13 @@
 import { ShareIcon } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
-import { useRef } from 'react';
-import { Pressable, StyleSheet } from 'react-native';
+import { useRef, useState } from 'react';
+import {
+  findNodeHandle,
+  Platform,
+  Pressable,
+  StyleSheet,
+  View,
+} from 'react-native';
 import { useSnackbar } from '../../hooks';
 import { HeaderSlot } from '../../navigation';
 import { shareTask, type ShareableTask } from './shareTask';
@@ -13,13 +19,21 @@ export function ShareTaskButton({ task }: { task: ShareableTask }) {
   const { showSnackbar } = useSnackbar();
   // Two overlapping Share.share calls reject on iOS ("already presenting").
   const busy = useRef(false);
+  const anchorRef = useRef<View>(null);
+  const [sharing, setSharing] = useState(false);
 
   const onPress = async () => {
     if (busy.current) return;
     busy.current = true;
+    setSharing(true);
 
     try {
-      const outcome = await shareTask(task);
+      // iPad presents the sheet as a popover and needs a source view.
+      const anchor =
+        Platform.OS === 'ios'
+          ? (findNodeHandle(anchorRef.current) ?? undefined)
+          : undefined;
+      const outcome = await shareTask(task, anchor);
 
       if (outcome === 'copied') {
         showSnackbar({ message: 'Link copied', type: 'success' });
@@ -29,18 +43,26 @@ export function ShareTaskButton({ task }: { task: ShareableTask }) {
       showSnackbar({ message: "Couldn't share this task", type: 'error' });
     } finally {
       busy.current = false;
+      setSharing(false);
     }
   };
 
   return (
     <HeaderSlot side="right">
       <Pressable
+        ref={anchorRef}
         testID="share-task"
         accessibilityRole="button"
         accessibilityLabel="Share task"
         accessibilityHint="Opens the system share sheet"
+        accessibilityState={{ disabled: sharing }}
+        disabled={sharing}
         onPress={onPress}
-        style={({ pressed }) => [styles.button, pressed && styles.pressed]}
+        style={({ pressed }) => [
+          styles.button,
+          pressed && styles.pressed,
+          sharing && styles.busy,
+        ]}
       >
         <ShareIcon size="lg" color={Colors.WHITE} />
       </Pressable>
@@ -57,5 +79,8 @@ const styles = StyleSheet.create({
   },
   pressed: {
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  busy: {
+    opacity: 0.6,
   },
 });
