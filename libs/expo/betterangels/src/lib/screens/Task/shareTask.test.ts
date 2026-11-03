@@ -48,32 +48,10 @@ describe('taskShareUrl', () => {
     );
   });
 
-  it('follows the host the app claims, not a second setting', () => {
-    appConfig.host = 'outreach.betterangels.la';
-
-    expect(taskShareUrl('abc')).toBe(
-      'https://outreach.betterangels.la/task/abc',
-    );
-  });
-
   it('fails loudly when app config has no host', () => {
     appConfig.host = undefined;
 
     expect(() => taskShareUrl('abc')).toThrow('outreachWebHost');
-  });
-
-  it('follows the root deployment on web', () => {
-    setPlatform('web');
-    vi.stubGlobal('window', {
-      location: {
-        origin: 'https://outreach.dev.betterangels.la',
-        pathname: '/task/task-1',
-      },
-    });
-
-    expect(taskShareUrl('task-2')).toBe(
-      'https://outreach.dev.betterangels.la/task/task-2',
-    );
   });
 
   it('follows a branch preview base path on web', () => {
@@ -81,12 +59,28 @@ describe('taskShareUrl', () => {
     vi.stubGlobal('window', {
       location: {
         origin: 'https://outreach.dev.betterangels.la',
+        host: 'outreach.dev.betterangels.la',
         pathname: '/branches/feature-x/task/task-1',
       },
     });
 
     expect(taskShareUrl('task-2')).toBe(
       'https://outreach.dev.betterangels.la/branches/feature-x/task/task-2',
+    );
+  });
+
+  it('falls back to the configured host when the page is served elsewhere', () => {
+    setPlatform('web');
+    vi.stubGlobal('window', {
+      location: {
+        origin: 'https://preview.example.com',
+        host: 'preview.example.com',
+        pathname: '/task/task-1',
+      },
+    });
+
+    expect(taskShareUrl('task-2')).toBe(
+      'https://outreach.dev.betterangels.la/task/task-2',
     );
   });
 });

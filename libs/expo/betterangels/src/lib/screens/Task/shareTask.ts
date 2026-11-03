@@ -31,15 +31,19 @@ export function outreachWebHost(): string {
   return host.replace(/\/+$/, '');
 }
 
+const TASK_ROUTE = '/task/';
+
 /**
  * The deployment serving the current web page: the origin at the root, or
- * origin + `/branches/<branch>` on a preview. `null` outside the browser.
+ * origin + `/branches/<branch>` on a preview. `null` outside the browser or
+ * when the page is served from a host other than the configured one.
  */
-function webShareBase(): string | null {
+function webShareBase(configuredHost: string): string | null {
   if (
     Platform.OS !== 'web' ||
     typeof window === 'undefined' ||
-    !window.location
+    !window.location ||
+    window.location.host !== configuredHost
   ) {
     return null;
   }
@@ -47,16 +51,16 @@ function webShareBase(): string | null {
   const { origin, pathname } = window.location;
   // The share action lives on `/task/<id>`; everything before it is the base,
   // which is '' at the root and `/branches/<branch>` on a preview deploy.
-  const route = '/task/';
-  const index = pathname.lastIndexOf(route);
+  const index = pathname.lastIndexOf(TASK_ROUTE);
 
   return index === -1 ? origin : `${origin}${pathname.slice(0, index)}`;
 }
 
 export function taskShareUrl(taskId: string): string {
-  const base = webShareBase() ?? `https://${outreachWebHost()}`;
+  const host = outreachWebHost();
+  const base = webShareBase(host) ?? `https://${host}`;
 
-  return `${base}/task/${encodeURIComponent(taskId)}`;
+  return `${base}${TASK_ROUTE}${encodeURIComponent(taskId)}`;
 }
 
 /**

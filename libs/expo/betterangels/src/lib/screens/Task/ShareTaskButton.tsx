@@ -1,5 +1,6 @@
 import { ShareIcon } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
+import { useRef } from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 import { useSnackbar } from '../../hooks';
 import { HeaderSlot } from '../../navigation';
@@ -10,17 +11,24 @@ const TOUCH_TARGET = 44;
 
 export function ShareTaskButton({ task }: { task: ShareableTask }) {
   const { showSnackbar } = useSnackbar();
+  // Two overlapping Share.share calls reject on iOS ("already presenting").
+  const busy = useRef(false);
 
   const onPress = async () => {
+    if (busy.current) return;
+    busy.current = true;
+
     try {
       const outcome = await shareTask(task);
 
       if (outcome === 'copied') {
         showSnackbar({ message: 'Link copied', type: 'success' });
       }
-    } catch (error) {
-      console.error(error);
+    } catch {
+      console.error('share_task_failed', { taskId: task.id });
       showSnackbar({ message: "Couldn't share this task", type: 'error' });
+    } finally {
+      busy.current = false;
     }
   };
 
