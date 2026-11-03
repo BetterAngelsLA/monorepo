@@ -28,6 +28,7 @@ export function Dropdown<T extends string | number = string | number>(
 ) {
   const {
     label,
+    ariaLabel,
     labelVariant,
     labelClassname,
     placeholder = 'Please select',
@@ -364,7 +365,10 @@ export function Dropdown<T extends string | number = string | number>(
           role="combobox"
           aria-expanded={isOpen}
           aria-controls={menuId}
-          aria-labelledby={label ? labelId : undefined}
+          // `aria-labelledby` used to point at an id `Label` never renders, so
+          // every labelled dropdown was unnamed. The visible label text is the
+          // name; `ariaLabel` supplies one when no label is shown.
+          aria-label={ariaLabel ?? label}
           aria-disabled={disabled}
           tabIndex={disabled ? -1 : 0}
           className={mergeCss([

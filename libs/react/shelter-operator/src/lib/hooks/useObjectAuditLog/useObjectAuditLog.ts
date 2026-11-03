@@ -12,7 +12,18 @@ export type AuditEvent = AuditAction['events'][number];
 
 const DEFAULT_PAGE_SIZE = 25;
 
-type UseObjectAuditLogArgs = {
+export type ObjectAuditLogFilters = {
+  /**
+   * Inclusive lower bound (ISO datetime). ``null`` and ``undefined`` both mean
+   * "unbounded"; the hook normalizes them so the two cannot produce different
+   * query identities.
+   */
+  dateFrom?: string | null;
+  /** Inclusive upper bound (ISO datetime); ``null`` means "unbounded". */
+  dateTo?: string | null;
+};
+
+type UseObjectAuditLogArgs = ObjectAuditLogFilters & {
   targetType: ObjectAuditLogQueryVariables['targetType'];
   objectId: string;
   pageSize?: number;
@@ -36,15 +47,31 @@ export function useObjectAuditLog({
   targetType,
   objectId,
   pageSize = DEFAULT_PAGE_SIZE,
+  // Defaulted rather than left optional: `undefined` and `null` mean the same
+  // thing here, and letting both reach the memo's dependency list would rebuild
+  // an identical `variables` object and reset the cursor chain for no reason.
+  dateFrom = null,
+  dateTo = null,
 }: UseObjectAuditLogArgs) {
-  const variables = useMemo<ObjectAuditLogQueryVariables>(
-    () => ({
+  const variables = useMemo<ObjectAuditLogQueryVariables>(() => {
+    const filters: NonNullable<ObjectAuditLogQueryVariables['filters']> = {};
+
+    if (dateFrom) {
+      filters.dateFrom = dateFrom;
+    }
+    if (dateTo) {
+      filters.dateTo = dateTo;
+    }
+
+    return {
       targetType,
       objectId,
       limit: pageSize,
-    }),
-    [targetType, objectId, pageSize],
-  );
+      // Omit the input entirely when nothing is set: the server defaults to
+      // "no filters", and the variable set stays identical to the initial one.
+      ...(Object.keys(filters).length > 0 ? { filters } : {}),
+    };
+  }, [targetType, objectId, dateFrom, dateTo, pageSize]);
 
   const { data, loading, error, fetchMore, refetch } = useQuery<
     ObjectAuditLogQuery,

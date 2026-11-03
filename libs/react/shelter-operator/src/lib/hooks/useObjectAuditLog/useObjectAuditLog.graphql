@@ -1,7 +1,8 @@
 query ObjectAuditLog(
   $targetType: AuditTargetType!
   $objectId: ID!
-  # Wired by the activity-log date-range and actor-filter follow-ups.
+  # Populated by the activity log's date-range controls; omitted entirely when
+  # no bound is set. The actor filter extends this same input.
   $filters: AuditEventFilter
   $limit: Int!
   $after: String

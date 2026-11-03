@@ -1,10 +1,13 @@
 import type { AuditTargetType } from '@monorepo/ba-platform/types';
 import { LoadingView } from '@monorepo/react/components';
 import { mergeCss } from '@monorepo/react/shared';
-import { useObjectAuditLog } from '../../hooks';
+import { useCallback, useState } from 'react';
+import { useObjectAuditLog, type ObjectAuditLogFilters } from '../../hooks';
 import { Button } from '../base-ui/buttons';
 import { Text } from '../base-ui/text/text';
 import { AuditActionRow } from './AuditActionRow';
+import { AuditFilterBar } from './AuditFilterBar';
+import { hasDateBounds, initialAuditFilter } from './auditFilters';
 
 type ObjectAuditLogProps = {
   targetType: AuditTargetType;
@@ -37,6 +40,12 @@ export function ObjectAuditLog({
   objectId,
   className,
 }: ObjectAuditLogProps) {
+  // One clock read seeds both the query and the bar, so the window they show
+  // and the window they request cannot disagree.
+  const [initial] = useState(initialAuditFilter);
+  const [filters, setFilters] = useState<ObjectAuditLogFilters>(
+    initial.filters,
+  );
   const {
     actions,
     loading,
@@ -46,7 +55,11 @@ export function ObjectAuditLog({
     hasMore,
     loadMore,
     retry,
-  } = useObjectAuditLog({ targetType, objectId });
+  } = useObjectAuditLog({ targetType, objectId, ...filters });
+
+  const handleFilterChange = useCallback((next: ObjectAuditLogFilters) => {
+    setFilters(next);
+  }, []);
 
   const hasActions = actions.length > 0;
   const hasRefreshError = Boolean(error || retryError);
@@ -122,7 +135,9 @@ export function ObjectAuditLog({
         {!hasActions && !hasMore && (
           <div className="py-16 text-center">
             <Text variant="body" textColor="text-neutral-50">
-              No activity yet.
+              {hasDateBounds(filters)
+                ? 'No activity in the selected date range.'
+                : 'No activity'}
             </Text>
           </div>
         )}
@@ -147,6 +162,11 @@ export function ObjectAuditLog({
 
   return (
     <div className={mergeCss(['flex flex-col gap-4', className])}>
+      <AuditFilterBar
+        initialPreset={initial.preset}
+        initialRange={initial.range}
+        onChange={handleFilterChange}
+      />
       {renderContent()}
     </div>
   );

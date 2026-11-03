@@ -8,16 +8,50 @@ import { ApolloProvider, useApolloClient } from '@apollo/client/react';
 import { MockedProvider } from '@apollo/client/testing/react';
 import { AuditEventKind, AuditTargetType } from '@monorepo/ba-platform/types';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { endOfDay, format, startOfDay, subDays } from 'date-fns';
 import { useState } from 'react';
 import { ObjectAuditLog } from './ObjectAuditLog';
 import { useObjectAuditLog } from '../../hooks';
 import { ObjectAuditLogDocument } from '../../hooks/useObjectAuditLog/__generated__/useObjectAuditLog.generated';
 
+/** Variables for the hook in isolation: no filters unless a harness passes them. */
 const baseVariables = {
   targetType: AuditTargetType.Bed,
   objectId: '7',
   limit: 25,
 };
+
+/**
+ * The log opens on the default 30-day preset, so its first query carries those
+ * bounds. The clock is pinned (below) so the window is exact, and the expected
+ * bounds are computed here rather than by calling the component's own helper.
+ */
+const PINNED_NOW = new Date(2026, 5, 15, 12, 0, 0);
+
+const logVariables = {
+  ...baseVariables,
+  filters: {
+    dateFrom: startOfDay(subDays(PINNED_NOW, 29)).toISOString(),
+    dateTo: endOfDay(PINNED_NOW).toISOString(),
+  },
+};
+
+beforeEach(() => {
+  vi.setSystemTime(PINNED_NOW);
+});
+
+afterEach(() => {
+  vi.useRealTimers();
+});
+
+// jsdom has no ResizeObserver; the preset dropdown measures its anchor on open.
+class ResizeObserverStub {
+  observe = vi.fn();
+  unobserve = vi.fn();
+  disconnect = vi.fn();
+}
+(globalThis as unknown as { ResizeObserver: unknown }).ResizeObserver =
+  ResizeObserverStub;
 
 function makeEvent(overrides: Record<string, unknown> = {}) {
   return {
@@ -272,7 +306,7 @@ describe('ObjectAuditLog', () => {
   });
 
   it('renders grouped actions with their field changes', async () => {
-    renderLog([page(baseVariables, [makeAction()], null, false)]);
+    renderLog([page(logVariables, [makeAction()], null, false)]);
 
     expect(await screen.findByText('Ada Lovelace')).not.toBeNull();
     expect(screen.getByText('Name:')).not.toBeNull();
@@ -280,17 +314,80 @@ describe('ObjectAuditLog', () => {
     expect(screen.queryByRole('button', { name: /load more/i })).toBeNull();
   });
 
-  it('shows the empty state when there are no actions', async () => {
-    renderLog([page(baseVariables, [], null, false)]);
+  it('shows the filtered empty state when the range has no activity', async () => {
+    renderLog([page(logVariables, [], null, false)]);
 
-    await screen.findByText('No activity yet.');
+    await screen.findByText('No activity in the selected date range.');
+  });
+
+  it('falls back to "No activity" once the range is cleared', async () => {
+    renderLog([
+      page(logVariables, [makeAction()], null, false),
+      page(baseVariables, [], null, false),
+    ]);
+
+    await screen.findByText('Ada Lovelace');
+
+    fireEvent.click(screen.getByRole('combobox'));
+    fireEvent.click(await screen.findByText('All Time'));
+
+    await screen.findByText('No activity');
+  });
+
+  it('shows the same window it queries', async () => {
+    renderLog([page(logVariables, [makeAction()], null, false)]);
+
+    await screen.findByText('Ada Lovelace');
+
+    const { dateFrom, dateTo } = logVariables.filters as {
+      dateFrom: string;
+      dateTo: string;
+    };
+    const value = (label: string) =>
+      (screen.getByLabelText(label) as HTMLInputElement).value;
+
+    // Both come from one clock read, so the fields and the request agree.
+    expect(value('Start date')).toBe(format(new Date(dateFrom), 'MM/dd/yyyy'));
+    expect(value('End date')).toBe(format(new Date(dateTo), 'MM/dd/yyyy'));
+  });
+
+  it('re-queries with the new bounds and replaces the rows on a preset change', async () => {
+    const sevenDays = {
+      dateFrom: startOfDay(subDays(PINNED_NOW, 6)).toISOString(),
+      dateTo: endOfDay(PINNED_NOW).toISOString(),
+    };
+
+    renderLog([
+      page(
+        logVariables,
+        [makeAction({ actor: 'DEFAULT WINDOW' })],
+        null,
+        false,
+      ),
+      page(
+        { ...baseVariables, filters: sevenDays },
+        [makeAction({ actor: 'LAST SEVEN' })],
+        null,
+        false,
+      ),
+    ]);
+
+    await screen.findByText('DEFAULT WINDOW');
+
+    fireEvent.click(screen.getByRole('combobox'));
+    fireEvent.click(await screen.findByText('Last 7 Days'));
+
+    // The mock only matches the seven-day bounds, so rendering these rows
+    // proves the request carried them; the old rows must be gone.
+    expect(await screen.findByText('LAST SEVEN')).not.toBeNull();
+    expect(screen.queryByText('DEFAULT WINDOW')).toBeNull();
   });
 
   it('appends the next page instead of replacing the first one', async () => {
     renderLog([
-      page(baseVariables, [makeAction()], 'c1', true),
+      page(logVariables, [makeAction()], 'c1', true),
       page(
-        { ...baseVariables, after: 'c1' },
+        { ...logVariables, after: 'c1' },
         [makeAction({ fieldChanges: { name: ['Bed A', 'PAGE2'] } })],
         null,
         false,
@@ -308,8 +405,8 @@ describe('ObjectAuditLog', () => {
 
   it('shows an error with a retry that reloads the log', async () => {
     renderLog([
-      errorPage(baseVariables),
-      page(baseVariables, [makeAction()], null, false),
+      errorPage(logVariables),
+      page(logVariables, [makeAction()], null, false),
     ]);
 
     expect(await screen.findByText('Unable to load activity.')).not.toBeNull();
