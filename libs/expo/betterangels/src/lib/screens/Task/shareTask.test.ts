@@ -125,6 +125,16 @@ describe('shareTask', () => {
     expect(JSON.stringify(content)).not.toContain('Call Jordan');
   });
 
+  // react-native-web forwards to navigator.share, whose promise resolves
+  // `undefined` — a completed share, not a fallback to the clipboard.
+  it('reports success on web when the sheet completes', async () => {
+    setPlatform('web');
+    vi.spyOn(Share, 'share').mockResolvedValue(undefined as never);
+
+    await expect(shareTask(task())).resolves.toBe('shared');
+    expect(Clipboard.setStringAsync).not.toHaveBeenCalled();
+  });
+
   it('anchors the iOS sheet when given a source node', async () => {
     vi.spyOn(Share, 'share').mockResolvedValue({ action: 'sharedAction' });
 

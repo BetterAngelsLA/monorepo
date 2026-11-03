@@ -74,12 +74,13 @@ export async function shareTask(
   const url = taskShareUrl(task.id);
 
   try {
-    const result = await Share.share(
+    // Web Share resolves `undefined` on success; only iOS reports an action.
+    const result = (await Share.share(
       { title: 'Task', message: url },
       { dialogTitle: 'Share task', subject: 'Task', anchor },
-    );
+    )) as { action?: string } | undefined;
 
-    return result.action === Share.dismissedAction ? 'dismissed' : 'shared';
+    return result?.action === Share.dismissedAction ? 'dismissed' : 'shared';
   } catch (error) {
     // On web this forwards to navigator.share. A dismissal rejects with
     // AbortError — a user decision, not a failure — and anything else (no Web
