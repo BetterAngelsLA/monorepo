@@ -49,11 +49,11 @@ function webShareBase(configuredHost: string): string | null {
   }
 
   const { origin, pathname } = window.location;
-  // The share action lives on `/task/<id>`; everything before it is the base,
-  // which is '' at the root and `/branches/<branch>` on a preview deploy.
-  const index = pathname.lastIndexOf(TASK_ROUTE);
+  // Strip the trailing `/task/<id>`; what remains is the deployment base, ''
+  // at the root and `/branches/<branch>` on a preview.
+  const basePath = pathname.replace(new RegExp(`${TASK_ROUTE}[^/]+/?$`), '');
 
-  return index === -1 ? origin : `${origin}${pathname.slice(0, index)}`;
+  return basePath === pathname ? origin : `${origin}${basePath}`;
 }
 
 export function taskShareUrl(taskId: string): string {
