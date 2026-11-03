@@ -7,11 +7,7 @@ vi.mock('expo-clipboard', () => ({ setStringAsync: vi.fn() }));
 const setPlatform = (os: string) =>
   Object.defineProperty(Platform, 'OS', { configurable: true, value: os });
 
-const task = (overrides: Record<string, unknown> = {}) => ({
-  id: 'task-1',
-  summary: 'Follow up on TAP card',
-  ...overrides,
-});
+const task = () => ({ id: 'task-1' });
 
 beforeEach(() => {
   setPlatform('ios');

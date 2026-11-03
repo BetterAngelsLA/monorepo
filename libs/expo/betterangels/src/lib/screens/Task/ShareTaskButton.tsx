@@ -16,17 +16,16 @@ import { shareTask, type ShareableTask } from './shareTask';
 const TOUCH_TARGET = 44;
 
 // Only one system share sheet can be presented at a time, so the lock is
-// module-level rather than per-component; a ref would let two mounted buttons
-// race for the same sheet.
-const inFlightShares = new Set<string>();
+// module-level rather than per-component.
+let shareSheetOpen = false;
 
 export function ShareTaskButton({ task }: { task: ShareableTask }) {
   const { showSnackbar } = useSnackbar();
   const [sharing, setSharing] = useState(false);
 
   const onPress = async (event: GestureResponderEvent) => {
-    if (inFlightShares.has(task.id)) return;
-    inFlightShares.add(task.id);
+    if (shareSheetOpen) return;
+    shareSheetOpen = true;
     setSharing(true);
 
     try {
@@ -46,7 +45,7 @@ export function ShareTaskButton({ task }: { task: ShareableTask }) {
       console.error('share_task_failed', { taskId: task.id });
       showSnackbar({ message: "Couldn't share this task", type: 'error' });
     } finally {
-      inFlightShares.delete(task.id);
+      shareSheetOpen = false;
       setSharing(false);
     }
   };

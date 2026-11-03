@@ -86,5 +86,11 @@ describe('ShareTaskButton', () => {
     expect(shareTask).toHaveBeenCalledTimes(1);
 
     resolve('shared');
+
+    await waitFor(() =>
+      expect(
+        screen.getByTestId('share-task').props.accessibilityState,
+      ).toMatchObject({ disabled: false }),
+    );
   });
 });
