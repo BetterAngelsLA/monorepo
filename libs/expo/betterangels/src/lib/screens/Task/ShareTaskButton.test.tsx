@@ -45,7 +45,7 @@ describe('ShareTaskButton', () => {
   it('reports a failure without logging the error payload', async () => {
     const consoleError = vi
       .spyOn(console, 'error')
-      .mockImplementation(() => {});
+      .mockImplementation(() => undefined);
     vi.mocked(shareTask).mockRejectedValue(new Error('boom'));
 
     await render(<ShareTaskButton task={{ id: 'task-1' }} />);
