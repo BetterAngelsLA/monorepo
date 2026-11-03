@@ -23,7 +23,10 @@ export type ObjectAuditLogFilters = {
   dateTo?: string | null;
   /** Restrict to a single acting user. */
   actorId?: string | null;
-  /** Restrict to events rendered as system (no attributed user). */
+  /**
+   * Restrict to events the log renders as system: no frozen name/email, or an
+   * import/clone reason label (§11). Such events can still carry an actor id.
+   */
   systemOnly?: boolean | null;
 };
 

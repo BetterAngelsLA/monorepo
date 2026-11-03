@@ -139,6 +139,53 @@ function actorPage(search: string) {
   };
 }
 
+function systemActorPage(search: string) {
+  return {
+    request: {
+      query: AuditActorsDocument,
+      variables: {
+        targetType: AuditTargetType.Bed,
+        objectId: '7',
+        search,
+        limit: 20,
+      },
+    },
+    result: {
+      data: {
+        objectAuditActors: [
+          {
+            __typename: 'AuditActorType',
+            id: null,
+            label: 'System',
+            isSystem: true,
+          },
+        ],
+      },
+    },
+  };
+}
+
+async function selectActor(term: string, label: string) {
+  const input = screen.getByPlaceholderText('Search actors');
+  fireEvent.focus(input);
+  fireEvent.change(input, { target: { value: term } });
+  fireEvent.click(await screen.findByRole('option', { name: label }));
+}
+
+/** The log as a caller actually mounts it: the object can change in place. */
+function SwitchingLog() {
+  const [objectId, setObjectId] = useState('7');
+
+  return (
+    <>
+      <button type="button" onClick={() => setObjectId('8')}>
+        switch-log
+      </button>
+      <ObjectAuditLog targetType={AuditTargetType.Bed} objectId={objectId} />
+    </>
+  );
+}
+
 function renderLog(mocks: ReadonlyArray<unknown>) {
   return render(
     <MockedProvider mocks={mocks as never} showWarnings={false}>
@@ -361,15 +408,17 @@ describe('ObjectAuditLog', () => {
     await screen.findByText('No activity');
   });
 
-  it('shows the generic empty state when only an actor narrows the log', async () => {
-    // "All Time" plus an actor is filtered but has no date bounds, so the copy
-    // must not claim a date range is what excluded the activity.
+  it('requests the chosen actor together with the window', async () => {
+    // The mock is keyed on the window *and* the actor, so these rows can only
+    // render if the request carried both.
     renderLog([
       page(logVariables, [makeAction()], null, false),
-      page(baseVariables, [], null, false),
       page(
-        { ...baseVariables, filters: { actorId: 'user-1' } },
-        [],
+        {
+          ...baseVariables,
+          filters: { ...logVariables.filters, actorId: 'user-1' },
+        },
+        [makeAction({ actor: 'ONLY THIS ACTOR' })],
         null,
         false,
       ),
@@ -378,20 +427,84 @@ describe('ObjectAuditLog', () => {
 
     await screen.findByText('Ada Lovelace');
 
-    fireEvent.click(screen.getByRole('combobox', { name: 'Date range' }));
-    fireEvent.click(await screen.findByText('All Time'));
+    await selectActor('ad', 'Ada Lovelace');
 
-    const input = screen.getByPlaceholderText('Search actors');
-    fireEvent.focus(input);
-    fireEvent.change(input, { target: { value: 'ad' } });
-    fireEvent.click(
-      await screen.findByRole('option', { name: 'Ada Lovelace' }),
+    expect(await screen.findByText('ONLY THIS ACTOR')).not.toBeNull();
+  });
+
+  it('requests systemOnly for the System entry', async () => {
+    renderLog([
+      page(logVariables, [makeAction()], null, false),
+      page(
+        {
+          ...baseVariables,
+          filters: { ...logVariables.filters, systemOnly: true },
+        },
+        [makeAction({ actor: 'SYSTEM ONLY ROW' })],
+        null,
+        false,
+      ),
+      systemActorPage('sys'),
+    ]);
+
+    await screen.findByText('Ada Lovelace');
+
+    await selectActor('sys', 'System');
+
+    expect(await screen.findByText('SYSTEM ONLY ROW')).not.toBeNull();
+  });
+
+  it('drops the actor filter when the object changes', async () => {
+    render(
+      <MockedProvider
+        mocks={
+          [
+            page(
+              logVariables,
+              [makeAction({ actor: 'SEVEN DEFAULT' })],
+              null,
+              false,
+            ),
+            page(
+              {
+                ...baseVariables,
+                filters: { ...logVariables.filters, actorId: 'user-1' },
+              },
+              [makeAction({ actor: 'SEVEN ACTOR' })],
+              null,
+              false,
+            ),
+            // If the actor survived the switch this request would be unmocked
+            // and the log would show its error state instead of these rows.
+            page(
+              {
+                ...baseVariables,
+                objectId: '8',
+                filters: logVariables.filters,
+              },
+              [makeAction({ actor: 'EIGHT DEFAULT' })],
+              null,
+              false,
+            ),
+            actorPage('ad'),
+          ] as never
+        }
+        showWarnings={false}
+      >
+        <SwitchingLog />
+      </MockedProvider>,
     );
 
-    await screen.findByText('No activity');
-    expect(
-      screen.queryByText('No activity in the selected date range.'),
-    ).toBeNull();
+    await screen.findByText('SEVEN DEFAULT');
+
+    await selectActor('ad', 'Ada Lovelace');
+    await screen.findByText('SEVEN ACTOR');
+    expect(screen.getByLabelText('Clear actor filter')).not.toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: 'switch-log' }));
+
+    expect(await screen.findByText('EIGHT DEFAULT')).not.toBeNull();
+    expect(screen.queryByLabelText('Clear actor filter')).toBeNull();
   });
 
   it('shows the same window it queries', async () => {

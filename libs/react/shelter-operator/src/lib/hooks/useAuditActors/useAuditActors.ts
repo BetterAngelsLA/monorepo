@@ -29,6 +29,9 @@ type UseAuditActorsArgs = {
  * object without belonging to its organization, plus one synthetic `System`
  * entry (`id: null`, selected with `systemOnly`). Requests are on demand:
  * nothing is fetched until *search* has at least two characters.
+ *
+ * ``error`` is returned rather than swallowed: a failed lookup and an object
+ * with no actors are different facts, and only the caller knows how to say so.
  */
 export function useAuditActors({
   targetType,
@@ -38,7 +41,7 @@ export function useAuditActors({
   const term = search.trim();
   const canSearch = Boolean(objectId) && term.length >= MIN_ACTOR_SEARCH_LENGTH;
 
-  const { data, loading } = useQuery(AuditActorsDocument, {
+  const { data, loading, error, refetch } = useQuery(AuditActorsDocument, {
     variables: {
       targetType,
       objectId,
@@ -56,5 +59,5 @@ export function useAuditActors({
     }),
   );
 
-  return { options, loading };
+  return { options, loading, error, refetch };
 }

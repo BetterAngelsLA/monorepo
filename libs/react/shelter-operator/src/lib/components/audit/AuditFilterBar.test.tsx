@@ -8,9 +8,11 @@ import {
   waitFor,
 } from '@testing-library/react';
 import { endOfDay, startOfDay, subDays } from 'date-fns';
+import { useState } from 'react';
 import type { DateRange, DateRangePresetValue } from '../date-range-filter';
 import { resolvePresetValue } from '../date-range-filter';
 import { AuditFilterBar } from './AuditFilterBar';
+import type { AuditActorSelection } from './auditFilters';
 import { AuditActorsDocument } from '../../hooks/useAuditActors/__generated__/useAuditActors.generated';
 
 // jsdom has no ResizeObserver; the preset dropdown measures its anchor on open.
@@ -84,28 +86,40 @@ function systemActorMock(search: string) {
   };
 }
 
-function renderBar({
-  mocks = [],
-  onChange = () => undefined,
-  initialPreset,
-  initialRange,
-}: {
+type HarnessProps = {
   mocks?: ReadonlyArray<unknown>;
   onChange?: (filters: unknown) => void;
   initialPreset?: DateRangePresetValue;
   initialRange?: DateRange;
-} = {}) {
-  return render(
+};
+
+/** Renders the bar as a caller does: it owns the committed actor selection. */
+function Harness({
+  mocks = [],
+  onChange = () => undefined,
+  initialPreset,
+  initialRange,
+}: HarnessProps) {
+  const [actorSelection, setActorSelection] =
+    useState<AuditActorSelection | null>(null);
+
+  return (
     <MockedProvider mocks={mocks as never} showWarnings={false}>
       <AuditFilterBar
         targetType={AuditTargetType.Bed}
         objectId="7"
         initialPreset={initialPreset}
         initialRange={initialRange}
+        actorSelection={actorSelection}
+        onActorSelectionChange={setActorSelection}
         onChange={onChange}
       />
-    </MockedProvider>,
+    </MockedProvider>
   );
+}
+
+function renderBar(props: HarnessProps = {}) {
+  return render(<Harness {...props} />);
 }
 
 /** The preset trigger is named for assistive tech; the actor search is the other. */
@@ -260,6 +274,46 @@ describe('AuditFilterBar', () => {
     fireEvent.change(input, { target: { value: 'ad' } });
     await waitFor(() => expect(calls).toEqual(['ad']));
     expect(await screen.findByText('Ada Lovelace')).not.toBeNull();
+  });
+
+  it('only names the listbox while it is open', () => {
+    renderBar();
+
+    const input = screen.getByPlaceholderText('Search actors');
+    expect(input.getAttribute('aria-controls')).toBeNull();
+
+    fireEvent.focus(input);
+
+    const controls = input.getAttribute('aria-controls');
+    expect(controls).toBeTruthy();
+    expect(document.getElementById(controls as string)).not.toBeNull();
+  });
+
+  it('reports a failed actor search and retries it', async () => {
+    const onChange = vi.fn();
+    const failure = {
+      request: {
+        query: AuditActorsDocument,
+        variables: actorVariables('ad'),
+      },
+      error: new Error('network down'),
+    };
+
+    renderBar({ mocks: [failure, actorMock('ad')], onChange });
+
+    const input = screen.getByPlaceholderText('Search actors');
+    fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: 'ad' } });
+
+    // A failed lookup must not be reported as "this object has no actors".
+    expect(await screen.findByText(/Couldn.t load actors/)).not.toBeNull();
+    expect(screen.queryByText('No actors found.')).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+
+    expect(
+      await screen.findByRole('option', { name: 'Ada Lovelace' }),
+    ).not.toBeNull();
   });
 
   it('selects a searched actor with the keyboard', async () => {

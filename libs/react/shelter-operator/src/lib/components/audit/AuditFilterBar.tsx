@@ -11,6 +11,7 @@ import {
 } from 'react';
 import type { AuditActorOption, ObjectAuditLogFilters } from '../../hooks';
 import { MIN_ACTOR_SEARCH_LENGTH, useAuditActors } from '../../hooks';
+import { Button } from '../base-ui/buttons';
 import { Input } from '../base-ui/input';
 import { Text } from '../base-ui/text/text';
 import {
@@ -33,8 +34,7 @@ const ACTOR_SEARCH_DEBOUNCE_MS = 300;
  * the object's own audit history.
  *
  * Nothing is requested until the term is at least two characters (the backend's
- * own floor), and the caller only mounts this when the user holds
- * `view_org_members`, which the backend requires.
+ * own floor).
  */
 function ActorFilter({
   targetType,
@@ -49,7 +49,7 @@ function ActorFilter({
 }) {
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, ACTOR_SEARCH_DEBOUNCE_MS);
-  const { options, loading } = useAuditActors({
+  const { options, loading, error, refetch } = useAuditActors({
     targetType,
     objectId,
     search: debouncedSearch,
@@ -213,7 +213,7 @@ function ActorFilter({
         aria-autocomplete="list"
         aria-haspopup="listbox"
         aria-expanded={isOpen}
-        aria-controls={listboxId}
+        aria-controls={isOpen ? listboxId : undefined}
         aria-activedescendant={activeOptionId}
         onFocus={() => setIsOpen(true)}
         onBlur={(event) => {
@@ -231,46 +231,72 @@ function ActorFilter({
       />
 
       {isOpen && (
-        <div
-          id={listboxId}
-          ref={listRef}
-          role="listbox"
-          aria-label="Actors"
-          className="absolute z-20 mt-1 max-h-64 w-full overflow-y-auto rounded-lg border border-neutral-90 bg-white p-1 shadow-lg"
-        >
-          {!canSearch ? (
-            <Text variant="caption" className="block px-3 py-2">
-              Type at least {MIN_ACTOR_SEARCH_LENGTH} characters.
-            </Text>
-          ) : loading ? (
-            <Text variant="caption" className="block px-3 py-2">
-              Searching…
-            </Text>
-          ) : options.length === 0 ? (
-            <Text variant="caption" className="block px-3 py-2">
-              No actors found.
-            </Text>
-          ) : (
-            options.map((option, index) => (
-              <button
-                id={optionId(index)}
-                key={option.id}
-                type="button"
-                role="option"
-                aria-selected={index === activeIndex}
-                onMouseEnter={() => setActiveIndex(index)}
-                onMouseDown={(event) => event.preventDefault()}
-                onClick={() => selectActor(option)}
-                className={mergeCss([
-                  'block w-full cursor-pointer rounded-md px-3 py-2 text-left text-sm text-neutral-20',
-                  index === activeIndex
-                    ? 'bg-neutral-99'
-                    : 'hover:bg-neutral-99',
-                ])}
+        <div className="absolute z-20 mt-1 w-full rounded-lg border border-neutral-90 bg-white p-1 shadow-lg">
+          <div
+            id={listboxId}
+            ref={listRef}
+            role="listbox"
+            aria-label="Actors"
+            className="max-h-64 overflow-y-auto"
+          >
+            {!canSearch ? (
+              <Text variant="caption" className="block px-3 py-2">
+                Type at least {MIN_ACTOR_SEARCH_LENGTH} characters.
+              </Text>
+            ) : loading ? (
+              <Text variant="caption" className="block px-3 py-2">
+                Searching…
+              </Text>
+            ) : error ? (
+              <Text
+                variant="caption"
+                textColor="text-red-700"
+                className="block px-3 py-2"
               >
-                {option.label}
-              </button>
-            ))
+                Couldn&rsquo;t load actors.
+              </Text>
+            ) : options.length === 0 ? (
+              <Text variant="caption" className="block px-3 py-2">
+                No actors found.
+              </Text>
+            ) : (
+              options.map((option, index) => (
+                <button
+                  id={optionId(index)}
+                  key={option.id}
+                  type="button"
+                  role="option"
+                  aria-selected={index === activeIndex}
+                  onMouseEnter={() => setActiveIndex(index)}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => selectActor(option)}
+                  className={mergeCss([
+                    'block w-full cursor-pointer rounded-md px-3 py-2 text-left text-sm text-neutral-20',
+                    index === activeIndex
+                      ? 'bg-neutral-99'
+                      : 'hover:bg-neutral-99',
+                  ])}
+                >
+                  {option.label}
+                </button>
+              ))
+            )}
+          </div>
+
+          {/* A failed lookup is not an empty one: offer the request again. */}
+          {error && (
+            <div className="border-t border-neutral-90 p-1">
+              <Button
+                variant="primary-sm"
+                color="blue"
+                className="w-full"
+                onClick={() => {
+                  void refetch();
+                }}
+              >
+                Try again
+              </Button>
+            </div>
           )}
         </div>
       )}
@@ -282,20 +308,28 @@ function ActorFilter({
  * Date-range and actor filters for the audit log. Emits the derived
  * `dateFrom`/`dateTo`/`actorId`/`systemOnly` filter object on every change.
  *
- * The caller passes the preset and range it seeded its query with, so the bar
- * and the query come from one clock read. The props default to
- * {@link DEFAULT_AUDIT_PRESET} for standalone use.
+ * All filter state belongs to the caller: it seeds the range from one clock
+ * read, owns the actor selection, and can therefore reset both together when
+ * the log's target changes. Only the range the user is currently looking at
+ * stays local. The date props default to {@link DEFAULT_AUDIT_PRESET} for
+ * standalone use.
  */
 export function AuditFilterBar({
   targetType,
   objectId,
   onChange,
+  actorSelection,
+  onActorSelectionChange,
   initialPreset = DEFAULT_AUDIT_PRESET,
   initialRange,
 }: {
   targetType: AuditTargetType;
   objectId: string;
   onChange: (filters: ObjectAuditLogFilters) => void;
+  /** The committed actor filter, owned by the caller so it resets with the target. */
+  actorSelection: AuditActorSelection | null;
+  /** Emitted when the actor search commits or clears a selection. */
+  onActorSelectionChange: (selection: AuditActorSelection | null) => void;
   /** Preset the caller seeded its filters with. */
   initialPreset?: DateRangePresetValue;
   /** Range the caller's filters represent; resolved from the preset if absent. */
@@ -305,8 +339,6 @@ export function AuditFilterBar({
   const [range, setRange] = useState<DateRange>(
     () => initialRange ?? resolvePresetValue(initialPreset),
   );
-  const [actorSelection, setActorSelection] =
-    useState<AuditActorSelection | null>(null);
 
   const handleRangeChange = useCallback(
     (nextRange: DateRange, nextPreset: DateRangePresetValue) => {
@@ -319,11 +351,11 @@ export function AuditFilterBar({
 
   const handleActorChange = useCallback(
     (next: AuditActorSelection | null) => {
-      setActorSelection(next);
+      onActorSelectionChange(next);
       // The range is already on screen; only the actor dimension moved.
       onChange(rangeToFilters(range, next));
     },
-    [range, onChange],
+    [onChange, onActorSelectionChange, range],
   );
 
   return (

@@ -7,7 +7,21 @@ import { Button } from '../base-ui/buttons';
 import { Text } from '../base-ui/text/text';
 import { AuditActionRow } from './AuditActionRow';
 import { AuditFilterBar } from './AuditFilterBar';
-import { hasDateBounds, initialAuditFilter } from './auditFilters';
+import {
+  hasDateBounds,
+  initialAuditFilter,
+  type AuditActorSelection,
+} from './auditFilters';
+
+/**
+ * Filter state tagged with the target it was chosen on, so a different object
+ * starts from the seeded window with no actor instead of inheriting one.
+ */
+type SeededFilters = {
+  targetKey: string;
+  filters: ObjectAuditLogFilters;
+  actor: AuditActorSelection | null;
+};
 
 type ObjectAuditLogProps = {
   targetType: AuditTargetType;
@@ -43,9 +57,51 @@ export function ObjectAuditLog({
   // One clock read seeds both the query and the bar, so the window they show
   // and the window they request cannot disagree.
   const [initial] = useState(initialAuditFilter);
-  const [filters, setFilters] = useState<ObjectAuditLogFilters>(
-    initial.filters,
+  const targetKey = `${targetType}:${objectId}`;
+  const [seeded, setSeeded] = useState<SeededFilters>(() => ({
+    targetKey,
+    filters: initial.filters,
+    actor: null,
+  }));
+
+  // A filter belongs to the object it was chosen on: carrying an actor from
+  // another object's history would silently narrow this log or empty it.
+  // Deriving the live values from `targetKey` (rather than resetting in an
+  // effect) means the stale filter never reaches a request, and the bar is
+  // re-keyed below so its visible range agrees with the query.
+  const current: SeededFilters =
+    seeded.targetKey === targetKey
+      ? seeded
+      : { targetKey, filters: initial.filters, actor: null };
+
+  const seedFilter = useCallback(
+    (patch: Partial<Pick<SeededFilters, 'filters' | 'actor'>>) => {
+      setSeeded((previous) => {
+        const base =
+          previous.targetKey === targetKey
+            ? previous
+            : { targetKey, filters: initial.filters, actor: null };
+
+        return { ...base, ...patch };
+      });
+    },
+    [initial.filters, targetKey],
   );
+
+  const handleFilterChange = useCallback(
+    (next: ObjectAuditLogFilters) => {
+      seedFilter({ filters: next });
+    },
+    [seedFilter],
+  );
+
+  const handleActorSelectionChange = useCallback(
+    (next: AuditActorSelection | null) => {
+      seedFilter({ actor: next });
+    },
+    [seedFilter],
+  );
+
   const {
     actions,
     loading,
@@ -55,11 +111,7 @@ export function ObjectAuditLog({
     hasMore,
     loadMore,
     retry,
-  } = useObjectAuditLog({ targetType, objectId, ...filters });
-
-  const handleFilterChange = useCallback((next: ObjectAuditLogFilters) => {
-    setFilters(next);
-  }, []);
+  } = useObjectAuditLog({ targetType, objectId, ...current.filters });
 
   const hasActions = actions.length > 0;
   const hasRefreshError = Boolean(error || retryError);
@@ -135,7 +187,7 @@ export function ObjectAuditLog({
         {!hasActions && !hasMore && (
           <div className="py-16 text-center">
             <Text variant="body" textColor="text-neutral-50">
-              {hasDateBounds(filters)
+              {hasDateBounds(current.filters)
                 ? 'No activity in the selected date range.'
                 : 'No activity'}
             </Text>
@@ -163,10 +215,13 @@ export function ObjectAuditLog({
   return (
     <div className={mergeCss(['flex flex-col gap-4', className])}>
       <AuditFilterBar
+        key={targetKey}
         targetType={targetType}
         objectId={objectId}
         initialPreset={initial.preset}
         initialRange={initial.range}
+        actorSelection={current.actor}
+        onActorSelectionChange={handleActorSelectionChange}
         onChange={handleFilterChange}
       />
       {renderContent()}
