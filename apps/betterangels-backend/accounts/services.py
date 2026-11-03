@@ -362,8 +362,13 @@ def reconcile_org_groups(org: Organization) -> None:
         # current types no longer grant this role, so its Grant goes with the
         # row.  Unlike a teardown delete — which deliberately leaves Grants
         # standing — reconcile knows these are stale derived rows, so their
-        # members are unmirrored before the delete.  The rows are locked for the
-        # pass so a membership cannot slip in between the read and the delete.
+        # members are unmirrored before the delete.
+        #
+        # The locked query joins the MTI parent (``auth_group``), so ``FOR
+        # UPDATE`` covers the row a membership insert's foreign key must
+        # key-share: an insert either commits before the prefetch (and is
+        # unmirrored) or blocks until the group is gone.  Locking the through
+        # rows instead would not help — row locks do not block new inserts.
         stale = list(
             PermissionGroup.objects.filter(
                 organization=org,

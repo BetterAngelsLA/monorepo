@@ -40,7 +40,8 @@ class AuditStaleGrantsTests(TestCase):
 
         output = self._run()
 
-        self.assertIn("member@example.com", output)
+        self.assertIn(f"user {self.member.pk}", output)
+        self.assertNotIn("member@example.com", output)
         self.assertIn(CASEWORKER.name, output)
         self.assertIn("orphaned", output)
         self.assertIn("1 orphaned", output)
@@ -64,6 +65,8 @@ class AuditStaleGrantsTests(TestCase):
         self.assertEqual(payload[0]["status"], "orphaned")
         self.assertEqual(payload[0]["role"], CASEWORKER.name)
         self.assertEqual(payload[0]["organization_id"], self.org.pk)
+        self.assertEqual(payload[0]["user_id"], self.member.pk)
+        self.assertNotIn("user", payload[0])
 
     def test_scoping_to_another_org_reports_nothing(self) -> None:
         PermissionGroup.objects.filter(pk=self.group.pk).delete()
@@ -75,6 +78,6 @@ class AuditStaleGrantsTests(TestCase):
     def test_grant_only_roles_are_not_reported(self) -> None:
         """ORG_ADMIN is never in the expected set; it is not a stale mirror."""
         org_admin_role = Role.objects.get(name=ORG_ADMIN.name, is_global=False)
-        Grant.objects.create(principal_user=baker.make(User), role=org_admin_role, scope_org=self.org)
+        Grant.objects.create(principal_user=self.member, role=org_admin_role, scope_org=self.org)
 
         self.assertEqual(self._run().strip(), "No stale grants found.")

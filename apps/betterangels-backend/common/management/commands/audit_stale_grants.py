@@ -8,9 +8,10 @@ Grant is indistinguishable from a direct one (they are the same
 ``unique_user_grant`` row), so it cannot be deleted safely by a migration.
 
 This command reports those rows for a human to review.  It is read-only and
-always exits 0.  ``pending-reconcile`` means the row still exists and the next
-reconcile will revoke it; ``orphaned`` means reconcile cannot see it and only a
-manual Grant delete will.
+always exits 0.  Output carries ids only — no emails or other member PII.
+``pending-reconcile`` means the row still exists and the next reconcile will
+revoke it; ``orphaned`` means reconcile cannot see it and only a manual Grant
+delete will.
 
 Usage::
 
@@ -81,7 +82,6 @@ class Command(BaseCommand):
                         "organization_id": organization.pk,
                         "organization": organization.name,
                         "user_id": user.pk,
-                        "user": user.email or user.username,
                         "role": grant.role.name,
                         "status": ("pending-reconcile" if (user.pk, grant.role.name) in held else "orphaned"),
                     }
@@ -99,7 +99,7 @@ class Command(BaseCommand):
         for finding in findings:
             self.stdout.write(
                 f"  org {finding['organization_id']} ({finding['organization']})  "
-                f"user {finding['user_id']} {finding['user']}  "
+                f"user {finding['user_id']}  "
                 f"{finding['role']}  grant {finding['grant_id']}  {finding['status']}"
             )
 
