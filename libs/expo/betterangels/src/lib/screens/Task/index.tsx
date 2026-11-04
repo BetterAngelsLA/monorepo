@@ -1,8 +1,8 @@
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { LoadingView, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { formatScalarDate } from '@monorepo/shared/scalars';
-import { router } from 'expo-router';
-import { useCallback } from 'react';
+import { router, useNavigation } from 'expo-router';
+import { useCallback, useEffect, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { MainScrollContainer, TaskStatusBtn } from '../../ui-components';
 import { useUser } from '../../hooks';
@@ -13,6 +13,7 @@ import TaskBody from './TaskBody';
 import TaskClient from './TaskClient';
 import TaskCreatedBy from './TaskCreatedBy';
 import TaskHeader from './TaskHeader';
+import { ShareTaskButton } from './ShareTaskButton';
 import { TaskDocument } from './__generated__/Task.generated';
 
 export default function Task({
@@ -31,6 +32,24 @@ export default function Task({
   const { user } = useUser();
   const task = data?.task;
   const clientProfileId = task?.clientProfile?.id;
+
+  const taskId = task?.id;
+
+  // A stable target keeps the effect from re-running (and the header from
+  // re-rendering) on every cache update.
+  const shareTarget = useMemo(() => (taskId ? { id: taskId } : null), [taskId]);
+
+  const navigation = useNavigation();
+
+  // Set here, not in the layout: the stack owns the header, the task data lives
+  // in this screen.
+  useEffect(() => {
+    if (!shareTarget) return;
+
+    navigation.setOptions({
+      headerRight: () => <ShareTaskButton task={shareTarget} />,
+    });
+  }, [navigation, shareTarget]);
 
   const handleClientPress = useCallback(() => {
     // `/client/[id]` resolves to the HMIS client screen for HMIS users; this
