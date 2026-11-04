@@ -11,6 +11,7 @@ import uuid
 from collections.abc import Iterable
 from typing import TYPE_CHECKING, Any
 
+import pghistory
 from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
@@ -369,21 +370,34 @@ def reconcile_org_groups(org: Organization) -> None:
         # key-share: an insert either commits before the prefetch (and is
         # unmirrored) or blocks until the group is gone.  Locking the through
         # rows instead would not help — row locks do not block new inserts.
+        #
+        # ``OF`` keeps the lock to those two tables: the template and
+        # organization joins are read-only here, and templates are shared by
+        # every org, so locking them would serialise reconciles across orgs.
+        # ``select_related`` covers what ``unmirror_group_members`` reads, so a
+        # stale set costs one query per group (the DELETE) rather than three.
         stale = list(
             PermissionGroup.objects.filter(
                 organization=org,
                 template__name__in=dual_write_template_names() - expected,
             )
-            .select_for_update()
+            .select_for_update(of=("self", "group_ptr"))
+            .select_related("organization", "template")
             .prefetch_related("user_set")
         )
         if stale:
-            revoked = unmirror_group_members(stale)
-            logger.info(
-                "reconcile_org_groups(%s): retiring %d stale role group(s) %s; revoked %d mirrored grant(s)",
+            labels = sorted(permission_group.label for permission_group in stale)
+            # Attribute the revocation in pghistory: the admin path carries the
+            # operator via HistoryMiddleware, but ``post_migrate`` has no
+            # request, so without this the Grant deletions are anonymous.
+            with pghistory.context(source="reconcile_org_groups", organization_id=org.pk):
+                revoked = unmirror_group_members(stale)
+            logger.warning(
+                "reconcile_org_groups(%s %s): retiring %d stale role group(s) %s; revoked %d mirrored grant(s)",
                 org.pk,
+                org.name,
                 len(stale),
-                sorted(permission_group.label for permission_group in stale),
+                labels,
                 revoked,
             )
         PermissionGroup.objects.filter(pk__in=[permission_group.pk for permission_group in stale]).delete()

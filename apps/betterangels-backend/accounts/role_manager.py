@@ -79,6 +79,10 @@ def unmirror_group_members(permission_groups: Iterable[PermissionGroup]) -> int:
     type) — not for a single membership edit, which uses
     :func:`unmirror_membership_grants`.
 
+    Pass a queryset that has ``select_related("template", "organization")``:
+    the template and organization are read per group here, so without it the
+    batch costs two extra queries per group on top of its ``DELETE``.
+
     Returns the number of ``Grant`` rows deleted.
     """
     groups = list(permission_groups)

@@ -655,7 +655,9 @@ class CustomOrganizationAdmin(MemberInviteAdminMixin, admin.ModelAdmin):
                 PermissionGroup.objects.filter(
                     organization=form.instance,
                     template__name__in=sorted(losing),
-                ).prefetch_related("user_set")
+                )
+                .select_related("template", "organization")
+                .prefetch_related("user_set")
             )
         super().save_related(request, form, formsets, change)
         reconcile_org_groups(form.instance)
