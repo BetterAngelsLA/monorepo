@@ -32,6 +32,12 @@ type UseAuditActorsArgs = {
  *
  * ``error`` is returned rather than swallowed: a failed lookup and an object
  * with no actors are different facts, and only the caller knows how to say so.
+ *
+ * The query stays cache-first on purpose. An object's actor list is fairly
+ * static, so repeating a term should not cost a request; the backend caches its
+ * aggregate for 60 s anyway. The trade-off is that a newly active actor appears
+ * only when a different term is searched, on the next mount, or after the
+ * caller's explicit ``refetch`` (which the failure path uses).
  */
 export function useAuditActors({
   targetType,
