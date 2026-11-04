@@ -11,7 +11,6 @@ import uuid
 from collections.abc import Iterable
 from typing import TYPE_CHECKING, Any
 
-import pghistory
 from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
@@ -387,11 +386,7 @@ def reconcile_org_groups(org: Organization) -> None:
         )
         if stale:
             labels = sorted(permission_group.label for permission_group in stale)
-            # Attribute the revocation in pghistory: the admin path carries the
-            # operator via HistoryMiddleware, but ``post_migrate`` has no
-            # request, so without this the Grant deletions are anonymous.
-            with pghistory.context(source="reconcile_org_groups", organization_id=org.pk):
-                revoked = unmirror_group_members(stale)
+            revoked = unmirror_group_members(stale)
             logger.warning(
                 "reconcile_org_groups(%s): retiring %d stale role group(s) %s; revoked %d mirrored grant(s)",
                 org.pk,

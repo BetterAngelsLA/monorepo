@@ -1,6 +1,7 @@
 import logging
 from typing import Any
 
+import pghistory
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import DatabaseError
@@ -117,7 +118,13 @@ def sync_all_org_permission_groups(sender: object, **kwargs: object) -> None:
         return
 
     for org in organizations:
-        reconcile(org)
+        # A deploy has no request, so HistoryMiddleware cannot attribute the
+        # revocations reconcile may make.  Scope the context here rather than in
+        # ``reconcile_org_groups``: pghistory merges nested metadata permanently,
+        # so setting it inside an admin save would mislabel every later event in
+        # that request as a migrate-path reconcile.
+        with pghistory.context(source="post_migrate_reconcile", organization_id=org.pk):
+            reconcile(org)
 
     if not settings.IS_LOCAL_DEV:
         return

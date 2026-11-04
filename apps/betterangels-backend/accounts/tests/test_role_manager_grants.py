@@ -11,10 +11,12 @@ from typing import Any, cast
 
 from django.test import TestCase
 from model_bakery import baker
+from pghistory.models import Events
 
 from accounts.models import Grant, OrganizationProfile, PermissionGroup, Role, User
 from accounts.role_manager import OrgRoleManager
 from accounts.services import reconcile_org_groups
+from accounts.signals import sync_all_org_permission_groups
 from common.permissions.config import TemplateConfig
 from common.tests.utils import make_permission_group
 from notes.groups import CASEWORKER
@@ -263,3 +265,22 @@ class MembershipEdgeMirrorTestCase(TestCase):
         cast(Any, self.user.groups).set_base([self.group], raw=True)
 
         self.assertTrue(self._mirrors().exists())
+
+    def test_post_migrate_reconcile_attributes_the_revocation(self) -> None:
+        """A deploy has no request, so the post_migrate signal supplies the context.
+
+        The context is set at the signal rather than inside reconcile: pghistory
+        merges nested metadata permanently, so setting it during an admin save
+        would mislabel the rest of that request.
+        """
+        self.user.groups.add(self.group)
+        OrganizationProfile.objects.filter(organization=self.org).update(org_types=["shelter"])
+
+        sync_all_org_permission_groups(None)
+
+        self.assertFalse(self._mirrors().exists())
+        event = Events.objects.filter(pgh_label="grant.remove").order_by("-pgh_id").first()
+        self.assertIsNotNone(event)
+        assert event is not None  # narrows for mypy
+        self.assertEqual(event.pgh_context["source"], "post_migrate_reconcile")
+        self.assertEqual(event.pgh_context["organization_id"], self.org.pk)
