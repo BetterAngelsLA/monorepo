@@ -289,7 +289,7 @@ function ActorFilter({
               options.map((option, index) => (
                 <button
                   id={optionId(index)}
-                  key={option.id}
+                  key={option.id ?? 'system'}
                   type="button"
                   role="option"
                   tabIndex={-1}

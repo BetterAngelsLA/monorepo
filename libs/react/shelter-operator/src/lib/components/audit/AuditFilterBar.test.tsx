@@ -256,7 +256,16 @@ describe('AuditFilterBar', () => {
 
   it('queries actors only after two debounced characters', async () => {
     const calls: string[] = [];
-    renderBar({ mocks: [actorMock('', calls), actorMock('ad', calls)] });
+    // `a` needs a mock of its own: without one, a premature single-character
+    // request matches nothing, never records itself in `calls`, and the
+    // assertions below would pass with the floor broken.
+    renderBar({
+      mocks: [
+        actorMock('', calls),
+        actorMock('a', calls),
+        actorMock('ad', calls),
+      ],
+    });
 
     await act(async () => {
       await new Promise((resolve) => setTimeout(resolve, 600));
