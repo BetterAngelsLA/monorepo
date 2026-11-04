@@ -1,49 +1,49 @@
-import { gql, InMemoryCache } from '@apollo/client';
+import { InMemoryCache } from '@apollo/client';
+import { AuditTargetType } from '@monorepo/ba-platform/types';
+import {
+  AuditActorsDocument,
+  type AuditActorsQuery,
+  type AuditActorsQueryVariables,
+} from '../../hooks/useAuditActors/__generated__/useAuditActors.generated';
 import { createOperatorTypePolicies } from './createOperatorTypePolicies';
 
-const ACTORS_QUERY = gql`
-  query Actors($objectId: ID!) {
-    objectAuditActors(objectId: $objectId) {
-      __typename
-      id
-      label
-      isSystem
-    }
-  }
-`;
-
-type ActorsResult = {
-  objectAuditActors: Array<{
-    __typename: 'AuditActorType';
-    id: string | null;
-    label: string;
-    isSystem: boolean;
-  }>;
-};
-
-type ActorsVariables = { objectId: string };
+/**
+ * The real actor query, so this test doubles as a valid document for codegen:
+ * an inline `gql` tag here would be scanned and validated against the schema.
+ */
+function variables(objectId: string): AuditActorsQueryVariables {
+  return {
+    targetType: AuditTargetType.Shelter,
+    objectId,
+    search: 'ad',
+    limit: 20,
+  };
+}
 
 function write(cache: InMemoryCache, objectId: string, label: string) {
-  cache.writeQuery<ActorsResult, ActorsVariables>({
-    query: ACTORS_QUERY,
-    variables: { objectId },
-    data: {
-      objectAuditActors: [
-        {
-          __typename: 'AuditActorType',
-          id: 'user-1',
-          label,
-          isSystem: false,
-        },
-      ],
-    },
+  const data: AuditActorsQuery = {
+    __typename: 'Query',
+    objectAuditActors: [
+      {
+        __typename: 'AuditActorType',
+        id: 'user-1',
+        label,
+        isSystem: false,
+      },
+    ],
+  };
+
+  cache.writeQuery<AuditActorsQuery, AuditActorsQueryVariables>({
+    query: AuditActorsDocument,
+    variables: variables(objectId),
+    data,
   });
 }
 
 function read(cache: InMemoryCache, objectId: string) {
-  return cache.readQuery<ActorsResult, ActorsVariables>({
-    query: ACTORS_QUERY,
-    variables: { objectId },
+  return cache.readQuery<AuditActorsQuery, AuditActorsQueryVariables>({
+    query: AuditActorsDocument,
+    variables: variables(objectId),
   });
 }
 
