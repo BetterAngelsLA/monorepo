@@ -102,15 +102,15 @@ def _handle_exception(error: Exception):
 
 #### Summary of triggers
 
-| `kind`       | Django Exception                                   | When it happens                                                                                                                                                                                                                                    |
-| ------------ | -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `VALIDATION` | `django.core.exceptions.ValidationError`           | Model `full_clean()` fails (e.g., missing required field, invalid choice). **Field-level** errors have `field` set to the camelCase field name; non-field errors have `field: null`.                                                               |
-| `ERROR`      | `django.core.exceptions.ObjectDoesNotExist`        | Entity lookup fails (e.g., `get_by_pk_or_not_found()` returns nothing). Message is typically `"<ModelName> matching ID <pk> could not be found."`                                                                                                  |
-| `ERROR`      | Any other caught exception                         | Catch-all within the mutation handler. Any unexpected runtime error becomes `kind: ERROR`.                                                                                                                                                         |
-| `PERMISSION` | `django.core.exceptions.PermissionDenied`          | Raised explicitly by service code, or raised when `fail_silently=False` on a permission extension.                                                                                                                                                 |
+| `kind`       | Django Exception                                   | When it happens                                                                                                                                                                                                                      |
+| ------------ | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `VALIDATION` | `django.core.exceptions.ValidationError`           | Model `full_clean()` fails (e.g., missing required field, invalid choice). **Field-level** errors have `field` set to the camelCase field name; non-field errors have `field: null`.                                                 |
+| `ERROR`      | `django.core.exceptions.ObjectDoesNotExist`        | Entity lookup fails (e.g., `get_by_pk_or_not_found()` returns nothing). Message is typically `"<ModelName> matching ID <pk> could not be found."`                                                                                    |
+| `ERROR`      | Any other caught exception                         | Catch-all within the mutation handler. Any unexpected runtime error becomes `kind: ERROR`.                                                                                                                                           |
+| `PERMISSION` | `django.core.exceptions.PermissionDenied`          | Raised explicitly by service code, or raised when `fail_silently=False` on a permission extension.                                                                                                                                   |
 | `PERMISSION` | `strawberry_django.permissions.DjangoNoPermission` | Raised by permission extensions (`HasPerm`, `HasRetvalPerm`, `IsAuthenticated`) when the user lacks required permissions. Converted to `PermissionDenied` by `handle_no_permission()`, which creates `PERMISSION` messages directly. |
-| `INFO`       | —                                                  | **Never auto-generated.** Not used anywhere in BetterAngels. Would require a mutation to manually return `OperationInfo(messages=[OperationMessage(kind=INFO, ...)])`.                                                                             |
-| `WARNING`    | —                                                  | **Never auto-generated.** Same as `INFO` — not used in BetterAngels.                                                                                                                                                                               |
+| `INFO`       | —                                                  | **Never auto-generated.** Not used anywhere in BetterAngels. Would require a mutation to manually return `OperationInfo(messages=[OperationMessage(kind=INFO, ...)])`.                                                               |
+| `WARNING`    | —                                                  | **Never auto-generated.** Same as `INFO` — not used in BetterAngels.                                                                                                                                                                 |
 
 ---
 
@@ -118,20 +118,23 @@ def _handle_exception(error: Exception):
 
 Understanding when `OperationMessage.field` is `null` vs. a string is critical for building correct error-handling UIs. The rules come directly from `_get_validation_errors` above:
 
-| `kind`             | `field` populated? | Details                                                                                                                                                                                                                                                                                                                                                                  |
-| ------------------ | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `VALIDATION`       | ✅ Sometimes       | **Yes** when the `ValidationError` has an `error_dict` (per-field errors). Django's `full_clean()` produces this when individual model fields fail validation, e.g. `{"firstName": ["This field is required."]}` → `field: "firstName"`. Note: the special key `NON_FIELD_ERRORS` (`__all__`) is converted to `field: null`.                                             |
-| `VALIDATION`       | ❌ Sometimes       | **No** when the `ValidationError` has an `error_list` (non-field / global errors). These are form-level errors like "The entire form is invalid" with no single field to blame.                                                                                                                                                                                          |
-| `ERROR`            | ❌ Never           | `ObjectDoesNotExist` and catch-all exceptions go through the `else` branch — `field` is never passed, always defaults to `null`.                                                                                                                                                                                                                                         |
-| `PERMISSION`       | ❌ Usually not     | When flowing through `_handle_exception` (the `PermissionDenied` → `_get_validation_errors` path), `field` is `null`.                                                                                                                                                                                                                                                    |
-| `PERMISSION`       | ✅ Sometimes       | When flowing through the **separate** `handle_no_permission()` path in `strawberry_django/permissions.py`, `field` is set to `info.field_name` (the GraphQL field name). This happens when `fail_silently=True` and the return type union includes `OperationInfo` — the case for the built-in `HasPerm`/`HasRetvalPerm` guards on notes/clients mutations. |
-| `INFO` / `WARNING` | ❌ Never           | These are never auto-generated. If manually created, `field` defaults to `null` unless explicitly set.                                                                                                                                                                                                                                                                   |
+| `kind`             | `field` populated? | Details                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| ------------------ | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `VALIDATION`       | ✅ Sometimes       | **Yes** when the `ValidationError` has an `error_dict` (per-field errors). Django's `full_clean()` produces this when individual model fields fail validation, e.g. `{"firstName": ["This field is required."]}` → `field: "firstName"`. Note: the special key `NON_FIELD_ERRORS` (`__all__`) is converted to `field: null`.                                                                                                                                                       |
+| `VALIDATION`       | ❌ Sometimes       | **No** when the `ValidationError` has an `error_list` (non-field / global errors). These are form-level errors like "The entire form is invalid" with no single field to blame.                                                                                                                                                                                                                                                                                                    |
+| `ERROR`            | ❌ Never           | `ObjectDoesNotExist` and catch-all exceptions go through the `else` branch — `field` is never passed, always defaults to `null`.                                                                                                                                                                                                                                                                                                                                                   |
+| `PERMISSION`       | ❌ Usually not     | When flowing through `_handle_exception` (the `PermissionDenied` → `_get_validation_errors` path), `field` is `null`.                                                                                                                                                                                                                                                                                                                                                              |
+| `PERMISSION`       | ✅ Sometimes       | When flowing through the **separate** `handle_no_permission()` path in `strawberry_django/permissions.py`, `field` is set to `info.field_name` (the GraphQL field name). This happens when `fail_silently=True`, the return type union includes `OperationInfo`, **and** the check runs on the field's inputs — i.e. a `HasPerm` on a mutation (`createClientProfile`). The retval check (`HasRetvalPerm`, `PermissionedQuerySet`) runs after resolution and yields `field: null`. |
+| `INFO` / `WARNING` | ❌ Never           | These are never auto-generated. If manually created, `field` defaults to `null` unless explicitly set.                                                                                                                                                                                                                                                                                                                                                                             |
 
 **In practice for BetterAngels:**
 
 - `ERROR` messages never have `field` set
-- `PERMISSION` messages from resolver-level guards (`require_can()` raising `PermissionDenied`) flow through `_handle_exception` and have `field: null`
+- `PERMISSION` messages from resolver-level guards (`require_can()`, `can_obj()`, `org_or_deny()`) flow through `_handle_exception` and have `field: null`
+- `PERMISSION` messages from `HasPerm(fail_silently=True)` on a mutation carry the GraphQL field name — the only case where `field` is usable
 - Non-field `VALIDATION` messages have `field: null`
+
+See [§1.4.2](#142-denial-shapes-by-surface) for the concrete shape each surface produces.
 
 ---
 
@@ -149,23 +152,73 @@ The `@strawberry_django.mutation` decorator defaults `handle_django_errors=True`
 
 ### 1.4 Permission handling (separate path)
 
-In addition to the mutation-level `_handle_exception`, Strawberry's permission extensions have their own error path:
+Permission failures do **not** all arrive the same way. The shape is decided by _where the
+check sits_, not by which permission failed — so a client cannot infer "permission denied"
+from one field. There are three mechanisms.
 
-1. The extension raises `DjangoNoPermission`.
-2. `DjangoPermissionExtension.resolve()` catches it and calls `handle_no_permission()`.
-3. `handle_no_permission()` checks if the return type union includes `OperationInfo`. If so, it returns an `OperationInfo` with a `PERMISSION` message directly (bypassing `_handle_exception`). The `field` is set to `info.field_name` — the name of the GraphQL mutation field.
-4. If `fail_silently=False`, it instead raises `PermissionDenied`, which flows into `_handle_exception` and produces `kind: PERMISSION` with `field: null` — the path BetterAngels' resolver-level `require_can()` guards take.
+#### 1.4.1 The mechanisms
 
-#### Permission extensions used in BetterAngels
+**Resolver guard — `require_can()` / `can_obj()`** (`common/permissions/utils.py`,
+`common/permissions/selectors.py`). A plain call in the resolver body that raises
+`PermissionDenied`. Because it runs _inside_ the resolver, the mutation wrapper turns it
+into an `OperationInfo` with `kind: PERMISSION` and `field: null`. The same guard on a
+`Query` field has no wrapper, so it surfaces in the top-level `errors[]` instead.
 
-| Extension         | Defined in                                 | Used for                                                   | `fail_silently` default   |
-| ----------------- | ------------------------------------------ | ---------------------------------------------------------- | ------------------------- |
-| `require_can()`   | `common/permissions/utils.py` (not an extension — a resolver guard) | Org-scoped writes (teams, reports, member management, shelters, referrals) | n/a — raises `PermissionDenied` |
-| `HasRetvalPerm`   | `strawberry_django` (built-in)             | Object-level mutations (notes, tasks)                      | `True` (built-in default) |
-| `HasPerm`         | `strawberry_django` (built-in)             | Create mutations (clients, documents)                      | `True` (built-in default) |
-| `IsAuthenticated` | `common/permissions/utils.py` (BetterAngels override) | All mutations; raises `UnauthenticatedGQLError` when anonymous | n/a                       |
+**Declarative extension — `HasPerm` / `HasRetvalPerm`** (`strawberry_django`). Runs
+_before_ the resolver. On failure `handle_no_permission()` picks the shape from the
+declared return type:
 
----
+1. union containing `OperationInfo` → returns one with `kind: PERMISSION`
+   (`field` = the GraphQL field name for `HasPerm`; `null` for the retval check, which
+   runs after resolution where there is no single input field to name)
+2. `OffsetPaginated` → an **empty page** (`totalCount: 0`), not an error
+3. `StrawberryList` → `[]`; optional type → `null`
+4. anything else → raises `PermissionDenied`
+
+`fail_silently=False` skips all of that and raises immediately. That raise happens in the
+extension chain, _outside_ the mutation wrapper, so it surfaces as a top-level `errors[]`
+entry — **not** an `OperationInfo`.
+
+**Row-filtering extension — `PermissionedQuerySet`** (`common/graphql/extensions.py`). A
+`HasRetvalPerm` subclass that pre-filters `info.context.qs` and forces
+`fail_silently=False`; the mutation then fetches through the filtered queryset and turns
+`DoesNotExist` into its own `PermissionDenied`, so the shape is the resolver-guard one.
+
+#### 1.4.2 Denial shapes by surface
+
+One row per mechanism, each with the test that pins it — these are the shapes to code the
+client against.
+
+| Surface                                      | Mechanism                                                | Non-holder receives                                                                                                                              | Pinned by                                                    |
+| -------------------------------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------ |
+| `createTask`, `updateTask`, `deleteTask`     | resolver `require_can(ADD)` / `can_obj`                  | `OperationInfo`: `{kind: "PERMISSION", field: null, message: "You do not have permission to perform this action in this organization."}`         | `tasks/tests/test_permissions.py`                            |
+| `task(pk)`                                   | `HasPerm(VIEW, fail_silently=False)`                     | top-level `errors[]`: `"You don't have permission to access this app."`                                                                          | `tasks/tests/test_permissions.py::test_view_task_permission` |
+| `tasks`                                      | `HasPerm(VIEW, fail_silently=True)` on `OffsetPaginated` | empty page — `totalCount: 0`, no error                                                                                                           | `tasks/tests/test_grant_authorization.py`                    |
+| `createClientProfile`                        | `HasPerm(fail_silently=True)`                            | `OperationInfo`: `{kind: "PERMISSION", field: "createClientProfile", message: "You don't have permission to access this app."}`                  | `clients/tests/test_permissions.py`                          |
+| `updateClientProfile`, `deleteClientProfile` | `HasPerm(fail_silently=False)`                           | top-level `errors[]`: `"You don't have permission to access this app."`                                                                          | `clients/tests/test_permissions.py`                          |
+| `updateClientDocument`                       | `HasRetvalPerm`                                          | `OperationInfo`: `{kind: "PERMISSION", field: null, message: "You don't have permission to access this app."}`                                   | `clients/tests/test_permissions.py`                          |
+| `createNoteServiceRequest`                   | `HasPerm` + `PermissionedQuerySet`                       | `OperationInfo`: `{kind: "PERMISSION", field: null, message: "You do not have permission to perform this action."}` (the resolver's own message) | `notes/tests/test_permissions.py`                            |
+| any mutation                                 | `IsAuthenticated`                                        | `UnauthenticatedGQLError` — top-level `errors[]`, `data: null`                                                                                   | `common/tests/`                                              |
+
+Two consequences worth stating plainly:
+
+- **A denied list is not an error.** `tasks`/`taskAssignees`/`clientProfiles` answer an
+  empty page to a non-holder, so "no rows" and "not allowed" are indistinguishable there.
+  Single-row reads and every write refuse instead.
+- **`field` is only populated by `HasPerm(fail_silently=True)` on a union.** Every other
+  path gives `field: null`, so don't key off it.
+
+#### 1.4.3 Permission mechanisms used in BetterAngels
+
+| Mechanism              | Defined in                                                       | Used for                                                                                           | `fail_silently`                        |
+| ---------------------- | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| `require_can()`        | `common/permissions/utils.py` (resolver guard, not an extension) | Org-scoped writes: teams, reports, member management, shelters, referrals, tasks                   | n/a — raises `PermissionDenied`        |
+| `can_obj()`            | `common/permissions/selectors.py` (resolver guard)               | Row-level writes: `updateTask` / `deleteTask`                                                      | n/a — raises `PermissionDenied`        |
+| `org_or_deny()`        | `common/graphql/utils.py` (resolver guard)                       | Resolving the payload/filter org before `require_can`; denies a missing, unknown, or malformed id  | n/a — raises `PermissionDenied`        |
+| `HasPerm`              | `strawberry_django` (built-in)                                   | Create mutations and reads; `perm_checker=can_anywhere_checker` swaps guardian for the grant model | `True`; single-row reads pass `False`  |
+| `HasRetvalPerm`        | `strawberry_django` (built-in)                                   | Object-level mutations (notes, referrals, client documents)                                        | `True` (built-in default)              |
+| `PermissionedQuerySet` | `common/graphql/extensions.py`                                   | Mutations that must fetch through a filtered queryset (notes)                                      | forced `False`                         |
+| `IsAuthenticated`      | `common/permissions/utils.py` (BetterAngels override)            | All mutations and authenticated reads                                                              | n/a — raises `UnauthenticatedGQLError` |
 
 ## 2. Error Path: `GraphQLError` (custom validation)
 
@@ -277,7 +330,7 @@ raise GraphQLError("Validation Errors", extensions={"errors": errors})
 
 #### `regions/schema.py` — region scope
 
-`interactionMap(regionCodes:)` refuses a **non-empty** `regionCodes` with no `dimension`: a code is not unique across dimensions (`"1"` is a council district, an SPA and a supervisorial district), so there is no correct dimension to guess. A `dimension` sent *without* `regionCodes` is **ignored** here — it has nothing to narrow — where the density tile refuses it. `regions/services.resolve_region_scope` expresses the pairing once and carries a `code` and a `field`; the resolver renders them in the same extension shape:
+`interactionMap(regionCodes:)` refuses a **non-empty** `regionCodes` with no `dimension`: a code is not unique across dimensions (`"1"` is a council district, an SPA and a supervisorial district), so there is no correct dimension to guess. A `dimension` sent _without_ `regionCodes` is **ignored** here — it has nothing to narrow — where the density tile refuses it. `regions/services.resolve_region_scope` expresses the pairing once and carries a `code` and a `field`; the resolver renders them in the same extension shape:
 
 ```python
 raise GraphQLError(
@@ -334,8 +387,8 @@ Every exception type used in the BetterAngels backend, the error path each takes
 | `ValidationError`         | `django.core.exceptions`                    | Model `full_clean()`, strawberry-django create/update resolvers                                                 | ✅ Yes (→ `OperationInfo`, `kind: VALIDATION`) | Contains `OperationInfo`                        | —                                                                       |
 | `ObjectDoesNotExist`      | `django.core.exceptions`                    | `get_by_pk_or_not_found()`, `.get()` on scoped querysets                                                        | ✅ Yes (→ `OperationInfo`, `kind: ERROR`)      | Contains `OperationInfo`                        | —                                                                       |
 | `PermissionDenied`        | `django.core.exceptions`                    | `accounts/schema.py`, `referrals/schema.py`, `tasks/schema.py`, `hmis/api_bridge.py`, `common/graphql/utils.py` | ✅ Yes (→ `OperationInfo`, `kind: PERMISSION`) | Contains `OperationInfo`                        | —                                                                       |
-| `DjangoNoPermission`      | `strawberry_django.permissions`             | Permission extensions (`HasPerm`, `HasRetvalPerm`, `IsAuthenticated`)                                          | ❌ No — caught by `handle_no_permission()`     | Contains `OperationInfo` (if union supports it) | —                                                                       |
-| `GraphQLError`            | `graphql-core`                              | `clients/schema.py`, `hmis/api_bridge.py`, `regions/schema.py`                                                   | ❌ No                                          | `null`                                          | `{message, extensions: {errors: [...]}}`                                |
+| `DjangoNoPermission`      | `strawberry_django.permissions`             | Permission extensions (`HasPerm`, `HasRetvalPerm`, `IsAuthenticated`)                                           | ❌ No — caught by `handle_no_permission()`     | Contains `OperationInfo` (if union supports it) | —                                                                       |
+| `GraphQLError`            | `graphql-core`                              | `clients/schema.py`, `hmis/api_bridge.py`, `regions/schema.py`                                                  | ❌ No                                          | `null`                                          | `{message, extensions: {errors: [...]}}`                                |
 | `UnauthenticatedGQLError` | `common/errors.py` (extends `GraphQLError`) | `common/permissions/utils.py` (`IsAuthenticated`), `hmis/api_bridge.py` (401)                                   | ❌ No                                          | `null`                                          | `{message, extensions: {code: "UNAUTHENTICATED", http: {status: 401}}}` |
 | `NotFoundGQLError`        | `common/errors.py` (extends `GraphQLError`) | `hmis/api_bridge.py` only (404)                                                                                 | ❌ No                                          | `null`                                          | `{message, extensions: {code: "NOT_FOUND", http: {status: 404}}}`       |
 | `PermissionError`         | Python `builtins` (OS-level)                | `accounts/schema.py`, `accounts/selectors.py`, `clients/schema.py`, `hmis/schema.py`                            | ❌ No                                          | `null`                                          | `{message: "..."}` (plain, no extensions)                               |
@@ -359,16 +412,16 @@ The `_handle_error_response` method maps upstream HTTP status codes to exception
 
 ## Related files
 
-| File                                                     | Purpose                                                                                           |
-| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| `strawberry_django/fields/types.py`                      | Defines `OperationInfo`, `OperationMessage`, `OperationMessage.Kind`                              |
-| `strawberry_django/mutations/fields.py`                  | `_get_validation_errors()`, `_handle_exception()`, `DjangoMutationBase.get_result()`              |
-| `strawberry_django/permissions.py`                       | `DjangoPermissionExtension.handle_no_permission()`, `HasPerm`, `HasRetvalPerm`, `IsAuthenticated` |
-| `apps/betterangels-backend/common/permissions/selectors.py` | `can()` / `scopes()` / `visible()` — grant authority                                                                    |
-| `apps/betterangels-backend/common/permissions/utils.py`   | `require_can()`, `IsAuthenticated` (override), `PERMISSION_DENIED_MESSAGE`                        |
-| `apps/betterangels-backend/common/graphql/extensions.py` | `PermissionedQuerySet` — injects permission-filtered querysets                                    |
-| `apps/betterangels-backend/common/errors.py`             | `UnauthenticatedGQLError`, `NotFoundGQLError` — reusable `GraphQLError` subclasses                |
-| `apps/betterangels-backend/clients/schema.py`            | `validate_client_profile_data()` — custom validation raising `GraphQLError`                       |
-| `apps/betterangels-backend/clients/enums.py`             | `ErrorCodeEnum` — machine-readable error codes for custom validation                              |
-| `apps/betterangels-backend/hmis/api_bridge.py`           | HMIS proxy — raises `GraphQLError` for upstream 422 responses                                     |
-| `apps/betterangels-backend/schema.graphql`               | Generated schema showing all payload unions with `OperationInfo`                                  |
+| File                                                        | Purpose                                                                                           |
+| ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `strawberry_django/fields/types.py`                         | Defines `OperationInfo`, `OperationMessage`, `OperationMessage.Kind`                              |
+| `strawberry_django/mutations/fields.py`                     | `_get_validation_errors()`, `_handle_exception()`, `DjangoMutationBase.get_result()`              |
+| `strawberry_django/permissions.py`                          | `DjangoPermissionExtension.handle_no_permission()`, `HasPerm`, `HasRetvalPerm`, `IsAuthenticated` |
+| `apps/betterangels-backend/common/permissions/selectors.py` | `can()` / `scopes()` / `visible()` — grant authority                                              |
+| `apps/betterangels-backend/common/permissions/utils.py`     | `require_can()`, `IsAuthenticated` (override), `PERMISSION_DENIED_MESSAGE`                        |
+| `apps/betterangels-backend/common/graphql/extensions.py`    | `PermissionedQuerySet` — injects permission-filtered querysets                                    |
+| `apps/betterangels-backend/common/errors.py`                | `UnauthenticatedGQLError`, `NotFoundGQLError` — reusable `GraphQLError` subclasses                |
+| `apps/betterangels-backend/clients/schema.py`               | `validate_client_profile_data()` — custom validation raising `GraphQLError`                       |
+| `apps/betterangels-backend/clients/enums.py`                | `ErrorCodeEnum` — machine-readable error codes for custom validation                              |
+| `apps/betterangels-backend/hmis/api_bridge.py`              | HMIS proxy — raises `GraphQLError` for upstream 422 responses                                     |
+| `apps/betterangels-backend/schema.graphql`                  | Generated schema showing all payload unions with `OperationInfo`                                  |

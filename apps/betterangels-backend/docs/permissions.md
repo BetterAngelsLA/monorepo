@@ -6,8 +6,10 @@ BetterAngels uses a **two-layer permission model** — org-scoped authority gate
 
 | Layer            | Mechanism                                                        | Scope                                               | Used for                                            |
 | ---------------- | ---------------------------------------------------------------- | --------------------------------------------------- | --------------------------------------------------- |
-| **Org-scoped**   | Grants: `can()` / `require_can()` / `scopes()` / `visible()`     | "Can this user perform action X in organization Y?" | Teams, reports, member management, shelters, referrals, operator queries |
-| **Object-level** | django-guardian + `HasRetvalPerm` (grant object arm in progress) | "Can this user access this specific object?"        | Notes, tasks, client documents                      |
+| **Org-scoped**   | Grants: `can()` / `require_can()` / `scopes()` / `visible()`     | "Can this user perform action X in organization Y?" | Teams, reports, member management, shelters, referrals, operator queries, tasks |
+| **Object-level** | django-guardian + `HasRetvalPerm` (grant object arm in progress) | "Can this user access this specific object?"        | Notes, client documents                             |
+
+Tasks are **grant-only** as well, with an org-scoped write and a SHARED read: `createTask` carries `organizationId` and authorizes `require_can(tasks.add_task, org)`, `updateTask`/`deleteTask` authorize `can_obj` on the row's org, and both reads ride `can_anywhere_checker` — any `tasks.view_task` holder sees every task, from any org (RFC 0003).  The nested task list on a note asks for the same authority (`tasks.add` to create, `tasks.delete` to remove); the note's own gate is not a substitute.
 
 Referrals are **grant-only**: the scoped `Caseworker` `Role` carries add/change/view/delete, the legacy template carries none, and both reads and writes go through `visible()`/`require_can()`.  `CreateReferralInput.organizationId` names the target org explicitly; no request header is read.
 
