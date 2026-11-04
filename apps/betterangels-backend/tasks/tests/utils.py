@@ -1,9 +1,15 @@
-from typing import Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
 from test_utils.mixins import HasGraphQLProtocol
 
+if TYPE_CHECKING:
+    from organizations.models import Organization
+
 
 class TaskGraphQLUtilsMixin(HasGraphQLProtocol):
+    # Supplied by ``GraphQLBaseTestCase``; declared here so mypy can see it.
+    org_1: "Organization"
+
     def get_task_fields(self) -> str:
         return """
             id

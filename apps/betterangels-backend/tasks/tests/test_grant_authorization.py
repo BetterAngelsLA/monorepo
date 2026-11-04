@@ -17,14 +17,15 @@ the cutover posture:
 
 from typing import Tuple
 
+from model_bakery import baker
+from organizations.models import Organization
+
 from accounts.models import User
 from accounts.services import sync_roles
 from clients.models import ClientProfile
 from common.permissions.utils import PERMISSION_DENIED_MESSAGE
 from common.tests.utils import GraphQLBaseTestCase, make_legacy_only_holder
-from model_bakery import baker
 from notes.groups import CASEWORKER
-from organizations.models import Organization
 from tasks.models import Task
 from tasks.tests.utils import TaskGraphQLUtilsMixin
 

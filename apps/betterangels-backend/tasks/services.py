@@ -88,6 +88,10 @@ def task_create_legacy(
             description=item.get("description") or "",
             status=item.get("status") or Task.Status.TO_DO,
             team_id=item.get("team_id"),
+            # ``assigneeId`` shipped before the payload org did (#2629/#2642), so a
+            # build in the window sends it with no ``organizationId`` — dropping it
+            # here would silently unassign every task those clients create.
+            assignee_id=item.get("assignee_id"),
             note=note,
             hmis_note=hmis_note,
             client_profile=client_profile,

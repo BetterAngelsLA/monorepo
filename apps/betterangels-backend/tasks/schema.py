@@ -32,7 +32,7 @@ from .types import CreateTaskInput, TaskAssigneeType, TaskOrder, TaskType, Updat
 class Query:
     task: TaskType = strawberry_django.field(
         permission_classes=[IsAuthenticated],
-        extensions=[HasPerm(Task.perms.VIEW, perm_checker=can_anywhere_checker)],
+        extensions=[HasPerm(Task.perms.VIEW, perm_checker=can_anywhere_checker, fail_silently=False)],
     )
 
     task_assignees: OffsetPaginated[TaskAssigneeType] = strawberry_django.offset_paginated(
