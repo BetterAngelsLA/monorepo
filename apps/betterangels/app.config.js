@@ -25,8 +25,8 @@ if (
 }
 
 const HOSTNAME = IS_PRODUCTION
-  ? 'api.prod.betterangels.la' // TODO: We should adjust this to be app.betterangels.la
-  : 'api.dev.betterangels.la'; // TODO: We should adjust this to be app.dev.betterangels.la
+  ? 'outreach.betterangels.la'
+  : 'outreach.dev.betterangels.la';
 
 const BUNDLE_IDENTIFIER = IS_PRODUCTION
   ? 'la.betterangels.app'
@@ -37,7 +37,7 @@ export default {
     name: IS_PRODUCTION ? 'BetterAngels' : 'BetterAngels (Dev)',
     slug: 'betterangels',
     scheme: IS_PRODUCTION ? 'betterangels' : 'betterangels-dev',
-    version: '1.2.16',
+    version: '1.2.17',
     orientation: 'portrait',
     icon: IS_PRODUCTION
       ? './src/app/assets/images/icon.png'
@@ -50,7 +50,7 @@ export default {
     ios: {
       supportsTablet: true,
       bundleIdentifier: BUNDLE_IDENTIFIER,
-      buildNumber: '1.2.16',
+      buildNumber: '1.2.17',
       associatedDomains: [`applinks:${HOSTNAME}`],
       config: {
         usesNonExemptEncryption: false,
@@ -75,6 +75,7 @@ export default {
       intentFilters: [
         {
           action: 'VIEW',
+          autoVerify: true,
           data: [
             {
               scheme: 'https',
@@ -86,7 +87,7 @@ export default {
         },
       ],
       config: {},
-      versionCode: 88,
+      versionCode: 89,
     },
     web: {
       favicon: './src/app/assets/images/favicon.png',

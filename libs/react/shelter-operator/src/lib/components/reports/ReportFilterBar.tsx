@@ -1,13 +1,12 @@
 import { useQuery } from '@apollo/client/react';
 import { useAtom } from 'jotai';
 import { Download } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { Button } from '../base-ui/buttons/buttons';
 import { useToast } from '../base-ui/toast';
 import {
-  DateRangePicker,
-  DateRangePresetDropdown,
+  DateRangeFilter,
   dateRangeFilterAtom,
   type DateRange,
 } from '../date-range-filter';
@@ -38,18 +37,11 @@ function rangeLabel({ from, to }: DateRange): string {
  * same one the charts use.
  */
 export function ReportFilterBar({ shelterId }: { shelterId?: string }) {
-  const [{ range }, setFilter] = useAtom(dateRangeFilterAtom);
+  const [{ preset, range }, setFilter] = useAtom(dateRangeFilterAtom);
   const { exportMetrics, isExporting: isBackendExporting } =
     useShelterMetricsExport();
   const { showToast } = useToast();
   const [isExportOpen, setIsExportOpen] = useState(false);
-  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
-  const [previewCustom, setPreviewCustom] = useState(false);
-
-  const handleCalendarOpenChange = useCallback((open: boolean) => {
-    setIsCalendarOpen(open);
-    if (!open) setPreviewCustom(false);
-  }, []);
 
   // Refreshed each time the modal opens, so "Exported at" on the PDF reads
   // the actual generation time rather than when the tab first loaded.
@@ -179,24 +171,25 @@ export function ReportFilterBar({ shelterId }: { shelterId?: string }) {
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
-      <div className="flex flex-wrap items-center gap-3">
-        <DateRangePicker
-          className="w-80"
-          value={range}
-          open={isCalendarOpen}
-          onOpenChange={handleCalendarOpenChange}
-          onDirty={() => setPreviewCustom(true)}
-          onCommit={(next) => {
-            setFilter({ preset: 'CUSTOM', range: next });
-            setPreviewCustom(false);
-          }}
-        />
-        <DateRangePresetDropdown
-          className="w-56"
-          displayPreset={previewCustom ? 'CUSTOM' : undefined}
-          onCustomSelected={() => handleCalendarOpenChange(true)}
-        />
-      </div>
+      <DateRangeFilter
+        presetAriaLabel="Date range"
+        presetClassName="w-56"
+        pickerClassName="w-80"
+        value={range}
+        preset={preset}
+        onChange={(nextRange, nextPreset) => {
+          // Reports has no "All Time" entry, so `ALL` is unreachable here; the
+          // atom's state shape stays date-range-only.
+          if (nextPreset === 'ALL') {
+            return;
+          }
+
+          setFilter({
+            preset: nextPreset,
+            range: nextRange,
+          });
+        }}
+      />
 
       <Button
         variant="primary"

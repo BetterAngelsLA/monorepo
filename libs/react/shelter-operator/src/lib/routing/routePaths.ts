@@ -1,4 +1,4 @@
-import { generatePath, matchPath } from 'react-router-dom';
+import { generatePath, matchPath } from 'react-router';
 import { TShelterMgmtSegment, TShelterProfileSegment } from './types';
 
 const OPERATOR_BASE = '/operator';
@@ -71,6 +71,7 @@ export const profileRouteConfig = {
     services: 'services',
     ecosystem: 'ecosystem',
     media: 'media',
+    activity: 'activity',
     baPrivate: 'ba-private',
   },
 } as const satisfies StaticRouteConfig;

@@ -74,7 +74,10 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         """
 
         variables = {"id": client_profile_id}
-        expected_query_count = 18
+        # 15, not 18: strawberry-graphql-django 0.93 resolves three of the grant
+        # authority lookups in fewer round trips. The invariant above still holds --
+        # this is a constant, not a per-row, reduction.
+        expected_query_count = 15
 
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
@@ -128,7 +131,21 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             "veteranStatus": VeteranStatusEnum.NO.name,
         }
 
+        # The three document groups are filtered querysets with no ordering, so
+        # neither their order nor the order the database returns them in is part
+        # of the API. Compare the rows keyed by id so the assertion does not
+        # depend on which of the equivalent orders a query plan produces.
+        self._sort_document_groups(client_profile)
+        self._sort_document_groups(expected_client_profile)
+
         self.assertEqual(client_profile, expected_client_profile)
+
+    @staticmethod
+    def _sort_document_groups(client_profile: dict) -> None:
+        for field in ("docReadyDocuments", "consentFormDocuments", "otherDocuments"):
+            documents = client_profile.get(field)
+            if documents:
+                documents.sort(key=lambda document: int(document["id"]))
 
     def test_client_profiles_query(self) -> None:
         query = f"""

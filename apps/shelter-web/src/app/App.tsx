@@ -1,7 +1,7 @@
 import { MainLayout, operatorPath } from '@monorepo/react/shelter';
 import { OperatorApp } from '@monorepo/react/shelter-operator';
 import { APIProvider as MapsApiProvider } from '@vis.gl/react-google-maps';
-import { Route, Routes } from 'react-router-dom';
+import { Route, Routes } from 'react-router';
 import { useShelterRoutes } from './router';
 
 // Inlined by Vite at build time, so a bundle built without this key can never

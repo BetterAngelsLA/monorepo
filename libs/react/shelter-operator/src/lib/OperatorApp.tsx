@@ -5,7 +5,7 @@ import {
   ShelterPermissions,
 } from '@monorepo/ba-platform/permissions';
 import { operatorPath } from '@monorepo/react/shelter';
-import { Navigate, Route, Routes, useParams } from 'react-router-dom';
+import { Navigate, Route, Routes, useParams } from 'react-router';
 import { CreateShelterProfile } from './components/ShelterProfile';
 import {
   BaPrivateGate,
@@ -31,6 +31,7 @@ import { CreateOrganizationPage } from './pages/createOrganization';
 import { Dashboard } from './pages/dashboard/Dashboard';
 import {
   BaPrivatePage,
+  ShelterActivityPage,
   ShelterBasicInfoPage,
   ShelterDetailsPage,
   ShelterEcosystemPage,
@@ -131,6 +132,10 @@ export function OperatorApp() {
             <Route
               path={profileRouteConfig.children.media}
               element={<ShelterMediaPage />}
+            />
+            <Route
+              path={profileRouteConfig.children.activity}
+              element={<ShelterActivityPage />}
             />
             <Route
               path={profileRouteConfig.children.baPrivate}

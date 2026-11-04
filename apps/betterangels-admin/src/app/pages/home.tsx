@@ -4,7 +4,7 @@ import {
   UserOrganizationPermissions,
   type PermissionEnum,
 } from '@monorepo/ba-platform/permissions';
-import { Navigate } from 'react-router-dom';
+import { Navigate } from 'react-router';
 
 const permissionRoutes: { permission: PermissionEnum; path: string }[] = [
   { permission: UserOrganizationPermissions.ViewOrgMembers, path: '/users' },

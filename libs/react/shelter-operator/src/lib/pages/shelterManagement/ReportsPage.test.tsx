@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router';
 import { ReportsPage } from './ReportsPage';
 
 // The export flow and its data are ReportsView's concern, not this page's —

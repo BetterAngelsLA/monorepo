@@ -1,10 +1,12 @@
 # syntax=docker/dockerfile:1
 
-# Runtime base: the Python app plus the system libraries GeoDjango needs
-# (libpq for psycopg, gdal-bin for GDAL/GEOS/PROJ). Deliberately free of Docker,
-# AWS CLI, Node, EAS, psql and the Playwright libraries: the production stage
-# builds from here, and none of that is on the request path.
-FROM python:3.14.8-trixie AS slim-base
+# Runtime base: Python plus the system libraries GeoDjango needs (libpq for
+# psycopg, GDAL/GEOS/PROJ). No Docker, AWS CLI, Node, EAS, psql or Playwright
+# libraries — none of it is on the production request path.
+#
+# `-slim-trixie`, not `trixie`: the full image is buildpack-deps, which exists to
+# compile CPython. This image only installs wheels.
+FROM python:3.14.8-slim-trixie AS slim-base
 
 ENV PYTHONUNBUFFERED=1
 RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,type=cache \
@@ -13,8 +15,21 @@ RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,t
       ca-certificates \
       curl \
       libpq5 \
-      gdal-bin \
-    && rm -rf /var/lib/apt/lists/*
+      libgdal36 \
+      libgeos-c1t64 \
+      libproj25 \
+      proj-data \
+    && rm -rf /var/lib/apt/lists/* \
+    # Keep `proj.db` (the CRS registry); drop the datum-shift grids. Nothing here
+    # transforms on the client — `import_regions` requests 4326, PostGIS stores 4326.
+    && rm -f /usr/share/proj/*.gsb /usr/share/proj/*.gtx /usr/share/proj/*.tif \
+    # `uv` replaces pip end to end; idle/tkinter/pydoc are interactive tooling.
+    && PYLIB="$(ls -d /usr/local/lib/python3.* | head -1)" \
+    && rm -rf "$PYLIB"/ensurepip "$PYLIB"/idlelib "$PYLIB"/tkinter "$PYLIB"/pydoc_data \
+              "$PYLIB"/site-packages/pip* "$PYLIB"/site-packages/setuptools* \
+    # The console scripts too, or `pip`/`idle` stay on PATH and fail with
+    # "No module named …", which is worse than not having them.
+    && rm -f /usr/local/bin/pip /usr/local/bin/pip3* /usr/local/bin/idle /usr/local/bin/idle3*
 
 RUN groupadd --gid 1000 betterangels \
   && useradd --uid 1000 --gid betterangels --shell /bin/bash --create-home betterangels
@@ -41,6 +56,10 @@ FROM runtime-base AS base
 USER root
 
 # Docker
+#
+# `unzip`, `xz-utils` and `lsb-release` came with buildpack-deps in the full base.
+# They are needed below this point: the AWS CLI unpacks a zip, Node ships
+# `.tar.xz`, and the PGDG apt script keys off `lsb_release`.
 RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,type=cache \
     rm -f /etc/apt/apt.conf.d/docker-clean \
     && apt-get update \
@@ -48,6 +67,9 @@ RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,t
       ca-certificates \
       curl \
       gnupg \
+      lsb-release \
+      unzip \
+      xz-utils \
     && install -m 0755 -d /etc/apt/keyrings \
     && curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg \
     && chmod a+r /etc/apt/keyrings/docker.gpg \
@@ -226,7 +248,10 @@ COPY --chown=betterangels --parents \
   apps/betterangels-backend/pyproject.toml \
   /workspace/
 RUN --mount=type=cache,uid=1000,gid=1000,target=/home/betterangels/.cache/uv \
-    uv sync --no-install-project --no-dev
+    uv sync --no-install-project --no-dev \
+    # Devtools-only, and swept here rather than after the copy so the bytes are
+    # not left in an earlier layer.
+    && find /workspace/.venv -name '*.map' -type f -delete
 
 FROM base AS yarn
 COPY --chown=betterangels --parents \
@@ -293,4 +318,7 @@ COPY --chown=betterangels apps/betterangels-backend /workspace/apps/betterangels
 # (The preview deploy exercises the same imports end to end.)
 RUN python -c "import ctypes.util, django, psycopg; missing = [n for n in ('gdal', 'geos_c', 'proj') if not ctypes.util.find_library(n)]; assert not missing, missing; print('runtime libs ok')"
 
-RUN cd apps/betterangels-backend && python manage.py collectstatic --noinput
+# Same layer as collectstatic: a later RUN would only white out the maps.
+RUN cd apps/betterangels-backend \
+  && python manage.py collectstatic --noinput \
+  && find staticfiles -name '*.map' -type f -delete

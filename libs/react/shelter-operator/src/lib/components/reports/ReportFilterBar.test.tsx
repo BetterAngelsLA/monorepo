@@ -1,7 +1,9 @@
 import { MockedProvider } from '@apollo/client/testing/react';
 import type { MockLink } from '@apollo/client/testing';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { subDays } from 'date-fns';
 import { getDefaultStore } from 'jotai';
+import { toDateString } from '@monorepo/shared/scalars';
 import { OperatorShelterSummaryDocument } from '../../graphql/__generated__/shelters.generated';
 import { ShelterOccupancyMetricsDocument } from '../../hooks/useShelterOccupancyMetrics/__generated__/useShelterOccupancyMetrics.generated';
 import { dateRangeFilterAtom } from '../date-range-filter';
@@ -117,6 +119,8 @@ vi.mock('../../pages/report/useExportPdf', () => ({
 // mocking jotai out from under them.
 const store = getDefaultStore();
 
+const PINNED_NOW = new Date(2026, 5, 15, 12, 0, 0);
+
 // @ant-design/plots needs real layout/canvas APIs jsdom doesn't reliably
 // provide; the off-screen PDF render's chart content is covered in
 // ShelterReportPrint.test.tsx, not here.
@@ -172,6 +176,7 @@ function waitForPdfSelectable() {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.setSystemTime(PINNED_NOW);
   store.set(dateRangeFilterAtom, {
     preset: 'LAST_30_DAYS',
     range: { from: new Date(2026, 5, 1), to: new Date(2026, 5, 30) },
@@ -194,6 +199,10 @@ beforeEach(() => {
     unobserve = vi.fn();
     disconnect = vi.fn();
   };
+});
+
+afterEach(() => {
+  vi.useRealTimers();
 });
 
 describe('ReportFilterBar export', () => {
@@ -268,6 +277,55 @@ describe('ReportFilterBar export', () => {
       ),
     );
     expect(HTMLAnchorElement.prototype.click).not.toHaveBeenCalled();
+  });
+
+  it('feeds a preset selection into the shared range the export uses', async () => {
+    fetchMock.mockResolvedValue(exportResponse());
+    renderFilterBar('7');
+
+    fireEvent.click(screen.getByRole('combobox'));
+    fireEvent.click(screen.getByText('Last 7 Days'));
+
+    // The toolbar writes the atom the charts read, so a preset pick must land
+    // there rather than only in the toolbar's own state.
+    expect(store.get(dateRangeFilterAtom).preset).toBe('LAST_7_DAYS');
+
+    openModalAndExport();
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+
+    const url = new URL(fetchMock.mock.calls[0][0], 'https://example.test');
+
+    expect(url.searchParams.get('start_date')).toBe(
+      toDateString(subDays(PINNED_NOW, 6)),
+    );
+    expect(url.searchParams.get('end_date')).toBe(toDateString(PINNED_NOW));
+  });
+
+  it('re-opens the calendar for a committed custom range instead of clearing it', async () => {
+    const customRange = {
+      from: new Date(2026, 5, 1),
+      to: new Date(2026, 5, 30),
+    };
+    store.set(dateRangeFilterAtom, { preset: 'CUSTOM', range: customRange });
+
+    // The PDF export queries the off-screen report's data, so these renders
+    // need Apollo's provider even when the test only exercises the toolbar.
+    renderFilterBar('7');
+
+    fireEvent.click(screen.getByRole('combobox'));
+    // The trigger also reads "Custom"; the menu item is the later node.
+    const options = await screen.findAllByText('Custom');
+    fireEvent.click(options[options.length - 1]);
+
+    expect(
+      await screen.findByRole('dialog', { name: 'Select date range' }),
+    ).not.toBeNull();
+    // Editing the dates, not throwing them away.
+    expect(store.get(dateRangeFilterAtom)).toEqual({
+      preset: 'CUSTOM',
+      range: customRange,
+    });
   });
 
   it('cannot export before the shelter is known', () => {

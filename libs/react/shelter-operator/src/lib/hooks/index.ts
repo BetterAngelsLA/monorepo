@@ -13,6 +13,7 @@ export * from './useDeleteReservations';
 export * from './useDeleteRooms';
 export * from './useDeleteShelterPhotos';
 export * from './useFilteredPropertyOptions';
+export * from './useObjectAuditLog/useObjectAuditLog';
 export * from './useReservation';
 export * from './useReservations';
 export * from './useRoom';

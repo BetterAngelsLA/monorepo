@@ -1,5 +1,5 @@
 import { AppDrawer } from '@monorepo/react/components';
-import { Outlet } from 'react-router-dom';
+import { Outlet } from 'react-router';
 import { AppSidebar } from '../AppSidebar';
 import { NavBar } from '../NavBar';
 import { ToastContainer } from '../base-ui/toast';
