@@ -393,9 +393,8 @@ def reconcile_org_groups(org: Organization) -> None:
             with pghistory.context(source="reconcile_org_groups", organization_id=org.pk):
                 revoked = unmirror_group_members(stale)
             logger.warning(
-                "reconcile_org_groups(%s %s): retiring %d stale role group(s) %s; revoked %d mirrored grant(s)",
+                "reconcile_org_groups(%s): retiring %d stale role group(s) %s; revoked %d mirrored grant(s)",
                 org.pk,
-                org.name,
                 len(stale),
                 labels,
                 revoked,
