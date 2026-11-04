@@ -304,6 +304,24 @@ class TaskCreateCompatWindowTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin)
         task = Task.objects.get(pk=response["data"]["createTask"]["id"])
         self.assertEqual(task.organization_id, self.org_1.pk)
 
+    def test_pre_payload_build_still_honours_assignee_id(self) -> None:
+        """``assigneeId`` shipped before ``organizationId`` (#2629/#2642).
+
+        A build in the window sends the assignee and no org, so it lands on the
+        legacy path — that path has to carry the field or the assignment is
+        silently dropped.
+        """
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+        response = self.create_task_fixture(
+            {"summary": "legacy task with an assignee", "assigneeId": str(self.org_1_case_manager_2.pk)},
+            include_organization=False,
+        )
+        self.assertIsNone(response.get("errors"))
+
+        task = Task.objects.get(pk=response["data"]["createTask"]["id"])
+        self.assertEqual(task.assignee_id, self.org_1_case_manager_2.pk)
+
     def test_pre_payload_build_without_a_caseworker_group_is_refused(self) -> None:
         member = baker.make(User)
         self.org_1.add_user(member)

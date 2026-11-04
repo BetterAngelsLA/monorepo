@@ -22,24 +22,26 @@ export function useApplyTasks() {
     ) => {
       const { toCreateTask, toUpdateTask, toDeleteTask } = splitTasks(tasks);
 
-      // No active org to anchor creates to (none remembered / none to join).
-      if (!activeOrgId) return;
-
-      for (const s of toCreateTask) {
-        await createTask({
-          variables: {
-            data: {
-              summary: s.summary || '',
-              teamId: s.teamId || undefined,
-              assigneeId: s.assigneeId || undefined,
-              description: s.description,
-              status: s.status,
-              hmisClientProfile: hmisClientProfileId,
-              hmisNote: hmisNoteId,
-              organizationId: activeOrgId,
+      // Creates need an org to anchor to (none remembered / none to join).  Only
+      // the create loop is gated: an update or delete names its row, so it must
+      // still run when no org is active.
+      if (activeOrgId) {
+        for (const s of toCreateTask) {
+          await createTask({
+            variables: {
+              data: {
+                summary: s.summary || '',
+                teamId: s.teamId || undefined,
+                assigneeId: s.assigneeId || undefined,
+                description: s.description,
+                status: s.status,
+                hmisClientProfile: hmisClientProfileId,
+                hmisNote: hmisNoteId,
+                organizationId: activeOrgId,
+              },
             },
-          },
-        });
+          });
+        }
       }
 
       for (const s of toDeleteTask) {
