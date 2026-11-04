@@ -11,6 +11,10 @@
       <li><strong>{{ role }}</strong> — from {{ holders }} member{{ holders|pluralize }}</li>
     {% endfor %}
   </ul>
+  {% if revokes_grants %}
+    <p>A directly granted role in this organization is the same Grant row as the membership, so it is
+       revoked too.</p>
+  {% endif %}
   <p>Putting a role back — re-adding the org type, or re-adding the row — creates it again, but does not
      give it back to anyone.</p>
   <form method="post">

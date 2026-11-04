@@ -1,6 +1,7 @@
 import logging
 from typing import Any
 
+import pghistory
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import DatabaseError
@@ -117,7 +118,13 @@ def sync_all_org_permission_groups(sender: object, **kwargs: object) -> None:
         return
 
     for org in organizations:
-        reconcile(org)
+        # A deploy has no request, so HistoryMiddleware cannot attribute the
+        # revocations reconcile may make.  Scope the context here rather than in
+        # ``reconcile_org_groups``: pghistory merges nested metadata permanently,
+        # so setting it inside an admin save would mislabel every later event in
+        # that request as a migrate-path reconcile.
+        with pghistory.context(source="post_migrate_reconcile", organization_id=org.pk):
+            reconcile(org)
 
     if not settings.IS_LOCAL_DEV:
         return
@@ -165,9 +172,18 @@ def mirror_group_membership_grants(
 ) -> None:
     """Keep role-backed ``PermissionGroup`` memberships and Grants in step.
 
-    Wired to ``User.groups.through``, so every writer keeps the invariant —
-    the manager, the user admin, scripts, the shell — and reverse writes
-    (``permission_group.user_set.add/remove/clear``) are handled too.
+    Wired to ``User.groups.through``, so every writer that goes through the m2m
+    manager — the role manager, the user admin, scripts, the shell — keeps the
+    invariant, and reverse writes
+    (``permission_group.user_set.add/remove/clear``) are handled too.  Writers
+    that bypass the m2m manager (``through.objects.bulk_create``, raw SQL,
+    ``queryset.update()``) are the documented exception.  ``loaddata`` is not
+    one: it applies m2m data through the manager (``set_base(raw=True)``) and
+    therefore mirrors like any other write.  A
+    signal is deliberately the seam here: it is the only one every real writer
+    shares, so the invariant cannot be lost by a service-level refactor (ADR
+    0001 §4 phase 2 — a sanctioned exception to the "no logic in signals"
+    styleguide rule).
 
     A cascading delete of a ``PermissionGroup`` (teardown retiring a legacy
     row) does **not** emit ``m2m_changed`` — Django fast-deletes the through

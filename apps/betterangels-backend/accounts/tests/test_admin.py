@@ -87,7 +87,13 @@ class OrganizationAdminTestCase(TestCase):
         }
 
     def _change_payload(
-        self, organization: Organization, permission_group: PermissionGroup, *, template_id: int
+        self,
+        organization: Organization,
+        permission_group: PermissionGroup,
+        *,
+        template_id: int | None,
+        org_types: list[str] | None = None,
+        delete_row: bool = False,
     ) -> dict:
         """POST body for the org change form, repointing one inline row's template."""
         rows = list(PermissionGroup.objects.filter(organization=organization).order_by("pk"))
@@ -99,7 +105,9 @@ class OrganizationAdminTestCase(TestCase):
             "profile-MAX_NUM_FORMS": "1",
             "profile-0-id": str(organization.profile.pk),
             "profile-0-organization": str(organization.pk),
-            "profile-0-org_types": [t.value for t in organization.profile.org_types],
+            "profile-0-org_types": (
+                org_types if org_types is not None else [t.value for t in organization.profile.org_types]
+            ),
             "permission_groups-TOTAL_FORMS": str(len(rows)),
             "permission_groups-INITIAL_FORMS": str(len(rows)),
             "permission_groups-MIN_NUM_FORMS": "0",
@@ -131,6 +139,8 @@ class OrganizationAdminTestCase(TestCase):
             payload[f"permission_groups-{index}-template"] = str(
                 template_id if row.pk == permission_group.pk else (row.template_id or "")
             )
+            if delete_row and row.pk == permission_group.pk:
+                payload[f"permission_groups-{index}-DELETE"] = "on"
         return payload
 
     def test_creating_an_organization_sets_org_types_and_permission_groups(self) -> None:
@@ -272,6 +282,37 @@ class OrganizationAdminTestCase(TestCase):
             formset for formset in response.context["inline_admin_formsets"] if formset.formset.model is PermissionGroup
         )
         self.assertNotIn("group", inline_formset.formset.empty_form.fields)
+
+    def _remove_outreach_and_assert_grant_revoked(self, *, delete_row: bool) -> None:
+        organization = organization_recipe.make(preset_names=["outreach"], owner_roles=())
+        caseworker = PermissionGroup.objects.get(organization=organization, template__name=CASEWORKER.name)
+        member = baker.make(User)
+        organization.add_user(member)
+        member.groups.add(caseworker)
+        role = Role.objects.get(name=CASEWORKER.name, is_global=False)
+        grant_filter = {"principal_user": member, "role": role, "scope_org": organization}
+        self.assertTrue(Grant.objects.filter(**grant_filter).exists())
+
+        payload = self._change_payload(
+            organization,
+            caseworker,
+            template_id=caseworker.template_id,
+            org_types=["shelter"],
+            delete_row=delete_row,
+        )
+        payload["_confirm_role_loss"] = "1"
+        response = self.client.post(reverse("admin:organizations_organization_change", args=[organization.pk]), payload)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(PermissionGroup.objects.filter(pk=caseworker.pk).exists())
+        self.assertFalse(Grant.objects.filter(**grant_filter).exists())
+
+    def test_removing_an_org_type_revokes_mirrored_grants(self) -> None:
+        self._remove_outreach_and_assert_grant_revoked(delete_row=False)
+
+    def test_removing_an_org_type_with_its_row_revokes_mirrored_grants(self) -> None:
+        """The inline delete must not hide the row from revocation (finding H1)."""
+        self._remove_outreach_and_assert_grant_revoked(delete_row=True)
 
 
 class OrganizationAddMemberViewTestCase(TestCase):
