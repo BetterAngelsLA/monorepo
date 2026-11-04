@@ -21,6 +21,13 @@ export type ObjectAuditLogFilters = {
   dateFrom?: string | null;
   /** Inclusive upper bound (ISO datetime); ``null`` means "unbounded". */
   dateTo?: string | null;
+  /** Restrict to a single acting user. */
+  actorId?: string | null;
+  /**
+   * Restrict to events the log renders as system: no frozen name/email, or an
+   * import/clone reason label (§11). Such events can still carry an actor id.
+   */
+  systemOnly?: boolean | null;
 };
 
 type UseObjectAuditLogArgs = ObjectAuditLogFilters & {
@@ -52,6 +59,8 @@ export function useObjectAuditLog({
   // an identical `variables` object and reset the cursor chain for no reason.
   dateFrom = null,
   dateTo = null,
+  actorId = null,
+  systemOnly = null,
 }: UseObjectAuditLogArgs) {
   const variables = useMemo<ObjectAuditLogQueryVariables>(() => {
     const filters: NonNullable<ObjectAuditLogQueryVariables['filters']> = {};
@@ -62,6 +71,14 @@ export function useObjectAuditLog({
     if (dateTo) {
       filters.dateTo = dateTo;
     }
+    // These compose as AND, matching AuditEventFilter: with both set the server
+    // keeps only that actor's system-rendered events. Never drop one silently.
+    if (systemOnly) {
+      filters.systemOnly = true;
+    }
+    if (actorId) {
+      filters.actorId = actorId;
+    }
 
     return {
       targetType,
@@ -71,7 +88,7 @@ export function useObjectAuditLog({
       // "no filters", and the variable set stays identical to the initial one.
       ...(Object.keys(filters).length > 0 ? { filters } : {}),
     };
-  }, [targetType, objectId, dateFrom, dateTo, pageSize]);
+  }, [targetType, objectId, dateFrom, dateTo, actorId, systemOnly, pageSize]);
 
   const { data, loading, error, fetchMore, refetch } = useQuery<
     ObjectAuditLogQuery,

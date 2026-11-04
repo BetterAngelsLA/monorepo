@@ -12,6 +12,7 @@ import { endOfDay, format, startOfDay, subDays } from 'date-fns';
 import { useState } from 'react';
 import { ObjectAuditLog } from './ObjectAuditLog';
 import { useObjectAuditLog } from '../../hooks';
+import { AuditActorsDocument } from '../../hooks/useAuditActors/__generated__/useAuditActors.generated';
 import { ObjectAuditLogDocument } from '../../hooks/useObjectAuditLog/__generated__/useObjectAuditLog.generated';
 
 /** Variables for the hook in isolation: no filters unless a harness passes them. */
@@ -110,6 +111,82 @@ function errorPage(variables: Record<string, unknown>) {
     request: { query: ObjectAuditLogDocument, variables },
     error: new Error('network down'),
   };
+}
+
+function actorPage(search: string) {
+  return {
+    request: {
+      query: AuditActorsDocument,
+      variables: {
+        targetType: AuditTargetType.Bed,
+        objectId: '7',
+        search,
+        limit: 20,
+      },
+    },
+    result: {
+      data: {
+        objectAuditActors: [
+          {
+            __typename: 'AuditActorType',
+            id: 'user-1',
+            label: 'Ada Lovelace',
+            isSystem: false,
+          },
+        ],
+      },
+    },
+  };
+}
+
+function systemActorPage(search: string) {
+  return {
+    request: {
+      query: AuditActorsDocument,
+      variables: {
+        targetType: AuditTargetType.Bed,
+        objectId: '7',
+        search,
+        limit: 20,
+      },
+    },
+    result: {
+      data: {
+        objectAuditActors: [
+          {
+            __typename: 'AuditActorType',
+            id: null,
+            label: 'System',
+            isSystem: true,
+          },
+        ],
+      },
+    },
+  };
+}
+
+async function selectActor(term: string, label: string) {
+  const input = screen.getByPlaceholderText('Search actors');
+  fireEvent.focus(input);
+  fireEvent.change(input, { target: { value: term } });
+  fireEvent.click(await screen.findByRole('option', { name: label }));
+}
+
+/** The log as a caller actually mounts it: the object can change in place. */
+function SwitchingLog() {
+  const [objectId, setObjectId] = useState('7');
+
+  return (
+    <>
+      <button type="button" onClick={() => setObjectId('8')}>
+        switch-log
+      </button>
+      <button type="button" onClick={() => setObjectId('7')}>
+        switch-back
+      </button>
+      <ObjectAuditLog targetType={AuditTargetType.Bed} objectId={objectId} />
+    </>
+  );
 }
 
 function renderLog(mocks: ReadonlyArray<unknown>) {
@@ -328,10 +405,152 @@ describe('ObjectAuditLog', () => {
 
     await screen.findByText('Ada Lovelace');
 
-    fireEvent.click(screen.getByRole('combobox'));
+    fireEvent.click(screen.getByRole('combobox', { name: 'Date range' }));
     fireEvent.click(await screen.findByText('All Time'));
 
     await screen.findByText('No activity');
+  });
+
+  it('requests the chosen actor together with the window', async () => {
+    // The mock is keyed on the window *and* the actor, so these rows can only
+    // render if the request carried both.
+    renderLog([
+      page(logVariables, [makeAction()], null, false),
+      page(
+        {
+          ...baseVariables,
+          filters: { ...logVariables.filters, actorId: 'user-1' },
+        },
+        [makeAction({ actor: 'ONLY THIS ACTOR' })],
+        null,
+        false,
+      ),
+      actorPage('ad'),
+    ]);
+
+    await screen.findByText('Ada Lovelace');
+
+    await selectActor('ad', 'Ada Lovelace');
+
+    expect(await screen.findByText('ONLY THIS ACTOR')).not.toBeNull();
+  });
+
+  it('requests systemOnly for the System entry', async () => {
+    renderLog([
+      page(logVariables, [makeAction()], null, false),
+      page(
+        {
+          ...baseVariables,
+          filters: { ...logVariables.filters, systemOnly: true },
+        },
+        [makeAction({ actor: 'SYSTEM ONLY ROW' })],
+        null,
+        false,
+      ),
+      systemActorPage('sys'),
+    ]);
+
+    await screen.findByText('Ada Lovelace');
+
+    await selectActor('sys', 'System');
+
+    expect(await screen.findByText('SYSTEM ONLY ROW')).not.toBeNull();
+  });
+
+  it('drops the actor filter when the object changes', async () => {
+    const sevenDays = {
+      dateFrom: startOfDay(subDays(PINNED_NOW, 6)).toISOString(),
+      dateTo: endOfDay(PINNED_NOW).toISOString(),
+    };
+    const presetTrigger = () =>
+      screen.getByRole('combobox', { name: 'Date range' });
+
+    render(
+      <MockedProvider
+        mocks={
+          [
+            page(
+              logVariables,
+              [makeAction({ actor: 'SEVEN DEFAULT' })],
+              null,
+              false,
+            ),
+            page(
+              {
+                ...baseVariables,
+                filters: { ...logVariables.filters, actorId: 'user-1' },
+              },
+              [makeAction({ actor: 'SEVEN ACTOR' })],
+              null,
+              false,
+            ),
+            page(
+              {
+                ...baseVariables,
+                filters: { ...sevenDays, actorId: 'user-1' },
+              },
+              [makeAction({ actor: 'SEVEN SEVEN DAYS' })],
+              null,
+              false,
+            ),
+            // If the actor survived the switch this request would be unmocked
+            // and the log would show its error state instead of these rows.
+            page(
+              {
+                ...baseVariables,
+                objectId: '8',
+                filters: logVariables.filters,
+              },
+              [makeAction({ actor: 'EIGHT DEFAULT' })],
+              null,
+              false,
+            ),
+            // Returning to the first object must query the seeded window with
+            // no actor; a revived filter would match the seven-day mock instead.
+            page(
+              { ...baseVariables, filters: logVariables.filters },
+              [makeAction({ actor: 'SEVEN RETURNED DEFAULT' })],
+              null,
+              false,
+            ),
+            actorPage('ad'),
+          ] as never
+        }
+        showWarnings={false}
+      >
+        <SwitchingLog />
+      </MockedProvider>,
+    );
+
+    await screen.findByText('SEVEN DEFAULT');
+
+    await selectActor('ad', 'Ada Lovelace');
+    await screen.findByText('SEVEN ACTOR');
+    expect(screen.getByLabelText('Clear actor filter')).not.toBeNull();
+
+    // Move off the seeded window, so a failure to reset is visible on screen
+    // and not only in the request.
+    fireEvent.click(presetTrigger());
+    fireEvent.click(await screen.findByText('Last 7 Days'));
+    await screen.findByText('SEVEN SEVEN DAYS');
+    expect(presetTrigger().textContent).toContain('Last 7 Days');
+
+    fireEvent.click(screen.getByRole('button', { name: 'switch-log' }));
+
+    expect(await screen.findByText('EIGHT DEFAULT')).not.toBeNull();
+    expect(screen.queryByLabelText('Clear actor filter')).toBeNull();
+    // The bar re-seeds to the window the new object's request carries.
+    expect(presetTrigger().textContent).toContain('Last 30 Days');
+
+    // Coming back must start fresh too: the filters chosen on this object
+    // earlier must not be revived, or the request would use them while the bar
+    // shows the seeded window.
+    fireEvent.click(screen.getByRole('button', { name: 'switch-back' }));
+
+    expect(await screen.findByText('SEVEN RETURNED DEFAULT')).not.toBeNull();
+    expect(screen.queryByText('SEVEN SEVEN DAYS')).toBeNull();
+    expect(screen.queryByLabelText('Clear actor filter')).toBeNull();
+    expect(presetTrigger().textContent).toContain('Last 30 Days');
   });
 
   it('shows the same window it queries', async () => {
@@ -374,7 +593,7 @@ describe('ObjectAuditLog', () => {
 
     await screen.findByText('DEFAULT WINDOW');
 
-    fireEvent.click(screen.getByRole('combobox'));
+    fireEvent.click(screen.getByRole('combobox', { name: 'Date range' }));
     fireEvent.click(await screen.findByText('Last 7 Days'));
 
     // The mock only matches the seven-day bounds, so rendering these rows
