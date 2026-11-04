@@ -65,6 +65,18 @@ function actorMock(search: string, calls?: string[]) {
   };
 }
 
+function emptyActorMock(search: string) {
+  return {
+    request: {
+      query: AuditActorsDocument,
+      variables: actorVariables(search),
+    },
+    result: {
+      data: { objectAuditActors: [] },
+    },
+  };
+}
+
 function systemActorMock(search: string) {
   return {
     request: {
@@ -285,17 +297,42 @@ describe('AuditFilterBar', () => {
     expect(await screen.findByText('Ada Lovelace')).not.toBeNull();
   });
 
-  it('only names the listbox while it is open', () => {
-    renderBar();
+  it('names the listbox only while it shows options', async () => {
+    renderBar({ mocks: [actorMock('ad')] });
 
     const input = screen.getByPlaceholderText('Search actors');
     expect(input.getAttribute('aria-controls')).toBeNull();
 
     fireEvent.focus(input);
+    // The popup is open, but it holds a status message, not a listbox.
+    expect(screen.getByRole('status').textContent).toContain(
+      'Type at least 2 characters.',
+    );
+    expect(screen.queryByRole('listbox')).toBeNull();
+    expect(input.getAttribute('aria-controls')).toBeNull();
+
+    fireEvent.change(input, { target: { value: 'ad' } });
+    await screen.findByRole('option', { name: 'Ada Lovelace' });
 
     const controls = input.getAttribute('aria-controls');
     expect(controls).toBeTruthy();
     expect(document.getElementById(controls as string)).not.toBeNull();
+  });
+
+  it('announces the empty result outside the listbox', async () => {
+    renderBar({ mocks: [emptyActorMock('ad')] });
+
+    const input = screen.getByPlaceholderText('Search actors');
+    fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: 'ad' } });
+
+    // "No actors found." is a status, not a listbox child (a listbox may only
+    // contain options), so it is announced instead of silently rendered.
+    expect(await screen.findByText('No actors found.')).not.toBeNull();
+    expect(screen.getByRole('status').textContent).toContain(
+      'No actors found.',
+    );
+    expect(screen.queryByRole('listbox')).toBeNull();
   });
 
   it('keeps focus in the filter after committing and clearing an actor', async () => {
@@ -350,6 +387,9 @@ describe('AuditFilterBar', () => {
     expect(
       await screen.findByRole('option', { name: 'Ada Lovelace' }),
     ).not.toBeNull();
+    // The footer unmounts when the error clears; focus must stay in the box
+    // rather than falling to the document.
+    expect(document.activeElement).toBe(input);
   });
 
   it('selects a searched actor with the keyboard', async () => {

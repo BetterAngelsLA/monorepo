@@ -115,9 +115,13 @@ function ActorFilter({
 
   const term = debouncedSearch.trim();
   const canSearch = term.length >= MIN_ACTOR_SEARCH_LENGTH;
+  // A listbox may only contain options. Everything else — the hint, loading, a
+  // failed lookup, no results — is a status message instead, which also lets
+  // assistive tech announce it.
+  const showOptions = canSearch && !loading && !error && options.length > 0;
   const optionId = (index: number) => `${listboxId}-option-${index}`;
   const activeOptionId =
-    isOpen && activeIndex >= 0 && activeIndex < options.length
+    isOpen && showOptions && activeIndex >= 0 && activeIndex < options.length
       ? optionId(activeIndex)
       : undefined;
 
@@ -239,7 +243,7 @@ function ActorFilter({
         aria-autocomplete="list"
         aria-haspopup="listbox"
         aria-expanded={isOpen}
-        aria-controls={isOpen ? listboxId : undefined}
+        aria-controls={isOpen && showOptions ? listboxId : undefined}
         aria-activedescendant={activeOptionId}
         onFocus={() => setIsOpen(true)}
         onBlur={(event) => {
@@ -258,35 +262,15 @@ function ActorFilter({
 
       {isOpen && (
         <div className="absolute z-20 mt-1 w-full rounded-lg border border-neutral-90 bg-white p-1 shadow-lg">
-          <div
-            id={listboxId}
-            ref={listRef}
-            role="listbox"
-            aria-label="Actors"
-            className="max-h-64 overflow-y-auto"
-          >
-            {!canSearch ? (
-              <Text variant="caption" className="block px-3 py-2">
-                Type at least {MIN_ACTOR_SEARCH_LENGTH} characters.
-              </Text>
-            ) : loading ? (
-              <Text variant="caption" className="block px-3 py-2">
-                Searching…
-              </Text>
-            ) : error ? (
-              <Text
-                variant="caption"
-                textColor="text-red-700"
-                className="block px-3 py-2"
-              >
-                Couldn&rsquo;t load actors.
-              </Text>
-            ) : options.length === 0 ? (
-              <Text variant="caption" className="block px-3 py-2">
-                No actors found.
-              </Text>
-            ) : (
-              options.map((option, index) => (
+          {showOptions ? (
+            <div
+              id={listboxId}
+              ref={listRef}
+              role="listbox"
+              aria-label="Actors"
+              className="max-h-64 overflow-y-auto"
+            >
+              {options.map((option, index) => (
                 <button
                   id={optionId(index)}
                   key={option.id ?? 'system'}
@@ -306,9 +290,33 @@ function ActorFilter({
                 >
                   {option.label}
                 </button>
-              ))
-            )}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div role="status" className="px-3 py-2">
+              {!canSearch ? (
+                <Text variant="caption" className="block">
+                  Type at least {MIN_ACTOR_SEARCH_LENGTH} characters.
+                </Text>
+              ) : loading ? (
+                <Text variant="caption" className="block">
+                  Searching…
+                </Text>
+              ) : error ? (
+                <Text
+                  variant="caption"
+                  textColor="text-red-700"
+                  className="block"
+                >
+                  Couldn&rsquo;t load actors.
+                </Text>
+              ) : (
+                <Text variant="caption" className="block">
+                  No actors found.
+                </Text>
+              )}
+            </div>
+          )}
 
           {/* A failed lookup is not an empty one: offer the request again. */}
           {error && (
@@ -318,6 +326,9 @@ function ActorFilter({
                 color="blue"
                 className="w-full"
                 onClick={() => {
+                  // This footer unmounts as soon as the error clears, so put
+                  // focus back in the box before starting the request.
+                  inputRef.current?.focus();
                   void refetch();
                 }}
               >
