@@ -266,12 +266,13 @@ class MembershipEdgeMirrorTestCase(TestCase):
 
         self.assertTrue(self._mirrors().exists())
 
-    def test_post_migrate_reconcile_attributes_the_revocation(self) -> None:
-        """A deploy has no request, so the post_migrate signal supplies the context.
+    def test_deploy_reconcile_attributes_the_revocation(self) -> None:
+        """The post_migrate handler has no request, so it supplies the context.
 
-        The context is set at the signal rather than inside reconcile: pghistory
-        merges nested metadata permanently, so setting it during an admin save
-        would mislabel the rest of that request.
+        The context is set at the signal handler rather than inside reconcile:
+        pghistory merges nested metadata permanently, so setting it during an
+        admin save would mislabel the rest of that request.  Receiver wiring is
+        covered by ``test_roles.test_migrate_completes_with_a_legacy_bare_group_present``.
         """
         self.user.groups.add(self.group)
         OrganizationProfile.objects.filter(organization=self.org).update(org_types=["shelter"])
