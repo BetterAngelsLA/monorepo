@@ -289,6 +289,33 @@ describe('AuditFilterBar', () => {
     expect(document.getElementById(controls as string)).not.toBeNull();
   });
 
+  it('keeps focus in the filter after committing and clearing an actor', async () => {
+    renderBar({ mocks: [actorMock('ad')] });
+
+    const input = screen.getByPlaceholderText('Search actors');
+    fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: 'ad' } });
+
+    const option = await screen.findByRole('option', { name: 'Ada Lovelace' });
+    // Options are driven from the textbox via aria-activedescendant, not by
+    // tabbing into the list.
+    expect(option.tabIndex).toBe(-1);
+
+    fireEvent.keyDown(input, { key: 'ArrowDown' });
+    fireEvent.keyDown(input, { key: 'Enter' });
+
+    // Committing unmounts the combobox; focus must not fall to the document.
+    expect(document.activeElement).toBe(
+      screen.getByLabelText('Clear actor filter'),
+    );
+
+    fireEvent.click(screen.getByLabelText('Clear actor filter'));
+
+    expect(document.activeElement).toBe(
+      screen.getByPlaceholderText('Search actors'),
+    );
+  });
+
   it('reports a failed actor search and retries it', async () => {
     const onChange = vi.fn();
     const failure = {

@@ -16,8 +16,9 @@ export const DEFAULT_AUDIT_PRESET: DateRangePresetValue = DEFAULT_PRESET;
 
 /**
  * A committed actor filter: one real user, or the synthetic ``System`` entry
- * (``id: null``) that selects every event with no attributed user. ``label``
- * exists only so the bar can render the choice once the search box is gone.
+ * (``id: null``) that selects the events the log renders as system — including
+ * import/clone rows that still carry a user id. ``label`` exists only so the
+ * bar can render the choice once the search box is gone.
  */
 export type AuditActorSelection = {
   id: string | null;

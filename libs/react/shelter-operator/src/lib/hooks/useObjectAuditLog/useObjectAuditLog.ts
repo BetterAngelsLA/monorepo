@@ -71,9 +71,12 @@ export function useObjectAuditLog({
     if (dateTo) {
       filters.dateTo = dateTo;
     }
+    // These compose as AND, matching AuditEventFilter: with both set the server
+    // keeps only that actor's system-rendered events. Never drop one silently.
     if (systemOnly) {
       filters.systemOnly = true;
-    } else if (actorId) {
+    }
+    if (actorId) {
       filters.actorId = actorId;
     }
 

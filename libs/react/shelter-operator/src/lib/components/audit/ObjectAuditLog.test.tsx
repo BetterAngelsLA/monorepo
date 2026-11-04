@@ -455,6 +455,13 @@ describe('ObjectAuditLog', () => {
   });
 
   it('drops the actor filter when the object changes', async () => {
+    const sevenDays = {
+      dateFrom: startOfDay(subDays(PINNED_NOW, 6)).toISOString(),
+      dateTo: endOfDay(PINNED_NOW).toISOString(),
+    };
+    const presetTrigger = () =>
+      screen.getByRole('combobox', { name: 'Date range' });
+
     render(
       <MockedProvider
         mocks={
@@ -471,6 +478,15 @@ describe('ObjectAuditLog', () => {
                 filters: { ...logVariables.filters, actorId: 'user-1' },
               },
               [makeAction({ actor: 'SEVEN ACTOR' })],
+              null,
+              false,
+            ),
+            page(
+              {
+                ...baseVariables,
+                filters: { ...sevenDays, actorId: 'user-1' },
+              },
+              [makeAction({ actor: 'SEVEN SEVEN DAYS' })],
               null,
               false,
             ),
@@ -501,10 +517,19 @@ describe('ObjectAuditLog', () => {
     await screen.findByText('SEVEN ACTOR');
     expect(screen.getByLabelText('Clear actor filter')).not.toBeNull();
 
+    // Move off the seeded window, so a failure to reset is visible on screen
+    // and not only in the request.
+    fireEvent.click(presetTrigger());
+    fireEvent.click(await screen.findByText('Last 7 Days'));
+    await screen.findByText('SEVEN SEVEN DAYS');
+    expect(presetTrigger().textContent).toContain('Last 7 Days');
+
     fireEvent.click(screen.getByRole('button', { name: 'switch-log' }));
 
     expect(await screen.findByText('EIGHT DEFAULT')).not.toBeNull();
     expect(screen.queryByLabelText('Clear actor filter')).toBeNull();
+    // The bar re-seeds to the window the new object's request carries.
+    expect(presetTrigger().textContent).toContain('Last 30 Days');
   });
 
   it('shows the same window it queries', async () => {

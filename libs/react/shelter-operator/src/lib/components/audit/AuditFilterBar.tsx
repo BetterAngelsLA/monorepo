@@ -58,7 +58,29 @@ function ActorFilter({
   const [activeIndex, setActiveIndex] = useState(-1);
   const containerRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
+  const clearButtonRef = useRef<HTMLButtonElement>(null);
+  // Committing swaps the combobox for the chip and clearing swaps it back, so
+  // the focused element unmounts. Remember where focus should land instead:
+  // only a change this control caused moves it, never a caller re-seeding.
+  const focusTargetRef = useRef<'clear' | 'input' | null>(null);
   const listboxId = useId();
+
+  useEffect(() => {
+    const target = focusTargetRef.current;
+
+    if (!target) {
+      return;
+    }
+
+    focusTargetRef.current = null;
+
+    if (target === 'clear') {
+      clearButtonRef.current?.focus();
+    } else {
+      inputRef.current?.focus();
+    }
+  }, [selection]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -100,6 +122,7 @@ function ActorFilter({
       : undefined;
 
   const selectActor = (option: AuditActorOption) => {
+    focusTargetRef.current = 'clear';
     setSearch('');
     setIsOpen(false);
     setActiveIndex(-1);
@@ -111,6 +134,7 @@ function ActorFilter({
   };
 
   const clearActor = () => {
+    focusTargetRef.current = 'input';
     setSearch('');
     setIsOpen(false);
     setActiveIndex(-1);
@@ -190,6 +214,7 @@ function ActorFilter({
             {selection.label}
           </Text>
           <button
+            ref={clearButtonRef}
             type="button"
             aria-label="Clear actor filter"
             onClick={clearActor}
@@ -205,6 +230,7 @@ function ActorFilter({
   return (
     <div className="relative w-56" ref={containerRef}>
       <Input
+        ref={inputRef}
         label="Actor"
         placeholder="Search actors"
         value={search}
@@ -266,6 +292,7 @@ function ActorFilter({
                   key={option.id}
                   type="button"
                   role="option"
+                  tabIndex={-1}
                   aria-selected={index === activeIndex}
                   onMouseEnter={() => setActiveIndex(index)}
                   onMouseDown={(event) => event.preventDefault()}
