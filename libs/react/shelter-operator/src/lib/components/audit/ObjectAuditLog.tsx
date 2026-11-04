@@ -64,28 +64,28 @@ export function ObjectAuditLog({
     actor: null,
   }));
 
-  // A filter belongs to the object it was chosen on: carrying an actor from
-  // another object's history would silently narrow this log or empty it.
-  // Deriving the live values from `targetKey` (rather than resetting in an
-  // effect) means the stale filter never reaches a request, and the bar is
-  // re-keyed below so its visible range agrees with the query.
-  const current: SeededFilters =
-    seeded.targetKey === targetKey
-      ? seeded
-      : { targetKey, filters: initial.filters, actor: null };
+  // A filter belongs to the object it was chosen on, and a target switch starts
+  // both dimensions over: an actor from another object's history would silently
+  // narrow this log, and a kept date range would make the query and the bar
+  // disagree (the bar re-seeds from this mount-time range). Discarding the old
+  // filters here — rather than only masking them while the key differs — is what
+  // makes returning to an earlier target start fresh instead of reviving them.
+  // Adjusting during render, not in an effect, keeps the reset values on the
+  // render that issues the request.
+  const isOtherTarget = seeded.targetKey !== targetKey;
+  const current: SeededFilters = isOtherTarget
+    ? { targetKey, filters: initial.filters, actor: null }
+    : seeded;
+
+  if (isOtherTarget) {
+    setSeeded(current);
+  }
 
   const seedFilter = useCallback(
     (patch: Partial<Pick<SeededFilters, 'filters' | 'actor'>>) => {
-      setSeeded((previous) => {
-        const base =
-          previous.targetKey === targetKey
-            ? previous
-            : { targetKey, filters: initial.filters, actor: null };
-
-        return { ...base, ...patch };
-      });
+      setSeeded((previous) => ({ ...previous, ...patch }));
     },
-    [initial.filters, targetKey],
+    [],
   );
 
   const handleFilterChange = useCallback(

@@ -181,6 +181,9 @@ function SwitchingLog() {
       <button type="button" onClick={() => setObjectId('8')}>
         switch-log
       </button>
+      <button type="button" onClick={() => setObjectId('7')}>
+        switch-back
+      </button>
       <ObjectAuditLog targetType={AuditTargetType.Bed} objectId={objectId} />
     </>
   );
@@ -502,6 +505,14 @@ describe('ObjectAuditLog', () => {
               null,
               false,
             ),
+            // Returning to the first object must query the seeded window with
+            // no actor; a revived filter would match the seven-day mock instead.
+            page(
+              { ...baseVariables, filters: logVariables.filters },
+              [makeAction({ actor: 'SEVEN RETURNED DEFAULT' })],
+              null,
+              false,
+            ),
             actorPage('ad'),
           ] as never
         }
@@ -529,6 +540,16 @@ describe('ObjectAuditLog', () => {
     expect(await screen.findByText('EIGHT DEFAULT')).not.toBeNull();
     expect(screen.queryByLabelText('Clear actor filter')).toBeNull();
     // The bar re-seeds to the window the new object's request carries.
+    expect(presetTrigger().textContent).toContain('Last 30 Days');
+
+    // Coming back must start fresh too: the filters chosen on this object
+    // earlier must not be revived, or the request would use them while the bar
+    // shows the seeded window.
+    fireEvent.click(screen.getByRole('button', { name: 'switch-back' }));
+
+    expect(await screen.findByText('SEVEN RETURNED DEFAULT')).not.toBeNull();
+    expect(screen.queryByText('SEVEN SEVEN DAYS')).toBeNull();
+    expect(screen.queryByLabelText('Clear actor filter')).toBeNull();
     expect(presetTrigger().textContent).toContain('Last 30 Days');
   });
 
