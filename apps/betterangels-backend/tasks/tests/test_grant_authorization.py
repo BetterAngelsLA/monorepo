@@ -12,20 +12,26 @@ the cutover posture:
 * a holder's grant at another org still reads (SHARED read) but cannot write;
 * a write needs the *exact* permission — ADD alone does not change or delete;
 * the org travels in the payload and unknown/malformed orgs fail closed;
+* a task created through a note passes the same gate — the nested replace-all
+  is not a way around ``tasks.add``/``tasks.delete``;
 * the global tier still passes.
 """
 
 from typing import Tuple
 
+from django.core.exceptions import PermissionDenied
 from model_bakery import baker
 from organizations.models import Organization
 
 from accounts.models import User
+from accounts.selectors import resolve_permission_group
 from accounts.services import sync_roles
 from clients.models import ClientProfile
 from common.permissions.utils import PERMISSION_DENIED_MESSAGE
 from common.tests.utils import GraphQLBaseTestCase, make_legacy_only_holder
 from notes.groups import CASEWORKER
+from notes.models import Note
+from notes.services import note_update
 from tasks.models import Task
 from tasks.tests.utils import TaskGraphQLUtilsMixin
 
@@ -331,3 +337,46 @@ class TaskCreateCompatWindowTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin)
         response = self.create_task_fixture({"summary": "should not appear"}, include_organization=False)
         self.assertIn("errors", response)
         self.assertEqual(Task.objects.count(), task_count)
+
+
+class NestedNoteTaskAuthorityTestCase(GraphQLBaseTestCase):
+    """A task created through a note passes the same gate as ``createTask``.
+
+    The note's nested task list is replace-all — a delete followed by a create —
+    so both halves need authority.  The note's own gate is not a substitute for
+    ``tasks.add``/``tasks.delete`` (RFC 0003).
+    """
+
+    def setUp(self) -> None:
+        super().setUp()
+        sync_roles()
+
+    def test_note_update_refuses_nested_task_create_without_the_grant(self) -> None:
+        note = baker.make(Note, organization=self.org_1)
+        # A leftover legacy group member: can reach the note, holds no Grant.
+        stranger = make_legacy_only_holder(organization=self.org_1, template_name="Caseworker", user=baker.make(User))
+        permission_group = resolve_permission_group(stranger, template=CASEWORKER)
+
+        with self.assertRaises(PermissionDenied):
+            note_update(
+                note=note,
+                data={"tasks": [{"summary": "smuggled through the note"}]},
+                user=stranger,
+                permission_group=permission_group,
+            )
+
+        self.assertFalse(note.tasks.exists())
+
+    def test_note_update_still_creates_nested_tasks_for_a_grant_holder(self) -> None:
+        note = baker.make(Note, organization=self.org_1)
+        holder = self.org_1_case_manager_1
+        permission_group = resolve_permission_group(holder, template=CASEWORKER)
+
+        note_update(
+            note=note,
+            data={"tasks": [{"summary": "legitimate task"}]},
+            user=holder,
+            permission_group=permission_group,
+        )
+
+        self.assertEqual(note.tasks.get().summary, "legitimate task")
