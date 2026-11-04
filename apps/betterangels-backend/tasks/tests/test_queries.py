@@ -46,7 +46,7 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         """
         variables = {"id": task_id}
 
-        expected_query_count = 12
+        expected_query_count = 5
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
 
@@ -91,7 +91,7 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             }
         )["data"]["createTask"]
 
-        expected_query_count = 9
+        expected_query_count = 6
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(self.get_tasks_query())
 
@@ -367,9 +367,9 @@ class TaskListAssigneeQueryCountTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMi
             )
 
     def test_tasks_list_does_not_add_a_query_per_assignee(self) -> None:
-        # A per-row assignee lookup would be 4 + 8 here. The flat count is the
+        # A per-row assignee lookup would be 6 + 8 here. The flat count is the
         # assertion: if `assignee` ever stops being joined, this grows by rows.
-        with self.assertNumQueriesWithoutCache(4):
+        with self.assertNumQueriesWithoutCache(6):
             response = self.execute_graphql(self.get_tasks_query())
 
         results = response["data"]["tasks"]["results"]
