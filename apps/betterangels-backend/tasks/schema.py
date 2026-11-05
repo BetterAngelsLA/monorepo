@@ -40,7 +40,10 @@ class Query:
         # Add *or* change: the picker is used both when creating a task and when
         # editing one, and editing only requires `tasks.change`. Gating on add
         # alone left a change-only role staring at an empty sheet.
-        extensions=[HasPerm([Task.perms.ADD, Task.perms.CHANGE])],
+        # ``perm_checker`` swaps Django/guardian has_perm for the grant model:
+        # without it a member provisioned only with a scoped Role got an empty
+        # sheet while the rest of the task domain authorized them.
+        extensions=[HasPerm([Task.perms.ADD, Task.perms.CHANGE], perm_checker=can_anywhere_checker)],
         description=(
             "Members the caller can assign a task to. Gated on tasks.add or "
             "tasks.change rather than organizations.view_org_members so a "
@@ -91,6 +94,12 @@ class Mutation:
                 # not translate it: a pre-wiring build would get ``data: null``
                 # plus an internal message instead of an ``OperationInfo``.
                 raise PermissionDenied(PERMISSION_DENIED_MESSAGE) from exc
+            # Group membership alone is not authority: the group still has to
+            # carry ``tasks.add``.  The extension this branch replaced checked
+            # exactly this before the resolver ran, so dropping it would let a
+            # customised group without the permission create tasks.
+            if not current_user.has_perm(Task.perms.ADD):
+                raise PermissionDenied(PERMISSION_DENIED_MESSAGE)
             organization = permission_group.organization
 
         # Resolve FK references only after authorizing: ``objects.get()`` raises

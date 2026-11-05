@@ -22,9 +22,14 @@ export function useApplyTasks() {
     ) => {
       const { toCreateTask, toUpdateTask, toDeleteTask } = splitTasks(tasks);
 
-      // Creates need an org to anchor to (none remembered / none to join).  Only
-      // the create loop is gated: an update or delete names its row, so it must
-      // still run when no org is active.
+      // Creates need an org to anchor to (none remembered / none to join).
+      // Reject rather than skip: the caller runs this inside the note save's
+      // try/catch, so throwing surfaces a failure, while resolving discards the
+      // drafts with no signal.  Updates and deletes name their row and still run.
+      if (!activeOrgId && toCreateTask.length > 0) {
+        throw new Error('Cannot create tasks without an active organization.');
+      }
+
       if (activeOrgId) {
         for (const s of toCreateTask) {
           await createTask({

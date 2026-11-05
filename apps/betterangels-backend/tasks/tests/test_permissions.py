@@ -230,20 +230,14 @@ class TaskAssigneeQueryPermissionTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsM
             self.assertEqual(response["data"]["taskAssignees"]["totalCount"], 0)
 
     def test_task_assignees_allows_a_change_only_role(self) -> None:
-        from django.contrib.auth.models import Group, Permission
-        from django.contrib.contenttypes.models import ContentType
+        """CHANGE alone is enough: the picker serves editing, not just creating.
 
+        Granted through the scoped Role, not a legacy ``auth.Group`` — after the
+        cutover a model-level ``has_perm`` alone confers no task authority.
+        """
         user = baker.make(User)
         self.org_1.add_user(user)
-
-        group = Group.objects.create(name="change-only")
-        group.permissions.add(
-            Permission.objects.get(
-                content_type=ContentType.objects.get_for_model(Task),
-                codename="change_task",
-            )
-        )
-        user.groups.add(group)
+        self._grant_permission(user, Task.perms.CHANGE, self.org_1, role_name="Task Changer")
 
         self.graphql_client.force_login(user)
 
