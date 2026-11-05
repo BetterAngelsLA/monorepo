@@ -47,63 +47,79 @@ describe('AuditEventRow', () => {
     expect(screen.queryByText(/street/)).toBeNull();
   });
 
-  it('renders the unchanged slot context of a netted schedule change', () => {
+  it('collapses a schedule slot into one coloured line', () => {
+    render(
+      <AuditEventRow
+        event={makeEvent({
+          action: 'shelter.schedule.add',
+          kind: AuditEventKind.Insert,
+          fieldChanges: {
+            day: [null, 'Thursday'],
+            'end time': [null, '16:00:00'],
+            shelter: [null, 'Gomez Family Sanctuary (id-12)'],
+            'start time': [null, '06:00:00'],
+            'is exception': [null, false],
+            'schedule type': [null, 'Operating Hours'],
+          },
+        })}
+      />,
+    );
+
+    const line = screen.getByText(
+      'Added Operating Hours: Thursday 06:00 - 16:00',
+    );
+
+    // Additions read green; the row no longer prints the id, the shelter name or
+    // a per-column pair whose other side is always null.
+    expect(line.className).toContain('text-success-30');
+    expect(screen.queryByText(/Gomez/)).toBeNull();
+    expect(screen.queryByText(/Schedule \d/)).toBeNull();
+    expect(screen.queryByText(/\u2192/)).toBeNull();
+  });
+
+  it('renders a removal in red', () => {
+    render(
+      <AuditEventRow
+        event={makeEvent({
+          action: 'shelter.schedule.remove',
+          kind: AuditEventKind.Delete,
+          fieldChanges: {
+            day: ['Thursday', null],
+            'end time': ['18:00:00', null],
+            'start time': ['08:00:00', null],
+            'is exception': [false, null],
+            'schedule type': ['Operating Hours', null],
+          },
+        })}
+      />,
+    );
+
+    const line = screen.getByText(
+      'Removed Operating Hours: Thursday 08:00 - 18:00',
+    );
+
+    expect(line.className).toContain('text-alert-60');
+  });
+
+  it('keeps the slot identity and the arrow for a netted time change', () => {
     render(
       <AuditEventRow
         event={makeEvent({
           action: 'shelter.schedule.update',
-          context: { day: 'Monday', 'schedule type': 'Operating Hours' },
-          fieldChanges: { 'start time': ['09:00:00', '10:00:00'] },
+          context: { day: 'Monday', 'schedule type': 'Intake Hours' },
+          fieldChanges: {
+            'start time': ['09:00:00', '10:00:00'],
+            'end time': ['17:00:00', '18:00:00'],
+          },
         })}
       />,
     );
 
     expect(
-      screen.getByText('Day: Monday \u00b7 Schedule type: Operating Hours'),
+      screen.getByText(
+        'Changed Intake Hours: Monday 09:00 - 17:00 \u2192 10:00 - 18:00',
+      ),
     ).not.toBeNull();
-    expect(screen.getByText('Start time:')).not.toBeNull();
-  });
-
-  it('renders "Every day" when the slot context has no day', () => {
-    render(
-      <AuditEventRow
-        event={makeEvent({
-          action: 'shelter.schedule.update',
-          context: { day: null, 'schedule type': 'Operating Hours' },
-          fieldChanges: { 'start time': ['09:00:00', '10:00:00'] },
-        })}
-      />,
-    );
-
-    expect(
-      screen.getByText('Day: Every day \u00b7 Schedule type: Operating Hours'),
-    ).not.toBeNull();
-  });
-
-  it('renders no context line for an event without one', () => {
-    render(
-      <AuditEventRow
-        event={makeEvent({ fieldChanges: { name: ['Bed A', 'Bed B'] } })}
-      />,
-    );
-
-    expect(screen.queryByText(/Day:|\u00b7/)).toBeNull();
-  });
-
-  it('caps a long context value so the line stays one line', () => {
-    render(
-      <AuditEventRow
-        event={makeEvent({
-          action: 'shelter.schedule.update',
-          context: { day: 'Monday', 'schedule type': 'x'.repeat(200) },
-        })}
-      />,
-    );
-
-    const line = screen.getByText(/^Day: Monday/).textContent;
-
-    expect(line?.endsWith('\u2026')).toBe(true);
-    expect(line?.length).toBeLessThan(200);
   });
 
   it('renders field changes when there is no summary', () => {

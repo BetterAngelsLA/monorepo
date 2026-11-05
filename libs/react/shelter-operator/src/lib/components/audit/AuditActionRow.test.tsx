@@ -102,55 +102,6 @@ describe('AuditActionRow', () => {
     expect(screen.queryByText(/shared_storage/)).toBeNull();
   });
 
-  it('shows the schedule slot context on the collapsed card', () => {
-    render(
-      <AuditActionRow
-        action={makeAction({
-          fieldChanges: { 'Schedule 7 start time': ['09:00:00', '10:00:00'] },
-          events: [
-            makeEvent({
-              action: 'shelter.schedule.update',
-              context: { day: 'Monday', 'schedule type': 'Operating Hours' },
-              fieldChanges: { 'start time': ['09:00:00', '10:00:00'] },
-            }),
-          ],
-        })}
-      />,
-    );
-
-    expect(
-      screen.getByText('Day: Monday \u00b7 Schedule type: Operating Hours'),
-    ).not.toBeNull();
-  });
-
-  it('shows a line per slot when an action nets several schedule slots', () => {
-    render(
-      <AuditActionRow
-        action={makeAction({
-          events: [
-            makeEvent({
-              action: 'shelter.schedule.update',
-              context: { day: 'Monday', 'schedule type': 'Operating Hours' },
-              fieldChanges: { 'start time': ['09:00:00', '10:00:00'] },
-            }),
-            makeEvent({
-              action: 'shelter.schedule.update',
-              context: { day: 'Tuesday', 'schedule type': 'Operating Hours' },
-              fieldChanges: { 'start time': ['09:00:00', '10:00:00'] },
-            }),
-          ],
-        })}
-      />,
-    );
-
-    expect(
-      screen.getByText('Day: Monday \u00b7 Schedule type: Operating Hours'),
-    ).not.toBeNull();
-    expect(
-      screen.getByText('Day: Tuesday \u00b7 Schedule type: Operating Hours'),
-    ).not.toBeNull();
-  });
-
   it('keeps event rows in the expanded details', () => {
     render(
       <AuditActionRow
@@ -180,80 +131,91 @@ describe('AuditActionRow', () => {
     expect(document.getElementById(controls as string)).not.toBeNull();
   });
 
-  it('curates the schedule default on the collapsed card', () => {
-    // Payload shape copied from a schedule create on a shelter log: the
-    // action-level keys are qualified, so the rule has to match by suffix.
+  it('renders one line per schedule slot instead of a column-per-field diff', () => {
     render(
       <AuditActionRow
         action={makeAction({
           fieldChanges: {
-            'Schedule 209 day': [null, 'Monday'],
-            'Schedule 209 end time': [null, '10:00:00'],
-            'Schedule 209 is exception': [null, false],
-            'Schedule 209 start time': [null, '09:00:00'],
+            'Schedule 204 day': [null, 'Thursday'],
+            'Schedule 204 end time': [null, '16:00:00'],
+            'Schedule 204 is exception': [null, false],
+            'Schedule 204 shelter': [null, 'Gomez Family Sanctuary (id-12)'],
+            'Schedule 204 start time': [null, '06:00:00'],
+            'Schedule 204 schedule type': [null, 'Operating Hours'],
+            'Schedule 176 day': ['Thursday', null],
+            'Schedule 176 end time': ['18:00:00', null],
+            'Schedule 176 start time': ['08:00:00', null],
+            'Schedule 176 schedule type': ['Operating Hours', null],
           },
           events: [
             makeEvent({
               action: 'shelter.schedule.add',
-              context: { day: 'Monday', 'schedule type': 'Operating Hours' },
+              kind: AuditEventKind.Insert,
+              fieldChanges: {
+                day: [null, 'Thursday'],
+                'end time': [null, '16:00:00'],
+                'start time': [null, '06:00:00'],
+                'schedule type': [null, 'Operating Hours'],
+              },
+            }),
+            makeEvent({
+              action: 'shelter.schedule.remove',
+              kind: AuditEventKind.Delete,
+              fieldChanges: {
+                day: ['Thursday', null],
+                'end time': ['18:00:00', null],
+                'start time': ['08:00:00', null],
+                'schedule type': ['Operating Hours', null],
+              },
             }),
           ],
         })}
       />,
     );
 
-    expect(screen.queryByText(/is exception/i)).toBeNull();
-    expect(screen.getByText('Schedule 209 start time:')).not.toBeNull();
+    // Removals first, then additions: what was there, then what is there now.
+    const lines = screen.getAllByText(/^(Added|Removed) Operating Hours/);
+
+    expect(lines.map((line) => line.textContent)).toEqual([
+      'Removed Operating Hours: Thursday 08:00 - 18:00',
+      'Added Operating Hours: Thursday 06:00 - 16:00',
+    ]);
+    expect(lines[0].className).toContain('text-alert-60');
+    expect(lines[1].className).toContain('text-success-30');
+    // No row id, no shelter name, no one-sided pairs.
+    expect(screen.queryByText(/Schedule 204/)).toBeNull();
+    expect(screen.queryByText(/Gomez/)).toBeNull();
+    expect(screen.queryByText(/\u2192/)).toBeNull();
   });
 
-  it('keeps a real is exception change on the card', () => {
+  it('keeps non-schedule changes on a card that also replaces slots', () => {
     render(
       <AuditActionRow
         action={makeAction({
-          fieldChanges: { 'Schedule 209 is exception': [false, true] },
-          events: [makeEvent({ action: 'shelter.schedule.update' })],
-        })}
-      />,
-    );
-
-    expect(screen.getByText('Schedule 209 is exception:')).not.toBeNull();
-  });
-
-  it('shows one line when several slots share the same context', () => {
-    const context = { day: 'Monday', 'schedule type': 'Operating Hours' };
-
-    render(
-      <AuditActionRow
-        action={makeAction({
-          events: [
-            makeEvent({ action: 'shelter.schedule.update', context }),
-            makeEvent({ action: 'shelter.schedule.update', context }),
-          ],
-        })}
-      />,
-    );
-
-    expect(
-      screen.getAllByText('Day: Monday \u00b7 Schedule type: Operating Hours'),
-    ).toHaveLength(1);
-  });
-
-  it('renders no empty context block when a context has nothing to show', () => {
-    const { container } = render(
-      <AuditActionRow
-        action={makeAction({
-          // A context whose only entry has no fallback copy renders nothing; the
-          // card must not leave the wrapper's spacing behind.
+          fieldChanges: {
+            name: ['Old Name', 'New Name'],
+            'Schedule 204 start time': [null, '06:00:00'],
+          },
           events: [
             makeEvent({
-              action: 'shelter.schedule.update',
-              context: { condition: null },
+              action: 'shelter.schedule.add',
+              kind: AuditEventKind.Insert,
+              fieldChanges: {
+                day: [null, 'Thursday'],
+                'start time': [null, '06:00:00'],
+                'end time': [null, '16:00:00'],
+                'schedule type': [null, 'Operating Hours'],
+              },
             }),
           ],
         })}
       />,
     );
 
-    expect(container.querySelector('.mt-3')).toBeNull();
+    expect(screen.getByText('Name:')).not.toBeNull();
+    expect(
+      screen.getByText('Added Operating Hours: Thursday 06:00 - 16:00'),
+    ).not.toBeNull();
+    expect(screen.queryByText(/Schedule 204/)).toBeNull();
   });
 });

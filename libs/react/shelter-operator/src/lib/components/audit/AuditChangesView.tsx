@@ -2,7 +2,6 @@ import { mergeCss } from '@monorepo/react/shared';
 import type { ReactNode } from 'react';
 import { Text } from '../base-ui/text/text';
 import {
-  displayOptionsForAction,
   formatFieldValue,
   parseFieldChanges,
   truncateValue,
@@ -95,15 +94,12 @@ function renderChange(change: AuditChange): ReactNode {
  */
 export function AuditChangesView({
   value,
-  actionKey,
   className,
 }: {
   value: unknown;
-  /** The event's action label (`shelter.schedule.update`); selects display rules. */
-  actionKey?: string;
   className?: string;
 }) {
-  const changes = parseFieldChanges(value, displayOptionsForAction(actionKey));
+  const changes = parseFieldChanges(value);
 
   if (changes.length === 0) {
     return null;

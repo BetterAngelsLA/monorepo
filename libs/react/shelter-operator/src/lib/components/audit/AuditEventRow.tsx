@@ -2,8 +2,9 @@ import { AuditEventKind } from '@monorepo/ba-platform/types';
 import { mergeCss } from '@monorepo/react/shared';
 import type { AuditEvent } from '../../hooks';
 import { AuditChangesView } from './AuditChangesView';
-import { AuditEventContext } from './AuditEventContext';
+import { AuditScheduleEvent } from './AuditScheduleEvent';
 import { humanizeAction } from './auditChanges';
+import { formatScheduleEvent } from './auditSchedule';
 import {
   formatAuditTimestamp,
   formatAuditTimestampAbsolute,
@@ -28,6 +29,26 @@ const KIND_META: Record<AuditEventKind, { label: string; className: string }> =
 
 /** One low-level event within a grouped action. */
 export function AuditEventRow({ event }: { event: AuditEvent }) {
+  // A schedule slot has no readable field-by-field diff: the save replaces the
+  // row, so one side of every pair is null. It renders as a single line instead,
+  // with the direction and colour carrying the operation.
+  const scheduleLine = formatScheduleEvent(event);
+
+  if (scheduleLine) {
+    return (
+      <div className="flex flex-wrap items-baseline gap-2 border-l-2 border-neutral-90 py-2 pl-4">
+        <AuditScheduleEvent line={scheduleLine} />
+        <Text
+          variant="caption"
+          textColor="text-neutral-50"
+          title={formatAuditTimestampAbsolute(event.timestamp)}
+        >
+          {formatAuditTimestamp(event.timestamp)}
+        </Text>
+      </div>
+    );
+  }
+
   // Defensive fallback for a backend that adds an event kind before this client
   // is regenerated: `KIND_META` is exhaustive over the generated enum, so the
   // typed cases cannot reach it, but an unknown wire value can.
@@ -61,11 +82,7 @@ export function AuditEventRow({ event }: { event: AuditEvent }) {
         </Text>
       </div>
 
-      <AuditEventContext context={event.context} />
-
-      {!event.summary && (
-        <AuditChangesView value={event.fieldChanges} actionKey={event.action} />
-      )}
+      {!event.summary && <AuditChangesView value={event.fieldChanges} />}
     </div>
   );
 }

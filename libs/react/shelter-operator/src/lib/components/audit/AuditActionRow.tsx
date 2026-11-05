@@ -4,11 +4,12 @@ import { useId, useMemo, useState } from 'react';
 import type { AuditAction } from '../../hooks';
 import { AuditEventRow } from './AuditEventRow';
 import { AuditChangesView } from './AuditChangesView';
+import { AuditScheduleEvent } from './AuditScheduleEvent';
 import {
-  AuditEventContext,
-  formatAuditEventContext,
-} from './AuditEventContext';
-import { subjectActionFor } from './auditChanges';
+  formatScheduleEvent,
+  withoutScheduleChanges,
+  type ScheduleChangeTone,
+} from './auditSchedule';
 import {
   formatAuditTimestamp,
   formatAuditTimestampAbsolute,
@@ -22,34 +23,57 @@ import { Text } from '../base-ui/text/text';
  * server capped a bulk action's event list); until it lands a capped bulk action
  * renders only the rows the server returned.
  */
+
+/**
+ * Removals first, then netted changes, then additions: a replaced slot set reads
+ * as what was there and then what is there now, the order the field-change view
+ * already uses for its own Removed/Added pairs.
+ */
+const TONE_ORDER: Record<ScheduleChangeTone, number> = {
+  removed: 0,
+  changed: 1,
+  added: 2,
+};
+
 export function AuditActionRow({ action }: { action: AuditAction }) {
   const [expanded, setExpanded] = useState(false);
   const detailsId = useId();
   const hasEvents = action.events.length > 0;
 
-  // The merged action-level changes belong to one subject; use its action for
-  // schedule-specific display options. Its keys are qualified per row
-  // (`Schedule 209 start time`), which `parseFieldChanges` matches by suffix.
-  const subjectAction = subjectActionFor(action);
+  // A schedule save replaces the slot set, so its rows render as one line each
+  // instead of a column-by-column diff whose every pair has a null side. The same
+  // lines replace the merged changes those rows contributed to the card.
+  const scheduleLines = useMemo(
+    () =>
+      action.events
+        .map((event, index) => ({
+          index,
+          line: formatScheduleEvent(event),
+        }))
+        .filter(
+          (
+            entry,
+          ): entry is {
+            index: number;
+            line: NonNullable<ReturnType<typeof formatScheduleEvent>>;
+          } => entry.line !== null,
+        )
+        .sort(
+          (a, b) =>
+            TONE_ORDER[a.line.tone] - TONE_ORDER[b.line.tone] ||
+            a.index - b.index,
+        )
+        .map((entry) => entry.line),
+    [action.events],
+  );
 
-  // A netted schedule change carries the slot's unchanged identity (day/type) in
-  // `context`. One action can cover several slots (Mon–Fri hours), so show each
-  // distinct line rather than only the first. Keying on the rendered line also
-  // drops events whose context has nothing to show, so an unrenderable context
-  // cannot leave an empty gap in the card.
-  const contexts = useMemo(() => {
-    const byLine = new Map<string, unknown>();
-
-    for (const event of action.events) {
-      const line = formatAuditEventContext(event.context);
-
-      if (line !== null && !byLine.has(line)) {
-        byLine.set(line, event.context);
-      }
-    }
-
-    return Array.from(byLine);
-  }, [action.events]);
+  const otherChanges = useMemo(
+    () =>
+      scheduleLines.length > 0
+        ? withoutScheduleChanges(action.fieldChanges)
+        : action.fieldChanges,
+    [action.fieldChanges, scheduleLines.length],
+  );
 
   // Summarized events (§32) are one-liners, not field changes: a shelter action
   // that only touches a bed would otherwise render an empty card body.
@@ -108,19 +132,15 @@ export function AuditActionRow({ action }: { action: AuditAction }) {
         </div>
       )}
 
-      {contexts.length > 0 && (
+      {scheduleLines.length > 0 && (
         <div className="mt-3 flex flex-col gap-1">
-          {contexts.map(([line, context]) => (
-            <AuditEventContext key={line} context={context} />
+          {scheduleLines.map((line, index) => (
+            <AuditScheduleEvent key={`${index}-${line.text}`} line={line} />
           ))}
         </div>
       )}
 
-      <AuditChangesView
-        value={action.fieldChanges}
-        actionKey={subjectAction}
-        className="mt-3"
-      />
+      <AuditChangesView value={otherChanges} className="mt-3" />
 
       {expanded && hasEvents && (
         <div id={detailsId} className="mt-2 flex flex-col">
