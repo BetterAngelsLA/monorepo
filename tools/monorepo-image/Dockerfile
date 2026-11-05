@@ -6,7 +6,7 @@
 #
 # `-slim-trixie`, not `trixie`: the full image is buildpack-deps, which exists to
 # compile CPython. This image only installs wheels.
-FROM python:3.14.8-slim-trixie AS slim-base
+FROM python:3.15.0-slim-trixie AS slim-base
 
 ENV PYTHONUNBUFFERED=1
 RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,type=cache \
