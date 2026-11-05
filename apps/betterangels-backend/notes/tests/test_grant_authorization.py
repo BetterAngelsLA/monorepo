@@ -14,7 +14,6 @@ the cutover posture:
 * a write needs the *exact* permission — ADD alone does not change or delete;
 * the org travels in the payload and unknown/malformed orgs fail closed;
 * a detached service request fails closed on delete;
-* the compat window keeps pre-payload builds creating via the legacy group;
 * the global tier still passes.
 """
 
@@ -349,38 +348,6 @@ class NoteGrantAuthorityDeniedTestCase(_NoteGrantHelpers, NoteGraphQLBaseTestCas
         self.assertGraphQLOperationInfo(
             foreign_delete, "deleteNote", DELETE_NOTE_DENIED_MESSAGE, kind="PERMISSION", exact=True
         )
-
-
-class NoteCreateCompatWindowTestCase(_NoteGrantHelpers, NoteGraphQLBaseTestCase):
-    """Builds that predate the payload organization still create via the legacy group.
-
-    The compat window keeps released binaries working while the app build
-    sending ``organizationId`` ships; the strict flip removes both the fallback
-    and these tests.
-    """
-
-    def setUp(self) -> None:
-        super().setUp()
-        sync_roles()
-
-    def test_pre_payload_build_creates_via_the_legacy_caseworker_group(self) -> None:
-        self.graphql_client.force_login(self.org_1_case_manager_1)
-
-        response = self._create_note_fixture({"purpose": "legacy client note"})
-        self.assertIsNone(response.get("errors"))
-
-        note = Note.objects.get(pk=response["data"]["createNote"]["id"])
-        self.assertEqual(note.organization_id, self.org_1.pk)
-
-    def test_pre_payload_build_without_a_caseworker_group_is_refused(self) -> None:
-        member = baker.make(User)
-        self.org_1.add_user(member)
-        self.graphql_client.force_login(member)
-
-        note_count = Note.objects.count()
-        response = self._create_note_fixture({"purpose": "should not appear"})
-        self.assertGraphQLOperationInfo(response, "createNote", PERMISSION_DENIED_MESSAGE, kind="PERMISSION")
-        self.assertEqual(Note.objects.count(), note_count)
 
 
 class NoteTaskDiffTestCase(_NoteGrantHelpers, NoteGraphQLBaseTestCase):

@@ -24,9 +24,9 @@ from common.graphql.types import (
     DeleteDjangoObjectInput,
     DeletedObjectType,
 )
-from common.graphql.utils import resolve_create_org
+from common.graphql.utils import org_or_deny
 from common.permissions.selectors import writable
-from common.permissions.utils import IsAuthenticated, get_writable_or_deny
+from common.permissions.utils import IsAuthenticated, get_writable_or_deny, require_can
 from common.services.types import UploadConfirmation, UploadRequest
 from common.utils import get_or_none
 from notes.groups import CASEWORKER
@@ -148,13 +148,9 @@ class Mutation:
             tasks=tasks_list,
         )
 
-        organization, permission_group = resolve_create_org(
-            user, data.organization_id, template=CASEWORKER, perm=NotePermissions.ADD
-        )
-        if permission_group is None:
-            note = note_create(organization=organization, **note_kwargs)
-        else:
-            note = note_create(permission_group=permission_group, **note_kwargs)
+        organization = org_or_deny(data.organization_id)
+        require_can(user, NotePermissions.ADD, org=organization)
+        note = note_create(organization=organization, **note_kwargs)
 
         note._private_details = note.private_details
 

@@ -31,10 +31,7 @@ QUERY_AUTHZ_ROUTES: dict[str, str] = {
 
 # mutation -> where authorization happens for that write.
 MUTATION_AUTHZ_ROUTES: dict[str, str] = {
-    "create_note": (
-        "resolver -> org_or_deny(organizationId) + require_can(ADD, org); "
-        "legacy-group fallback while pre-payload builds exist"
-    ),
+    "create_note": ("resolver -> org_or_deny(organizationId) + require_can(ADD, org)"),
     "update_note": "resolver -> get_writable_or_deny(CHANGE, row)",
     "update_note_location": "resolver -> get_writable_or_deny(CHANGE, row)",
     "revert_note": "resolver -> get_writable_or_deny(CHANGE, row)",
