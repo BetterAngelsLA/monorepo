@@ -9,7 +9,7 @@ from strawberry_django.auth.utils import get_current_user
 from strawberry_django.pagination import OffsetPaginated
 from strawberry_django.permissions import HasPerm
 
-from accounts.models import User
+from accounts.models import PermissionGroup, User
 from accounts.selectors import resolve_permission_group
 from clients.models import ClientProfile
 from common.constants import HMIS_SESSION_KEY_NAME
@@ -90,20 +90,12 @@ class Mutation:
         if hmis_client_profile_id := task_data.pop("hmis_client_profile", None):
             hmis_client_profile = HmisClientProfile.objects.get(pk=str(hmis_client_profile_id))
 
+        permission_group: Optional[PermissionGroup] = None
+
         if organization_id is not None and organization_id is not UNSET:
             # Payload-scoped grant authority (ADR 0001 §5, RFC 0003 slice 1).
             organization = org_or_deny(organization_id)
             require_can(current_user, Task.perms.ADD, org=organization)
-
-            tasks = task_create(
-                user=current_user,
-                organization=organization,
-                data=[task_data],
-                note=note,
-                hmis_note=hmis_note,
-                client_profile=client_profile,
-                hmis_client_profile=hmis_client_profile,
-            )
         else:
             # Compat window: a build that predates the payload org creates
             # through its legacy ``CASEWORKER`` group — the org comes from the
@@ -117,7 +109,27 @@ class Mutation:
                 # would get ``data: null`` plus an internal message instead of the
                 # ``OperationInfo`` it knows how to read.
                 raise PermissionDenied(PERMISSION_DENIED_MESSAGE) from exc
+            organization = permission_group.organization
 
+        # A task may only attach a note from its own org: tasks are readable
+        # agency-wide, so a foreign link would plant a task on another org's
+        # note.  The other parents carry no tenant — client profiles are
+        # platform-shared and HMIS notes have no organization — so ``note`` is
+        # the only one with an org to check.
+        if note is not None and note.organization_id != organization.pk:
+            raise PermissionDenied(PERMISSION_DENIED_MESSAGE)
+
+        if permission_group is None:
+            tasks = task_create(
+                user=current_user,
+                organization=organization,
+                data=[task_data],
+                note=note,
+                hmis_note=hmis_note,
+                client_profile=client_profile,
+                hmis_client_profile=hmis_client_profile,
+            )
+        else:
             tasks = task_create_legacy(
                 user=current_user,
                 permission_group=permission_group,

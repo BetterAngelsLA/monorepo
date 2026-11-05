@@ -21,6 +21,11 @@ CLIENT_FAMILY_PERMS = [
     for perm in (model.perms.ADD, model.perms.CHANGE, model.perms.DELETE, model.perms.VIEW)
 ]
 
+# The task bundle (RFC 0003 slice 1), shared by the legacy template and the
+# scoped Role so the template stays the Role's superset by construction rather
+# than by two hand-maintained lists that can drift.
+TASK_PERMS = [Task.perms.ADD, Task.perms.VIEW, Task.perms.CHANGE, Task.perms.DELETE]
+
 CASEWORKER = TemplateConfig(
     name="Caseworker",
     permissions=[
@@ -31,12 +36,8 @@ CASEWORKER = TemplateConfig(
         ServiceRequest.perms.ADD,
         # Client models: full CRUD
         *CLIENT_FAMILY_PERMS,
-        # Task: ADD + VIEW; CHANGE/DELETE ride the org-scoped Role (RFC 0003
-        # slice 1) and are listed here so the template stays the Role's superset.
-        Task.perms.ADD,
-        Task.perms.VIEW,
-        Task.perms.CHANGE,
-        Task.perms.DELETE,
+        # Task bundle — CHANGE/DELETE ride the org-scoped Role (RFC 0003).
+        *TASK_PERMS,
         # Attachment: ADD + VIEW
         Attachment.perms.ADD,
         Attachment.perms.VIEW,
@@ -60,10 +61,7 @@ CASEWORKER_ROLE = RoleDef(
         Team.perms.VIEW,
         # Task slice — RFC 0003 slice 1: org-scoped writes via ``can_obj``,
         # reads SHARED (the ``can_anywhere`` checker).
-        Task.perms.ADD,
-        Task.perms.VIEW,
-        Task.perms.CHANGE,
-        Task.perms.DELETE,
+        *TASK_PERMS,
         # Client family — the RFC 0002 cutover bundle.
         *CLIENT_FAMILY_PERMS,
         # Referrals ride the same scoped Role (RFC 0003 / #2574).

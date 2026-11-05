@@ -187,6 +187,29 @@ class TaskGrantAuthorityDeniedTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixi
         read = self.task_query(self.task.pk)
         self.assertIn("errors", read)
 
+    def test_create_task_refuses_a_note_from_another_org(self) -> None:
+        """The task's parents have to belong to the task's org.
+
+        Reads are agency-wide, so attaching a foreign note would plant a task on
+        another org's note.  Client profiles are platform-shared and HMIS notes
+        carry no org — the note is the only parent with a tenant to check.
+        """
+        foreign_note = baker.make(Note, organization=self.org_2)
+        self._login(self.org_1_case_manager_1)
+
+        initial_count = Task.objects.count()
+        created = self.create_task_fixture({"summary": "cross-org", "note": str(foreign_note.pk)})
+        self.assertGraphQLOperationInfo(created, "createTask", PERMISSION_DENIED_MESSAGE, kind="PERMISSION")
+        self.assertEqual(Task.objects.count(), initial_count)
+
+    def test_create_task_allows_a_note_from_the_same_org(self) -> None:
+        own_note = baker.make(Note, organization=self.org_1)
+        self._login(self.org_1_case_manager_1)
+
+        created = self.create_task_fixture({"summary": "same org", "note": str(own_note.pk)})
+        self.assertIsNone(created.get("errors"))
+        self.assertEqual(Task.objects.get(pk=created["data"]["createTask"]["id"]).note_id, own_note.pk)
+
     def test_grant_holder_with_only_add_cannot_update_or_delete(self) -> None:
         """Mutations thread the exact permission: CHANGE/DELETE, not just ADD."""
         add_only = baker.make(User)
@@ -362,6 +385,9 @@ class NestedNoteTaskAuthorityTestCase(GraphQLBaseTestCase):
 
     def test_note_update_refuses_nested_task_create_without_the_grant(self) -> None:
         note = baker.make(Note, organization=self.org_1)
+        # Seed a row so the replace-all delete half is exercised, not just create.
+        existing = baker.make(Task, organization=self.org_1, summary="already on the note")
+        note.tasks.add(existing)
         # A leftover legacy group member: can reach the note, holds no Grant.
         stranger = make_legacy_only_holder(organization=self.org_1, template_name="Caseworker", user=baker.make(User))
         permission_group = resolve_permission_group(stranger, template=CASEWORKER)
@@ -374,7 +400,30 @@ class NestedNoteTaskAuthorityTestCase(GraphQLBaseTestCase):
                 permission_group=permission_group,
             )
 
-        self.assertFalse(note.tasks.exists())
+        # The refused replace-all rolled back: the seeded task survives.
+        self.assertTrue(note.tasks.filter(pk=existing.pk).exists())
+        self.assertEqual(note.tasks.count(), 1)
+
+    def test_note_update_requires_delete_to_replace_existing_tasks(self) -> None:
+        """Replace-all is a delete: ``tasks.add`` alone must not wipe the list."""
+        note = baker.make(Note, organization=self.org_1)
+        existing = baker.make(Task, organization=self.org_1, summary="already on the note")
+        note.tasks.add(existing)
+
+        add_only = baker.make(User)
+        self.org_1.add_user(add_only)
+        self._grant_permission(add_only, Task.perms.ADD, self.org_1, role_name="Note Task Adder")
+        permission_group = resolve_permission_group(self.org_1_case_manager_1, template=CASEWORKER)
+
+        with self.assertRaises(PermissionDenied):
+            note_update(
+                note=note,
+                data={"tasks": [{"summary": "replacement"}]},
+                user=add_only,
+                permission_group=permission_group,
+            )
+
+        self.assertTrue(note.tasks.filter(pk=existing.pk).exists())
 
     def test_note_update_still_creates_nested_tasks_for_a_grant_holder(self) -> None:
         note = baker.make(Note, organization=self.org_1)
