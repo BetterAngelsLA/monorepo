@@ -40,7 +40,7 @@ The org always travels in the **payload**: query filters and mutation inputs car
 
 `common/permissions/utils.py`:
 
-- `require_can(user, perm, org=…)` — the write gate: raises `PermissionDenied(PERMISSION_DENIED_MESSAGE)` when `can()` is false.  Creates carry an explicit target org and are authorized by `can()`; `can()` never implies the org exists, so resolvers validate the org first (the `_org_or_deny` pattern).
+- `require_can(user, perm, org=…)` — the write gate: raises `PermissionDenied(PERMISSION_DENIED_MESSAGE)` when `can()` is false.  Creates carry an explicit target org and are authorized by `can()`; `can()` never implies the org exists, so resolvers validate the org first (`org_or_deny`, `common/graphql/utils.py`).
 - `IsAuthenticated` — the custom strawberry permission class (raises `UnauthenticatedGQLError`).
 
 The old `HasOrgPerm` extension and the `permissioned_queryset()` / `perm_filter()` / `_perm_q()` helpers are **deleted** — org-scoped surfaces authorize through the selectors above.
