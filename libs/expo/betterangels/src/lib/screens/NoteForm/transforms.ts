@@ -45,6 +45,10 @@ export function buildNotePayload(
   }
   if (include('tasks')) {
     payload.tasks = form.tasks.map((task) => ({
+      // Existing tasks carry their id so the backend can diff instead of
+      // delete-and-recreate the whole list (it falls back to replace-all when
+      // no ids are sent).
+      id: task.id ?? undefined,
       summary: task.summary || '',
       description: task.description || undefined,
       status: task.status != null ? TASK_STATUS_TO_INT[task.status] : undefined,

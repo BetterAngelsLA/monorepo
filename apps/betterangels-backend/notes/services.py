@@ -3,15 +3,17 @@ from typing import Any, Dict, Iterable, List, Optional, cast
 
 import pghistory
 from django.conf import settings
+from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.utils import timezone
 from organizations.models import Organization
+from strawberry import UNSET
 
 from accounts.models import PermissionGroup, User
 from clients.models import ClientProfile
 from common.constants import DEFAULT_DOCUMENT_CONTENT_TYPES, DEFAULT_IMAGE_CONTENT_TYPES
 from common.models import Attachment, Location
-from common.permissions.utils import assign_object_permissions, require_can
+from common.permissions.utils import PERMISSION_DENIED_MESSAGE, assign_object_permissions, require_can
 from common.services import file_upload
 from common.services.file_upload import (
     AttachmentUploadConfig,
@@ -27,7 +29,7 @@ from notes.permissions import (
     ServiceRequestPermissions,
 )
 from tasks.models import Task
-from tasks.services import task_create
+from tasks.services import task_create, task_delete, task_update
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -55,6 +57,72 @@ def _resolve_service(
 # ---------------------------------------------------------------------------
 # Note
 # ---------------------------------------------------------------------------
+
+
+#: Fields a note's task list may clear by sending an explicit null.  Everything
+#: else is left alone when the payload omits it — the mutation is a patch, and
+#: it must not null a required column just because a caller sent a partial item.
+_TASK_CLEARABLE_FIELDS = frozenset({"team_id", "assignee_id"})
+
+
+def _task_update_fields(item: Dict[str, Any]) -> Dict[str, Any]:
+    """The fields of one payload item that an in-place update should apply."""
+    return {
+        key: value
+        for key, value in item.items()
+        if key != "id" and value is not UNSET and (value is not None or key in _TASK_CLEARABLE_FIELDS)
+    }
+
+
+def _sync_note_tasks(*, note: Note, tasks_data: List[Dict[str, Any]], user: User) -> None:
+    """Reconcile a note's task list with the payload, asking for the exact authority.
+
+    A task is a task whatever path it arrives on: the note gate is not a
+    substitute for ``tasks.add``/``change``/``delete`` (RFC 0003).  Items
+    carrying ``id`` are updated in place, items without one are created, and the
+    note's tasks the payload no longer names are deleted — each arm gated by its
+    own permission at the note's org.
+
+    A payload with **no** ids is a legacy replace-all (a build that predates the
+    id field sends the whole list anonymous): every existing task is deleted and
+    the list recreated, which is the pre-diff behaviour.
+
+    An id that is not on this note refuses: it would otherwise let a caller
+    update or delete another note's task through this mutation.
+    """
+    existing = {str(pk): task for pk, task in ((t.pk, t) for t in note.tasks.all())}
+    incoming = [dict(item) for item in tasks_data]
+    referenced = {str(item["id"]) for item in incoming if item.get("id")}
+
+    if referenced - existing.keys():
+        # Not on this note — a foreign id, or one that no longer exists.
+        raise PermissionDenied(PERMISSION_DENIED_MESSAGE)
+
+    to_update = [item for item in incoming if item.get("id")]
+    to_create = [item for item in incoming if not item.get("id")]
+    to_delete = [pk for pk in existing if pk not in referenced]
+
+    if to_delete:
+        require_can(user, Task.perms.DELETE, org=note.organization)
+    if to_update:
+        require_can(user, Task.perms.CHANGE, org=note.organization)
+    if to_create:
+        require_can(user, Task.perms.ADD, org=note.organization)
+
+    for pk in to_delete:
+        task_delete(task=existing[pk])
+
+    for item in to_update:
+        task_update(task=existing[str(item["id"])], data=_task_update_fields(item))
+
+    if to_create:
+        task_create(
+            user=user,
+            organization=note.organization,
+            data=[{key: value for key, value in item.items() if key != "id"} for item in to_create],
+            note=note,
+            client_profile=note.client_profile,
+        )
 
 
 @transaction.atomic
@@ -120,26 +188,9 @@ def note_update(
                     sr_type=ServiceRequestTypeEnum.REQUESTED,
                 )
 
-        # --- Tasks (replace-all) ---
+        # --- Tasks (diff by id; legacy payloads replace all) ---
         if tasks_data is not None and user and (permission_group or organization):
-            # A task is a task whatever path it arrives on.  Replace-all is a
-            # delete followed by a create, so it asks for exactly the authority
-            # the flat ``deleteTask``/``createTask`` mutations ask for — the
-            # note gate is not a substitute (RFC 0003).
-            if note.tasks.exists():
-                require_can(user, Task.perms.DELETE, org=note.organization)
-            if tasks_data:
-                require_can(user, Task.perms.ADD, org=note.organization)
-
-            note.tasks.all().delete()
-            if tasks_data:
-                task_create(
-                    user=user,
-                    organization=note.organization,
-                    data=tasks_data,
-                    note=note,
-                    client_profile=note.client_profile,
-                )
+            _sync_note_tasks(note=note, tasks_data=tasks_data, user=user)
 
     return note
 

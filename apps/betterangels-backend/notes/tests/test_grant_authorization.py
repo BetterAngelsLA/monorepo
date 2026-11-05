@@ -30,6 +30,7 @@ from common.tests.utils import make_legacy_only_holder
 from notes.groups import CASEWORKER
 from notes.models import Note, ServiceRequest
 from notes.tests.utils import NoteGraphQLBaseTestCase
+from tasks.models import Task
 
 ORG_DENIED_MESSAGE = "You do not have access to this organization."
 DELETE_NOTE_DENIED_MESSAGE = "You do not have permission to delete this interaction."
@@ -384,3 +385,54 @@ class NoteCreateCompatWindowTestCase(_NoteGrantHelpers, NoteGraphQLBaseTestCase)
         response = self._create_note_fixture({"purpose": "should not appear"})
         self.assertGraphQLOperationInfo(response, "createNote", PERMISSION_DENIED_MESSAGE, kind="PERMISSION")
         self.assertEqual(Note.objects.count(), note_count)
+
+
+class NoteTaskDiffTestCase(_NoteGrantHelpers, NoteGraphQLBaseTestCase):
+    """``updateNote`` diffs its task list by id when the client sends ids.
+
+    Without ids the mutation keeps the legacy replace-all — every task deleted
+    and recreated — because that is what a build predating the ``id`` field
+    sends.  The difference between the two paths is what these tests pin.
+    """
+
+    def setUp(self) -> None:
+        super().setUp()
+        sync_roles()
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+    def _tasks(self, note_id: Any) -> list[Task]:
+        return list(Note.objects.get(pk=note_id).tasks.order_by("pk"))
+
+    def _update_tasks(self, note_id: Any, tasks: list[Dict[str, Any]]) -> Dict[str, Any]:
+        return self._update_note_fixture({"id": str(note_id), "tasks": tasks})
+
+    def test_id_bearing_payload_updates_in_place_and_diffs_the_rest(self) -> None:
+        note_id = self.note["id"]
+        self.assertIsNone(self._update_tasks(note_id, [{"summary": "keep"}, {"summary": "drop"}]).get("errors"))
+        kept, dropped = self._tasks(note_id)
+
+        updated = self._update_tasks(
+            note_id,
+            [{"id": str(kept.pk), "summary": "renamed in place"}, {"summary": "brand new"}],
+        )
+        self.assertIsNone(updated.get("errors"))
+
+        after = self._tasks(note_id)
+        self.assertEqual(len(after), 2)
+        self.assertIn(kept.pk, [task.pk for task in after])
+        self.assertEqual(Task.objects.get(pk=kept.pk).summary, "renamed in place")
+        self.assertFalse(Task.objects.filter(pk=dropped.pk).exists())
+        self.assertIn("brand new", [task.summary for task in after])
+
+    def test_task_id_from_another_note_is_refused(self) -> None:
+        other = self._create_note_fixture(self._create_payload(purpose="another note"))["data"]["createNote"]
+        self._update_tasks(other["id"], [{"summary": "other note task"}])
+        foreign = self._tasks(other["id"])[0]
+
+        response = self._update_tasks(self.note["id"], [{"id": str(foreign.pk), "summary": "hijacked"}])
+
+        self.assertEqual(
+            response["data"]["updateNote"]["messages"][0],
+            {"kind": "PERMISSION", "field": None, "message": PERMISSION_DENIED_MESSAGE},
+        )
+        self.assertEqual(Task.objects.get(pk=foreign.pk).summary, "other note task")

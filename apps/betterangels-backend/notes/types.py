@@ -201,8 +201,14 @@ class CreateNoteServiceInput:
 
 @strawberry.input
 class CreateNoteTaskInput:
-    """A task to create and attach to the note."""
+    """A task to create, or — when ``id`` is set — to update on the note.
 
+    Omitting ``id`` creates.  A payload with no ids at all is a legacy
+    replace-all: older builds send the whole list without ids, so the note's
+    tasks are still deleted and recreated for them.
+    """
+
+    id: Optional[ID] = None
     summary: str
     description: Optional[str] = None
     status: Optional[int] = None  # Task.Status int choices (0=TO_DO, 1=IN_PROGRESS, 2=COMPLETED)

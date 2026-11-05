@@ -729,6 +729,7 @@ export type CreateNoteServiceRequestPayload = OperationInfo | ServiceRequestType
 export type CreateNoteTaskInput = {
   assigneeId?: InputMaybe<Scalars['ID']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<Scalars['ID']['input']>;
   status?: InputMaybe<Scalars['Int']['input']>;
   summary: Scalars['String']['input'];
   teamId?: InputMaybe<Scalars['ID']['input']>;
