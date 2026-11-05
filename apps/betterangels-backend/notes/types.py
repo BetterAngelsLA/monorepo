@@ -278,7 +278,10 @@ class CreateNoteInput:
     # Optional during the compat window — a build that predates the payload
     # org falls back to the legacy caseworker group; the strict flip makes it
     # required again.
-    organization_id: Optional[ID] = None
+    # The acting org (ADR 0001 §5, RFC 0003 slice 2): authority is ``require_can``
+    # at this org.  Required since the strict flip — a released build that omits
+    # it fails GraphQL input coercion before any resolver runs.
+    organization_id: ID
 
     # Nested relations
     location: Optional[LocationInput] = None
