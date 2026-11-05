@@ -20,3 +20,6 @@ To run the web app locally:
 ## Tests
 
 Command to run tests: `yarn nx test shelter-web`;
+
+Browser monitoring configuration, dashboard queries and rollout verification:
+[Monitoring guide](../../docs/shelter-web-monitoring.md).

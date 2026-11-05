@@ -12,7 +12,8 @@
           "ci": true,
           "coverage": true
         }
-      }
+      },
+      "dependsOn": ["privacy-test"]
     },
     "build": {
       "executor": "nx:run-commands",
@@ -20,11 +21,30 @@
         "production",
         "^production",
         "{workspaceRoot}/tools/shared/**/*",
-        { "env": "CI" },
-        { "env": "BRANCH_NAME" },
-        { "env": "VITE_APP_BASE_PATH" },
-        { "env": "VITE_SHELTER_API_URL" },
-        { "env": "VITE_SHELTER_GOOGLE_MAPS_API_KEY" }
+        {
+          "env": "CI"
+        },
+        {
+          "env": "BRANCH_NAME"
+        },
+        {
+          "env": "VITE_APP_BASE_PATH"
+        },
+        {
+          "env": "VITE_SHELTER_API_URL"
+        },
+        {
+          "env": "VITE_SHELTER_GOOGLE_MAPS_API_KEY"
+        },
+        {
+          "env": "VITE_SHELTER_WEB_NEW_RELIC_LICENSE_KEY"
+        },
+        {
+          "env": "VITE_SHELTER_APP_ENV"
+        },
+        {
+          "env": "VITE_SHELTER_APP_VERSION"
+        }
       ],
       "outputs": ["{workspaceRoot}/dist/apps/shelter-web"],
       "options": {
@@ -52,6 +72,23 @@
       "options": {
         "command": "node tools/scripts/post-preview-comment.js --url=https://shelter.dev.betterangels.la"
       }
+    },
+    "privacy-test": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "command": "esbuild apps/shelter-web/src/monitoring/privacy.node-test.ts --bundle --platform=node --outfile=dist/apps/shelter-web/privacy.node-test.cjs && node --test dist/apps/shelter-web/privacy.node-test.cjs"
+      },
+      "outputs": [
+        "{workspaceRoot}/dist/apps/shelter-web/privacy.node-test.cjs"
+      ],
+      "inputs": [
+        "production",
+        "^production",
+        {
+          "externalDependencies": ["@newrelic/browser-agent"]
+        }
+      ]
     }
   }
 }
