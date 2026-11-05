@@ -531,17 +531,89 @@ def _kind(label: str) -> str:
     return "UPDATE"
 
 
-def _summary_line(row: Any, kind: str) -> str:
+def _humanize_label(label: str) -> str:
+    """``status notes`` -> ``Status notes``; ``start_date`` -> ``Start Date``.
+
+    Mirrors the operator UI's field labels (§13) so the collapsed summary and the
+    expanded detail name a field the same way.
+    """
+    return " ".join(part[:1].upper() + part[1:] for part in label.split("_") if part)
+
+
+def _summary_fields(row: Any) -> list[str]:
+    """Display names of the fields an ``UPDATE`` changed, in row order (§32).
+
+    What moved, not what it moved to: the values stay in the object's own log.
+    Mechanical columns are dropped for the same reason ``_scalar_changes`` drops
+    them — ``updated_at`` moves on every write and says nothing about the edit.
+    """
+    labels = _display_keys(row.pgh_obj_model)
+    pk_attname = _pk_attname(row.pgh_obj_model)
+    excluded = _MECHANICAL_FIELDS | _generated_fields(row.pgh_obj_model)
+
+    fields: list[str] = []
+    for attname in row.pgh_diff or {}:
+        if attname in excluded or attname == pk_attname or attname.startswith("pgh_"):
+            continue
+        label = _humanize_label(labels.get(attname, attname))
+        if label not in fields:
+            fields.append(label)
+
+    return fields
+
+
+def _summary_fields_by_line(
+    rows: list[Any],
+    *,
+    target_model_label: str | None,
+    hidden_summary_models: Collection[str],
+) -> dict[tuple[str, Any, str], list[str]]:
+    """Per collapsed summary line, the union of the fields its rows changed (§32).
+
+    One action can write the same object twice; the lines collapse to one, so its
+    field list has to cover both writes instead of only the row that happened to
+    produce the line.
+    """
+    fields_by_key: dict[tuple[str, Any, str], list[str]] = defaultdict(list)
+
+    for row in rows:
+        if row.pgh_obj_model not in _SUMMARY_ONLY_MODELS or row.pgh_obj_model == target_model_label:
+            continue
+        if row.pgh_obj_model in hidden_summary_models or _kind(row.pgh_label) != "UPDATE":
+            continue
+
+        key = (row.pgh_obj_model, row.pgh_obj_id, "UPDATE")
+        for label in _summary_fields(row):
+            if label not in fields_by_key[key]:
+                fields_by_key[key].append(label)
+
+    return fields_by_key
+
+
+def _summary_line(row: Any, kind: str, fields: Collection[str] = ()) -> str:
     """One-line acknowledgment for a summarized object (§32).
 
     ``pgh_data`` carries the row's state for INSERT/DELETE and the new state for
     UPDATE, so it is the source for the name in every case. ``Bed.name`` is
     nullable, so fall back to a model-and-id label instead of rendering "None".
+
+    The object's type names the subject — ``Updated Bed: North bunk (7)`` — because
+    a shelter log mixes beds and rooms and the name alone does not say which. The
+    nameless fallback keeps the type out of the name so the line reads once:
+    ``Created Bed: #7 (7)`` rather than ``Created Bed: Bed #7 (7)``.
+
+    An update also names the fields it changed (``Updated Bed: North bunk (7) Name,
+    Status notes``). A create or a delete lists nothing: every field of the row is
+    new or gone, so the list would restate the operation.
     """
-    name = (row.pgh_data or {}).get("name")
-    if not name:
-        name = f"{_model_verbose_name(row.pgh_obj_model)} #{row.pgh_obj_id}"
-    return f"{_SUMMARY_VERBS[kind]} {name} ({row.pgh_obj_id})"
+    object_type = _model_verbose_name(row.pgh_obj_model)
+    name = (row.pgh_data or {}).get("name") or f"#{row.pgh_obj_id}"
+    line = f"{_SUMMARY_VERBS[kind]} {object_type}: {name} ({row.pgh_obj_id})"
+
+    if kind != "UPDATE" or not fields:
+        return line
+
+    return f"{line} {', '.join(fields)}"
 
 
 def _actor(row: Any) -> str:
@@ -1153,6 +1225,13 @@ def _build_action(
     events: list[AuditEventData] = []
     summarized: set[tuple[str, Any, str]] = set()
     truncated = False
+    # A collapsed line covers every write of its object in this action, so its
+    # field list is resolved across all of them before the loop emits anything.
+    summary_fields = _summary_fields_by_line(
+        rows,
+        target_model_label=target_model_label,
+        hidden_summary_models=hidden_summary_models,
+    )
 
     for row in rows:
         # Stop before doing any per-row work (including the action-level rollup)
@@ -1185,7 +1264,11 @@ def _build_action(
                     target_type=target_type,
                     target_id=target_id,
                     field_changes={},
-                    summary=_summary_line(row, kind),
+                    summary=_summary_line(
+                        row,
+                        kind,
+                        summary_fields.get(summary_key, ()),
+                    ),
                 )
             )
             continue

@@ -1259,7 +1259,7 @@ needed for them.
 **Summary-only events (§32).** `AuditEventData` carries an optional
 `summary: str | None`. It is populated only by the summarized-object path —
 related `Room`/`Bed` writes in a Shelter log — which renders one line
-(`"Created Bed A (7)"`) and an empty `field_changes`. Such events never carry a
+(`"Created Bed: Bed A (7)"`) and an empty `field_changes`. Such events never carry a
 snapshot, even when `include_snapshot=True`, because the object's own log is the
 detail surface.
 
@@ -1630,9 +1630,9 @@ derivation regression, so it is the stronger guard.
 - **`references()` boundary pin:** the exact per-target _match_ set from §10 is asserted against a **hand-written literal** per target (`_EXPECTED_SHELTER_REFERENCES` and the Bed/Room equivalents), so any change to what `references()` reaches — a newly tracked model, a dropped branch — fails loudly. The literal, not a set derived from `event_models()` at assert time, is the stronger pin: a derived set would silently track a `references()` regression instead of catching it. Shelter excludes `ReferralEvent.shelter_id` and includes `MediaLinkEvent`/`VideoEvent`; Room includes `BedEvent.room_id` and `ReservationEvent.room_id`; Bed includes `ReservationEvent.bed_id`.
 - **Room/Bed reservation exclusion:** a reservation write appears in `objectAuditLog(RESERVATION)` (internal path) but **not** in `objectAuditLog(ROOM)`/`(BED)` or `(SHELTER)` (the target-scoped blocklist, §10); a room/bed configuration change still appears. A room log contains no `BedEvent` rows, and a bed log keeps the bed's full field detail.
 - **Multi-write action-level diff:** a status change + a separate notes update in one request (two saves, so two events) renders both the `status` and `notes` field changes (before/after diff), not just one winner row. A single save doing both is the one-row case above, and renders both changes from one event.
-- **Cross-model action:** one action writing a Shelter and a Bed renders the shelter's own before→after pair and a **summary** line for the bed (`Updated <name> (<id>)`) — no `Bed <id> name` pair, no shared-field collision (§13, §32).
+- **Cross-model action:** one action writing a Shelter and a Bed renders the shelter's own before→after pair and a **summary** line for the bed (`Updated Bed: <name> (<id>)`) — no `Bed <id> name` pair, no shared-field collision (§13, §32).
 - **Same-model multi-row action:** one action touching two rows of the _same_ model (two beds renamed in one context, standing in for a bulk `label="import"` write) renders two distinct summary lines, one per bed — not one collapsed line (§13, §32).
-- **Display scopes (§32):** a shelter action that creates a bed and renames a room renders `Created <name> (<id>)` / `Updated <name> (<id>)` with empty `field_changes` and no snapshot even under `include_snapshot=True`; repeated saves of one bed collapse to one line; a deleted bed keeps its last name; a nameless bed falls back to `Bed #<id>`; a Shelter log cannot reach `ReservationEvent`/`ReservationClientEvent` (`Reservation` has no shelter FK), while Room/Bed logs drop them via `_SCOPED_EXCLUSIONS`; and `targetType: RESERVATION` fails schema validation (the enum no longer publishes it, while the internal selector path still renders reservation-client writes).
+- **Display scopes (§32):** a shelter action that creates a bed and renames a room renders `Created Bed: <name> (<id>)` / `Updated Room: <name> (<id>)` with empty `field_changes` and no snapshot even under `include_snapshot=True`; repeated saves of one bed collapse to one line; a deleted bed keeps its last name; a nameless bed falls back to `#<id>`; a Shelter log cannot reach `ReservationEvent`/`ReservationClientEvent` (`Reservation` has no shelter FK), while Room/Bed logs drop them via `_SCOPED_EXCLUSIONS`; and `targetType: RESERVATION` fails schema validation (the enum no longer publishes it, while the internal selector path still renders reservation-client writes).
 - **Duplicate `verbose_name`:** a model with two fields sharing a `verbose_name` (the three `Shelter` "Additional Notes" fields) renders each edit under its own (raw) key in both `field_changes` and `snapshot`, so neither is silently dropped (§13).
 - **Cross-table context-less writes:** two context-less writes in different event tables render as two distinct singleton actions, with the `pgh_id` collision pinned explicitly so the test does not rely on sequence coincidence (§12).
 - **INSERT/REMOVE pk exclusion:** the model pk (`id`) is absent from an `.add` event's `field_changes` — it is in `pgh_data` but can never change — and (unit-tested) from the `.remove` branch too (§13).
@@ -2162,8 +2162,15 @@ graph LR
 ```
 
 **Shelter log — summaries for related Bed/Room.** Related `Bed` and `Room`
-writes appear as one line per object per kind: `Created <name> (<id>)`,
-`Updated <name> (<id>)`, `Deleted <name> (<id>)` (§13 `summary`). They carry an
+writes appear as one line per object per kind, naming the object type so the
+reader knows which kind of object the name belongs to:
+`Created Bed: <name> (<id>)`, `Updated Room: <name> (<id>) Name, Status notes`,
+`Deleted Bed: <name> (<id>)` (§13 `summary`). An update also names the fields it
+changed — display names only, never values, since the values belong to the
+object's own log; a create or delete lists nothing, because every field of the row
+is new or gone. The list is the union across the action's writes of that object,
+so a collapsed line does not under-report a second save in the same request.
+Mechanical columns are excluded, as in `field_changes`. They carry an
 empty `field_changes` and never a snapshot, even when `include_snapshot=True`.
 The line is omitted unless the caller holds `Bed.VIEW` / `Room.VIEW` in the
 shelter's organization, so a shelter-only reader cannot learn a bed or room name
@@ -2174,7 +2181,7 @@ derived from the anchored object's rows, so a related-only write reads as a
 modification of the anchor rather than creating or deleting it. Repeated saves of
 the same object under one context collapse to one line, keyed by
 `(model, obj id, kind)`. `Bed.name` is nullable, so a nameless bed falls back
-to `Bed #<id>`. The shelter's **own** fields, media, schedules, availability, and
+to `#<id>`. The shelter's **own** fields, media, schedules, availability, and
 M2M rows keep full detail; `ContactInfo` events are excluded entirely (§7b.6),
 and the BA-review fields are withheld from callers without the global grant
 (§18). `_SUMMARY_ONLY_MODELS`, `_SUMMARY_VERBS`, and the schema's field/summary

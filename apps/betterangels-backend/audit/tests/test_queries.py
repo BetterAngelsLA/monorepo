@@ -197,7 +197,7 @@ class ObjectAuditLogQueryTestCase(GraphQLBaseTestCase):
         response = self._query("SHELTER", self.shelter.id)
         events = response["data"]["objectAuditLog"]["results"][0]["events"]
 
-        self.assertEqual(events[0]["summary"], f"Updated Summarized Bed ({self.bed.id})")
+        self.assertEqual(events[0]["summary"], f"Updated Bed: Summarized Bed ({self.bed.id}) Name")
         self.assertEqual(events[0]["fieldChanges"], {})
 
     # ── authorization (§18) ──────────────────────────────────────────────────

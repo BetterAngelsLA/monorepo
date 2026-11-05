@@ -154,7 +154,7 @@ class ObjectAuditLogSelectorTestCase(TestCase):
         changes = actions[0].field_changes
         self.assertEqual(changes["name"], ["Audit Shelter", "Renamed Shelter"])
         self.assertNotIn(f"Bed {self.bed.pk} name", changes)
-        self.assertEqual(_summaries(actions[0]), [f"Updated Renamed Bed ({self.bed.pk})"])
+        self.assertEqual(_summaries(actions[0]), [f"Updated Bed: Renamed Bed ({self.bed.pk}) Name"])
 
     def test_one_action_touching_two_rows_of_a_model_keeps_them_separate(self) -> None:
         """Two rows of the *same* model render as two summary lines (§13, §32).
@@ -177,7 +177,7 @@ class ObjectAuditLogSelectorTestCase(TestCase):
         self.assertEqual(len(actions), 1)
         self.assertEqual(
             _summaries(actions[0]),
-            [f"Updated Renamed Bed A ({self.bed.pk})", f"Updated Renamed Bed B ({other_bed.pk})"],
+            [f"Updated Bed: Renamed Bed A ({self.bed.pk}) Name", f"Updated Bed: Renamed Bed B ({other_bed.pk}) Name"],
         )
         # Neither bed's fields reach the shelter-level rollup.
         self.assertEqual(actions[0].field_changes, {})
@@ -1067,7 +1067,7 @@ class AuditDisplayScopeTestCase(TestCase):
         self.assertEqual(len(actions), 1)
         self.assertCountEqual(
             _summaries(actions[0]),
-            [f"Created Bed A ({bed.pk})", f"Updated Room B ({self.room.pk})"],
+            [f"Created Bed: Bed A ({bed.pk})", f"Updated Room: Room B ({self.room.pk}) Name"],
         )
         # Nothing else about either object reaches the shelter-level rollup.
         self.assertEqual(actions[0].field_changes, {})
@@ -1098,7 +1098,7 @@ class AuditDisplayScopeTestCase(TestCase):
 
         self.assertIsNotNone(action)
         assert action is not None
-        self.assertEqual(_summaries(action), [f"Updated Bed B ({bed.pk})"])
+        self.assertEqual(_summaries(action), [f"Updated Bed: Bed B ({bed.pk}) Name, Room"])
         self.assertEqual(action.field_changes, {})
         self.assertEqual(action.events[0].field_changes, {})
         self.assertIsNone(action.events[0].snapshot)
@@ -1116,7 +1116,40 @@ class AuditDisplayScopeTestCase(TestCase):
         actions = self._log()
 
         self.assertEqual(len(actions), 1)
-        self.assertEqual(_summaries(actions[0]), [f"Updated Bed B ({bed.pk})"])
+        # Two writes, one line: the field list covers both.
+        self.assertEqual(
+            _summaries(actions[0]),
+            [f"Updated Bed: Bed B ({bed.pk}) Name, Status notes"],
+        )
+
+    def test_update_summary_names_the_fields_that_changed(self) -> None:
+        """What moved, not what it moved to: the values stay in the bed's own log."""
+        with audit_context(label="seed"):
+            bed = Bed.objects.create(shelter=self.shelter, name="Bed A")
+
+        with audit_context(user=self.user):
+            bed.status_notes = "Moved to the quiet wing"
+            bed.maintenance_flag = True
+            bed.save()
+
+        (line,) = _summaries(self._log()[0])
+
+        self.assertTrue(line.startswith(f"Updated Bed: Bed A ({bed.pk}) "))
+        self.assertCountEqual(
+            line.split(f"({bed.pk}) ", 1)[1].split(", "),
+            ["Status notes", "Maintenance flag"],
+        )
+        self.assertNotIn("quiet wing", line)
+        self.assertNotIn("True", line)
+
+    def test_create_summary_lists_no_fields(self) -> None:
+        """A create is every field at once; listing them restates the operation."""
+        with audit_context(user=self.user):
+            bed = Bed.objects.create(shelter=self.shelter, name="Bed A")
+
+        (line,) = _summaries(self._log()[0])
+
+        self.assertEqual(line, f"Created Bed: Bed A ({bed.pk})")
 
     def test_deleted_bed_is_summarized_with_its_last_name(self) -> None:
         with audit_context(label="seed"):
@@ -1129,7 +1162,7 @@ class AuditDisplayScopeTestCase(TestCase):
         actions = self._log()
 
         self.assertEqual(len(actions), 1)
-        self.assertEqual(_summaries(actions[0]), [f"Deleted Bed A ({bed_id})"])
+        self.assertEqual(_summaries(actions[0]), [f"Deleted Bed: Bed A ({bed_id})"])
 
     def test_summary_falls_back_when_a_bed_has_no_name(self) -> None:
         # ``Bed.name`` is nullable, so the line must not render "None".
@@ -1138,7 +1171,7 @@ class AuditDisplayScopeTestCase(TestCase):
 
         actions = self._log()
 
-        self.assertEqual(_summaries(actions[0]), [f"Created Bed #{bed.pk} ({bed.pk})"])
+        self.assertEqual(_summaries(actions[0]), [f"Created Bed: #{bed.pk} ({bed.pk})"])
 
     def test_shelter_log_cannot_reach_reservation_rows(self) -> None:
         """A Shelter log omits reservations structurally, not by an exclusion.
