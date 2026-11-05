@@ -11,7 +11,7 @@ dependencies = ["betterangels-backend"]
 [tool.uv]
 # cffi 2.0.0 predates cp315 wheels, so `uv sync` builds it from source and
 # needs libffi headers the image does not carry. 2.1.x ships cp315 wheels.
-constraint-dependencies = ["cffi>=2.1.1"]
+constraint-dependencies = ["cffi>=2.1.1", "gevent>=26.9.0", "greenlet>=3.5.6"]
 
 [tool.uv.sources]
 betterangels-backend = { workspace = true }
