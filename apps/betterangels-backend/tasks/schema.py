@@ -109,7 +109,14 @@ class Mutation:
             # through its legacy ``CASEWORKER`` group — the org comes from the
             # group, as before the cutover.  Dropped by the strict flip once
             # the build sending ``organizationId`` is deployed.
-            permission_group = resolve_permission_group(current_user, template=CASEWORKER)
+            try:
+                permission_group = resolve_permission_group(current_user, template=CASEWORKER)
+            except PermissionError as exc:
+                # ``resolve_permission_group`` raises the builtin ``PermissionError``,
+                # which the mutation wrapper does not translate — a pre-wiring build
+                # would get ``data: null`` plus an internal message instead of the
+                # ``OperationInfo`` it knows how to read.
+                raise PermissionDenied(PERMISSION_DENIED_MESSAGE) from exc
 
             tasks = task_create_legacy(
                 user=current_user,

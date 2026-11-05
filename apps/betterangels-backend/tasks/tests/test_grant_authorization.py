@@ -335,8 +335,17 @@ class TaskCreateCompatWindowTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin)
 
         task_count = Task.objects.count()
         response = self.create_task_fixture({"summary": "should not appear"}, include_organization=False)
-        self.assertIn("errors", response)
         self.assertEqual(Task.objects.count(), task_count)
+        # A pre-wiring build only understands the OperationInfo payload, so the
+        # refusal has to arrive there — not as ``data: null`` plus a raw error.
+        self.assertEqual(
+            response["data"]["createTask"]["messages"][0],
+            {
+                "kind": "PERMISSION",
+                "field": None,
+                "message": PERMISSION_DENIED_MESSAGE,
+            },
+        )
 
 
 class NestedNoteTaskAuthorityTestCase(GraphQLBaseTestCase):
