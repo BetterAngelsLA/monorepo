@@ -250,3 +250,22 @@ class TaskAssigneeQueryPermissionTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsM
         response = self.task_assignees_query()
 
         self.assertGreater(response["data"]["taskAssignees"]["totalCount"], 0)
+
+    def test_task_assignees_lists_the_roster_for_a_grant_only_holder(self) -> None:
+        """The picker is part of the task cutover: a scoped Grant must satisfy it.
+
+        At this head ``taskAssignees`` still asked Django/guardian ``has_perm``,
+        so a member provisioned only with a scoped Role got an empty page while
+        the rest of the task domain authorized them.  This pins the grant-model
+        predicate the field has to use.
+        """
+        user = baker.make(User)
+        self.org_1.add_user(user)
+        self._grant_permission(user, Task.perms.ADD, self.org_1, role_name="Task Assignee Adder")
+
+        self.graphql_client.force_login(user)
+        response = self.task_assignees_query()
+
+        ids = {row["id"] for row in response["data"]["taskAssignees"]["results"]}
+        self.assertIn(str(self.org_1_case_manager_2.pk), ids)
+        self.assertNotIn(str(self.org_2_case_manager_1.pk), ids)
