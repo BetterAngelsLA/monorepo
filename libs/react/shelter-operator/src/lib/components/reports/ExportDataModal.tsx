@@ -1,5 +1,5 @@
 import { mergeCss } from '@monorepo/react/shared';
-import { useState } from 'react';
+import { useState, useRef, type KeyboardEvent } from 'react';
 import { Button } from '../base-ui/buttons/buttons';
 import { Modal, ModalBody, ModalFooter, ModalHeader } from '../base-ui/modal';
 import { Text } from '../base-ui/text/text';
@@ -10,7 +10,16 @@ import {
   type ExportMetric,
 } from './useShelterMetricsExport';
 
-const FORMAT_LABELS: Record<ExportFormat, string> = {
+/**
+ * PDF is rendered client-side (see useExportPdf.ts) rather than through the
+ * `ShelterMetricsExportApi` the other three formats hit, but it shares the
+ * same file-type picker and metric checkboxes.
+ */
+export type ModalExportFormat = ExportFormat | 'pdf';
+const MODAL_FORMATS: ModalExportFormat[] = ['pdf', ...EXPORT_FORMATS];
+
+const FORMAT_LABELS: Record<ModalExportFormat, string> = {
+  pdf: 'PDF',
   csv: 'CSV',
   xlsx: 'XLSX',
   json: 'JSON',
@@ -28,21 +37,36 @@ const ALL_METRICS = [...EXPORT_METRICS];
 type ExportDataModalProps = {
   isOpen: boolean;
   isExporting: boolean;
+  /**
+   * True while data the *PDF* export depends on (its off-screen render's
+   * queries) is still loading or failed to load. Only the PDF format is gated
+   * by this: CSV/XLSX/JSON come from the export endpoint and must stay
+   * available even when the report queries are slow or broken.
+   */
+  disablePdfExport?: boolean;
   /** Human-readable range, so the modal states what it will export. */
   rangeLabel: string;
   onClose: () => void;
-  onExport: (format: ExportFormat, metrics: ExportMetric[]) => void;
+  onExport: (format: ModalExportFormat, metrics: ExportMetric[]) => void;
 };
 
 export function ExportDataModal({
   isOpen,
   isExporting,
+  disablePdfExport = false,
   rangeLabel,
   onClose,
   onExport,
 }: ExportDataModalProps) {
-  const [format, setFormat] = useState<ExportFormat>('csv');
+  // Keeps CSV as the default selection — matches the existing export tests'
+  // expectations, PDF is just added as another option in the picker.
+  const [format, setFormat] = useState<ModalExportFormat>('csv');
   const [metrics, setMetrics] = useState<ExportMetric[]>([...ALL_METRICS]);
+
+  // Only the selected format can block the export, so a slow/failed PDF
+  // render no longer takes CSV/XLSX/JSON down with it.
+  const isSelectedFormatBlocked = format === 'pdf' && disablePdfExport;
+  const formatRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   function toggleMetric(metric: ExportMetric) {
     setMetrics((current) =>
@@ -50,6 +74,45 @@ export function ExportDataModal({
         ? current.filter((selected) => selected !== metric)
         : [...current, metric],
     );
+  }
+
+  /** Arrow keys move between the format radios, skipping any that are blocked. */
+  function onFormatKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
+    const step =
+      event.key === 'ArrowRight' || event.key === 'ArrowDown'
+        ? 1
+        : event.key === 'ArrowLeft' || event.key === 'ArrowUp'
+          ? -1
+          : 0;
+    if (!step) return;
+
+    event.preventDefault();
+
+    const selectable = MODAL_FORMATS.map((option, i) => ({ option, i })).filter(
+      ({ option }) => !(option === 'pdf' && disablePdfExport),
+    );
+    if (selectable.length === 0) return;
+
+    // An unavailable format is `disabled` and non-tabbable, so it cannot hold
+    // the selection — that is what actually keeps the user off a dead option.
+    // This fallback is the belt to that braces: if a not-found (-1) index ever
+    // did reach here it would wrap the step round and move the focus
+    // backwards, so resolve it to an end of the list instead.
+    const currentIndex = selectable.findIndex(
+      ({ option }) => option === format,
+    );
+    const nextIndex =
+      currentIndex === -1
+        ? step > 0
+          ? 0
+          : selectable.length - 1
+        : (currentIndex + step + selectable.length) % selectable.length;
+
+    const next = selectable[nextIndex];
+    if (!next) return;
+
+    setFormat(next.option);
+    formatRefs.current[next.i]?.focus();
   }
 
   return (
@@ -80,24 +143,51 @@ export function ExportDataModal({
               role="radiogroup"
               aria-label="Export file type"
             >
-              {EXPORT_FORMATS.map((option) => (
-                <button
-                  key={option}
-                  type="button"
-                  role="radio"
-                  aria-checked={format === option}
-                  onClick={() => setFormat(option)}
-                  className={mergeCss([
-                    'min-w-14 rounded-full px-4 py-2 text-sm font-medium transition-colors',
-                    format === option
-                      ? 'bg-white text-[#111827] shadow-sm'
-                      : 'text-[#374151] hover:text-[#111827]',
-                  ])}
-                >
-                  {FORMAT_LABELS[option]}
-                </button>
-              ))}
+              {MODAL_FORMATS.map((option, index) => {
+                const optionBlocked = option === 'pdf' && disablePdfExport;
+                return (
+                  <button
+                    key={option}
+                    ref={(node) => {
+                      formatRefs.current[index] = node;
+                    }}
+                    type="button"
+                    role="radio"
+                    aria-checked={format === option}
+                    aria-disabled={optionBlocked || undefined}
+                    // Roving tabindex: only the selected radio is tabbable,
+                    // arrows move between them (see onFormatKeyDown). An
+                    // unavailable format is skipped, so it can never become
+                    // the selection and strand the user on a dead option.
+                    tabIndex={format === option && !optionBlocked ? 0 : -1}
+                    disabled={optionBlocked}
+                    onClick={() => setFormat(option)}
+                    onKeyDown={onFormatKeyDown}
+                    className={mergeCss([
+                      'min-w-14 rounded-full px-4 py-2 text-sm font-medium transition-colors',
+                      format === option
+                        ? 'bg-white text-[#111827] shadow-sm'
+                        : 'text-[#374151] hover:text-[#111827]',
+                      optionBlocked
+                        ? 'cursor-not-allowed text-[#9CA3AF] hover:text-[#9CA3AF]'
+                        : '',
+                    ])}
+                  >
+                    {FORMAT_LABELS[option]}
+                  </button>
+                );
+              })}
             </div>
+            {isSelectedFormatBlocked && (
+              <Text
+                variant="caption"
+                className="mt-2 block"
+                textColor="text-[#6B7280]"
+              >
+                PDF isn’t ready yet — its report data is still loading or
+                couldn’t be loaded. CSV, XLSX and JSON are unaffected.
+              </Text>
+            )}
             {format === 'csv' && (
               <Text
                 variant="caption"
@@ -145,7 +235,9 @@ export function ExportDataModal({
           variant="primary"
           color="blue"
           rightIcon={false}
-          disabled={isExporting || metrics.length === 0}
+          disabled={
+            isExporting || metrics.length === 0 || isSelectedFormatBlocked
+          }
           onClick={() => onExport(format, metrics)}
         >
           {isExporting ? 'Exporting…' : 'Export'}
