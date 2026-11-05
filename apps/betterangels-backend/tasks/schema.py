@@ -87,10 +87,9 @@ class Mutation:
             try:
                 permission_group = resolve_permission_group(current_user, template=CASEWORKER)
             except PermissionError as exc:
-                # ``resolve_permission_group`` raises the builtin ``PermissionError``,
-                # which the mutation wrapper does not translate — a pre-wiring build
-                # would get ``data: null`` plus an internal message instead of the
-                # ``OperationInfo`` it knows how to read.
+                # The builtin is not a ``PermissionDenied``, so the wrapper would
+                # not translate it: a pre-wiring build would get ``data: null``
+                # plus an internal message instead of an ``OperationInfo``.
                 raise PermissionDenied(PERMISSION_DENIED_MESSAGE) from exc
             organization = permission_group.organization
 
@@ -114,11 +113,10 @@ class Mutation:
         if hmis_client_profile_id := task_data.pop("hmis_client_profile", None):
             hmis_client_profile = HmisClientProfile.objects.get(pk=str(hmis_client_profile_id))
 
-        # A task may only attach a note from its own org: tasks are readable
+        # A task may only attach a note from its own org — tasks are readable
         # agency-wide, so a foreign link would plant a task on another org's
-        # note.  The other parents carry no tenant — client profiles are
-        # platform-shared and HMIS notes have no organization — so ``note`` is
-        # the only one with an org to check.
+        # note.  ``note`` is the only parent with a tenant: client profiles are
+        # platform-shared and HMIS notes have no organization.
         if note is not None and note.organization_id != organization.pk:
             raise PermissionDenied(PERMISSION_DENIED_MESSAGE)
 

@@ -500,7 +500,7 @@ The mechanics in §2.4–§2.6 are traced concretely for real people and orgs in
 | Org grants (org→org view/edit) | `Grant(principal_org, role, scope_org)` + delegation arm | ✅ (granularity limits, §3) |
 | Object grants | `Grant(…, scope_object_*)` + ancestor cascade | ✅ schema / ⚠️ wired at clients cutover |
 | Cross-org grants | delegation + multi-scope rows | ✅ |
-| Outreach app (notes/clients/…) | `org_via` on each model + §2.4 tiers | ⚠️ notes/tasks §5 · ✅ clients §5.1 profile + family (documents/imports still legacy) |
+| Outreach app (notes/clients/…) | `org_via` on each model + §2.4 tiers | ⚠️ notes §5 · ✅ tasks §5 slice 1 (strict flip #2459) · ✅ clients §5.1 profile + family (documents/imports still legacy) |
 | Shelter-first isolation | phased cutover, §4 | ✅ |
 | Client sharing (future) | data edge feeding `org_paths()`; object arm for per-record | ✅ v1 decided (2026-09-02) — BA-created person object grants; org-level edge future (§7.4) |
 
@@ -846,8 +846,8 @@ product rule (2026-09-02) is **not** "writes stay org-owned" — **reads and wri
 both platform-shared today**: client CHANGE/DELETE ride model-level permissions on the
 legacy `CASEWORKER` group (`notes/groups.py`), so any caseworker in any org edits or
 deletes any client. There are **no per-record guardian rows for `ClientProfile`**
-(guardian per-record exists for notes/tasks/documents; referrals cut over to grants,
-not clients).
+(guardian per-record remains for notes and documents; tasks and referrals have cut
+over to grants, not clients).
 
 Under v2 with `org_via = None`, org-scoped writes are inexpressible — `scopes()` returns
 org ids and the client has no org — and the object arm only covers per-record sharing.

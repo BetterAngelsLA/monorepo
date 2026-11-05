@@ -22,8 +22,7 @@ CLIENT_FAMILY_PERMS = [
 ]
 
 # The task bundle (RFC 0003 slice 1), shared by the legacy template and the
-# scoped Role so the template stays the Role's superset by construction rather
-# than by two hand-maintained lists that can drift.
+# scoped Role so the template stays the Role's superset by construction.
 TASK_PERMS = [Task.perms.ADD, Task.perms.VIEW, Task.perms.CHANGE, Task.perms.DELETE]
 
 CASEWORKER = TemplateConfig(
@@ -36,7 +35,6 @@ CASEWORKER = TemplateConfig(
         ServiceRequest.perms.ADD,
         # Client models: full CRUD
         *CLIENT_FAMILY_PERMS,
-        # Task bundle — CHANGE/DELETE ride the org-scoped Role (RFC 0003).
         *TASK_PERMS,
         # Attachment: ADD + VIEW
         Attachment.perms.ADD,
