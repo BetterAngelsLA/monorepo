@@ -77,6 +77,22 @@ describe('AuditEventRow', () => {
     expect(screen.queryByText(/\u2192/)).toBeNull();
   });
 
+  it('falls back to the field changes for an in-place schedule update', () => {
+    // No context means no identity: show the real diff rather than "Every day".
+    render(
+      <AuditEventRow
+        event={makeEvent({
+          action: 'shelter.schedule.update',
+          fieldChanges: { 'start time': ['09:00:00', '10:00:00'] },
+        })}
+      />,
+    );
+
+    expect(screen.getByText('Start time:')).not.toBeNull();
+    expect(screen.queryByText(/Every day/)).toBeNull();
+    expect(screen.queryByText(/\u2192/)).not.toBeNull();
+  });
+
   it('renders a removal in red', () => {
     render(
       <AuditEventRow

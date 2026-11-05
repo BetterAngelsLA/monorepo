@@ -188,6 +188,27 @@ describe('AuditActionRow', () => {
     expect(screen.queryByText(/\u2192/)).toBeNull();
   });
 
+  it('shows the diff of an in-place schedule update instead of a line', () => {
+    // An admin save has no slot identity, so the card cannot label it.
+    render(
+      <AuditActionRow
+        action={makeAction({
+          fieldChanges: { 'Schedule 204 start time': ['09:00:00', '10:00:00'] },
+          events: [
+            makeEvent({
+              action: 'shelter.schedule.update',
+              kind: AuditEventKind.Update,
+              fieldChanges: { 'start time': ['09:00:00', '10:00:00'] },
+            }),
+          ],
+        })}
+      />,
+    );
+
+    expect(screen.queryByText(/Every day/)).toBeNull();
+    expect(screen.getByText('Schedule 204 start time:')).not.toBeNull();
+  });
+
   it('keeps non-schedule changes on a card that also replaces slots', () => {
     render(
       <AuditActionRow

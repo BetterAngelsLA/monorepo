@@ -111,6 +111,11 @@ function windowOf(start: unknown, end: unknown): string {
  * exception flag (it is part of the netting identity, so it never changes there),
  * so a changed line cannot mark an exception slot. `start date`, `end date`,
  * `condition` and `demographic` are likewise not part of this line.
+ *
+ * An `UPDATE` with no `context` is an in-place save (the admin edits a `Schedule`
+ * row directly, the operator form replaces the set). It carries no identity and
+ * often only one side of the window, so this returns `null` and the caller renders
+ * the field changes it does have rather than an invented "Every day".
  */
 export function formatScheduleEvent(
   event: Pick<AuditEvent, 'action' | 'kind' | 'fieldChanges' | 'context'>,
@@ -121,6 +126,17 @@ export function formatScheduleEvent(
 
   const changes = event.fieldChanges;
   const context = (event.context ?? {}) as Record<string, unknown>;
+
+  // A netted change carries its slot identity in `context`; an add or a remove
+  // carries it as one-sided field changes, where an absent `day` genuinely means
+  // the slot has no day. An `UPDATE` with neither is unlabelled, not day-less.
+  const identityKnown =
+    changeText(changes, 'day') !== null ||
+    Object.prototype.hasOwnProperty.call(context, 'day');
+
+  if (event.kind === AuditEventKind.Update && !identityKnown) {
+    return null;
+  }
 
   const day =
     changeText(changes, 'day') ?? contextText(context, 'day') ?? 'Every day';

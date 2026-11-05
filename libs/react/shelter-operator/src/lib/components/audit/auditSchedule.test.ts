@@ -139,6 +139,32 @@ describe('formatScheduleEvent', () => {
     );
   });
 
+  it('returns null for an in-place update that carries no identity', () => {
+    // The admin edits a Schedule row directly: no context, and often only one
+    // side of the window. Guessing "Every day" would be a false statement.
+    const inPlace = {
+      action: 'shelter.schedule.update',
+      kind: AuditEventKind.Update,
+      context: null,
+      fieldChanges: { 'start time': ['09:00:00', '10:00:00'] },
+    };
+
+    expect(formatScheduleEvent(inPlace)).toBeNull();
+  });
+
+  it('still labels a netted update, which carries its identity', () => {
+    const netted = {
+      action: 'shelter.schedule.update',
+      kind: AuditEventKind.Update,
+      context: { day: null, 'schedule type': 'Operating Hours' },
+      fieldChanges: { 'start time': ['09:00:00', '10:00:00'] },
+    };
+
+    expect(formatScheduleEvent(netted)?.text).toBe(
+      'Changed Operating Hours: Every day 09:00 - \u2014 \u2192 10:00 - \u2014',
+    );
+  });
+
   it('returns null for a non-schedule event', () => {
     expect(
       formatScheduleEvent({
