@@ -24,6 +24,7 @@ const weeklyWithMondayRanges = (
 const openException = {
   localId: 'e1',
   startDate: '2026-12-24',
+  isDateRange: true,
   endDate: '2026-12-26',
   closedAllDay: false,
   startTime: '09:00',

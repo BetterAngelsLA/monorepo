@@ -1,39 +1,44 @@
-import { useRef } from 'react';
 import { Input } from '../../../../../base-ui/input';
+import type { ExceptionEntry } from '../types';
+
+type TDateField = Pick<ExceptionEntry, 'startDate' | 'endDate' | 'isDateRange'>;
 
 type TProps = {
+  isDateRange: boolean;
   startDate: string; // "YYYY-MM-DD"
   endDate: string; // "YYYY-MM-DD"
-  onChange: (field: 'startDate' | 'endDate', value: string) => void;
+  onChange: (patch: Partial<TDateField>) => void;
   disabled?: boolean;
 };
 
+/** Adds days in UTC so a date-only value cannot shift across DST boundaries. */
+function addDays(date: string, days: number): string {
+  if (!date) return '';
+
+  const next = new Date(date);
+  next.setUTCDate(next.getUTCDate() + days);
+
+  return next.toISOString().slice(0, 10);
+}
+
 export function DateOrRangePicker(props: TProps) {
-  const { startDate, endDate, onChange, disabled } = props;
+  const { isDateRange, startDate, endDate, onChange, disabled } = props;
 
-  const isSingleDay = !endDate || endDate === startDate;
+  // A single-day exception is stored with endDate mirroring startDate, so the
+  // payload stays complete while only one field is shown.
+  const handleStartDateChange = (value: string) => {
+    onChange(
+      isDateRange ? { startDate: value } : { startDate: value, endDate: value },
+    );
+  };
 
-  // Remembers the last end date before collapsing to single day,
-  // so toggling back to range can restore it instead of recomputing startDate + 1.
-  const savedEndDateRef = useRef<string>('');
-
-  const handleSingleToggle = () => {
-    if (isSingleDay) {
-      // Restore saved end date if still after startDate, otherwise startDate + 1
-      const saved = savedEndDateRef.current;
-      if (saved && saved > startDate) {
-        onChange('endDate', saved);
-      } else if (startDate) {
-        const next = new Date(startDate);
-        next.setDate(next.getDate() + 1);
-        onChange('endDate', next.toISOString().slice(0, 10));
-      } else {
-        onChange('endDate', '');
-      }
+  // Range mode is explicit: only this button changes it. Picking dates —
+  // including equal start and end dates — never shows or hides the end field.
+  const handleToggleRange = () => {
+    if (isDateRange) {
+      onChange({ isDateRange: false, endDate: startDate });
     } else {
-      // Save current end date before collapsing
-      savedEndDateRef.current = endDate;
-      onChange('endDate', startDate);
+      onChange({ isDateRange: true, endDate: addDays(startDate, 1) });
     }
   };
 
@@ -42,23 +47,20 @@ export function DateOrRangePicker(props: TProps) {
       <div className="flex items-center gap-2 flex-wrap">
         <Input
           dataType="date"
-          label={isSingleDay ? 'Date' : 'Start date'}
+          label={isDateRange ? 'Start date' : 'Date'}
           value={startDate}
-          onChange={(e) => {
-            onChange('startDate', e.target.value);
-            if (isSingleDay) onChange('endDate', e.target.value);
-          }}
+          onChange={(e) => handleStartDateChange(e.target.value)}
           disabled={disabled}
           className="w-44"
         />
 
-        {!isSingleDay && (
+        {isDateRange && (
           <Input
             dataType="date"
             label="End date"
             value={endDate}
             min={startDate}
-            onChange={(e) => onChange('endDate', e.target.value)}
+            onChange={(e) => onChange({ endDate: e.target.value })}
             disabled={disabled}
             className="w-44"
           />
@@ -67,13 +69,13 @@ export function DateOrRangePicker(props: TProps) {
 
       <button
         type="button"
-        onClick={handleSingleToggle}
+        onClick={handleToggleRange}
         className="text-xs text-blue-600 hover:text-blue-800 underline"
         disabled={disabled}
       >
-        {isSingleDay
-          ? '+ Add end date (date range)'
-          : '— Remove end date (single day)'}
+        {isDateRange
+          ? '— Remove end date (single day)'
+          : '+ Add end date (date range)'}
       </button>
     </div>
   );
