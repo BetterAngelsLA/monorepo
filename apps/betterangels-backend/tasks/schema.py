@@ -73,23 +73,6 @@ class Mutation:
         task_data = asdict(data)
         organization_id = task_data.pop("organization_id", None)
 
-        # Resolve FK references
-        note = None
-        if note_id := task_data.pop("note", None):
-            note = Note.objects.get(pk=str(note_id))
-
-        hmis_note = None
-        if hmis_note_id := task_data.pop("hmis_note", None):
-            hmis_note = HmisNote.objects.get(pk=str(hmis_note_id))
-
-        client_profile = None
-        if client_profile_id := task_data.pop("client_profile", None):
-            client_profile = ClientProfile.objects.get(pk=str(client_profile_id))
-
-        hmis_client_profile = None
-        if hmis_client_profile_id := task_data.pop("hmis_client_profile", None):
-            hmis_client_profile = HmisClientProfile.objects.get(pk=str(hmis_client_profile_id))
-
         permission_group: Optional[PermissionGroup] = None
 
         if organization_id is not None and organization_id is not UNSET:
@@ -110,6 +93,26 @@ class Mutation:
                 # ``OperationInfo`` it knows how to read.
                 raise PermissionDenied(PERMISSION_DENIED_MESSAGE) from exc
             organization = permission_group.organization
+
+        # Resolve FK references only after authorizing: ``objects.get()`` raises
+        # DoesNotExist for a bogus id and the gate denies for a real one, so
+        # resolving first would let an unauthorized caller probe which note or
+        # client ids exist — and would spend the lookups before refusing.
+        note = None
+        if note_id := task_data.pop("note", None):
+            note = Note.objects.get(pk=str(note_id))
+
+        hmis_note = None
+        if hmis_note_id := task_data.pop("hmis_note", None):
+            hmis_note = HmisNote.objects.get(pk=str(hmis_note_id))
+
+        client_profile = None
+        if client_profile_id := task_data.pop("client_profile", None):
+            client_profile = ClientProfile.objects.get(pk=str(client_profile_id))
+
+        hmis_client_profile = None
+        if hmis_client_profile_id := task_data.pop("hmis_client_profile", None):
+            hmis_client_profile = HmisClientProfile.objects.get(pk=str(hmis_client_profile_id))
 
         # A task may only attach a note from its own org: tasks are readable
         # agency-wide, so a foreign link would plant a task on another org's

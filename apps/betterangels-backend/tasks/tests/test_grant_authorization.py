@@ -187,6 +187,20 @@ class TaskGrantAuthorityDeniedTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixi
         read = self.task_query(self.task.pk)
         self.assertIn("errors", read)
 
+    def test_create_task_denial_does_not_reveal_whether_an_id_exists(self) -> None:
+        """A real and a bogus parent id must refuse identically.
+
+        The FKs were resolved before authorizing, so an unauthorized caller got
+        ``DoesNotExist`` ("Note matching query does not exist.") for an unknown
+        id and a PERMISSION refusal for a real one — an existence oracle.
+        """
+        self._login(self.non_case_manager_user)
+        real_note = baker.make(Note, organization=self.org_2)
+
+        for note_id in ("999999999", str(real_note.pk)):
+            created = self.create_task_fixture({"summary": "probe", "note": note_id})
+            self.assertGraphQLOperationInfo(created, "createTask", PERMISSION_DENIED_MESSAGE, kind="PERMISSION")
+
     def test_create_task_refuses_a_note_from_another_org(self) -> None:
         """The task's parents have to belong to the task's org.
 
