@@ -1151,6 +1151,38 @@ class AuditDisplayScopeTestCase(TestCase):
 
         self.assertEqual(line, f"Created Bed: Bed A ({bed.pk})")
 
+    def test_no_op_save_is_not_reported(self) -> None:
+        """Edit -> save with nothing changed must not add a card to the log."""
+        with audit_context(label="seed"):
+            bed = Bed.objects.create(shelter=self.shelter, name="Bed A")
+
+        with audit_context(user=self.user):
+            bed.save()
+
+        self.assertEqual(self._log(), [])
+
+    def test_no_op_shelter_save_is_not_reported(self) -> None:
+        """The anchored object gets the same treatment as a summarized one."""
+        with audit_context(user=self.user):
+            self.shelter.save()
+
+        self.assertEqual(self._log(), [])
+
+    def test_no_op_save_does_not_mask_a_real_change_in_the_same_action(self) -> None:
+        """The no-op write is dropped, not the object: the real change survives."""
+        with audit_context(label="seed"):
+            bed = Bed.objects.create(shelter=self.shelter, name="Bed A")
+
+        with audit_context(user=self.user):
+            bed.save()
+            bed.status_notes = "Second write"
+            bed.save()
+
+        self.assertEqual(
+            _summaries(self._log()[0]),
+            [f"Updated Bed: Bed A ({bed.pk}) Status notes"],
+        )
+
     def test_deleted_bed_is_summarized_with_its_last_name(self) -> None:
         with audit_context(label="seed"):
             bed = Bed.objects.create(shelter=self.shelter, name="Bed A")
@@ -1626,6 +1658,7 @@ class ObjectAuditLogScheduleEventsTestCase(TestCase):
         self.assertEqual([e.action for e in actions[0].events], ["shelter.schedule.update"])
         self.assertEqual(event.kind, "UPDATE")
         self.assertEqual(event.context, {"day": "Monday", "schedule type": "Operating Hours"})
+
         self.assertEqual(
             event.field_changes,
             {"start time": ["09:00:00", "10:00:00"], "end time": ["17:00:00", "18:00:00"]},

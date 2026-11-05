@@ -1034,6 +1034,9 @@ def object_audit_log(
     # served from the cursor by the next request.
     remaining = MAX_EVENTS_PER_PAGE
     actions: list[AuditActionData] = []
+    # The cursor follows the rows that were read, not the actions that survived:
+    # a key whose action renders nothing must not stall the next page.
+    last_read: AuditActionData | None = None
     for key in page_keys:
         action_rows = grouped.get(key)
         if not action_rows:
@@ -1051,6 +1054,11 @@ def object_audit_log(
             hidden_fields=hidden_fields,
             hidden_summary_models=hidden_summary_models,
         )
+        last_read = action
+        if not action.events:
+            # Nothing survived rendering (a no-op save, or only withheld rows):
+            # the card would be empty, so the action is not returned at all.
+            continue
         actions.append(action)
         remaining -= len(action.events)
 
@@ -1070,7 +1078,7 @@ def object_audit_log(
     actions.sort(key=lambda a: (a.timestamp, a.order), reverse=True)
     return AuditActionPageData(
         results=actions,
-        end_cursor=_encode_cursor(actions[-1]) if actions else None,
+        end_cursor=_encode_cursor(last_read) if last_read else None,
         has_next_page=has_next_page,
     )
 
@@ -1254,6 +1262,13 @@ def _build_action(
             summary_key = (row.pgh_obj_model, row.pgh_obj_id, kind)
             if summary_key in summarized:
                 continue
+            line_fields = summary_fields.get(summary_key, ())
+            # A save that changed only unrendered columns acknowledges nothing, so
+            # it has no line: printing "Updated Bed: A (7)" with no fields would be
+            # a no-op card. A later row of the same object can still carry a real
+            # change, so the key is only claimed once a line is emitted.
+            if kind == "UPDATE" and not line_fields:
+                continue
             summarized.add(summary_key)
             events.append(
                 AuditEventData(
@@ -1304,7 +1319,6 @@ def _build_action(
         # the raw field name for them (§13).
         hidden = hidden_by_model.get(owner, ())
         changes = _render_keys(_scalar_changes(row, resolver, hidden), owner)
-        _merge_scalar(scalar_changes, owner, row.pgh_obj_id, changes)
 
         # An UPDATE whose predecessor row was purged has no diff base:
         # pghistory's read-time ``pgh_diff`` is NULL, which is not the same as
@@ -1312,6 +1326,16 @@ def _build_action(
         # INSERT/DELETE render from ``pgh_data`` and the through-table path has
         # no ``pgh_obj`` to diff against at all.
         no_base = _kind(row.pgh_label) == "UPDATE" and row.pgh_diff is None
+        snapshot = _snapshot(row, resolver, hidden) if include_snapshot else None
+
+        # Saving without editing still writes a row: ``updated_at`` moves, the
+        # trigger fires, and every rendered change is empty. Emitting that event
+        # puts an empty "Changed" card in the log, so it is not an event at all.
+        # ``no_base`` stays (the diff is missing, not empty) and an INSERT/DELETE
+        # is a real creation or deletion even when no column is renderable.
+        if not changes and not no_base and snapshot is None and _kind(row.pgh_label) == "UPDATE":
+            continue
+
         # A schedule row's identity is the part of it the write did not change. An
         # id-carrying entry may move a slot to another day, so ``day`` can be both
         # a change and (stale) context; the change wins.
@@ -1320,6 +1344,7 @@ def _build_action(
             context = _schedule_context(row, resolver, hidden) or {}
             schedule_context = {field: value for field, value in context.items() if field not in changes} or None
 
+        _merge_scalar(scalar_changes, owner, row.pgh_obj_id, changes)
         events.append(
             AuditEventData(
                 timestamp=row.pgh_created_at,
@@ -1329,7 +1354,7 @@ def _build_action(
                 target_type=target_type,
                 target_id=target_id,
                 field_changes=None if no_base else {f: list(pair) for f, pair in changes.items()},
-                snapshot=_snapshot(row, resolver, hidden) if include_snapshot else None,
+                snapshot=snapshot,
                 context=schedule_context,
             )
         )

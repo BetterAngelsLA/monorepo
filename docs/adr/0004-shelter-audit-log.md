@@ -2176,7 +2176,12 @@ The line is omitted unless the caller holds `Bed.VIEW` / `Room.VIEW` in the
 shelter's organization, so a shelter-only reader cannot learn a bed or room name
 from the log when the corresponding query is empty. The hidden event model is
 pruned from the aggregate with `across()`, so an action containing only hidden
-rows disappears instead of surfacing as an empty action; the action verb is
+rows disappears instead of surfacing as an empty action. A write that changed only
+mechanical columns — edit → save with nothing edited still moves `updated_at` — is
+not an event at all, on the anchor and on a summarized object alike, so it cannot
+render as a card with no content. An action left with no events is dropped from
+the page; the cursor still advances past its key, so a dropped action cannot stall
+pagination. The action verb is
 derived from the anchored object's rows, so a related-only write reads as a
 modification of the anchor rather than creating or deleting it. Repeated saves of
 the same object under one context collapse to one line, keyed by
