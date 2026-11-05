@@ -252,13 +252,14 @@ def invalidate_scope_cache(user: "User") -> None:
     tier) call this after changing *user*'s authority so a request that
     grants/revokes and then re-reads authority on the same user instance never
     serves the stale decision (a cached ``ALL`` sentinel is the hard-stale
-    case).  The same request-scope staleness applies to the effective-report memos
-    (``global_permissions`` / ``organization_effective_permissions``), so they
-    are dropped here too.  Delegation writes (``grant_delegate`` / ``grant_delete``
-    on an org principal) have no single user principal to reach from here, so
-    invalidation is caller-supplied: pass the instance serving the request
-    (``acting_user``).  Fanning out to DB-loaded members would clear memos on
-    instances nobody reads and leave the caller's cache stale.
+    case).  The same request-scope staleness applies to the effective-report
+    memos (``global_permissions`` / ``organization_effective_permissions``),
+    so they are dropped here too.  Delegation
+    writes (``grant_delegate`` / ``grant_delete`` on an org principal) have no
+    single user principal to reach from here, so invalidation is
+    caller-supplied: pass the instance serving the request (``acting_user``).
+    Fanning out to DB-loaded members would clear memos on instances nobody
+    reads and leave the caller's cache stale.
     """
     user.__dict__.pop("_authority_cache", None)
     user.__dict__.pop("_can_anywhere_cache", None)

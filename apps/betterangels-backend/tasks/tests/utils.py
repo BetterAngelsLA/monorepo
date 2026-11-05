@@ -1,9 +1,15 @@
-from typing import Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
 from test_utils.mixins import HasGraphQLProtocol
 
+if TYPE_CHECKING:
+    from organizations.models import Organization
+
 
 class TaskGraphQLUtilsMixin(HasGraphQLProtocol):
+    # Supplied by ``GraphQLBaseTestCase``; declared here so mypy can see it.
+    org_1: "Organization"
+
     def get_task_fields(self) -> str:
         return """
             id
@@ -33,14 +39,31 @@ class TaskGraphQLUtilsMixin(HasGraphQLProtocol):
             }}
         """
 
-    def create_task_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
-        return self._create_or_update_task_fixture("create", variables)
+    def task_query(self, task_id: Any) -> Dict[str, Any]:
+        query = """
+            query ($id: ID!) {
+                task(pk: $id) {
+                    id
+                    summary
+                }
+            }
+        """
+        return self.execute_graphql(query, {"id": task_id})
+
+    def create_task_fixture(self, variables: Dict[str, Any], *, include_organization: bool = True) -> Dict[str, Any]:
+        return self._create_or_update_task_fixture("create", variables, include_organization=include_organization)
 
     def update_task_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
         return self._create_or_update_task_fixture("update", variables)
 
-    def _create_or_update_task_fixture(self, operation: str, variables: Dict[str, Any]) -> Dict[str, Any]:
+    def _create_or_update_task_fixture(
+        self, operation: str, variables: Dict[str, Any], *, include_organization: bool = True
+    ) -> Dict[str, Any]:
         assert operation in ["create", "update"], "Invalid operation specified."
+
+        if operation == "create" and include_organization:
+            # The acting org (RFC 0003): authority is ``require_can`` at this org.
+            variables.setdefault("organizationId", str(self.org_1.pk))
 
         mutation: str = f"""
             mutation {operation.capitalize()}Task($data: {operation.capitalize()}TaskInput!) {{ # noqa: B950
@@ -60,7 +83,7 @@ class TaskGraphQLUtilsMixin(HasGraphQLProtocol):
         """
         return self.execute_graphql(mutation, {"data": variables})
 
-    def delete_task_fixture(self, task_id: str) -> Dict[str, Any]:
+    def delete_task_fixture(self, task_id: str | int) -> Dict[str, Any]:
         mutation: str = """
             mutation ($id: ID!) {
                 deleteTask(data: { id: $id }) {

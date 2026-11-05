@@ -21,6 +21,10 @@ CLIENT_FAMILY_PERMS = [
     for perm in (model.perms.ADD, model.perms.CHANGE, model.perms.DELETE, model.perms.VIEW)
 ]
 
+# The task bundle (RFC 0003 slice 1), shared by the legacy template and the
+# scoped Role so the template stays the Role's superset by construction.
+TASK_PERMS = [Task.perms.ADD, Task.perms.VIEW, Task.perms.CHANGE, Task.perms.DELETE]
+
 CASEWORKER = TemplateConfig(
     name="Caseworker",
     permissions=[
@@ -31,9 +35,7 @@ CASEWORKER = TemplateConfig(
         ServiceRequest.perms.ADD,
         # Client models: full CRUD
         *CLIENT_FAMILY_PERMS,
-        # Task: ADD + VIEW only
-        Task.perms.ADD,
-        Task.perms.VIEW,
+        *TASK_PERMS,
         # Attachment: ADD + VIEW
         Attachment.perms.ADD,
         Attachment.perms.VIEW,
@@ -48,12 +50,16 @@ CASEWORKER = TemplateConfig(
 # ── Role definition (ADR 0001 §2.2 — scoped caseworker capability) ───────
 # The scoped ``Caseworker`` Role backs the cut-over slices of the caseworker
 # template: teams read (``teams.view_team``), the client family (ADR 0001 §5.1,
-# RFC 0002 — SHARED read / SHARED write) and referrals (RFC 0003).  Notes/tasks
-# stay legacy until their own cutover.
+# RFC 0002 — SHARED read / SHARED write), referrals (RFC 0003) and the task
+# slice (RFC 0003 slice 1 — org-scoped writes, SHARED reads).  Notes stay
+# legacy until their own cutover.
 CASEWORKER_ROLE = RoleDef(
     name=CASEWORKER.name,
     permissions=[
         Team.perms.VIEW,
+        # Task slice — RFC 0003 slice 1: org-scoped writes via ``can_obj``,
+        # reads SHARED (the ``can_anywhere`` checker).
+        *TASK_PERMS,
         # Client family — the RFC 0002 cutover bundle.
         *CLIENT_FAMILY_PERMS,
         # Referrals ride the same scoped Role (RFC 0003 / #2574).

@@ -11,7 +11,7 @@ from accounts.selectors import resolve_permission_group
 from clients.models import ClientProfile
 from common.constants import DEFAULT_DOCUMENT_CONTENT_TYPES, DEFAULT_IMAGE_CONTENT_TYPES
 from common.models import Attachment, Location
-from common.permissions.utils import assign_object_permissions
+from common.permissions.utils import assign_object_permissions, require_can
 from common.services import file_upload
 from common.services.file_upload import (
     AttachmentUploadConfig,
@@ -27,6 +27,7 @@ from notes.permissions import (
     PrivateDetailsPermissions,
     ServiceRequestPermissions,
 )
+from tasks.models import Task
 from tasks.services import task_create
 
 # ---------------------------------------------------------------------------
@@ -119,11 +120,20 @@ def note_update(
 
         # --- Tasks (replace-all) ---
         if tasks_data is not None and user and permission_group:
+            # A task is a task whatever path it arrives on.  Replace-all is a
+            # delete followed by a create, so it asks for exactly the authority
+            # the flat ``deleteTask``/``createTask`` mutations ask for — the
+            # note gate is not a substitute (RFC 0003).
+            if note.tasks.exists():
+                require_can(user, Task.perms.DELETE, org=note.organization)
+            if tasks_data:
+                require_can(user, Task.perms.ADD, org=note.organization)
+
             note.tasks.all().delete()
             if tasks_data:
                 task_create(
                     user=user,
-                    permission_group=permission_group,
+                    organization=note.organization,
                     data=tasks_data,
                     note=note,
                     client_profile=note.client_profile,
@@ -302,9 +312,12 @@ def note_create(
         )
 
     if tasks:
+        # Same authority as a flat ``createTask`` (RFC 0003) — creating through a
+        # note must not be a way around ``tasks.add``.
+        require_can(user, Task.perms.ADD, org=note.organization)
         task_create(
             user=user,
-            permission_group=permission_group,
+            organization=note.organization,
             data=tasks,
             note=note,
             client_profile=note.client_profile,
