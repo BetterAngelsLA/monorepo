@@ -26,6 +26,7 @@ const schedule = (overrides: Partial<ScheduleType>): ScheduleType =>
 const exception = (overrides: Partial<ExceptionEntry>): ExceptionEntry => ({
   localId: 'e1',
   startDate: '2026-12-24',
+  isDateRange: true,
   endDate: '2026-12-26',
   closedAllDay: false,
   startTime: '10:00',
@@ -118,6 +119,7 @@ describe('hydrateExceptions', () => {
         localId: 'x',
         serverId: 'x',
         startDate: '',
+        isDateRange: false,
         endDate: '',
         closedAllDay: true,
         startTime: '',
@@ -139,7 +141,23 @@ describe('hydrateExceptions', () => {
 
     expect(entry.closedAllDay).toBe(true);
     expect(entry.endDate).toBe('2026-12-25');
+    expect(entry.isDateRange).toBe(false);
     expect(entry.condition).toBe(ConditionChoices.Heat);
+  });
+
+  it('hydrates a multi-day exception as a date range', () => {
+    const [entry] = hydrateExceptions([
+      schedule({
+        isException: true,
+        id: 'x',
+        startDate: '2026-12-24',
+        endDate: '2026-12-26',
+      }),
+    ]);
+
+    expect(entry.startDate).toBe('2026-12-24');
+    expect(entry.endDate).toBe('2026-12-26');
+    expect(entry.isDateRange).toBe(true);
   });
 });
 

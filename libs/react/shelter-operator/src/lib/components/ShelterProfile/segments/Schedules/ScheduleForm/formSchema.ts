@@ -73,6 +73,10 @@ const exceptionBaseFields = {
   localId: z.string(),
   serverId: z.string().optional(),
   startDate: dateField,
+  // Display-only: whether the form shows a separate end date field. Kept in
+  // form state (rather than derived from the dates) so that entering a date
+  // cannot toggle the field, and equal start/end dates stay a range.
+  isDateRange: z.boolean(),
   endDate: dateField,
   condition: z.enum(ConditionChoices).optional(),
 };

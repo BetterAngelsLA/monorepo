@@ -39,6 +39,9 @@ export function hydrateExceptions(schedules: ScheduleType[]): ExceptionEntry[] {
     localId: s.id ?? crypto.randomUUID(),
     serverId: s.id ?? undefined,
     startDate: s.startDate ?? '',
+    // A saved range is only recognizable when its ends differ; a same-day
+    // exception loads as a single day.
+    isDateRange: Boolean(s.startDate && s.endDate && s.endDate !== s.startDate),
     endDate: s.endDate ?? s.startDate ?? '',
     closedAllDay: !s.startTime && !s.endTime,
     startTime: toHHMM(s.startTime),

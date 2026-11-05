@@ -54,9 +54,10 @@ export function ExceptionRow(props: TProps) {
 
       {/* Date / date range */}
       <DateOrRangePicker
+        isDateRange={entry.isDateRange}
         startDate={entry.startDate}
         endDate={entry.endDate}
-        onChange={(field, value) => onChange({ [field]: value })}
+        onChange={onChange}
         disabled={disabled}
       />
 
