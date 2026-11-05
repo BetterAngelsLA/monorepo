@@ -24,8 +24,10 @@ as the API layer instead of Django REST Framework.
 
   Domain-authority decisions go through the selectors (`common/permissions/selectors.py`),
   never `user.has_perm` or guardian `filter_for_user`:
-  - **Reads** — `visible(qs, user, perm)` (list hooks via `visible_rows_for_holder`;
-    single fields via the `*_checker` predicates). Never reuse a read filter for a write.
+  - **Reads** — `visible(qs, user, perm)` for org-tier lists; SHARED-tier list fields
+    ride the declarative `HasPerm(…, perm_checker=can_anywhere_checker,
+    fail_silently=True)` (an empty page for non-holders); single fields via the
+    `*_checker` predicates. Never reuse a read filter for a write.
   - **Writes** — `writable(qs, user, perm)` is `can_obj` as a queryset filter. Mutation
     gates fetch through `get_writable_or_deny(qs, pk, user, perm)` — the fetch *is* the
     check (unfetchable means unwritable) — or compose on `writable` directly. Never fetch

@@ -104,8 +104,8 @@ def resolve_permission_group(
     """Resolve the correct PermissionGroup for a mutation.
 
     If *organization_id* is provided, validates membership against that org.
-    Otherwise finds the first organization where the user holds a
-    *template* group.
+    Otherwise takes the lowest-org-id organization where the user holds a
+    *template* group (deterministic for multi-org callers).
 
     Callers should always specify *template* explicitly (e.g.
     ``CASEWORKER`` for outreach operations).
@@ -115,10 +115,14 @@ def resolve_permission_group(
         organization = Organization.objects.get(id=organization_id)
         return get_permission_group_for_org(user, organization, template=template)
 
-    # No organization_id — find the first org where the user holds this template.
+    # No organization_id — take the lowest org id where the user holds this
+    # template.  Ordered so a multi-org caller lands in the same org on every
+    # request: the compat windows fall back to this, and an unordered ``first()``
+    # would let the same build create in a different org after any re-plan.
     permission_group = (
         PermissionGroup.objects.select_related("organization")
         .filter(template__name=template_name, user=user.pk)  # type: ignore[union-attr]
+        .order_by("organization_id")
         .first()
     )
 

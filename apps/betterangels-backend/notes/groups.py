@@ -25,17 +25,17 @@ CLIENT_FAMILY_PERMS = [
 # scoped Role so the template stays the Role's superset by construction.
 TASK_PERMS = [Task.perms.ADD, Task.perms.VIEW, Task.perms.CHANGE, Task.perms.DELETE]
 
+# The note bundle (RFC 0003 slice 2), shared by the legacy template and the
+# scoped Role so the template stays the Role's superset by construction.
+NOTE_PERMS = [Note.perms.ADD, Note.perms.VIEW, Note.perms.CHANGE, Note.perms.DELETE]
+
 CASEWORKER = TemplateConfig(
     name="Caseworker",
     permissions=[
-        # Note: ADD + VIEW + CHANGE + DELETE.  The write cutover (RFC 0003
-        # slice 2) removed the guardian write paths, so the model-level
-        # CHANGE/DELETE perms can no longer over-permit through
-        # ``filter_for_user`` — they now mirror the Role bundle.
-        Note.perms.ADD,
-        Note.perms.VIEW,
-        Note.perms.CHANGE,
-        Note.perms.DELETE,
+        # Note bundle.  The write cutover removed the guardian write paths, so
+        # model-level CHANGE/DELETE can no longer over-permit through
+        # ``filter_for_user`` — they mirror the Role bundle.
+        *NOTE_PERMS,
         # ServiceRequest: ADD only.  SR writes gate through the owning note's
         # org (SR is not org-scoped yet — its ``service`` hop cannot resolve);
         # the model-level VIEW/CHANGE/DELETE perms move with the
@@ -72,10 +72,7 @@ CASEWORKER_ROLE = RoleDef(
         # reads SHARED.  Attachments ride the note gate (the upload mutations
         # gate on Note CHANGE), so the scoped role carries no Attachment perms
         # — E005 rejects them (Attachment declares no org scoping).
-        Note.perms.ADD,
-        Note.perms.VIEW,
-        Note.perms.CHANGE,
-        Note.perms.DELETE,
+        *NOTE_PERMS,
         # ServiceRequest: deliberately absent from the scoped role — SR is not
         # org-scoped in this slice (its ``service`` hop cannot resolve until
         # OrganizationService is org-scoped), and E005 forbids a scoped Role

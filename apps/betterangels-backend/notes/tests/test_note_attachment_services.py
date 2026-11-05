@@ -18,7 +18,6 @@ from notes.services import (
 class CreateNoteAttachmentPresignedUploadsTest(TestCase):
     """Test that the note-specific wrapper delegates correctly to the generic service."""
 
-
     def setUp(self) -> None:
         self.user: Any = baker.make("accounts.User")
 

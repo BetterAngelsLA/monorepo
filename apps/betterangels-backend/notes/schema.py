@@ -6,7 +6,7 @@ from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.db.models import Exists, OuterRef, Q, QuerySet
 from organizations.models import Organization
-from strawberry import UNSET, asdict
+from strawberry import asdict
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.mutations import resolvers
@@ -23,9 +23,9 @@ from common.graphql.types import (
     DeleteDjangoObjectInput,
     DeletedObjectType,
 )
-from common.graphql.utils import org_or_deny
+from common.graphql.utils import resolve_create_org
 from common.permissions.selectors import writable
-from common.permissions.utils import PERMISSION_DENIED_MESSAGE, IsAuthenticated, get_writable_or_deny, require_can
+from common.permissions.utils import IsAuthenticated, get_writable_or_deny
 from common.services.types import UploadConfirmation, UploadRequest
 from common.utils import get_or_none
 from notes.groups import CASEWORKER
@@ -158,24 +158,12 @@ class Mutation:
             tasks=tasks_list,
         )
 
-        if data.organization_id is not None and data.organization_id is not UNSET:
-            # Payload-scoped grant authority (ADR 0001 §5, RFC 0003 slice 2).
-            organization = org_or_deny(data.organization_id)
-            require_can(user, NotePermissions.ADD, org=organization)
+        organization, permission_group = resolve_create_org(
+            user, data.organization_id, template=CASEWORKER, perm=NotePermissions.ADD
+        )
+        if permission_group is None:
             note = note_create(organization=organization, **note_kwargs)
         else:
-            # Compat window: a build that predates the payload org creates
-            # through its legacy ``CASEWORKER`` group — the org comes from the
-            # group, as before the cutover.  Dropped by the strict flip once
-            # the build sending ``organizationId`` is deployed.
-            try:
-                permission_group = resolve_permission_group(user, template=CASEWORKER)
-            except PermissionError:
-                # Same structured denial the removed ``HasPerm`` extension
-                # produced for a caller without the app-level perm (the
-                # builtin ``PermissionError`` would escape as an unhandled
-                # error).
-                raise PermissionDenied(PERMISSION_DENIED_MESSAGE)
             note = note_create(permission_group=permission_group, **note_kwargs)
 
         note._private_details = note.private_details

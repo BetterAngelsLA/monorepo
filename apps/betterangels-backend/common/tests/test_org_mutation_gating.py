@@ -53,6 +53,10 @@ GATE_MARKERS = (
     "visible(",
     "writable(",
     "get_writable_or_deny(",
+    # The create gate: resolve the payload org and ``require_can`` at it, or the
+    # compat-window legacy group.  Added when the create resolvers collapsed onto
+    # it — without the marker the tripwire cannot see the indirection.
+    "resolve_create_org(",
     "permission=",
     "can_anywhere_checker",
 )

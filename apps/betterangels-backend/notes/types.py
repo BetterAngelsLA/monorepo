@@ -1,18 +1,13 @@
 from datetime import datetime
-from typing import Any, List, Optional
+from typing import List, Optional
 
 import strawberry
 import strawberry_django
 from django.db.models import (
-    BooleanField,
-    Case,
     Exists,
-    F,
     OuterRef,
     Q,
     QuerySet,
-    Value,
-    When,
 )
 from strawberry import ID, Info, Maybe, auto
 
@@ -28,8 +23,8 @@ from common.graphql.types import (
 )
 from common.models import Attachment
 from common.org_types import REGISTRY
+from notes import selectors as note_selectors
 from notes.enums import ServiceRequestTypeEnum
-from notes.permissions import NotePermissions
 from tasks.types import TaskType
 from teams.types import TeamType
 
@@ -149,44 +144,6 @@ class NoteFilter:
         return query
 
 
-def _perm_org_ids(info: Info, perm: str) -> Optional[list[int]]:
-    """Org ids where *info*'s user holds *perm*; ``None`` for the global tier (all)."""
-    from common.permissions.selectors import ALL, scopes
-
-    s = scopes(info.context.request.user, perm)
-    if s is ALL:
-        return None
-    # ``scopes`` returns a frozenset of org ids (the request-cached snapshot).
-    return list(s)
-
-
-def _can_edit_case(info: Info) -> Any:
-    """Org-scoped edit flag: CHANGE where the caller's role holds it (RFC 0003 slice 2).
-
-    Replaces the guardian prefilter (``filter_for_user``) — the org-scoped arm
-    is the single authority; the object arm joins when the sharing edge ships.
-    """
-    org_ids = _perm_org_ids(info, NotePermissions.CHANGE)
-    if org_ids is None:
-        return Value(True)
-    return Case(
-        When(organization_id__in=org_ids, then=Value(True)),
-        default=Value(False),
-        output_field=BooleanField(),
-    )
-
-
-def _private_details_case(info: Info) -> Any:
-    """Private details are readable at the note's org (was: the creating group's guardian row)."""
-    org_ids = _perm_org_ids(info, NotePermissions.CHANGE)
-    if org_ids is None:
-        return F("private_details")
-    return Case(
-        When(organization_id__in=org_ids, then=F("private_details")),
-        default=Value(None),
-    )
-
-
 @strawberry_django.type(
     models.Note,
     pagination=True,
@@ -216,7 +173,7 @@ class NoteType:
 
     @strawberry_django.field(
         annotate={
-            "_can_edit": lambda info: _can_edit_case(info),
+            "_can_edit": lambda info: note_selectors.can_edit_case(info.context.request.user),
         }
     )
     def user_can_edit(self, root: models.Note) -> bool:
@@ -224,7 +181,7 @@ class NoteType:
 
     @strawberry_django.field(
         annotate={
-            "_private_details": lambda info: _private_details_case(info),
+            "_private_details": lambda info: note_selectors.private_details_case(info.context.request.user),
         }
     )
     def private_details(self, root: models.Note) -> Optional[str]:
