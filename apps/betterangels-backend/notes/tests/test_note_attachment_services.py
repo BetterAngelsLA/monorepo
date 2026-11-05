@@ -4,6 +4,9 @@ from unittest.mock import MagicMock, patch
 from django.test import TestCase
 from model_bakery import baker
 
+from accounts.tests.baker_recipes import organization_recipe
+from common.models import Attachment
+from common.services.file_upload import UploadConfirmation, UploadRequest
 from notes.models import Note
 from notes.services import (
     NOTE_ATTACHMENT_CONFIG,
@@ -14,6 +17,7 @@ from notes.services import (
 
 class CreateNoteAttachmentPresignedUploadsTest(TestCase):
     """Test that the note-specific wrapper delegates correctly to the generic service."""
+
 
     def setUp(self) -> None:
         self.user: Any = baker.make("accounts.User")

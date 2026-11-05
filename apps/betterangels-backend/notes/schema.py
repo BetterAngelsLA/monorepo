@@ -2,7 +2,6 @@ from typing import Any, Dict, Optional, cast
 
 import strawberry
 import strawberry_django
-from common.graphql.org import resolve_org_or_deny
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.db.models import Exists, OuterRef, Q, QuerySet
@@ -24,6 +23,7 @@ from common.graphql.types import (
     DeleteDjangoObjectInput,
     DeletedObjectType,
 )
+from common.graphql.utils import org_or_deny
 from common.permissions.selectors import writable
 from common.permissions.utils import PERMISSION_DENIED_MESSAGE, IsAuthenticated, get_writable_or_deny, require_can
 from common.services.types import UploadConfirmation, UploadRequest
@@ -160,7 +160,7 @@ class Mutation:
 
         if data.organization_id is not None and data.organization_id is not UNSET:
             # Payload-scoped grant authority (ADR 0001 §5, RFC 0003 slice 2).
-            organization = resolve_org_or_deny(data.organization_id)
+            organization = org_or_deny(data.organization_id)
             require_can(user, NotePermissions.ADD, org=organization)
             note = note_create(organization=organization, **note_kwargs)
         else:

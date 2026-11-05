@@ -35,7 +35,6 @@ over.
 
 #: Grant-only domains — legacy ``PermissionGroup`` rows are inert: not reported
 #: and never consulted for authority.  Shelters, teams, reports, member
-<<<<<<< HEAD
 #: management (``organizations.*`` — bound to the org-root Organization model), the
 #: client family (RFC 0002 — SHARED read / SHARED write), referrals (the whole
 #: bundle rides the scoped ``Caseworker`` Role; the template carries no referral
@@ -81,15 +80,6 @@ def is_cut_over(perm: str) -> bool:
     app_label = perm.split(".", 1)[0]
     return app_label in LEGACY_INERT_APPS and perm not in LEGACY_LIVE_PERMISSIONS
 
-=======
-#: management (``organizations.*`` — bound to the org-root Organization model),
-#: the client family (RFC 0002 — SHARED read / SHARED write), and the
-#: tasks/notes cutovers (RFC 0003 — slice 1 tasks, slice 2 notes/service
-#: requests, whose writes gate through ``writable()``).
-LEGACY_INERT_APPS: frozenset[str] = frozenset(
-    {"shelters", "teams", "reports", "organizations", "clients", "tasks", "notes"}
-)
->>>>>>> 815e7fe23 (fix(perm): mark the notes cutover inert for the legacy permission report)
 
 #: Domains where the global tier is enforceable at any org — exactly the
 #: grant-only set (the effective per-org report may fold global-tier

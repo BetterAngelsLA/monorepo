@@ -20,15 +20,16 @@ the cutover posture:
 
 from typing import Any, Dict, Tuple
 
+from model_bakery import baker
+from organizations.models import Organization
+
 from accounts.models import User
 from accounts.services import sync_roles
 from common.permissions.utils import PERMISSION_DENIED_MESSAGE
 from common.tests.utils import make_legacy_only_holder
-from model_bakery import baker
 from notes.groups import CASEWORKER
 from notes.models import Note, ServiceRequest
 from notes.tests.utils import NoteGraphQLBaseTestCase
-from organizations.models import Organization
 
 ORG_DENIED_MESSAGE = "You do not have access to this organization."
 DELETE_NOTE_DENIED_MESSAGE = "You do not have permission to delete this interaction."
@@ -265,7 +266,7 @@ class NoteGrantAuthorityDeniedTestCase(_NoteGrantHelpers, NoteGraphQLBaseTestCas
         )
 
     def test_create_note_with_an_unknown_organization_is_denied(self) -> None:
-        """``resolve_org_or_deny`` on the payload org fails closed — unknown is not found."""
+        """``org_or_deny`` on the payload org fails closed — unknown is not found."""
         self.graphql_client.force_login(self.org_1_case_manager_1)
         initial_count = Note.objects.count()
 

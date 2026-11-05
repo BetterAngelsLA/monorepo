@@ -5,6 +5,7 @@ import pghistory
 from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
+from organizations.models import Organization
 
 from accounts.models import PermissionGroup, User
 from clients.models import ClientProfile
@@ -25,7 +26,6 @@ from notes.permissions import (
     PrivateDetailsPermissions,
     ServiceRequestPermissions,
 )
-from organizations.models import Organization
 from tasks.models import Task
 from tasks.services import task_create
 

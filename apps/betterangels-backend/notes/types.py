@@ -156,7 +156,8 @@ def _perm_org_ids(info: Info, perm: str) -> Optional[list[int]]:
     s = scopes(info.context.request.user, perm)
     if s is ALL:
         return None
-    return list(s.values_list("pk", flat=True))
+    # ``scopes`` returns a frozenset of org ids (the request-cached snapshot).
+    return list(s)
 
 
 def _can_edit_case(info: Info) -> Any:
