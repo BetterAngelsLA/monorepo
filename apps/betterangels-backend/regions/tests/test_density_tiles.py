@@ -35,7 +35,6 @@ from accounts.role_manager import OrgRoleManager
 from accounts.services import sync_roles
 from accounts.tests.baker_recipes import organization_recipe
 from common.models import Location
-from common.tests.utils import make_legacy_only_holder
 from notes.groups import CASEWORKER
 from notes.models import Note
 from regions.models import Region, RegionKind
@@ -118,7 +117,9 @@ class DensityTileBaseTestCase(TestCase):
         Built in that order deliberately — ``make_legacy_only_holder`` drops every Grant on
         the user, so the report grant has to be added after it or it is silently revoked.
         """
-        user = make_legacy_only_holder(user=baker.make(User), organization=organization, template_name=CASEWORKER.name)
+        user = baker.make(User)
+        organization.add_user(user)
+        OrgRoleManager(organization).add_roles(user, CASEWORKER)
         OrgRoleManager(organization).add_roles(user, ORG_ADMIN)
         return user
 

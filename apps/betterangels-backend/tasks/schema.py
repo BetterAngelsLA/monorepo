@@ -3,21 +3,20 @@ from typing import Optional, cast
 import strawberry
 import strawberry_django
 from django.core.exceptions import PermissionDenied
-from strawberry import UNSET, asdict
+from strawberry import asdict
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.pagination import OffsetPaginated
 from strawberry_django.permissions import HasPerm
 
-from accounts.models import PermissionGroup, User
-from accounts.selectors import resolve_permission_group
+from accounts.models import User
 from clients.models import ClientProfile
 from common.constants import HMIS_SESSION_KEY_NAME
 from common.graphql.permission_checkers import can_anywhere_checker
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
-from common.graphql.utils import org_or_deny
+from common.graphql.utils import resolve_create_org
 from common.permissions.selectors import can_obj
-from common.permissions.utils import PERMISSION_DENIED_MESSAGE, IsAuthenticated, require_can
+from common.permissions.utils import PERMISSION_DENIED_MESSAGE, IsAuthenticated
 from common.utils import get_or_none
 from hmis.models import HmisClientProfile, HmisNote
 from notes.groups import CASEWORKER
@@ -76,31 +75,9 @@ class Mutation:
         task_data = asdict(data)
         organization_id = task_data.pop("organization_id", None)
 
-        permission_group: Optional[PermissionGroup] = None
-
-        if organization_id is not None and organization_id is not UNSET:
-            # Payload-scoped grant authority (ADR 0001 §5, RFC 0003 slice 1).
-            organization = org_or_deny(organization_id)
-            require_can(current_user, Task.perms.ADD, org=organization)
-        else:
-            # Compat window: a build that predates the payload org creates
-            # through its legacy ``CASEWORKER`` group — the org comes from the
-            # group, as before the cutover.  Dropped by the strict flip once
-            # the build sending ``organizationId`` is deployed.
-            try:
-                permission_group = resolve_permission_group(current_user, template=CASEWORKER)
-            except PermissionError as exc:
-                # The builtin is not a ``PermissionDenied``, so the wrapper would
-                # not translate it: a pre-wiring build would get ``data: null``
-                # plus an internal message instead of an ``OperationInfo``.
-                raise PermissionDenied(PERMISSION_DENIED_MESSAGE) from exc
-            # Group membership alone is not authority: the group still has to
-            # carry ``tasks.add``.  The extension this branch replaced checked
-            # exactly this before the resolver ran, so dropping it would let a
-            # customised group without the permission create tasks.
-            if not current_user.has_perm(Task.perms.ADD):
-                raise PermissionDenied(PERMISSION_DENIED_MESSAGE)
-            organization = permission_group.organization
+        organization, permission_group = resolve_create_org(
+            current_user, organization_id, template=CASEWORKER, perm=Task.perms.ADD
+        )
 
         # Resolve FK references only after authorizing: ``objects.get()`` raises
         # DoesNotExist for a bogus id and the gate denies for a real one, so

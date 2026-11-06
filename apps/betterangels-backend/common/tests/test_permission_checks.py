@@ -8,7 +8,7 @@ from model_bakery import baker
 
 from accounts.models import Grant, Role, User
 from accounts.tests.baker_recipes import organization_recipe
-from common.models import WRITE_OBJECT, WRITE_SHARED, OrgScoped
+from common.models import WRITE_OBJECT, WRITE_SHARED, Attachment, OrgScoped
 from common.permissions.checks import (
     _org_via_errors_for_model,
     check_grant_never_references_global_role,
@@ -19,7 +19,6 @@ from common.permissions.checks import (
     check_scoped_role_never_in_user_groups,
     check_write_tier_declarations,
 )
-from notes.models import Note
 from shelters.models import Shelter
 
 
@@ -109,16 +108,16 @@ class GrantSystemChecksTestCase(TestCase):
 
     def test_e005_fires_for_a_role_permission_on_an_unscoped_model(self) -> None:
         role = Role.objects.create(name="Scoped Role")
-        content_type = ContentType.objects.get_for_model(Note)
+        content_type = ContentType.objects.get_for_model(Attachment)
         permission, _ = Permission.objects.get_or_create(
             content_type=content_type,
-            codename="view_note",
-            defaults={"name": "Can view note"},
+            codename="view_attachment",
+            defaults={"name": "Can view attachment"},
         )
         role.permissions.add(permission)
 
         errors = _errors_with(check_role_permissions_models_declare_org_scoping(None), "permissions.E005")
-        self.assertTrue(any("Note" in error.msg for error in errors))
+        self.assertTrue(any("Attachment" in error.msg for error in errors))
 
     def test_e005_is_quiet_for_a_role_permission_on_an_org_scoped_model(self) -> None:
         role = Role.objects.create(name="Scoped Role")
@@ -160,11 +159,11 @@ class GrantSystemChecksTestCase(TestCase):
     def test_e005_is_quiet_for_global_roles_on_unscoped_models(self) -> None:
         """Global roles are never org-filtered, so their models need no declaration yet."""
         role = Role.objects.create(name="Global Ops", is_global=True)
-        content_type = ContentType.objects.get_for_model(Note)
+        content_type = ContentType.objects.get_for_model(Attachment)
         permission, _ = Permission.objects.get_or_create(
             content_type=content_type,
-            codename="view_note",
-            defaults={"name": "Can view note"},
+            codename="view_attachment",
+            defaults={"name": "Can view attachment"},
         )
         role.permissions.add(permission)
 

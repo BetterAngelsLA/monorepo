@@ -1,37 +1,38 @@
-from typing import Optional, cast
+from typing import Any, Dict, Optional, cast
 
 import strawberry
 import strawberry_django
+from django.core.exceptions import PermissionDenied
 from django.db import transaction
-from django.db.models import Exists, OuterRef, QuerySet
+from django.db.models import Q, QuerySet
 from organizations.models import Organization
 from strawberry import asdict
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.mutations import resolvers
 from strawberry_django.pagination import OffsetPaginated
-from strawberry_django.permissions import HasPerm, HasRetvalPerm
+from strawberry_django.permissions import HasPerm
 
 from accounts.models import User
 from accounts.selectors import resolve_permission_group
 from accounts.types import OrganizationFilter, OrganizationOrder, OrganizationType
 from clients.models import ClientProfileImportRecord
-from common.graphql.extensions import PermissionedQuerySet
+from common.graphql.permission_checkers import can_anywhere_checker
 from common.graphql.types import (
     AuthorizedPresignedS3UploadsType,
     DeleteDjangoObjectInput,
     DeletedObjectType,
 )
-from common.graphql.utils import get_object_or_permission_error
-from common.models import Attachment
-from common.permissions.utils import IsAuthenticated
+from common.graphql.utils import resolve_create_org
+from common.permissions.selectors import writable
+from common.permissions.utils import IsAuthenticated, get_writable_or_deny
 from common.services.types import UploadConfirmation, UploadRequest
+from common.utils import get_or_none
 from notes.groups import CASEWORKER
 from notes.models import Note, NoteDataImport, NoteImportRecord, ServiceRequest
 from notes.permissions import (
     NoteImportRecordPermissions,
     NotePermissions,
-    ServiceRequestPermissions,
 )
 from notes.services import (
     create_note_attachment_presigned_uploads,
@@ -70,27 +71,32 @@ from .types import (
 @strawberry.type
 class Query:
     note: NoteType = strawberry_django.field(
-        permission_classes=[IsAuthenticated], extensions=[HasRetvalPerm(NotePermissions.VIEW)], filters=NoteFilter
+        permission_classes=[IsAuthenticated],
+        extensions=[HasPerm(NotePermissions.VIEW, perm_checker=can_anywhere_checker)],
+        filters=NoteFilter,
     )
 
     notes: OffsetPaginated[NoteType] = strawberry_django.offset_paginated(
         permission_classes=[IsAuthenticated],
-        extensions=[HasRetvalPerm(NotePermissions.VIEW)],
+        # SHARED read (RFC 0003 slice 2): a holder sees every note, a non-holder
+        # gets an empty page — the legacy guardian-prefilter shape, kept for
+        # parity.  Same declarative pattern as tasks and the client family.
+        extensions=[HasPerm(perms=[NotePermissions.VIEW], perm_checker=can_anywhere_checker, fail_silently=True)],
     )
 
     services: OffsetPaginated[OrganizationServiceType] = strawberry_django.offset_paginated(
         permission_classes=[IsAuthenticated],
-        extensions=[HasPerm(NotePermissions.ADD)],
+        extensions=[HasPerm(NotePermissions.ADD, perm_checker=can_anywhere_checker)],
     )
 
     service_categories: OffsetPaginated[OrganizationServiceCategoryType] = strawberry_django.offset_paginated(
         permission_classes=[IsAuthenticated],
-        extensions=[HasPerm(NotePermissions.ADD)],
+        extensions=[HasPerm(NotePermissions.ADD, perm_checker=can_anywhere_checker)],
     )
 
     interaction_authors: OffsetPaginated[InteractionAuthorType] = strawberry_django.offset_paginated(
         permission_classes=[IsAuthenticated],
-        extensions=[HasPerm(NotePermissions.ADD)],
+        extensions=[HasPerm(NotePermissions.ADD, perm_checker=can_anywhere_checker)],
     )
 
     @strawberry_django.offset_paginated(
@@ -103,35 +109,27 @@ class Query:
         ordering: Optional[list[OrganizationOrder]] = None,
         filters: Optional[OrganizationFilter] = None,
     ) -> QuerySet[Organization]:
-        """Return organizations where the current user is a caseworker."""
-        user = cast(User, get_current_user(info))
-        from accounts.models import PermissionGroup
+        """Organizations where the current user can read notes.
 
-        has_caseworker_group = Exists(
-            PermissionGroup.objects.filter(
-                organization=OuterRef("pk"),
-                template__name=CASEWORKER.name,
-                user=user,
-            )
+        The Interactions org filter drives a notes screen, so it follows the note
+        read authority rather than legacy group membership: a grant-only
+        caseworker used to get ``[]`` here while the notes list showed them rows.
+        """
+        user = cast(User, get_current_user(info))
+
+        from common.permissions.selectors import ALL, scopes
+
+        scope: Any = scopes(user, NotePermissions.VIEW)
+        queryset: QuerySet[Organization] = (
+            Organization.objects.all() if scope is ALL else Organization.objects.filter(pk__in=scope)
         )
-        queryset: QuerySet[Organization] = Organization.objects.filter(has_caseworker_group)
         return queryset
 
 
 @strawberry.type
 class Mutation:
-    # TODO(org-scoping): Migrate from resolve_permission_group() (first-match org)
-    # to the notes grant cutover (ADR 0001 §5): org-scoped writes on the
-    # CASEWORKER Role via require_can at the payload org — the same shape as the
-    # teams/reports/member-management cutovers.  Affects create_note,
-    # update_note, update_note_location, revert_note, delete_note,
-    # create_note_service_request, and import_note.  The new note attachment
-    # mutations are already safe — their service layer passes
-    # organization_id=note.organization_id.
-    # Defer to a dedicated PR — touches 7 mutations + their tests.
-
     # Notes
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(NotePermissions.ADD)])
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def create_note(self, info: Info, data: CreateNoteInput) -> NoteType:
         """
         Create a note with optional nested relations (location, services, tasks).
@@ -139,7 +137,6 @@ class Mutation:
         callers that only send core note fields.
         """
         user = cast(User, get_current_user(info))
-        permission_group = resolve_permission_group(user, template=CASEWORKER)
 
         location_dict = asdict(data.location) if data.location else None
         provided_list = [asdict(s) for s in data.provided_services] if data.provided_services else None
@@ -148,9 +145,8 @@ class Mutation:
 
         team_id = data.team_id.value if data.team_id else None
 
-        note = note_create(
+        note_kwargs: Dict[str, Any] = dict(
             user=user,
-            permission_group=permission_group,
             purpose=data.purpose,
             team_id=team_id,
             public_details=data.public_details or "",
@@ -164,53 +160,52 @@ class Mutation:
             tasks=tasks_list,
         )
 
+        organization, permission_group = resolve_create_org(
+            user, data.organization_id, template=CASEWORKER, perm=NotePermissions.ADD
+        )
+        if permission_group is None:
+            note = note_create(organization=organization, **note_kwargs)
+        else:
+            note = note_create(permission_group=permission_group, **note_kwargs)
+
         note._private_details = note.private_details
 
         return cast(NoteType, note)
 
-    @strawberry_django.mutation(
-        permission_classes=[IsAuthenticated],
-        extensions=[PermissionedQuerySet(model=Note, perms=[NotePermissions.CHANGE])],
-    )
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def update_note(self, info: Info, data: UpdateNoteInput) -> NoteType:
         user = cast(User, get_current_user(info))
-        permission_group = resolve_permission_group(user, template=CASEWORKER)
-
-        qs: QuerySet[Note] = info.context.qs
 
         clean = asdict(data)
 
-        note = get_object_or_permission_error(qs, data.id)
+        note = get_writable_or_deny(Note.objects.all(), data.id, user, NotePermissions.CHANGE)
+
         note = note_update(
             note=note,
             data=clean,
             user=user,
-            permission_group=permission_group,
+            organization=note.organization,
         )
         note._private_details = note.private_details
 
         return cast(NoteType, note)
 
-    @strawberry_django.mutation(
-        permission_classes=[IsAuthenticated],
-        extensions=[PermissionedQuerySet(model=Note, perms=[NotePermissions.CHANGE])],
-    )
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def update_note_location(self, info: Info, data: UpdateNoteLocationInput) -> NoteType:
-        qs: QuerySet[Note] = info.context.qs
-        note = get_object_or_permission_error(qs, data.id)
+        user = cast(User, get_current_user(info))
+
+        note = get_writable_or_deny(Note.objects.all(), data.id, user, NotePermissions.CHANGE)
 
         location_data = cast(dict, strawberry.asdict(data)["location"])
         note = note_update_location(note=note, location_data=location_data)
 
         return cast(NoteType, note)
 
-    @strawberry_django.mutation(
-        permission_classes=[IsAuthenticated],
-        extensions=[PermissionedQuerySet(model=Note, perms=[NotePermissions.CHANGE])],
-    )
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def revert_note(self, info: Info, data: RevertNoteInput) -> NoteType:
-        qs: QuerySet[Note] = info.context.qs
-        note = get_object_or_permission_error(qs, data.id)
+        user = cast(User, get_current_user(info))
+
+        note = get_writable_or_deny(Note.objects.all(), data.id, user, NotePermissions.CHANGE)
 
         NoteReverter(note_id=data.id).revert_to_revert_before_timestamp(
             revert_before_timestamp=data.revert_before_timestamp.isoformat()
@@ -219,37 +214,29 @@ class Mutation:
 
         return cast(NoteType, note)
 
-    @strawberry_django.mutation(
-        permission_classes=[IsAuthenticated],
-        extensions=[
-            PermissionedQuerySet(model=Note, perms=[NotePermissions.DELETE]),
-        ],
-    )
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def delete_note(self, info: Info, data: DeleteDjangoObjectInput) -> NoteType:
-        qs: QuerySet[Note] = info.context.qs
-        note = get_object_or_permission_error(
-            qs, data.id, error_message="You do not have permission to delete this interaction."
+        user = cast(User, get_current_user(info))
+
+        note = get_writable_or_deny(
+            Note.objects.all(),
+            data.id,
+            user,
+            NotePermissions.DELETE,
+            message="You do not have permission to delete this interaction.",
         )
 
         return cast(NoteType, resolvers.delete(info, note))
 
-    @strawberry_django.mutation(
-        permission_classes=[IsAuthenticated],
-        extensions=[
-            HasPerm(ServiceRequestPermissions.ADD),
-            PermissionedQuerySet(model=Note, perms=[NotePermissions.CHANGE]),
-        ],
-    )
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def create_note_service_request(self, info: Info, data: CreateNoteServiceRequestInput) -> ServiceRequestType:
         user = cast(User, get_current_user(info))
-        permission_group = resolve_permission_group(user, template=CASEWORKER)
 
-        qs: QuerySet[Note] = info.context.qs
-        note = get_object_or_permission_error(qs, str(data.note_id))
+        note = get_writable_or_deny(Note.objects.all(), data.note_id, user, NotePermissions.CHANGE)
 
         service_requests = note_service_request_create(
             user=user,
-            permission_group=permission_group,
+            organization=note.organization,
             note=note,
             data=[
                 {
@@ -262,18 +249,24 @@ class Mutation:
 
         return cast(ServiceRequestType, service_requests[0])
 
-    @strawberry_django.mutation(
-        permission_classes=[IsAuthenticated],
-        extensions=[PermissionedQuerySet(model=ServiceRequest, perms=[ServiceRequestPermissions.DELETE])],
-    )
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def delete_service_request(self, info: Info, data: DeleteDjangoObjectInput) -> DeletedObjectType:
         """
         NOTE: this function will need to change once ServiceRequests are able to be associated with zero or more than one Note
         """
-        qs: QuerySet[ServiceRequest] = info.context.qs
-        sr = get_object_or_permission_error(
-            qs, data.id, error_message="You do not have permission to delete this service request."
-        )
+        user = cast(User, get_current_user(info))
+
+        sr = get_or_none(ServiceRequest.objects.all(), data.id)
+        # The mutation means "remove this request from its visit note", so the
+        # note's org-scope is the authority (SR has no org reach of its own
+        # until the service catalog is org-scoped).  The write-scoped exists is
+        # the gate; no note → fail closed.
+        if sr is None or not (
+            writable(Note.objects.all(), user, NotePermissions.CHANGE)
+            .filter(Q(provided_services=sr) | Q(requested_services=sr))
+            .exists()
+        ):
+            raise PermissionDenied("You do not have permission to delete this service request.")
 
         deleted_id = service_request_delete(service_request=sr)
 
@@ -377,13 +370,7 @@ class Mutation:
 
     # ── Note Attachment Presigned S3 Uploads ────────────────────────────
 
-    @strawberry_django.mutation(
-        permission_classes=[IsAuthenticated],
-        extensions=[
-            HasPerm(Attachment.perms.ADD),
-            PermissionedQuerySet(model=Note, perms=[NotePermissions.CHANGE]),
-        ],
-    )
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def generate_note_file_uploads(
         self,
         info: Info,
@@ -391,8 +378,7 @@ class Mutation:
     ) -> AuthorizedPresignedS3UploadsType:
         user = cast(User, get_current_user(info))
 
-        qs: QuerySet[Note] = info.context.qs
-        get_object_or_permission_error(qs, data.note_id)
+        get_writable_or_deny(Note.objects.all(), data.note_id, user, NotePermissions.CHANGE)
 
         uploads = [
             UploadRequest(
@@ -406,13 +392,7 @@ class Mutation:
 
         return AuthorizedPresignedS3UploadsType.from_batch(presigned)
 
-    @strawberry_django.mutation(
-        permission_classes=[IsAuthenticated],
-        extensions=[
-            HasPerm(Attachment.perms.ADD),
-            PermissionedQuerySet(model=Note, perms=[NotePermissions.CHANGE]),
-        ],
-    )
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def resolve_note_file_uploads(
         self,
         info: Info,
@@ -420,8 +400,19 @@ class Mutation:
     ) -> NoteAttachmentUploadsType:
         user = cast(User, get_current_user(info))
 
-        qs: QuerySet[Note] = info.context.qs
-        note = get_object_or_permission_error(qs, data.note_id)
+        note = get_writable_or_deny(Note.objects.all(), data.note_id, user, NotePermissions.CHANGE)
+
+        # Authority is the note gate above.  The guardian rows the service
+        # mirrors are the legacy arm, so a grant-only holder — the blessed
+        # post-cutover state — has no group to mirror onto and must not be
+        # refused here (``resolve_permission_group`` raises ``PermissionError``,
+        # which would otherwise escape as an unhandled error).
+        try:
+            permission_group = resolve_permission_group(
+                user, template=CASEWORKER, organization_id=str(note.organization_id)
+            )
+        except PermissionError:
+            permission_group = None
 
         attachment_list = [
             UploadConfirmation(
@@ -432,6 +423,8 @@ class Mutation:
             )
             for a in data.attachments
         ]
-        attachments = resolve_note_file_uploads(user=user, note=note, attachments=attachment_list)
+        attachments = resolve_note_file_uploads(
+            user=user, note=note, attachments=attachment_list, permission_group=permission_group
+        )
 
         return NoteAttachmentUploadsType(attachments=cast(list[NoteAttachmentType], attachments))
