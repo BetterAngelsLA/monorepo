@@ -1,4 +1,5 @@
 import { CreateNoteInput, TaskStatusEnum, ViewNoteQuery } from '../../apollo';
+import { toClearableId } from '../NotesHmis/utils/toClearableId';
 import { TNoteFormInputs } from './schema';
 
 const TASK_STATUS_TO_INT: Record<TaskStatusEnum, number> = {
@@ -45,15 +46,20 @@ export function buildNotePayload(
   }
   if (include('tasks')) {
     payload.tasks = form.tasks.map((task) => ({
-      // Existing tasks carry their id so the backend can diff instead of
-      // delete-and-recreate the whole list (it falls back to replace-all when
-      // no ids are sent).
-      id: task.id ?? undefined,
+      // Drafts carry a local `temp-…` id until they are persisted.  Sending it
+      // as the GraphQL id makes the backend reject the whole mutation (an id
+      // that is not on the note is a permission refusal), and the note editor
+      // used to swallow that.  Only a persisted id identifies a row to diff.
+      id: task.id && !task.id.startsWith('temp-') ? task.id : undefined,
       summary: task.summary || '',
-      description: task.description || undefined,
+      // `??`, not `||`: a cleared description is `''` and must be written, not
+      // skipped — `undefined` is what the backend treats as "leave it alone".
+      description: task.description ?? undefined,
       status: task.status != null ? TASK_STATUS_TO_INT[task.status] : undefined,
-      teamId: task.teamId || undefined,
-      assigneeId: task.assigneeId || undefined,
+      teamId: toClearableId(task.teamId),
+      // Same distinction the task form uses: `undefined` untouched, `null`
+      // cleared, a string assigned.
+      assigneeId: toClearableId(task.assigneeId),
     }));
   }
 

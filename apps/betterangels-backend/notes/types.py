@@ -9,7 +9,7 @@ from django.db.models import (
     Q,
     QuerySet,
 )
-from strawberry import ID, Info, Maybe, auto
+from strawberry import ID, UNSET, Info, Maybe, auto
 
 from accounts.models import PermissionGroup, User
 from accounts.types import OrganizationType, UserType
@@ -210,7 +210,9 @@ class CreateNoteTaskInput:
 
     id: Optional[ID] = None
     summary: str
-    description: Optional[str] = None
+    # ``Maybe`` so an in-place update can tell "leave it alone" (omitted) from
+    # "clear it" (explicit null); ``Optional`` collapses both to ``None``.
+    description: Maybe[str | None] = UNSET
     status: Optional[int] = None  # Task.Status int choices (0=TO_DO, 1=IN_PROGRESS, 2=COMPLETED)
     team_id: Maybe[ID | None]
     assignee_id: Maybe[ID | None]
@@ -221,8 +223,10 @@ class UpdateNoteInput:
     """
     Input for updating a note with all nested relations.
     Omitted fields are left unchanged — UNSET for the plain ``Optional``
-    fields, absent (``None``) for the ``Maybe`` ones. Nested relation fields
-    use replace-all semantics (existing items are removed, new ones created).
+    fields, absent (``None``) for the ``Maybe`` ones. Nested task items carrying
+    an ``id`` are updated in place, items without one are created, and the tasks
+    the payload no longer names are deleted (a payload with no ids is a legacy
+    replace-all).
     """
 
     id: ID

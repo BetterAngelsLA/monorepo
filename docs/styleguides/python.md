@@ -35,7 +35,7 @@ as the API layer instead of Django REST Framework.
   - **Creates** — `require_can(user, perm, org=…)` at the payload organization
     (`can`/`can_anywhere`). The org is the *target*, never the authority source — grant
     topology (direct, delegated, global) resolves inside `scopes()`.
-  - **Platform-only fields/actions** — gate on the global tier (`holds_globally`): the one
+  - **Platform-only fields/actions** — gate on the global tier (`can_globally`): the one
     check a scoped Grant can never satisfy. Never reach for `can_anywhere` here — it admits
     scoped holders. A declarative `GLOBAL` access tier is a planned vocabulary extension;
     until it lands, every surface that touches a platform-only asset carries the tier check.

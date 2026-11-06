@@ -436,3 +436,65 @@ class NoteTaskDiffTestCase(_NoteGrantHelpers, NoteGraphQLBaseTestCase):
             {"kind": "PERMISSION", "field": None, "message": PERMISSION_DENIED_MESSAGE},
         )
         self.assertEqual(Task.objects.get(pk=foreign.pk).summary, "other note task")
+
+    def test_in_place_update_leaves_omitted_fields_alone(self) -> None:
+        """A patch, not a replace: what the caller does not send is untouched."""
+        note_id = self.note["id"]
+        self._update_tasks(note_id, [{"summary": "task", "description": "keep me"}])
+        task = self._tasks(note_id)[0]
+
+        self._update_tasks(note_id, [{"id": str(task.pk), "summary": "renamed"}])
+
+        task.refresh_from_db()
+        self.assertEqual(task.summary, "renamed")
+        self.assertEqual(task.description, "keep me")
+
+    def test_explicit_null_clears_a_nullable_field(self) -> None:
+        note_id = self.note["id"]
+        self._update_tasks(note_id, [{"summary": "task", "description": "drop me"}])
+        task = self._tasks(note_id)[0]
+
+        self._update_tasks(note_id, [{"id": str(task.pk), "summary": "task", "description": None}])
+
+        task.refresh_from_db()
+        self.assertIsNone(task.description)
+
+    def test_empty_string_clears_the_description(self) -> None:
+        note_id = self.note["id"]
+        self._update_tasks(note_id, [{"summary": "task", "description": "drop me"}])
+        task = self._tasks(note_id)[0]
+
+        self._update_tasks(note_id, [{"id": str(task.pk), "summary": "task", "description": ""}])
+
+        task.refresh_from_db()
+        self.assertEqual(task.description, "")
+
+
+class CaseworkerOrganizationsTestCase(_NoteGrantHelpers, NoteGraphQLBaseTestCase):
+    """The Interactions org filter follows note read authority, not group membership."""
+
+    QUERY = """
+        query { caseworkerOrganizations { totalCount results { id } } }
+    """
+
+    def test_a_grant_only_note_viewer_sees_their_org(self) -> None:
+        sync_roles()
+        user = baker.make(User)
+        self.org_1.add_user(user)
+        self._grant(user, self.org_1, "Note Viewer", (Note.perms.VIEW,))
+
+        self.graphql_client.force_login(user)
+        response = self.execute_graphql(self.QUERY)
+
+        ids = {row["id"] for row in response["data"]["caseworkerOrganizations"]["results"]}
+        self.assertIn(str(self.org_1.pk), ids)
+        self.assertNotIn(str(self.org_2.pk), ids)
+
+    def test_a_legacy_only_caseworker_is_not_listed(self) -> None:
+        sync_roles()
+        user = make_legacy_only_holder(user=baker.make(User), organization=self.org_1, template_name=CASEWORKER.name)
+
+        self.graphql_client.force_login(user)
+        response = self.execute_graphql(self.QUERY)
+
+        self.assertEqual(response["data"]["caseworkerOrganizations"]["totalCount"], 0)

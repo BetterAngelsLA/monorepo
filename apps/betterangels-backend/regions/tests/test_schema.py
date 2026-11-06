@@ -22,7 +22,7 @@ from accounts.models import OrganizationProfile, OrgTypeChoices, User
 from accounts.role_manager import OrgRoleManager
 from accounts.services import sync_roles
 from common.models import Location
-from common.tests.utils import GraphQLBaseTestCase, make_legacy_only_holder
+from common.tests.utils import GraphQLBaseTestCase
 from notes.groups import CASEWORKER
 from notes.models import Note
 from regions.models import Region, RegionKind
@@ -216,17 +216,13 @@ class InteractionMapBaseTestCase(GraphQLBaseTestCase):
 
     The map's authority is two gates that are easy to conflate:
 
-    * ``reports.view_reports`` at the org — a **grant**, role-backed, so
+    * ``reports.view_reports`` at the org — a grant, role-backed, so
       ``ORG_ADMIN``/``ORG_SUPERUSER`` satisfy it;
-    * the note read scope — a **legacy** ``PermissionGroup`` permission, because notes
-      are gated on RFC 0003 and **no ``Role`` carries ``notes.view_note``**
-      (``CASEWORKER_ROLE`` carries ``Team.perms.VIEW``, the client bundle and the
-      referral bundle, but no note permissions).
+    * the note read scope — ``notes.view_note``, a **SHARED** read on the scoped
+      ``CASEWORKER_ROLE`` since RFC 0003 slice 2.
 
-    So a caller must satisfy both, and the roles that do are caseworkers, not
-    ``ORG_ADMIN``. Gating the map on ``require_can(..., NotePermissions.VIEW)`` instead would
-    deny *every* non-superuser and return nothing for every real user, because no ``Role``
-    carries that codename.
+    So a caller satisfies both only as a caseworker *with* the report gate: the
+    map's reader carries the Caseworker Role plus ``ORG_ADMIN``.
     """
 
     def setUp(self) -> None:
@@ -244,13 +240,15 @@ class InteractionMapBaseTestCase(GraphQLBaseTestCase):
         self.note_there = baker.make(Note, organization=self.org_2, interacted_at=when, location=shared_location)
 
     def caseworker(self) -> User:
-        """A real caseworker: legacy ``notes.view_note`` AND a grant for the report gate.
+        """A real caseworker: the scoped Caseworker Role (notes read) plus the report gate.
 
-        Built in that order deliberately — ``add_legacy_membership`` drops every Grant on
-        the user (it models the pre-cutover state), so the role-backed grant has to be
-        added after it or it is silently revoked.
+        The notes cutover moved note authority onto the scoped Role, so a
+        legacy-only membership no longer reads notes — which is exactly what the
+        map's fine gate now asks.
         """
-        user = make_legacy_only_holder(user=baker.make(User), organization=self.org_1, template_name=CASEWORKER.name)
+        user = baker.make(User)
+        self.org_1.add_user(user)
+        OrgRoleManager(self.org_1).add_roles(user, CASEWORKER)
         OrgRoleManager(self.org_1).add_roles(user, ORG_ADMIN)
         return user
 
@@ -811,12 +809,11 @@ class ReportCalendarTimeZoneTestCase(GraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
         sync_roles()
-        # A caseworker: the map needs the note read scope as well as the report grant, and the
-        # legacy holder is created before the role so `make_legacy_only_holder`'s grant purge
-        # cannot revoke it.
-        self.reader = make_legacy_only_holder(
-            user=baker.make(User), organization=self.org_1, template_name=CASEWORKER.name
-        )
+        # A caseworker: the map needs the note read scope (the scoped Caseworker
+        # Role since RFC 0003 slice 2) as well as the report grant.
+        self.reader = baker.make(User)
+        self.org_1.add_user(self.reader)
+        OrgRoleManager(self.org_1).add_roles(self.reader, CASEWORKER)
         OrgRoleManager(self.org_1).add_roles(self.reader, ORG_ADMIN)
         OrganizationProfile.objects.update_or_create(
             organization=self.org_1,

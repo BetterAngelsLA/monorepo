@@ -280,8 +280,9 @@ class GrantSelectorsTestCase(TestCase):
         """writable() admits exactly the rows can_obj() admits (one predicate).
 
         Mutation gates fetch through writable() so the fetch is the gate;
-        can_obj() delegates to it, so the fetch-of-one and the check-of-one
-        can never disagree.
+        can_obj() answers the same question about a row already in hand without
+        the query, so this pin is what keeps the fetch-of-one and the
+        check-of-one from disagreeing.
         """
         alice = baker.make(User)
         grant_create(user=alice, role=self.shelter_role, scope_org=self.org_a)

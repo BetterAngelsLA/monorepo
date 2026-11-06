@@ -294,13 +294,10 @@ def organization_effective_permissions(user: User) -> dict[int, list[str]]:
     domain has cut over grant-only (member management ``organizations.*`` on the
     org root, teams, reports, shelters, the client family, tasks and notes —
     all in ``LEGACY_INERT_APPS``), so the fold carries the full ORG_ADMIN and
-    client bundles.  Referrals remain the legacy-only domain, enforced per org by
-    legacy ``PermissionGroup`` rows (strawberry ``HasPerm`` at an org the user
-    holds a template group in), and the client document/import carve-out
-    (``LEGACY_LIVE_PERMISSIONS``) is reported from the legacy arm even though its
-    app is inert.  Those legacy permissions never consult the
-
-    global tier — folding their global permissions in would advertise controls
+    client bundles.  The client document/import carve-out
+    (``LEGACY_LIVE_PERMISSIONS``) is still reported from the legacy arm even
+    though its app is inert.  Those legacy permissions never consult the global
+    tier — folding their global permissions in would advertise controls
     the backend refuses (e.g. a superuser with no group at that org, or a
     ``user_permission`` on a legacy-only perm).  They reach an
     entry only through the org-scoped legacy arm

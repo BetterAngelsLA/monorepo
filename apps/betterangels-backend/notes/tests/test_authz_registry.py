@@ -1,11 +1,11 @@
 """Registry canary — every notes Query/Mutation field is protected (ADR 0001 §5, RFC 0003 slice 2).
 
-The notes cutover made authorization behavioral: the single read rides the
-shared grant checker (``HasPerm`` + ``can_anywhere_checker``), the list rides
-the type-level ``get_queryset`` hook (``visible_rows_for_holder``), and the
-mutations authorize through ``org_or_deny`` + ``require_can`` /
-``get_writable_or_deny`` (the write-scoped fetch is the gate) — none of them
-inherits a transport default that would let an unguarded field through.
+The notes cutover made authorization behavioral: both reads ride the shared
+grant checker (``HasPerm`` + ``can_anywhere_checker``; the list adds
+``fail_silently=True`` so a non-holder gets an empty page), and the mutations
+authorize through ``org_or_deny`` + ``require_can`` / ``get_writable_or_deny``
+(the write-scoped fetch is the gate) — none of them inherits a transport
+default that would let an unguarded field through.
 
 These tests close the same gap the teams/shelters/tasks cutovers did: every
 field on the notes ``Query`` / ``Mutation`` types must appear below with its
@@ -22,13 +22,11 @@ from notes.schema import Mutation, Query
 # field -> where authorization happens for that read.
 QUERY_AUTHZ_ROUTES: dict[str, str] = {
     "note": "field -> HasPerm(VIEW) + can_anywhere_checker (SHARED read)",
-    "notes": "resolver -> NoteType.get_queryset -> visible_rows_for_holder(VIEW)",
+    "notes": "field -> HasPerm(VIEW) + can_anywhere_checker, fail_silently (empty page)",
     "services": "field -> HasPerm(Note ADD) + can_anywhere_checker",
     "service_categories": "field -> HasPerm(Note ADD) + can_anywhere_checker",
     "interaction_authors": "field -> HasPerm(Note ADD) + can_anywhere_checker",
-    "caseworker_organizations": (
-        "resolver -> legacy PermissionGroup membership (pre-cutover read, retires with the legacy groups)"
-    ),
+    "caseworker_organizations": ("resolver -> scopes(Note VIEW) — the note read authority, not group membership"),
 }
 
 # mutation -> where authorization happens for that write.

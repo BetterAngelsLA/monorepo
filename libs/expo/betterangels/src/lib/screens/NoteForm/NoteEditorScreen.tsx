@@ -141,8 +141,12 @@ export default function NoteEditorScreen(props: NoteEditorScreenProps) {
 
     try {
       if (isCreateMode) {
-        // No active org to anchor the create to (none remembered / none to join).
-        if (!activeOrgId) return;
+        // No active org to anchor the create to (none remembered / none to
+        // join).  Throw rather than return: the catch below surfaces it, while
+        // returning would navigate away as if the note had been saved.
+        if (!activeOrgId) {
+          throw new Error('Cannot create an interaction without an active organization.');
+        }
 
         const result = await createNote({
           variables: {
@@ -166,7 +170,11 @@ export default function NoteEditorScreen(props: NoteEditorScreenProps) {
           variables: { data: { id: noteId as string, ...payload } },
         });
 
-        if (!result.data) {
+        const updated = result.data?.updateNote;
+        if (!updated || !('id' in updated)) {
+          // A rejection comes back as `OperationInfo`, not an error, so
+          // `result.data` is truthy and the screen used to navigate away as if
+          // the save had worked.
           throw new Error(`Failed to update interaction: ${updateError}`);
         }
       }

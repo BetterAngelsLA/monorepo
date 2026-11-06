@@ -62,7 +62,7 @@ def _resolve_service(
 #: Fields a note's task list may clear by sending an explicit null.  Everything
 #: else is left alone when the payload omits it — the mutation is a patch, and
 #: it must not null a required column just because a caller sent a partial item.
-_TASK_CLEARABLE_FIELDS = frozenset({"team_id", "assignee_id"})
+_TASK_CLEARABLE_FIELDS = frozenset({"team_id", "assignee_id", "description"})
 
 
 def _task_update_fields(item: Dict[str, Any]) -> Dict[str, Any]:
@@ -137,9 +137,11 @@ def note_update(
     """
     Update a Note, including nested relations.
 
-    Core fields are updated in-place. Nested relation fields use
-    replace-all semantics: existing items are removed and new ones created.
-    Caller is responsible for permission checks.
+    Core fields are updated in-place. Nested relations reconcile rather than
+    replace: a task carrying ``id`` is updated, one without it is created, and
+    the note's tasks the payload no longer names are deleted. A payload with no
+    ids at all is a legacy replace-all.  Caller is responsible for permission
+    checks.
     """
     # Extract nested relation data (handle separately)
     location_data = data.pop("location", None)

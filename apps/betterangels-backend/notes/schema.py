@@ -4,7 +4,7 @@ import strawberry
 import strawberry_django
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
-from django.db.models import Exists, OuterRef, Q, QuerySet
+from django.db.models import Q, QuerySet
 from organizations.models import Organization
 from strawberry import asdict
 from strawberry.types import Info
@@ -109,18 +109,20 @@ class Query:
         ordering: Optional[list[OrganizationOrder]] = None,
         filters: Optional[OrganizationFilter] = None,
     ) -> QuerySet[Organization]:
-        """Return organizations where the current user is a caseworker."""
-        user = cast(User, get_current_user(info))
-        from accounts.models import PermissionGroup
+        """Organizations where the current user can read notes.
 
-        has_caseworker_group = Exists(
-            PermissionGroup.objects.filter(
-                organization=OuterRef("pk"),
-                template__name=CASEWORKER.name,
-                user=user,
-            )
+        The Interactions org filter drives a notes screen, so it follows the note
+        read authority rather than legacy group membership: a grant-only
+        caseworker used to get ``[]`` here while the notes list showed them rows.
+        """
+        user = cast(User, get_current_user(info))
+
+        from common.permissions.selectors import ALL, scopes
+
+        scope: Any = scopes(user, NotePermissions.VIEW)
+        queryset: QuerySet[Organization] = (
+            Organization.objects.all() if scope is ALL else Organization.objects.filter(pk__in=scope)
         )
-        queryset: QuerySet[Organization] = Organization.objects.filter(has_caseworker_group)
         return queryset
 
 

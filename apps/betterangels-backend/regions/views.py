@@ -10,7 +10,7 @@ whole reason both endpoints live here.
 from __future__ import annotations
 
 from datetime import date
-from typing import Optional
+from typing import TYPE_CHECKING, Optional, cast
 
 from django.http import HttpResponse, JsonResponse
 from django.utils.dateparse import parse_date
@@ -18,8 +18,8 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.views import APIView
-from strawberry_django.utils.query import filter_for_user
 
+from common.permissions.selectors import can_anywhere
 from common.utils import aware_range
 from notes.permissions import NotePermissions
 from reports.calendar import report_calendar_time_zone
@@ -31,6 +31,9 @@ from .models import RegionKind
 from .selectors import org_notes_in_range
 from .services import RegionScopeError, resolve_region_scope
 from .tiles import MVT_CONTENT_TYPE, density_tile, region_tile
+
+if TYPE_CHECKING:
+    from accounts.models import User
 
 #: Slippy-map limits. z0 is the whole world; z16 is past the detail these boundaries carry, and
 #: without a ceiling a client can ask for a zoom that makes PostGIS encode thousands of
@@ -210,10 +213,15 @@ class DensityTileView(APIView):
             # it without a query is both cheaper and what `interactionMap` does with `[]`.
             return HttpResponse(status=204)
 
-        # Org confinement happens once, in the selector, before the note permission filter
-        # sees the queryset: `filter_for_user` is the note read scope and has no org notion.
+        # Org confinement happens once, in the selector, before the note scope sees the
+        # queryset: the scope is the SHARED `notes.view_note` predicate (RFC 0003 slice 2)
+        # and has no org notion of its own.
+        # A non-holder gets no cells.  Answer before the query: `density_tile` embeds the
+        # note queryset in an aggregate, where `none()` compiles to a `NothingNode` and
+        # raises `EmptyResultSet` instead of returning an empty tile.
+        if not can_anywhere(cast("User", request.user), NotePermissions.VIEW):
+            return HttpResponse(status=204)
         notes = org_notes_in_range(organization_id=org.id, start=start, end=end)
-        notes = filter_for_user(notes, request.user, [NotePermissions.VIEW])
 
         tile = density_tile(
             notes=notes,

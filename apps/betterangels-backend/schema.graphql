@@ -736,7 +736,7 @@ union CreateNoteServiceRequestPayload = ServiceRequestType | OperationInfo
 input CreateNoteTaskInput {
   id: ID = null
   summary: String!
-  description: String = null
+  description: String
   status: Int = null
   teamId: ID
   assigneeId: ID

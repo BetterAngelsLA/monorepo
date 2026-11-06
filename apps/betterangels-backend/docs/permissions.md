@@ -79,7 +79,7 @@ python manage.py explain_permission --user 42 --perm shelters.view_shelter --obj
 
 ## Overview
 
-Permission group templates define a **set of Django permissions** that can be assigned to users within an organization. A user's effective authority is the **union of the roles/Grants** they hold at that org — the template defines the bundle (mirrored by `RoleDef.from_template()`), and cut-over domains read the `Grant` arm while legacy-only domains (notes/clients) still read the template-backed `PermissionGroup` rows.
+Permission group templates define a **set of Django permissions** that can be assigned to users within an organization. A user's effective authority is the **union of the roles/Grants** they hold at that org — the template defines the bundle (mirrored by `RoleDef.from_template()`), and cut-over domains read the `Grant` arm; after the notes cutover the only legacy consumers left are client documents and imports (`LEGACY_LIVE_PERMISSIONS`).
 
 This composable model means you never need a single monolithic role — you combine templates to build the desired access level.
 
