@@ -79,7 +79,11 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         # Logout after setting up the note
         self.graphql_client.logout()
 
-    def _create_note_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
+    def _create_note_fixture(self, variables: Dict[str, Any], *, include_organization: bool = True) -> Dict[str, Any]:
+        if include_organization:
+            # ``CreateNoteInput.organizationId`` is required since the strict
+            # flip: the acting org travels in the payload (RFC 0003 slice 2).
+            variables.setdefault("organizationId", str(self.org_1.pk))
         return self._create_or_update_note_fixture("create", variables)
 
     def _update_note_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
