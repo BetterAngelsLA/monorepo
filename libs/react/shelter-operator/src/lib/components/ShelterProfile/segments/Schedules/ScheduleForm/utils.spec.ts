@@ -62,8 +62,8 @@ describe('hydrateWeekly', () => {
     ]);
 
     expect(weekly[DayOfWeekChoices.Monday].ranges).toStrictEqual([
-      { _id: 'a', startTime: '09:00', endTime: '17:00' },
-      { _id: 'b', startTime: '18:00', endTime: '20:00' },
+      { _id: 'a', serverId: 'a', startTime: '09:00', endTime: '17:00' },
+      { _id: 'b', serverId: 'b', startTime: '18:00', endTime: '20:00' },
     ]);
   });
 
@@ -77,7 +77,7 @@ describe('hydrateWeekly', () => {
     ]);
 
     expect(weekly[DayOfWeekChoices.Monday].ranges).toStrictEqual([
-      { _id: 's1', startTime: '09:00', endTime: '17:00' },
+      { _id: 's1', serverId: 's1', startTime: '09:00', endTime: '17:00' },
     ]);
     expect(weekly[DayOfWeekChoices.Sunday].ranges).toStrictEqual([]);
     expect(weekly[DayOfWeekChoices.Tuesday].ranges).toStrictEqual([]);
@@ -116,6 +116,7 @@ describe('hydrateExceptions', () => {
     ).toStrictEqual([
       {
         localId: 'x',
+        serverId: 'x',
         startDate: '',
         endDate: '',
         closedAllDay: true,
@@ -147,8 +148,8 @@ describe('buildScheduleInputs', () => {
     const weekly = buildDefaultWeeklyState();
 
     weekly[DayOfWeekChoices.Monday].ranges = [
-      { _id: 'a', startTime: '09:00', endTime: '17:00' },
-      { _id: 'b', startTime: '18:00', endTime: '' },
+      { _id: 'a', serverId: 'row-a', startTime: '09:00', endTime: '17:00' },
+      { _id: 'b', serverId: 'row-b', startTime: '18:00', endTime: '' },
     ];
     weekly[DayOfWeekChoices.Sunday].ranges = [
       { _id: 'c', startTime: '22:00', endTime: '23:30' },
@@ -156,6 +157,7 @@ describe('buildScheduleInputs', () => {
 
     expect(buildScheduleInputs(OPERATING, weekly, [])).toStrictEqual([
       {
+        id: 'row-a',
         scheduleType: OPERATING,
         days: [DayOfWeekChoices.Monday],
         startTime: '09:00:00',
@@ -163,6 +165,7 @@ describe('buildScheduleInputs', () => {
         isException: false,
       },
       {
+        id: undefined,
         scheduleType: OPERATING,
         days: [DayOfWeekChoices.Sunday],
         startTime: '22:00:00',
@@ -190,6 +193,7 @@ describe('buildScheduleInputs', () => {
       ]),
     ).toStrictEqual([
       {
+        id: undefined,
         scheduleType: OPERATING,
         startDate: '2026-12-25',
         endDate: '2026-12-25',
@@ -199,6 +203,7 @@ describe('buildScheduleInputs', () => {
         isException: true,
       },
       {
+        id: undefined,
         scheduleType: OPERATING,
         startDate: '2026-12-31',
         endDate: '2027-01-01',
