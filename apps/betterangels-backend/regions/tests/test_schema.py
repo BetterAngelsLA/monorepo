@@ -22,7 +22,7 @@ from accounts.models import OrganizationProfile, OrgTypeChoices, User
 from accounts.role_manager import OrgRoleManager
 from accounts.services import sync_roles
 from common.models import Location
-from common.tests.utils import GraphQLBaseTestCase
+from common.tests.utils import GraphQLBaseTestCase, make_legacy_only_holder
 from notes.groups import CASEWORKER
 from notes.models import Note
 from regions.models import Region, RegionKind
@@ -419,8 +419,8 @@ class InteractionMapPermissionTestCase(InteractionMapBaseTestCase):
     """Who may read pins: the caseworker yes, the report-only role no."""
 
     def test_a_caseworker_holds_both_gates_and_sees_the_pins(self) -> None:
-        """**The positive case.** A caseworker holds ``notes.view_note`` through the legacy
-        ``Caseworker`` group and ``reports.view_reports`` through their ``ORG_ADMIN`` grant,
+        """**The positive case.** A caseworker holds ``notes.view_note`` through the scoped
+        ``Caseworker`` Role and ``reports.view_reports`` through their ``ORG_ADMIN`` grant,
         so the map must return the org's interaction.
 
         The one test that separates a working gate from an unsatisfiable one: both return
@@ -433,6 +433,23 @@ class InteractionMapPermissionTestCase(InteractionMapBaseTestCase):
         # The negative control for `withheld`: this role holds the note scope, so a non-empty
         # payload must not claim one was applied.
         self.assertFalse(result["withheld"], "a reader who can see notes was told the payload was withheld")
+
+    def test_a_legacy_only_caseworker_is_withheld(self) -> None:
+        """The cutover boundary: a legacy ``Caseworker`` group no longer reads notes.
+
+        Before RFC 0003 slice 2 the note scope ran through ``filter_for_user``,
+        which honoured the model-level ``notes.view_note`` that group carries, so
+        this reader saw pins.  The grant predicate does not — which is what makes
+        a failed grant backfill show up here instead of reading an empty map
+        forever.
+        """
+        user = make_legacy_only_holder(user=baker.make(User), organization=self.org_1, template_name=CASEWORKER.name)
+        OrgRoleManager(self.org_1).add_roles(user, ORG_ADMIN)
+
+        result = self._map(user)
+
+        self.assertEqual(result["points"], [])
+        self.assertTrue(result["withheld"])
 
     def test_org_admin_without_note_permission_sees_no_pins(self) -> None:
         """``ORG_ADMIN`` holds ``reports.view_reports`` and no ``notes.view_note``.

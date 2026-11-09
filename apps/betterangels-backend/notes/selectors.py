@@ -10,7 +10,7 @@ from typing import Any, Optional
 from django.db.models import BooleanField, Case, F, Value, When
 
 from accounts.models import User
-from notes.permissions import NotePermissions
+from notes.permissions import NotePermissions, PrivateDetailsPermissions
 
 
 def perm_org_ids(user: User, perm: str) -> Optional[list[int]]:
@@ -41,8 +41,14 @@ def can_edit_case(user: User) -> Any:
 
 
 def private_details_case(user: User) -> Any:
-    """``Case`` masking ``private_details`` outside the orgs *user* may edit."""
-    org_ids = perm_org_ids(user, NotePermissions.CHANGE)
+    """``Case`` masking ``private_details`` outside the orgs *user* may read it in.
+
+    Keyed on ``PrivateDetailsPermissions.VIEW`` — the permission that exists for
+    exactly this, and the one ``main`` enforced (as a per-object grant).  Keying
+    it on note CHANGE conflated "may edit a note" with "may read another
+    member's private notes".
+    """
+    org_ids = perm_org_ids(user, PrivateDetailsPermissions.VIEW)
     if org_ids is None:
         return F("private_details")
     return Case(

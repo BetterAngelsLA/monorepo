@@ -58,12 +58,6 @@ selectors answer, utils refuse:
   carry the permission.
 - `IsAuthenticated` — the strawberry permission class (raises `UnauthenticatedGQLError`).
 
-- `require_can(...)`, `get_writable_or_deny(...)` — raise `PermissionDenied(PERMISSION_DENIED_MESSAGE)`.
-- `org_or_deny(org_id)` — resolve a client-supplied org; missing, unknown and malformed deny alike.
-- `resolve_create_org(user, organization_id, template=…, perm=…)` — the payload org
-  (grant authority), or the legacy group during a compat window.
-- `IsAuthenticated` — the strawberry permission class (raises `UnauthenticatedGQLError`).
-
 `can_obj` deliberately keeps its own row implementation rather than delegating to
 `writable`: delegation would spend a query on a row the caller already holds.  An
 equivalence test pins the two to the same predicate, so they cannot drift silently.

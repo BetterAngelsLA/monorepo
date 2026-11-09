@@ -326,6 +326,11 @@ class ExplainPermissionTestCase(TestCase):
 
         result = explain(holder, "clients.change_clientprofile", obj=note)
 
+        # The premise: the legacy arm really does hold.  Without this the test is
+        # green even if the carve-out went inert, because both arms would deny
+        # and the assertion below would still pass.
+        self.assertTrue(_arm(result, "legacy rows").holds)
+
         self.assertFalse(result.cut_over)
         self.assertFalse(result.verdict)
         self.assertEqual(result.verdict, can_obj(holder, "clients.change_clientprofile", note))

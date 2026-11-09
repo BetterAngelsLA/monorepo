@@ -112,10 +112,12 @@ class DensityTileBaseTestCase(TestCase):
         self.client.force_login(self.reader)
 
     def _both_gates(self, organization: Any) -> User:
-        """A caseworker: legacy ``notes.view_note`` **and** a role-backed report grant.
+        """A caseworker: the scoped ``Caseworker`` Role (``notes.view_note``) **and** a
+        role-backed report grant.
 
-        Built in that order deliberately — ``make_legacy_only_holder`` drops every Grant on
-        the user, so the report grant has to be added after it or it is silently revoked.
+        Both are grants now — the note scope has not come from the legacy group since
+        RFC 0003 slice 2, so a legacy-only reader is denied (pinned in
+        ``test_schema.py::test_a_legacy_only_caseworker_is_withheld``).
         """
         user = baker.make(User)
         organization.add_user(user)

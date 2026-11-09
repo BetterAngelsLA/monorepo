@@ -437,6 +437,24 @@ class NoteTaskDiffTestCase(_NoteGrantHelpers, NoteGraphQLBaseTestCase):
         )
         self.assertEqual(Task.objects.get(pk=foreign.pk).summary, "other note task")
 
+    def test_an_empty_string_id_is_refused_rather_than_wiping_the_list(self) -> None:
+        """``""`` is a malformed id, not "no id".
+
+        Treated as absent it makes ``referenced`` empty, which is the legacy
+        replace-all: every task on the note is deleted and the list recreated.
+        """
+        note_id = self.note["id"]
+        self._update_tasks(note_id, [{"summary": "keep me"}])
+        task = self._tasks(note_id)[0]
+
+        response = self._update_tasks(note_id, [{"id": "", "summary": "replacement"}])
+
+        self.assertEqual(
+            response["data"]["updateNote"]["messages"][0],
+            {"kind": "PERMISSION", "field": None, "message": PERMISSION_DENIED_MESSAGE},
+        )
+        self.assertEqual([t.pk for t in self._tasks(note_id)], [task.pk])
+
     def test_in_place_update_leaves_omitted_fields_alone(self) -> None:
         """A patch, not a replace: what the caller does not send is untouched."""
         note_id = self.note["id"]

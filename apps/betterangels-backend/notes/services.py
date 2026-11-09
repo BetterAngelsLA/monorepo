@@ -92,6 +92,12 @@ def _sync_note_tasks(*, note: Note, tasks_data: List[Dict[str, Any]], user: User
     """
     existing = {str(pk): task for pk, task in ((t.pk, t) for t in note.tasks.all())}
     incoming = [dict(item) for item in tasks_data]
+
+    # An explicit empty id is a malformed payload, not "no id": treated as absent
+    # it makes ``referenced`` empty, which is the legacy replace-all — the whole
+    # list would be deleted and re-created.  Refuse instead.
+    if any(item.get("id") == "" for item in incoming):
+        raise PermissionDenied(PERMISSION_DENIED_MESSAGE)
     referenced = {str(item["id"]) for item in incoming if item.get("id")}
 
     if referenced - existing.keys():

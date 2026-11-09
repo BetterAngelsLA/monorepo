@@ -29,12 +29,16 @@ describe('buildNotePayload — nested tasks', () => {
   it('sends a persisted id so the backend can diff in place', () => {
     const payload = buildNotePayload(formWithTasks([persisted]), true, { tasks: true });
 
+    // Assert the list first: `tasks?.[0]` is `undefined` when the transform drops
+    // the tasks entirely, which would let an id assertion pass on nothing.
+    expect(payload.tasks).toHaveLength(1);
     expect(payload.tasks?.[0].id).toBe('42');
   });
 
   it('strips the local draft id — the backend refuses an id that is not on the note', () => {
     const payload = buildNotePayload(formWithTasks([localDraft]), true, { tasks: true });
 
+    expect(payload.tasks).toHaveLength(1);
     expect(payload.tasks?.[0].id).toBeUndefined();
   });
 
@@ -43,6 +47,7 @@ describe('buildNotePayload — nested tasks', () => {
 
     const payload = buildNotePayload(formWithTasks([cleared]), true, { tasks: true });
 
+    expect(payload.tasks).toHaveLength(1);
     expect(payload.tasks?.[0].assigneeId).toBeNull();
   });
 
@@ -54,6 +59,7 @@ describe('buildNotePayload — nested tasks', () => {
 
     const payload = buildNotePayload(formWithTasks([cleared]), true, { tasks: true });
 
+    expect(payload.tasks).toHaveLength(1);
     expect(payload.tasks?.[0].description).toBe('');
   });
 });

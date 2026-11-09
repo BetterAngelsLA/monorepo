@@ -8,6 +8,7 @@ from clients.models import (
 from common.models import Attachment
 from common.permissions.config import RoleDef, TemplateConfig
 from notes.models import Note, ServiceRequest
+from notes.permissions import PrivateDetailsPermissions
 from referrals.models import Referral
 from tasks.models import Task
 from teams.models import Team
@@ -27,7 +28,15 @@ TASK_PERMS = [Task.perms.ADD, Task.perms.VIEW, Task.perms.CHANGE, Task.perms.DEL
 
 # The note bundle (RFC 0003 slice 2), shared by the legacy template and the
 # scoped Role so the template stays the Role's superset by construction.
-NOTE_PERMS = [Note.perms.ADD, Note.perms.VIEW, Note.perms.CHANGE, Note.perms.DELETE]
+# Private details ride it: the note object arm is not wired yet, so the only
+# scoped lever is the org-wide one, and a Role without it would see nothing.
+NOTE_PERMS = [
+    Note.perms.ADD,
+    Note.perms.VIEW,
+    Note.perms.CHANGE,
+    Note.perms.DELETE,
+    PrivateDetailsPermissions.VIEW,
+]
 
 CASEWORKER = TemplateConfig(
     name="Caseworker",
