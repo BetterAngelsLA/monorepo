@@ -21,6 +21,7 @@ export const Default: Story = {
   decorators: pageDecorator,
   args: {
     metrics: {
+      __typename: 'ReservationMetricsType',
       checkedIn: 8,
       checkInOverdueToCheckedIn: 1,
       cancelled: 7,
