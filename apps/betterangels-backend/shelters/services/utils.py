@@ -149,6 +149,22 @@ def _schedule_type_label(schedule_type: ScheduleTypeChoices) -> str:
     return str(schedule_type.label)
 
 
+def _duplicate_slot_message(row: Dict[str, Any]) -> str:
+    """Explain which slot the payload repeats, in the user's terms."""
+    when: str
+    if row["start_date"]:
+        when = row["start_date"].isoformat()
+    elif row["day"]:
+        when = str(row["day"].label)
+    else:
+        when = "every day"
+
+    start = row["start_time"]
+    at = start.strftime("%H:%M") if start else "the same time"
+
+    return f"{_schedule_type_label(row['schedule_type'])}: {when} already has a slot starting at {at}."
+
+
 def _sync_schedules(
     shelter: Shelter,
     schedules_data: List[Dict[str, Any]],
@@ -189,6 +205,16 @@ def _sync_schedules(
                     }
                 )
             specs.append((str(raw_id) if raw_id else None, row))
+
+    # The stored key is (shelter, type, day, start time, start date). A payload
+    # that repeats one cannot be saved, and the DB error would reach the user as a
+    # generic failure, so name the slot instead.
+    seen_slots: set[tuple[Any, ...]] = set()
+    for _key, row in specs:
+        slot_key = (row["schedule_type"], row["day"], row["start_time"], row["start_date"])
+        if slot_key in seen_slots:
+            raise ValidationError({"schedules": _duplicate_slot_message(row)})
+        seen_slots.add(slot_key)
 
     existing = {
         str(row.id): row for row in shelter.schedules.select_for_update() if scope is None or row.schedule_type in scope

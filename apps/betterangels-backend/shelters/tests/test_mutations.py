@@ -1420,6 +1420,21 @@ class UpdateShelterSchedulesTestCase(ShelterTestCase, TestCase):
         self.slot.refresh_from_db()
         self.assertEqual(self.slot.start_time, time(10, 0))
 
+    def test_duplicate_slot_returns_a_validation_message(self) -> None:
+        """Two entries for the same slot surface the reason, not a generic failure."""
+        response = self._update(
+            [
+                self._entry(id=str(self.slot.pk)),
+                self._entry(startTime="09:00:00", endTime="12:00:00"),
+            ]
+        )
+
+        self.assertIsNone(response.get("errors"))
+        messages = response["data"]["updateShelter"]["messages"]
+        self.assertEqual(messages[0]["kind"], "VALIDATION")
+        self.assertIn("Monday", messages[0]["message"])
+        self.assertIn("09:00", messages[0]["message"])
+
     def test_unknown_schedule_id_is_rejected(self) -> None:
         response = self._update([self._entry(id="999999")])
 

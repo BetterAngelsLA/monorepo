@@ -522,6 +522,20 @@ class SyncSchedulesTestCase(TestCase):
             {DayOfWeekChoices.TUESDAY, DayOfWeekChoices.WEDNESDAY},
         )
 
+    def test_rejects_a_duplicate_slot_with_a_readable_message(self) -> None:
+        """The stored key repeats, so the save is refused before the DB sees it."""
+        with self.assertRaises(ValidationError) as raised:
+            _sync_schedules(
+                self.shelter,
+                [
+                    self._entry(start_time=datetime.time(9, 0), end_time=datetime.time(12, 0)),
+                    self._entry(start_time=datetime.time(9, 0), end_time=datetime.time(17, 0)),
+                ],
+            )
+
+        self.assertIn("Monday", str(raised.exception))
+        self.assertIn("09:00", str(raised.exception))
+
     def test_rejects_an_id_from_another_shelter(self) -> None:
         other = Shelter.objects.create(name="Other Shelter")
         foreign = Schedule.objects.create(
