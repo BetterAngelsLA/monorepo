@@ -25,9 +25,9 @@ import { Text } from '../base-ui/text/text';
  */
 
 /**
- * Removals first, then netted changes, then additions: a replaced slot set reads
- * as what was there and then what is there now, the order the field-change view
- * already uses for its own Removed/Added pairs.
+ * Removals first, then changes, then additions: one save reads as what was there,
+ * what moved, and what is new — the order the field-change view already uses for
+ * its own Removed/Added pairs.
  */
 const TONE_ORDER: Record<ScheduleChangeTone, number> = {
   removed: 0,
@@ -40,9 +40,9 @@ export function AuditActionRow({ action }: { action: AuditAction }) {
   const detailsId = useId();
   const hasEvents = action.events.length > 0;
 
-  // A schedule save replaces the slot set, so its rows render as one line each
-  // instead of a column-by-column diff whose every pair has a null side. The same
-  // lines replace the merged changes those rows contributed to the card.
+  // Each schedule row renders as one line instead of a column-by-column diff
+  // whose every pair has a null side. The same lines replace the merged changes
+  // those rows contributed to the card.
   const scheduleLines = useMemo(
     () =>
       action.events

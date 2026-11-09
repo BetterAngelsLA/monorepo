@@ -188,8 +188,68 @@ describe('AuditActionRow', () => {
     expect(screen.queryByText(/\u2192/)).toBeNull();
   });
 
-  it('shows the diff of an in-place schedule update instead of a line', () => {
-    // An admin save has no slot identity, so the card cannot label it.
+  it('renders one line per row of a save that deletes, edits and adds', () => {
+    // One upsert can touch three rows; each is its own event and its own line.
+    render(
+      <AuditActionRow
+        action={makeAction({
+          fieldChanges: {
+            'Schedule 320 start time': ['20:10:00', '17:23:00'],
+            'Schedule 321 start time': ['16:23:00', '16:23:00'],
+            'Schedule 322 start time': ['17:23:00', '19:23:00'],
+          },
+          events: [
+            makeEvent({
+              action: 'shelter.schedule.remove',
+              kind: AuditEventKind.Delete,
+              fieldChanges: {
+                day: ['Wednesday', null],
+                'start time': ['20:10:00', null],
+                'end time': ['23:10:00', null],
+                'schedule type': ['Operating Hours', null],
+              },
+            }),
+            makeEvent({
+              action: 'shelter.schedule.update',
+              kind: AuditEventKind.Update,
+              context: { day: 'Wednesday', 'schedule type': 'Operating Hours' },
+              fieldChanges: {
+                'start time': ['16:23:00', '17:23:00'],
+                'end time': ['17:23:00', '20:23:00'],
+              },
+            }),
+            makeEvent({
+              action: 'shelter.schedule.add',
+              kind: AuditEventKind.Insert,
+              fieldChanges: {
+                day: [null, 'Wednesday'],
+                'start time': [null, '17:23:00'],
+                'end time': [null, '19:23:00'],
+                'schedule type': [null, 'Operating Hours'],
+              },
+            }),
+          ],
+        })}
+      />,
+    );
+
+    expect(
+      screen.getByText('Removed Operating Hours: Wednesday 20:10 - 23:10'),
+    ).not.toBeNull();
+    expect(
+      screen.getByText(
+        'Changed Operating Hours: Wednesday 16:23 - 17:23 \u2192 17:23 - 20:23',
+      ),
+    ).not.toBeNull();
+    expect(
+      screen.getByText('Added Operating Hours: Wednesday 17:23 - 19:23'),
+    ).not.toBeNull();
+    // The lines replace the merged changes; nothing is repeated below them.
+    expect(screen.queryByText(/Schedule 32/)).toBeNull();
+  });
+
+  it('shows the diff of an unlabelled schedule update instead of a line', () => {
+    // Rows written before the server sent the slot identity cannot be labelled.
     render(
       <AuditActionRow
         action={makeAction({

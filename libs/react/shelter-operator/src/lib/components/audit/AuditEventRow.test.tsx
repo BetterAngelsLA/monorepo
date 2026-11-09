@@ -117,7 +117,7 @@ describe('AuditEventRow', () => {
     expect(line.className).toContain('text-alert-60');
   });
 
-  it('keeps the slot identity and the arrow for a netted time change', () => {
+  it('keeps the slot identity and the arrow for a time change', () => {
     render(
       <AuditEventRow
         event={makeEvent({

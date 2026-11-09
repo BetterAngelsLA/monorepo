@@ -17,7 +17,7 @@ export type ScheduleChangeLine = {
   text: string;
 };
 
-/** True when the event describes a schedule slot: an add, a remove, or a netted time change. */
+/** True when the event describes a schedule slot: an add, a remove, or a time change. */
 export function isScheduleEvent(event: { action: string }): boolean {
   return event.action.startsWith(SCHEDULE_ACTION_PREFIX);
 }
@@ -51,8 +51,8 @@ function scalarPair(changes: unknown, field: string): ScalarPair | null {
 }
 
 /**
- * The side of a pair that exists. A slot is replaced, never edited in place, so
- * an add carries only the new value and a remove only the old one (§13).
+ * The side of a pair that exists. An add carries only the new value and a remove
+ * only the old one (§13); an update carries both.
  */
 function definedSide([oldValue, newValue]: ScalarPair): unknown {
   return newValue === null || newValue === undefined ? oldValue : newValue;
@@ -104,16 +104,16 @@ function windowOf(start: unknown, end: unknown): string {
  * and the time window — and drops the row id and the owning shelter, which are
  * the same for every slot in the action.
  *
- * A netted time change is the one case with two real sides, so it keeps an arrow
+ * A time change has two real sides, so it keeps an arrow
  * inside the same one-line shape.
  *
- * NOTE: `context` carries the day and type of a netted change but not the
+ * NOTE: `context` carries the day and type of a time change but not the
  * exception flag (it is part of the netting identity, so it never changes there),
  * so a changed line cannot mark an exception slot. `start date`, `end date`,
  * `condition` and `demographic` are likewise not part of this line.
  *
- * An `UPDATE` with no `context` is an in-place save (the admin edits a `Schedule`
- * row directly, the operator form replaces the set). It carries no identity and
+ * An `UPDATE` with no `context` predates the current server (which always sends
+ * the slot identity for one). It carries no identity and
  * often only one side of the window, so this returns `null` and the caller renders
  * the field changes it does have rather than an invented "Every day".
  */
@@ -127,7 +127,7 @@ export function formatScheduleEvent(
   const changes = event.fieldChanges;
   const context = (event.context ?? {}) as Record<string, unknown>;
 
-  // A netted change carries its slot identity in `context`; an add or a remove
+  // A time change carries its slot identity in `context`; an add or a remove
   // carries it as one-sided field changes, where an absent `day` genuinely means
   // the slot has no day. An `UPDATE` with neither is unlabelled, not day-less.
   const identityKnown =
@@ -177,12 +177,31 @@ export function formatScheduleEvent(
   const startPair = scalarPair(changes, 'start time');
   const endPair = scalarPair(changes, 'end time');
 
+  // A real update carries only the fields that changed, so a one-sided edit has
+  // one bound and no other. Printing two dashed windows would read as if the
+  // rest of the window were missing, so name the bound that moved instead.
+  if (startPair === null || endPair === null) {
+    const [field, pair] =
+      startPair !== null
+        ? (['start time', startPair] as const)
+        : (['end time', endPair] as const);
+
+    if (pair === null) {
+      return null;
+    }
+
+    return {
+      tone: 'changed',
+      text: `Changed ${label}: ${day} ${field} ${clock(pair[0]) ?? '\u2014'} \u2192 ${clock(pair[1]) ?? '\u2014'}`,
+    };
+  }
+
   return {
     tone: 'changed',
     text: `Changed ${label}: ${day} ${windowOf(
-      startPair?.[0],
-      endPair?.[0],
-    )} \u2192 ${windowOf(startPair?.[1], endPair?.[1])}`,
+      startPair[0],
+      endPair[0],
+    )} \u2192 ${windowOf(startPair[1], endPair[1])}`,
   };
 }
 

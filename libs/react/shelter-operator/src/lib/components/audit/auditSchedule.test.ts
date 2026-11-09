@@ -139,9 +139,9 @@ describe('formatScheduleEvent', () => {
     );
   });
 
-  it('returns null for an in-place update that carries no identity', () => {
-    // The admin edits a Schedule row directly: no context, and often only one
-    // side of the window. Guessing "Every day" would be a false statement.
+  it('returns null for an update with no identity to report', () => {
+    // Older rows predate the server sending the slot identity. Guessing
+    // "Every day" would be a false statement, so the card falls back to the diff.
     const inPlace = {
       action: 'shelter.schedule.update',
       kind: AuditEventKind.Update,
@@ -152,16 +152,45 @@ describe('formatScheduleEvent', () => {
     expect(formatScheduleEvent(inPlace)).toBeNull();
   });
 
-  it('still labels a netted update, which carries its identity', () => {
-    const netted = {
+  it('labels an in-place update with the identity the server supplies', () => {
+    const inPlace = {
+      action: 'shelter.schedule.update',
+      kind: AuditEventKind.Update,
+      context: { day: 'Wednesday', 'schedule type': 'Operating Hours' },
+      fieldChanges: {
+        'start time': ['16:23:00', '16:23:00'],
+        'end time': ['17:23:00', '20:23:00'],
+      },
+    };
+
+    expect(formatScheduleEvent(inPlace)?.text).toBe(
+      'Changed Operating Hours: Wednesday 16:23 - 17:23 \u2192 16:23 - 20:23',
+    );
+  });
+
+  it('names the bound that moved when only one side changed', () => {
+    const inPlace = {
+      action: 'shelter.schedule.update',
+      kind: AuditEventKind.Update,
+      context: { day: 'Wednesday', 'schedule type': 'Operating Hours' },
+      fieldChanges: { 'start time': ['06:30:00', '07:30:00'] },
+    };
+
+    expect(formatScheduleEvent(inPlace)?.text).toBe(
+      'Changed Operating Hours: Wednesday start time 06:30 \u2192 07:30',
+    );
+  });
+
+  it('keeps the "every day" wording when the identity has no day', () => {
+    const inPlace = {
       action: 'shelter.schedule.update',
       kind: AuditEventKind.Update,
       context: { day: null, 'schedule type': 'Operating Hours' },
-      fieldChanges: { 'start time': ['09:00:00', '10:00:00'] },
+      fieldChanges: { 'end time': ['17:00:00', '18:00:00'] },
     };
 
-    expect(formatScheduleEvent(netted)?.text).toBe(
-      'Changed Operating Hours: Every day 09:00 - \u2014 \u2192 10:00 - \u2014',
+    expect(formatScheduleEvent(inPlace)?.text).toBe(
+      'Changed Operating Hours: Every day end time 17:00 \u2192 18:00',
     );
   });
 
