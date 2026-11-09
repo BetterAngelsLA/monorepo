@@ -213,14 +213,15 @@ class DensityTileView(APIView):
             # it without a query is both cheaper and what `interactionMap` does with `[]`.
             return HttpResponse(status=204)
 
-        # Org confinement happens once, in the selector, before the note scope sees the
-        # queryset: the scope is the SHARED `notes.view_note` predicate (RFC 0003 slice 2)
-        # and has no org notion of its own.
-        # A non-holder gets no cells.  Answer before the query: `density_tile` embeds the
-        # note queryset in an aggregate, where `none()` compiles to a `NothingNode` and
-        # raises `EmptyResultSet` instead of returning an empty tile.
+        # A non-holder gets no cells.  Answered before the query because `density_tile`
+        # embeds the note queryset in an aggregate, where `none()` compiles to a
+        # `NothingNode` and raises `EmptyResultSet` rather than returning an empty tile.
+        # 204 is the shape the client already reads as "no cells" (see `DeckMapLayers`).
         if not can_anywhere(cast("User", request.user), NotePermissions.VIEW):
             return HttpResponse(status=204)
+
+        # Org confinement happens once, in the selector: the note scope above is the SHARED
+        # `notes.view_note` predicate (RFC 0003 slice 2) and has no org notion of its own.
         notes = org_notes_in_range(organization_id=org.id, start=start, end=end)
 
         tile = density_tile(
