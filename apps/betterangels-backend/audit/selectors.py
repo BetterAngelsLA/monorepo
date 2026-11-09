@@ -200,10 +200,10 @@ class AuditEventData:
     # (§32, e.g. "Created Bed A (7)"). When set, the UI shows this and no field
     # changes; ``field_changes`` is empty.
     summary: str | None = None
-    # Unchanged identity fields that keep a synthesized event identifiable -- a
-    # netted schedule slot's day and schedule type. It is *context*, never a
-    # change: ``field_changes`` holds only real before/after pairs, so a client
-    # can trust every entry there.
+    # Unchanged identity fields that keep an event identifiable -- a schedule
+    # slot's day and schedule type. It is *context*, never a change:
+    # ``field_changes`` holds only real before/after pairs, so a client can trust
+    # every entry there.
     context: dict[str, Any] | None = None
 
 
@@ -621,12 +621,19 @@ def _schedule_context(row: Any, resolver: _LabelResolver, hidden_fields: Collect
     06:00 - 18:00 -> 05:00 - 18:00`` instead of a bare ``start time`` diff.
 
     A null ``day`` means "every day" (see ``Schedule.day``) and is rendered as
-    such by the UI. Withheld fields never reach the context (§18).
+    such by the UI. An *exception* row also has a null ``day`` — it is scoped by
+    its dates instead — so it gets no context here: "every day" would be a false
+    statement, and the date-scoped label is the log UI's problem, not this
+    field's. Those events render as a plain diff. Withheld fields never reach the
+    context (§18).
     """
     model_label = row.pgh_obj_model
     fk_fields = _fk_fields(model_label)
     fields = _field_meta(model_label)
     data = row.pgh_data or {}
+
+    if data.get("is_exception"):
+        return None
 
     context = {
         field: _render_value(field, data.get(field), fk_fields, fields, resolver)
@@ -1025,10 +1032,10 @@ def object_audit_actors(
     An actor is shown under its most frequent frozen name/email; equally frequent
     names break by recency, then alphabetically, so the label never depends on
     the query plan. The list is ordered by event count -- **raw written rows**,
-    not rendered events: a full-replacement schedule save writes two rows per
-    slot (§13), which netting collapses for display, so a schedule-heavy actor
-    can rank above the events the log shows. The count is a picker convenience;
-    the actor set and labels are exact.
+    not rendered events: a bed save collapses into one summary line (§32) however
+    many rows it wrote, so an actor who mostly edits beds ranks by the writes,
+    not by the lines the log shows. The count is a picker convenience; the actor
+    set and labels are exact.
 
     *hidden_summary_models* mirrors ``object_audit_log``: actors whose only
     events are withheld Bed/Room summaries must not appear either. A frozen

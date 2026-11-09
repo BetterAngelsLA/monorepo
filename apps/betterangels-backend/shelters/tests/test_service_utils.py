@@ -497,6 +497,25 @@ class SyncSchedulesTestCase(TestCase):
         self.assertFalse(Schedule.objects.filter(pk=self.slot.pk).exists())
         self.assertTrue(Schedule.objects.filter(pk=intake.pk).exists())
 
+    def test_id_outside_the_scope_is_rejected_with_its_own_message(self) -> None:
+        """The row exists; it is simply not part of this payload's scope."""
+        intake = Schedule.objects.create(
+            shelter=self.shelter,
+            schedule_type=ScheduleTypeChoices.INTAKE,
+            day=DayOfWeekChoices.MONDAY,
+            start_time=datetime.time(8, 0),
+            end_time=datetime.time(9, 0),
+        )
+
+        with self.assertRaisesMessage(ValidationError, "not a schedule type in scheduleTypes"):
+            _sync_schedules(
+                self.shelter,
+                [self._entry(id=intake.pk)],
+                schedule_types=[ScheduleTypeChoices.OPERATING],
+            )
+
+        self.assertTrue(Schedule.objects.filter(pk=intake.pk).exists())
+
     def test_entry_outside_the_scope_is_rejected(self) -> None:
         with self.assertRaises(ValidationError):
             _sync_schedules(

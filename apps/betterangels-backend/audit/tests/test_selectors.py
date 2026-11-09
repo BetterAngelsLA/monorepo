@@ -3,7 +3,7 @@
 import base64
 import json
 import re
-from datetime import datetime, time, timedelta, timezone
+from datetime import date, datetime, time, timedelta, timezone
 from types import SimpleNamespace
 from typing import Any
 from unittest import mock
@@ -1663,6 +1663,27 @@ class ObjectAuditLogScheduleEventsTestCase(TestCase):
 
         self.assertEqual(event.context, {"day": None, "schedule type": "Operating Hours"})
         self.assertEqual(event.field_changes, {"end time": ["17:00:00", "18:00:00"]})
+
+    def test_exception_slot_update_gets_no_day_identity(self) -> None:
+        """An exception is scoped by date, not day: "every day" would be a lie."""
+        with audit_context(user=self.user):
+            exception = Schedule.objects.create(
+                shelter=self.shelter,
+                start_date=date(2026, 12, 25),
+                end_date=date(2026, 12, 25),
+                start_time=time(10, 0),
+                end_time=time(12, 0),
+                is_exception=True,
+            )
+        with audit_context(user=self.user):
+            exception.end_time = time(14, 0)
+            exception.save()
+
+        event = audit_log(obj=self.shelter, target_type="SHELTER")[0].events[0]
+
+        self.assertEqual(event.kind, "UPDATE")
+        self.assertIsNone(event.context)
+        self.assertEqual(event.field_changes, {"end time": ["12:00:00", "14:00:00"]})
 
     def test_hidden_fields_are_redacted_from_changes_and_the_context(self) -> None:
         """A withheld raw attname never reaches the diff or the slot identity (§18)."""

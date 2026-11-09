@@ -216,9 +216,10 @@ def _sync_schedules(
             raise ValidationError({"schedules": _duplicate_slot_message(row)})
         seen_slots.add(slot_key)
 
-    existing = {
-        str(row.id): row for row in shelter.schedules.select_for_update() if scope is None or row.schedule_type in scope
-    }
+    # Lock every row of the shelter: the scope decides what may be written, not
+    # what a concurrent save may be doing to the other types.
+    existing = {str(row.id): row for row in shelter.schedules.select_for_update()}
+    in_scope = {key: row for key, row in existing.items() if scope is None or row.schedule_type in scope}
 
     kept: set[str] = set()
     for key, _row in specs:
@@ -226,11 +227,13 @@ def _sync_schedules(
             continue
         if key not in existing:
             raise ValidationError({"schedules": f"Schedule {key} does not belong to this shelter."})
+        if key not in in_scope:
+            raise ValidationError({"schedules": f"Schedule {key} is not a schedule type in scheduleTypes."})
         if key in kept:
             raise ValidationError({"schedules": f"Schedule {key} appears more than once in the payload."})
         kept.add(key)
 
-    for key, stored in existing.items():
+    for key, stored in in_scope.items():
         if key not in kept:
             stored.delete()
 
@@ -239,7 +242,7 @@ def _sync_schedules(
             Schedule.objects.create(shelter=shelter, **row)
             continue
 
-        target = existing[key]
+        target = in_scope[key]
         # ``updated_at`` is ``auto_now``, and the schedule trigger fires on any
         # row change, so saving an untouched slot would date it and log an edit
         # nobody made. Only write the fields that actually differ.

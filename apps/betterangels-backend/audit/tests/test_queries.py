@@ -595,7 +595,7 @@ class ObjectAuditLogQueryTestCase(GraphQLBaseTestCase):
         self.assertEqual(len(actions), 1)
         self.assertEqual(actions[0]["fieldChanges"]["name"], ["Query Shelter", "By Casey"])
 
-    # ── schedule netting (§13) ───────────────────────────────────────────────
+    # ── schedule events (§13) ────────────────────────────────────────────────
 
     def test_schedule_update_exposes_slot_context_not_a_noop_change(self) -> None:
         """A schedule slot's identity is ``context``; ``fieldChanges`` is only diffs."""
