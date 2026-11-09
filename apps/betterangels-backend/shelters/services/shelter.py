@@ -11,7 +11,13 @@ from common.permissions.utils import require_can
 from shelters.models import ContactInfo, Service, ServiceCategory, Shelter
 from shelters.permissions import BA_REVIEW_FIELDS, can_change_ba_review
 from shelters.selectors import shelter_get
-from shelters.services.utils import _SHELTER_M2M_FIELDS, _create_schedules, _prepare_shelter_data, _set_m2m_from_enums
+from shelters.services.utils import (
+    _SHELTER_M2M_FIELDS,
+    _create_schedules,
+    _prepare_shelter_data,
+    _set_m2m_from_enums,
+    _sync_schedules,
+)
 
 
 def _require_permission_on_ba_review_change(user: "User", data: Dict[str, Any]) -> None:
@@ -342,8 +348,7 @@ def shelter_update(*, user: "User", data: Dict[str, Any]) -> Shelter:
         _apply_additional_contacts(shelter, additional_contacts or [])
 
     if has_schedules:
-        shelter.schedules.all().delete()
-        _create_schedules(shelter, schedules_data)
+        _sync_schedules(shelter, schedules_data)
 
     if cities_served_ids is not None:
         shelter.cities_served.set(cities_served_ids)

@@ -1386,12 +1386,16 @@ Load is bounded, not fetched: the page query still reads every row of the
 selected actions, so a pathological bulk action is bounded in rendering and in
 `field_changes` but not in rows fetched.
 
-**Full-replacement child models: schedule netting (decided).** `shelter_update`
-applies full-replacement semantics to schedules — it deletes every `Schedule`
-row and bulk-creates the new set
+**Full-replacement child models: schedule netting (decided).** When this pass was
+designed, `shelter_update` applied full-replacement semantics to schedules — it
+deleted every `Schedule` row and bulk-created the new set
 ([services/shelter.py](apps/betterangels-backend/shelters/services/shelter.py)) —
-so one logical slot edit emits a `.remove` and an `.add` under the same context.
-Rendered naively that is a deletion and a creation the user never made, and the
+so one logical slot edit emitted a `.remove` and an `.add` under the same context.
+**Schedules are now upserted by id** (`_sync_schedules`), so a slot edit is a real
+`ScheduleEvent` update carrying only the fields that changed; netting remains for
+the rows that are *genuinely* created and deleted in one context, which a client
+can still cause by omitting ids. Rendered naively a replacement is a deletion and
+a creation the user never made, and the
 action-level merge, keyed by `(owner, row id, field)`, then flattened changes
 across distinct `Schedule` rows, fabricating pairs such as `day friday -> sunday`
 from two unrelated rows. The selector nets the remove/add set per slot before the

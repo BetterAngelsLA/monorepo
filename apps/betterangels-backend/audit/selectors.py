@@ -679,12 +679,13 @@ def _merge_scalar(
             target[key] = [old, new]
 
 
-# Schedule is the one full-replacement child model: ``shelter_update`` deletes
-# every row and bulk-creates the new set, so one logical edit emits a ``.remove``
-# and an ``.add`` of the same slot. These rows are netted back into a per-slot
-# change; select them by model, not by a duplicated label prefix, so a label
-# rename cannot silently disable netting. A future full-replacement child needs
-# the same treatment explicitly.
+# Schedules are upserted by id now (``_sync_schedules``), so a slot edit arrives as
+# a real ``ScheduleEvent`` update. Netting is kept for clients that still replace
+# the set — omitting the ids deletes and re-creates the rows, which would read as
+# a deletion plus a creation the user never made. These rows are netted back into
+# a per-slot change; select them by model, not by a duplicated label prefix, so a
+# label rename cannot silently disable netting. A future full-replacement child
+# needs the same treatment explicitly.
 
 
 def _schedule_events(

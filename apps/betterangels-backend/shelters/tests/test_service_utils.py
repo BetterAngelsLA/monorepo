@@ -2,6 +2,7 @@ import datetime
 from decimal import Decimal
 
 from django.core.exceptions import ValidationError
+from django.db import transaction
 from django.test import TestCase
 from places import Places
 
@@ -20,6 +21,7 @@ from shelters.services.utils import (
     _parse_location,
     _prepare_shelter_data,
     _set_m2m_from_enums,
+    _sync_schedules,
     _validate_subset_attributes,
 )
 
@@ -392,3 +394,115 @@ class ValidateSubsetAttributesTestCase(TestCase):
     def test_raw_string_values_are_accepted(self) -> None:
         """Raw strings (as opposed to enum instances) work via getattr(v, 'value', v)."""
         _validate_subset_attributes(self.shelter, {"demographics": [DemographicChoices.SINGLE_MEN.value]})
+
+
+class SyncSchedulesTestCase(TestCase):
+    """Tests for _sync_schedules: an in-place upsert, not a replace."""
+
+    def setUp(self) -> None:
+        self.shelter = Shelter.objects.create(name="Upsert Shelter")
+        self.slot = Schedule.objects.create(
+            shelter=self.shelter,
+            schedule_type=ScheduleTypeChoices.OPERATING,
+            day=DayOfWeekChoices.MONDAY,
+            start_time=datetime.time(9, 0),
+            end_time=datetime.time(17, 0),
+        )
+
+    def _entry(self, **overrides: object) -> dict:
+        entry: dict = {
+            "schedule_type": ScheduleTypeChoices.OPERATING,
+            "days": [DayOfWeekChoices.MONDAY],
+            "start_time": datetime.time(9, 0),
+            "end_time": datetime.time(17, 0),
+            "is_exception": False,
+        }
+        entry.update(overrides)
+        return entry
+
+    def test_updates_the_row_in_place(self) -> None:
+        """The slot keeps its id, so the write is an edit and not a replacement."""
+        _sync_schedules(
+            self.shelter,
+            [self._entry(id=self.slot.pk, start_time=datetime.time(10, 0))],
+        )
+
+        self.assertEqual(Schedule.objects.filter(shelter=self.shelter).count(), 1)
+        self.slot.refresh_from_db()
+        self.assertEqual(self.slot.start_time, datetime.time(10, 0))
+
+    def test_creates_entries_without_an_id_and_keeps_the_rest(self) -> None:
+        _sync_schedules(
+            self.shelter,
+            [
+                self._entry(id=self.slot.pk),
+                self._entry(days=[DayOfWeekChoices.TUESDAY]),
+            ],
+        )
+
+        self.assertTrue(Schedule.objects.filter(pk=self.slot.pk).exists())
+        self.assertEqual(Schedule.objects.filter(shelter=self.shelter).count(), 2)
+        self.assertTrue(Schedule.objects.filter(shelter=self.shelter, day=DayOfWeekChoices.TUESDAY).exists())
+
+    def test_deletes_rows_absent_from_the_payload(self) -> None:
+        """The payload is authoritative: a slot left out is removed."""
+        _sync_schedules(self.shelter, [])
+
+        self.assertFalse(Schedule.objects.filter(shelter=self.shelter).exists())
+
+    def test_fans_out_a_multi_day_entry(self) -> None:
+        _sync_schedules(
+            self.shelter,
+            [self._entry(days=[DayOfWeekChoices.TUESDAY, DayOfWeekChoices.WEDNESDAY])],
+        )
+
+        self.assertEqual(
+            set(Schedule.objects.filter(shelter=self.shelter).values_list("day", flat=True)),
+            {DayOfWeekChoices.TUESDAY, DayOfWeekChoices.WEDNESDAY},
+        )
+
+    def test_rejects_an_id_from_another_shelter(self) -> None:
+        other = Shelter.objects.create(name="Other Shelter")
+        foreign = Schedule.objects.create(
+            shelter=other,
+            day=DayOfWeekChoices.MONDAY,
+            start_time=datetime.time(9, 0),
+            end_time=datetime.time(17, 0),
+        )
+
+        with self.assertRaises(ValidationError):
+            _sync_schedules(self.shelter, [self._entry(id=foreign.pk)])
+
+        self.assertTrue(Schedule.objects.filter(pk=foreign.pk).exists())
+        self.assertTrue(Schedule.objects.filter(pk=self.slot.pk).exists())
+
+    def test_rejects_the_same_id_twice(self) -> None:
+        with self.assertRaises(ValidationError):
+            _sync_schedules(
+                self.shelter,
+                [self._entry(id=self.slot.pk), self._entry(id=self.slot.pk)],
+            )
+
+    def test_swaps_two_slots_times_in_one_payload(self) -> None:
+        """The unique key is deferred, so a swap does not trip it mid-flight."""
+        second = Schedule.objects.create(
+            shelter=self.shelter,
+            schedule_type=ScheduleTypeChoices.OPERATING,
+            day=DayOfWeekChoices.MONDAY,
+            start_time=datetime.time(10, 0),
+            end_time=datetime.time(17, 0),
+        )
+
+        with transaction.atomic():
+            _sync_schedules(
+                self.shelter,
+                [
+                    self._entry(id=self.slot.pk, start_time=datetime.time(10, 0)),
+                    self._entry(id=second.pk, start_time=datetime.time(9, 0)),
+                ],
+            )
+
+        self.slot.refresh_from_db()
+        second.refresh_from_db()
+        self.assertEqual(self.slot.start_time, datetime.time(10, 0))
+        self.assertEqual(second.start_time, datetime.time(9, 0))

@@ -45,6 +45,9 @@ class ShelterLocationInput:
 
 @strawberry.input
 class ScheduleInput:
+    #: Existing row to update. Omitted on a new slot; a row whose id is absent from
+    #: the submitted set is deleted (the payload is authoritative).
+    id: Optional[ID] = None
     schedule_type: ScheduleTypeChoices = ScheduleTypeChoices.OPERATING
     days: Optional[List[DayOfWeekChoices]] = None
     start_time: Optional[time] = None

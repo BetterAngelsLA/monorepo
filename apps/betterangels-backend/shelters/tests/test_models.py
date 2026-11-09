@@ -2,7 +2,7 @@ import datetime
 import random
 from typing import Any
 
-from django.db import IntegrityError
+from django.db import IntegrityError, connection, transaction
 from django.test import TestCase
 from model_bakery import baker
 from pghistory.models import Events
@@ -214,6 +214,12 @@ class ScheduleModelTestCase(TestCase):
         )
 
     def test_unique_constraint_same_type(self) -> None:
+        """A duplicate slot key is rejected at commit.
+
+        The constraint is deferred so an upsert can swap two slots' times inside
+        one transaction, so the check is forced here instead of firing on the
+        INSERT.
+        """
         Schedule.objects.create(
             shelter=self.shelter,
             schedule_type=ScheduleTypeChoices.OPERATING,
@@ -221,7 +227,7 @@ class ScheduleModelTestCase(TestCase):
             start_time=datetime.time(9, 0),
             end_time=datetime.time(17, 0),
         )
-        with self.assertRaises(IntegrityError):
+        with self.assertRaises(IntegrityError), transaction.atomic():
             Schedule.objects.create(
                 shelter=self.shelter,
                 schedule_type=ScheduleTypeChoices.OPERATING,
@@ -229,6 +235,8 @@ class ScheduleModelTestCase(TestCase):
                 start_time=datetime.time(9, 0),
                 end_time=datetime.time(18, 0),
             )
+            with connection.cursor() as cursor:
+                cursor.execute("SET CONSTRAINTS ALL IMMEDIATE")
 
     def test_different_types_same_day_allowed(self) -> None:
         Schedule.objects.create(

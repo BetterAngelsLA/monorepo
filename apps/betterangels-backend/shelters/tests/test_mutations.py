@@ -1,3 +1,4 @@
+from datetime import time
 from typing import Any
 
 from django.test import TestCase, ignore_warnings
@@ -6,8 +7,9 @@ from unittest_parametrize import ParametrizedTestCase
 
 from accounts.models import Role, User
 from accounts.services import role_assign
+from shelters.enums import DayOfWeekChoices, ScheduleTypeChoices
 from shelters.groups import GLOBAL_SHELTER_OPERATOR_ROLE
-from shelters.models import SPA, City, ContactInfo, Service, ServiceCategory, Shelter
+from shelters.models import SPA, City, ContactInfo, Schedule, Service, ServiceCategory, Shelter
 from shelters.tests.utils import ShelterTestCase
 
 
@@ -1323,3 +1325,77 @@ class UpdateShelterAdditionalContactsErrorShapeTestCase(ShelterTestCase, TestCas
         self.assertEqual(messages[1]["kind"], "VALIDATION")
         self.assertEqual(messages[1]["field"], "additionalContacts.1.contactEmail")
         self.assertIn("email", messages[1]["message"].lower())
+
+
+class UpdateShelterSchedulesTestCase(ShelterTestCase, TestCase):
+    """updateShelter reconciles schedules in place (upsert) instead of replacing them."""
+
+    UPDATE_MUTATION = """
+        mutation ($data: UpdateShelterInput!) {
+            updateShelter(data: $data) {
+                ... on ShelterType {
+                    id
+                }
+                ... on OperationInfo {
+                    messages {
+                        kind
+                        field
+                        message
+                    }
+                }
+            }
+        }
+    """
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.graphql_client.force_login(self.operator)
+        self.shelter = Shelter.objects.create(name="Scheduled Shelter", organization=self.org)
+        self.slot = Schedule.objects.create(
+            shelter=self.shelter,
+            schedule_type=ScheduleTypeChoices.OPERATING,
+            day=DayOfWeekChoices.MONDAY,
+            start_time=time(9, 0),
+            end_time=time(17, 0),
+        )
+
+    def _entry(self, **overrides: Any) -> dict[str, Any]:
+        entry: dict[str, Any] = {
+            "scheduleType": "OPERATING",
+            "days": ["MONDAY"],
+            "startTime": "09:00:00",
+            "endTime": "17:00:00",
+            "isException": False,
+        }
+        entry.update(overrides)
+        return entry
+
+    def _update(self, schedules: list[dict[str, Any]]) -> dict:
+        return self.execute_graphql(
+            self.UPDATE_MUTATION,
+            {"data": {"id": str(self.shelter.pk), "schedules": schedules}},
+        )
+
+    def test_schedule_id_round_trips_and_updates_in_place(self) -> None:
+        response = self._update([self._entry(id=str(self.slot.pk), startTime="10:00:00")])
+
+        self.assertIsNone(response.get("errors"))
+        self.assertIn("updateShelter", response["data"])
+        self.slot.refresh_from_db()
+        self.assertEqual(self.slot.start_time, time(10, 0))
+        self.assertEqual(Schedule.objects.filter(shelter=self.shelter).count(), 1)
+
+    def test_omitting_the_schedule_deletes_it(self) -> None:
+        response = self._update([])
+
+        self.assertIsNone(response.get("errors"))
+        self.assertFalse(Schedule.objects.filter(pk=self.slot.pk).exists())
+
+    def test_unknown_schedule_id_is_rejected(self) -> None:
+        response = self._update([self._entry(id="999999")])
+
+        self.assertIsNone(response.get("errors"))
+        # The whole update is rejected, so the existing slot is untouched.
+        self.assertTrue(Schedule.objects.filter(pk=self.slot.pk).exists())
+        messages = response["data"]["updateShelter"]["messages"]
+        self.assertEqual(messages[0]["kind"], "VALIDATION")

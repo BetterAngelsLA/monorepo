@@ -2666,6 +2666,7 @@ type SampleType {
 }
 
 input ScheduleInput {
+  id: ID = null
   scheduleType: ScheduleTypeChoices! = OPERATING
   days: [DayOfWeekChoices!] = null
   startTime: Time = null

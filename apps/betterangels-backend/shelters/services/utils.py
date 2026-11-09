@@ -101,46 +101,94 @@ def _prepare_shelter_data(
     return data, m2m_data, schedules_data
 
 
-def _create_schedules(shelter: Shelter, schedules_data: List[Dict[str, Any]]) -> None:
-    """Bulk-create Schedule rows from a list of input dicts.
+def _schedule_rows(entry: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Expand one schedule input into per-day row kwargs.
 
-    Each input dict may contain ``days`` (a list of day enums).
-    One Schedule row is created per day.  If ``days`` is empty or absent,
-    a single row with ``day=None`` (every day) is created.
+    ``days`` fans out to one row per day; absent or empty means a single row with
+    ``day=None`` (every day).
     """
-    if not schedules_data:
-        return
-    objs = []
+    # Resolve enum values to their raw strings for TextChoicesField
+    raw_type = entry.get("schedule_type")
+    schedule_type = (
+        ScheduleTypeChoices(getattr(raw_type, "value", raw_type)) if raw_type else ScheduleTypeChoices.OPERATING
+    )
+
+    raw_condition = entry.get("condition")
+    condition: ConditionChoices | None = (
+        ConditionChoices(getattr(raw_condition, "value", raw_condition)) if raw_condition else None
+    )
+
+    rows: List[Dict[str, Any]] = []
+    for raw_day in entry.get("days") or [None]:
+        rows.append(
+            {
+                "schedule_type": schedule_type,
+                "day": DayOfWeekChoices(getattr(raw_day, "value", raw_day)) if raw_day else None,
+                "start_time": entry.get("start_time"),
+                "end_time": entry.get("end_time"),
+                "start_date": entry.get("start_date"),
+                "end_date": entry.get("end_date"),
+                "condition": condition,
+                "is_exception": entry.get("is_exception", False),
+            }
+        )
+
+    return rows
+
+
+def _create_schedules(shelter: Shelter, schedules_data: List[Dict[str, Any]]) -> None:
+    """Bulk-create Schedule rows from a list of input dicts (create-only path)."""
+    rows = [row for entry in schedules_data for row in _schedule_rows(entry)]
+
+    if rows:
+        Schedule.objects.bulk_create([Schedule(shelter=shelter, **row) for row in rows])
+
+
+def _sync_schedules(shelter: Shelter, schedules_data: List[Dict[str, Any]]) -> None:
+    """Reconcile a shelter's schedules with the submitted set.
+
+    The payload is authoritative: an entry carrying an ``id`` updates that row in
+    place, an entry without one creates a row, and a row whose id is absent is
+    deleted. Updating in place is the point — the write then records only what
+    changed, so the audit log can report an edit as an edit instead of a delete
+    plus a create.
+
+    Ids must belong to *this* shelter (an id from another organization is an input
+    error, not a silent no-op) and may appear once. The caller runs inside a
+    transaction and the slot key is deferrable, so a save may swap two slots' times
+    without tripping the unique constraint mid-flight.
+    """
+    specs: List[tuple[str | None, Dict[str, Any]]] = []
     for entry in schedules_data:
-        # Resolve enum values to their raw strings for TextChoicesField
-        raw_type = entry.get("schedule_type")
-        schedule_type = (
-            ScheduleTypeChoices(getattr(raw_type, "value", raw_type)) if raw_type else ScheduleTypeChoices.OPERATING
-        )
+        raw_id = entry.get("id")
+        for row in _schedule_rows(entry):
+            specs.append((str(raw_id) if raw_id else None, row))
 
-        raw_condition = entry.get("condition")
-        condition: ConditionChoices | None = (
-            ConditionChoices(getattr(raw_condition, "value", raw_condition)) if raw_condition else None
-        )
+    existing = {str(row.id): row for row in shelter.schedules.select_for_update()}
 
-        # Fan out: one row per day (or a single row with day=None)
-        raw_days = entry.get("days") or [None]
-        for raw_day in raw_days:
-            day: DayOfWeekChoices | None = DayOfWeekChoices(getattr(raw_day, "value", raw_day)) if raw_day else None
-            objs.append(
-                Schedule(
-                    shelter=shelter,
-                    schedule_type=schedule_type,
-                    day=day,
-                    start_time=entry.get("start_time"),
-                    end_time=entry.get("end_time"),
-                    start_date=entry.get("start_date"),
-                    end_date=entry.get("end_date"),
-                    condition=condition,
-                    is_exception=entry.get("is_exception", False),
-                )
-            )
-    Schedule.objects.bulk_create(objs)
+    kept: set[str] = set()
+    for key, _row in specs:
+        if key is None:
+            continue
+        if key not in existing:
+            raise ValidationError({"schedules": f"Schedule {key} does not belong to this shelter."})
+        if key in kept:
+            raise ValidationError({"schedules": f"Schedule {key} appears more than once in the payload."})
+        kept.add(key)
+
+    for key, row in existing.items():
+        if key not in kept:
+            row.delete()
+
+    for key, row in specs:
+        if key is None:
+            Schedule.objects.create(shelter=shelter, **row)
+            continue
+
+        target = existing[key]
+        for field_name, value in row.items():
+            setattr(target, field_name, value)
+        target.save()
 
 
 def _validate_subset_attributes(shelter: Shelter, m2m_data: Dict[str, List[Any]]) -> None:
