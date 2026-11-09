@@ -431,6 +431,23 @@ class SyncSchedulesTestCase(TestCase):
         self.slot.refresh_from_db()
         self.assertEqual(self.slot.start_time, datetime.time(10, 0))
 
+    def test_unchanged_entry_does_not_touch_the_row(self) -> None:
+        """A save that matches what is stored must not date the row or log an edit."""
+        before = self.slot.updated_at
+
+        _sync_schedules(self.shelter, [self._entry(id=self.slot.pk)])
+
+        self.slot.refresh_from_db()
+        self.assertEqual(self.slot.updated_at, before)
+
+    def test_changed_entry_touches_the_row(self) -> None:
+        before = self.slot.updated_at
+
+        _sync_schedules(self.shelter, [self._entry(id=self.slot.pk, start_time=datetime.time(10, 0))])
+
+        self.slot.refresh_from_db()
+        self.assertGreater(self.slot.updated_at, before)
+
     def test_creates_entries_without_an_id_and_keeps_the_rest(self) -> None:
         _sync_schedules(
             self.shelter,

@@ -186,9 +186,17 @@ def _sync_schedules(shelter: Shelter, schedules_data: List[Dict[str, Any]]) -> N
             continue
 
         target = existing[key]
-        for field_name, value in row.items():
-            setattr(target, field_name, value)
-        target.save()
+        # ``updated_at`` is ``auto_now``, and the schedule trigger fires on any
+        # row change, so saving an untouched slot would date it and log an edit
+        # nobody made. Only write the fields that actually differ.
+        changed = [field_name for field_name, value in row.items() if getattr(target, field_name) != value]
+
+        if not changed:
+            continue
+
+        for field_name in changed:
+            setattr(target, field_name, row[field_name])
+        target.save(update_fields=[*changed, "updated_at"])
 
 
 def _validate_subset_attributes(shelter: Shelter, m2m_data: Dict[str, List[Any]]) -> None:
