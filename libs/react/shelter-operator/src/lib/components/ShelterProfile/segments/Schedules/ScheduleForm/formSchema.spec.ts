@@ -135,6 +135,65 @@ describe('scheduleFormSchema', () => {
     ).toContain('Invalid date format (YYYY-MM-DD)');
   });
 
+  it('rejects two weekly ranges that start at the same time', () => {
+    const result = scheduleFormSchema.safeParse({
+      weekly: weeklyWithMondayRanges([
+        { startTime: '09:00', endTime: '12:00' },
+        { startTime: '09:00', endTime: '17:00' },
+      ]),
+      exceptions: [],
+    });
+
+    expect(result.success).toBe(false);
+    // The error lands on the offending range, so the field shows it.
+    expect(result.error?.issues[0].path).toEqual([
+      'weekly',
+      DayOfWeekChoices.Monday,
+      'ranges',
+      1,
+      'startTime',
+    ]);
+    expect(result.error?.issues[0].message).toBe(
+      'Another range already starts at 09:00',
+    );
+  });
+
+  it('accepts two weekly ranges with different start times', () => {
+    expect(
+      issueMessages({
+        weekly: weeklyWithMondayRanges([
+          { startTime: '09:00', endTime: '12:00' },
+          { startTime: '13:00', endTime: '17:00' },
+        ]),
+        exceptions: [],
+      }),
+    ).toEqual([]);
+  });
+
+  it('rejects two exceptions covering the same date and start time', () => {
+    expect(
+      issueMessages({
+        weekly: buildDefaultWeeklyState(),
+        exceptions: [
+          { ...openException, localId: 'e1' },
+          { ...openException, localId: 'e2', endTime: '20:00' },
+        ],
+      }),
+    ).toContain('Another exception already covers this date and start time');
+  });
+
+  it('rejects two all-day exceptions on the same date', () => {
+    expect(
+      issueMessages({
+        weekly: buildDefaultWeeklyState(),
+        exceptions: [
+          { ...openException, localId: 'e1', closedAllDay: true },
+          { ...openException, localId: 'e2', closedAllDay: true },
+        ],
+      }),
+    ).toContain('Another exception already covers this date and start time');
+  });
+
   it('keeps an exception condition', () => {
     const result = scheduleFormSchema.safeParse({
       weekly: buildDefaultWeeklyState(),
