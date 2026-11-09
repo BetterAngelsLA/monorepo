@@ -41,26 +41,16 @@ export function ShelterSchedules(props: TProps) {
 
     const isDelete = scheduleInputs.length === 0;
 
-    const otherSchedules: ScheduleInput[] = shelter.schedules
-      .filter((s) => s.scheduleType !== scheduleType)
-      .map((s) => ({
-        id: s.id,
-        scheduleType: s.scheduleType,
-        days: s.day ? [s.day] : undefined,
-        startTime: s.startTime ?? undefined,
-        endTime: s.endTime ?? undefined,
-        startDate: s.startDate ?? undefined,
-        endDate: s.endDate ?? undefined,
-        condition: s.condition ?? undefined,
-        isException: s.isException,
-      }));
-
     try {
       const response = await updateShelter({
         variables: {
           data: {
             id: shelterId,
-            schedules: [...otherSchedules, ...scheduleInputs],
+            // Only the tab being saved. The schedule upsert reconciles the types
+            // named in `scheduleTypes` and leaves the others untouched, so a save
+            // from a stale tab cannot revert another type's hours.
+            schedules: scheduleInputs,
+            scheduleTypes: [scheduleType],
           },
         },
         awaitRefetchQueries: true, // after refetch setResetKey will retrigger render

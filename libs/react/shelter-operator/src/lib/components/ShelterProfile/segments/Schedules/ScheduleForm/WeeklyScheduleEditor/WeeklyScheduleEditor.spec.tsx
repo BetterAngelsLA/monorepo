@@ -24,15 +24,10 @@ describe('WeeklyScheduleEditor', () => {
     const onChange = vi.fn();
 
     render(
-      <WeeklyScheduleEditor
-        value={stateWithWednesday()}
-        onChange={onChange}
-      />,
+      <WeeklyScheduleEditor value={stateWithWednesday()} onChange={onChange} />,
     );
 
-    fireEvent.click(
-      screen.getAllByTitle('Copy these hours to all days')[0],
-    );
+    fireEvent.click(screen.getAllByTitle('Copy these hours to all days')[0]);
 
     const next = onChange.mock.calls[0][0] as WeeklyFormState;
 
