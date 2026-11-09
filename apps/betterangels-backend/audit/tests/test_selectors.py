@@ -1560,261 +1560,58 @@ class ObjectAuditActorsQueryBudgetTestCase(TestCase):
         self.assertIn('"label"', where)
 
 
-class ObjectAuditLogScheduleNettingTestCase(TestCase):
-    """Full-replacement schedule saves are netted to one UPDATE per slot (§13).
+class ObjectAuditLogScheduleEventsTestCase(TestCase):
+    """Schedule writes render one event per row, each labelled with its slot (§13).
 
-    ``shelter_update`` replaces the schedule set wholesale (delete all, then
-    bulk-create), so a single time edit emits a ``.remove`` and an ``.add`` of
-    the same slot. The selector pairs them back up instead of rendering a
-    deletion and a creation the user never made.
+    Schedules are upserted by id, so the log reports what the user did: an edited
+    slot is a real ``.update``, a removed one a ``.remove``, a new one an ``.add``.
+    Nothing is paired or synthesised, so a slot deleted and another added in the
+    same save stay two events instead of becoming a change nobody made.
     """
 
     def setUp(self) -> None:
         self.user = baker.make(User, first_name="Ada", last_name="Lovelace", email="ada@example.com")
         with audit_context(label="seed"):
             self.shelter = Shelter.objects.create(name="Scheduled Shelter")
-            Schedule.objects.create(
+            self.slot = Schedule.objects.create(
                 shelter=self.shelter,
                 day=DayOfWeekChoices.MONDAY,
                 start_time=time(9, 0),
                 end_time=time(17, 0),
             )
 
-    def _replace_schedules(self, *, start: time, end: time) -> None:
-        """The same delete-then-create shape ``shelter_update`` uses."""
+    def test_in_place_edit_is_one_update_with_its_slot_identity(self) -> None:
+        """The write the upsert performs: one row updated, labelled by its slot."""
         with audit_context(user=self.user):
-            self.shelter.schedules.all().delete()
-            Schedule.objects.create(
-                shelter=self.shelter,
-                day=DayOfWeekChoices.MONDAY,
-                start_time=start,
-                end_time=end,
-            )
-
-    def test_time_edit_is_one_update_event_not_a_remove_plus_add(self) -> None:
-        self._replace_schedules(start=time(10, 0), end=time(18, 0))
-
-        actions = audit_log(obj=self.shelter, target_type="SHELTER")
-
-        self.assertEqual(len(actions), 1)
-        self.assertEqual([event.action for event in actions[0].events], ["shelter.schedule.update"])
-        self.assertEqual([event.kind for event in actions[0].events], ["UPDATE"])
-
-        changes = actions[0].events[0].field_changes or {}
-        self.assertEqual(changes["start time"], ["09:00:00", "10:00:00"])
-        self.assertEqual(changes["end time"], ["17:00:00", "18:00:00"])
-        self.assertEqual(set(changes), {"start time", "end time"})
-
-    def test_netting_does_not_pair_across_objects(self) -> None:
-        """One context saving two shelters must net each object's rows separately."""
-        with audit_context(label="seed"):
-            other = Shelter.objects.create(name="Other Scheduled Shelter")
-            Schedule.objects.create(
-                shelter=other,
-                day=DayOfWeekChoices.MONDAY,
-                start_time=time(9, 0),
-                end_time=time(17, 0),
-            )
-
-        with audit_context(user=self.user):
-            self.shelter.schedules.all().delete()
-            other.schedules.all().delete()
-            Schedule.objects.create(
-                shelter=self.shelter,
-                day=DayOfWeekChoices.MONDAY,
-                start_time=time(10, 0),
-                end_time=time(18, 0),
-            )
-            Schedule.objects.create(
-                shelter=other,
-                day=DayOfWeekChoices.MONDAY,
-                start_time=time(10, 0),
-                end_time=time(18, 0),
-            )
-
-        for obj in (self.shelter, other):
-            actions = audit_log(obj=obj, target_type="SHELTER")
-            schedule_events = [
-                event for action in actions for event in action.events if event.action.startswith("shelter.schedule")
-            ]
-
-            self.assertEqual([event.action for event in schedule_events], ["shelter.schedule.update"])
-            self.assertTrue(all(event.target_id == str(obj.pk) for event in schedule_events))
-
-    def test_netted_change_keys_match_the_add_remove_keys(self) -> None:
-        """Netted updates render §13 display keys, like every other schedule event.
-
-        A single save can net one slot and add another; both must key
-        ``field_changes`` identically (``start time``, not ``start_time``) or the
-        action-level rollup carries two shapes for one field.
-        """
-        with audit_context(user=self.user):
-            self.shelter.schedules.all().delete()
-            Schedule.objects.create(
-                shelter=self.shelter,
-                day=DayOfWeekChoices.MONDAY,
-                start_time=time(10, 0),
-                end_time=time(18, 0),
-            )
-            Schedule.objects.create(
-                shelter=self.shelter,
-                day=DayOfWeekChoices.TUESDAY,
-                start_time=time(9, 0),
-                end_time=time(17, 0),
-            )
-
-        actions = audit_log(obj=self.shelter, target_type="SHELTER")
-        events = {event.action: event for event in actions[0].events}
-
-        netted = events["shelter.schedule.update"].field_changes or {}
-        added = events["shelter.schedule.add"].field_changes or {}
-        self.assertEqual(set(netted), {"start time", "end time"})
-        self.assertIn("start time", added)
-        self.assertNotIn("start_time", netted)
-        self.assertNotIn("start_time", added)
-
-        rollup_keys = set(actions[0].field_changes)
-        self.assertTrue(any(key.endswith(" start time") for key in rollup_keys))
-        self.assertFalse(any(key.endswith("start_time") for key in rollup_keys))
-        # Database-generated schedule columns are derived from start/end; they
-        # must not appear as changes (or in the rollup) on add/remove either.
-        self.assertFalse(any("cycle" in key.lower() or "duration" in key.lower() for key in added))
-        self.assertFalse(any("cycle" in key.lower() or "duration" in key.lower() for key in rollup_keys))
-        # The rollup holds only real changes: no ``[x, x]`` no-op pair survives.
-        for pair in actions[0].field_changes.values():
-            self.assertNotEqual(pair[0], pair[1])
-
-    def test_generated_schedule_columns_are_not_rendered(self) -> None:
-        """GeneratedField values are derived, so they are not changes or snapshots."""
-        with audit_context(user=self.user):
-            self.shelter.schedules.all().delete()
-            Schedule.objects.create(
-                shelter=self.shelter,
-                day=DayOfWeekChoices.TUESDAY,
-                start_time=time(10, 0),
-                end_time=time(18, 0),
-            )
-
-        actions = audit_log(obj=self.shelter, target_type="SHELTER", include_snapshot=True)
-        added = next(event for event in actions[0].events if event.action == "shelter.schedule.add")
-
-        self.assertFalse(
-            any("cycle" in key.lower() or "duration" in key.lower() for key in (added.field_changes or {}))
-        )
-        self.assertFalse(any("cycle" in key.lower() or "duration" in key.lower() for key in (added.snapshot or {})))
-
-    def test_netted_event_carries_the_slot_context(self) -> None:
-        """The slot's unchanged identity travels in ``context``, not as a change."""
-        self._replace_schedules(start=time(10, 0), end=time(18, 0))
+            self.slot.start_time = time(10, 0)
+            self.slot.end_time = time(18, 0)
+            self.slot.save()
 
         actions = audit_log(obj=self.shelter, target_type="SHELTER")
         event = actions[0].events[0]
 
+        self.assertEqual([e.action for e in actions[0].events], ["shelter.schedule.update"])
+        self.assertEqual(event.kind, "UPDATE")
         self.assertEqual(event.context, {"day": "Monday", "schedule type": "Operating Hours"})
-        self.assertEqual(set(event.field_changes or {}), {"start time", "end time"})
-        self.assertFalse([pair for pair in actions[0].field_changes.values() if pair[0] == pair[1]])
-
-    def test_netted_and_genuine_events_carry_snapshots(self) -> None:
-        """``include_snapshot`` still populates schedule events after netting."""
-        with audit_context(user=self.user):
-            self.shelter.schedules.all().delete()
-            Schedule.objects.create(
-                shelter=self.shelter,
-                day=DayOfWeekChoices.MONDAY,
-                start_time=time(10, 0),
-                end_time=time(18, 0),
-            )
-            Schedule.objects.create(
-                shelter=self.shelter,
-                day=DayOfWeekChoices.TUESDAY,
-                start_time=time(9, 0),
-                end_time=time(17, 0),
-            )
-
-        actions = audit_log(obj=self.shelter, target_type="SHELTER", include_snapshot=True)
-        events = {event.action: event for event in actions[0].events}
-
-        netted = events["shelter.schedule.update"].snapshot or {}
-        added = events["shelter.schedule.add"].snapshot or {}
-
-        self.assertTrue(netted, "the netted UPDATE must carry a snapshot")
-        self.assertTrue(added, "the genuine INSERT must carry a snapshot")
-        # A netted UPDATE snapshots the post-change state; the old row is gone.
-        self.assertEqual(netted["start time"], "10:00:00")
-        self.assertEqual(added["day"], "Tuesday")
-
-    def test_netted_snapshot_resolves_fk_labels(self) -> None:
-        """A netted event's snapshot renders FK ids as labels, like any other event."""
-        with audit_context(label="seed"):
-            demographic = Demographic.objects.create(name=DemographicChoices.COUPLES)
-            self.shelter.schedules.all().delete()
-            Schedule.objects.create(
-                shelter=self.shelter,
-                day=DayOfWeekChoices.MONDAY,
-                start_time=time(9, 0),
-                end_time=time(17, 0),
-                demographic=demographic,
-            )
-        with audit_context(user=self.user):
-            self.shelter.schedules.all().delete()
-            Schedule.objects.create(
-                shelter=self.shelter,
-                day=DayOfWeekChoices.MONDAY,
-                start_time=time(10, 0),
-                end_time=time(18, 0),
-                demographic=demographic,
-            )
-
-        actions = audit_log(obj=self.shelter, target_type="SHELTER", include_snapshot=True)
-        snapshot = actions[0].events[0].snapshot or {}
-
-        self.assertEqual(snapshot["shelter"], "Scheduled Shelter")
-        self.assertEqual(snapshot["demographic"], "couples")
-
-    def test_unchanged_slot_is_not_reported_as_a_change(self) -> None:
-        self._replace_schedules(start=time(9, 0), end=time(17, 0))
-
-        actions = audit_log(obj=self.shelter, target_type="SHELTER")
-
-        self.assertEqual(len(actions), 1)
-        self.assertEqual(actions[0].events, [])
-        self.assertEqual(actions[0].field_changes, {})
-
-    def test_multiple_residual_slots_render_as_delete_and_insert(self) -> None:
-        """No stable provenance across a replacement: only a 1:1 residual nets."""
-        with audit_context(label="seed"):
-            self.shelter.schedules.all().delete()
-            for start, end in ((time(9, 0), time(12, 0)), (time(10, 0), time(11, 0))):
-                Schedule.objects.create(
-                    shelter=self.shelter,
-                    day=DayOfWeekChoices.MONDAY,
-                    start_time=start,
-                    end_time=end,
-                )
-        # Two windows edited in one save; a positional zip used to pair them
-        # across (09:00→09:30, 10:00→10:30) and invent that story.
-        with audit_context(user=self.user):
-            self.shelter.schedules.all().delete()
-            for start, end in ((time(10, 30), time(12, 0)), (time(9, 30), time(11, 0))):
-                Schedule.objects.create(
-                    shelter=self.shelter,
-                    day=DayOfWeekChoices.MONDAY,
-                    start_time=start,
-                    end_time=end,
-                )
-
-        actions = audit_log(obj=self.shelter, target_type="SHELTER")
-
-        self.assertEqual(len(actions), 1)
         self.assertEqual(
-            sorted(event.kind for event in actions[0].events),
-            ["DELETE", "DELETE", "INSERT", "INSERT"],
+            event.field_changes,
+            {"start time": ["09:00:00", "10:00:00"], "end time": ["17:00:00", "18:00:00"]},
         )
-        self.assertTrue(all(event.context is None for event in actions[0].events))
 
-    def test_hidden_fields_are_redacted_from_genuine_events(self) -> None:
-        """A withheld raw attname never reaches a schedule add/remove field map (§18)."""
+    def test_delete_add_and_edit_are_three_events(self) -> None:
+        """One save may delete one slot, edit another and add a third."""
+        with audit_context(label="seed"):
+            doomed = Schedule.objects.create(
+                shelter=self.shelter,
+                day=DayOfWeekChoices.MONDAY,
+                start_time=time(10, 0),
+                end_time=time(11, 0),
+            )
+
         with audit_context(user=self.user):
+            doomed.delete()
+            self.slot.start_time = time(8, 0)
+            self.slot.save()
             Schedule.objects.create(
                 shelter=self.shelter,
                 day=DayOfWeekChoices.TUESDAY,
@@ -1822,101 +1619,168 @@ class ObjectAuditLogScheduleNettingTestCase(TestCase):
                 end_time=time(17, 0),
             )
 
-        actions = audit_log(
+        events = audit_log(obj=self.shelter, target_type="SHELTER")[0].events
+
+        self.assertEqual(sorted(event.kind for event in events), ["DELETE", "INSERT", "UPDATE"])
+        deleted = next(event for event in events if event.kind == "DELETE")
+        inserted = next(event for event in events if event.kind == "INSERT")
+        updated = next(event for event in events if event.kind == "UPDATE")
+        self.assertEqual((deleted.field_changes or {})["start time"], ["10:00:00", None])
+        self.assertEqual((inserted.field_changes or {})["start time"], [None, "09:00:00"])
+        self.assertEqual(updated.field_changes, {"start time": ["09:00:00", "08:00:00"]})
+        self.assertEqual(updated.context, {"day": "Monday", "schedule type": "Operating Hours"})
+
+    def test_replacement_save_stays_a_remove_and_an_add(self) -> None:
+        """A client that omits ids still replaces; the log says so honestly."""
+        with audit_context(user=self.user):
+            self.shelter.schedules.all().delete()
+            Schedule.objects.create(
+                shelter=self.shelter,
+                day=DayOfWeekChoices.MONDAY,
+                start_time=time(10, 0),
+                end_time=time(18, 0),
+            )
+
+        events = audit_log(obj=self.shelter, target_type="SHELTER")[0].events
+
+        self.assertEqual(sorted(event.kind for event in events), ["DELETE", "INSERT"])
+        self.assertTrue(all(event.context is None for event in events))
+
+    def test_every_day_slot_keeps_the_day_key_null(self) -> None:
+        """A null day means "every day"; the copy belongs to the UI."""
+        with audit_context(user=self.user):
+            slot = Schedule.objects.create(
+                shelter=self.shelter,
+                day=None,
+                start_time=time(9, 0),
+                end_time=time(17, 0),
+            )
+        with audit_context(user=self.user):
+            slot.end_time = time(18, 0)
+            slot.save()
+
+        event = audit_log(obj=self.shelter, target_type="SHELTER")[0].events[0]
+
+        self.assertEqual(event.context, {"day": None, "schedule type": "Operating Hours"})
+        self.assertEqual(event.field_changes, {"end time": ["17:00:00", "18:00:00"]})
+
+    def test_hidden_fields_are_redacted_from_changes_and_the_context(self) -> None:
+        """A withheld raw attname never reaches the diff or the slot identity (§18)."""
+        with audit_context(user=self.user):
+            self.slot.day = DayOfWeekChoices.TUESDAY
+            self.slot.start_time = time(10, 0)
+            self.slot.save()
+
+        event = audit_log(
             obj=self.shelter,
             target_type="SHELTER",
             hidden_fields={"shelters.Schedule": ("day",)},
-        )
-        event = next(event for event in actions[0].events if event.action == "shelter.schedule.add")
+        )[0].events[0]
 
-        changes = event.field_changes or {}
-        self.assertNotIn("day", changes)
-        self.assertIn("start time", changes)
-
-    def test_hidden_fields_are_redacted_from_netted_changes_and_context(self) -> None:
-        """The synthesized diff and context honour the same withheld set (§18)."""
-        self._replace_schedules(start=time(10, 0), end=time(18, 0))
-
-        actions = audit_log(
-            obj=self.shelter,
-            target_type="SHELTER",
-            hidden_fields={"shelters.Schedule": ("start_time", "day")},
-        )
-        event = actions[0].events[0]
-
-        self.assertEqual(set(event.field_changes or {}), {"end time"})
+        self.assertNotIn("day", event.field_changes or {})
+        self.assertEqual(event.field_changes, {"start time": ["09:00:00", "10:00:00"]})
         self.assertEqual(event.context, {"schedule type": "Operating Hours"})
 
-    def test_deleted_slots_keep_delete_events(self) -> None:
-        """Removes with no matching add are genuine deletions, not a netted update."""
+    def test_events_carry_snapshots(self) -> None:
         with audit_context(user=self.user):
-            self.shelter.schedules.all().delete()
-
-        actions = audit_log(obj=self.shelter, target_type="SHELTER")
-
-        self.assertEqual(len(actions), 1)
-        self.assertEqual([event.action for event in actions[0].events], ["shelter.schedule.remove"])
-        self.assertEqual([event.kind for event in actions[0].events], ["DELETE"])
-        self.assertIsNone(actions[0].events[0].context)
-        self.assertEqual((actions[0].events[0].field_changes or {})["day"], ["Monday", None])
-
-    def test_every_day_slot_keeps_the_day_key_out_of_the_netted_change(self) -> None:
-        """``day=None`` means every day: absent from the change, null in context."""
-        with audit_context(label="seed"):
-            self.shelter.schedules.all().delete()
+            self.slot.start_time = time(10, 0)
+            self.slot.save()
             Schedule.objects.create(
                 shelter=self.shelter,
-                day=None,
+                day=DayOfWeekChoices.TUESDAY,
                 start_time=time(9, 0),
                 end_time=time(17, 0),
             )
+
+        events = audit_log(obj=self.shelter, target_type="SHELTER", include_snapshot=True)[0].events
+        updated = next(event for event in events if event.kind == "UPDATE")
+        inserted = next(event for event in events if event.kind == "INSERT")
+
+        self.assertEqual((updated.snapshot or {})["start time"], "10:00:00")
+        self.assertEqual((inserted.snapshot or {})["day"], "Tuesday")
+
+    def test_add_and_remove_keys_use_display_names(self) -> None:
         with audit_context(user=self.user):
-            self.shelter.schedules.all().delete()
+            self.slot.delete()
             Schedule.objects.create(
                 shelter=self.shelter,
-                day=None,
+                day=DayOfWeekChoices.TUESDAY,
+                start_time=time(9, 0),
+                end_time=time(17, 0),
+            )
+
+        action = audit_log(obj=self.shelter, target_type="SHELTER")[0]
+
+        for event in action.events:
+            self.assertIn("start time", event.field_changes or {})
+            self.assertNotIn("start_time", event.field_changes or {})
+        rollup_keys = set(action.field_changes)
+        self.assertTrue(any(key.endswith(" start time") for key in rollup_keys))
+        self.assertFalse(any(key.endswith("start_time") for key in rollup_keys))
+        # Database-generated schedule columns are derived from start/end.
+        self.assertFalse(any("cycle" in key.lower() or "duration" in key.lower() for key in rollup_keys))
+        for pair in action.field_changes.values():
+            self.assertNotEqual(pair[0], pair[1])
+
+    def test_generated_schedule_columns_are_not_rendered(self) -> None:
+        with audit_context(user=self.user):
+            Schedule.objects.create(
+                shelter=self.shelter,
+                day=DayOfWeekChoices.TUESDAY,
                 start_time=time(10, 0),
                 end_time=time(18, 0),
             )
 
-        actions = audit_log(obj=self.shelter, target_type="SHELTER")
+        events = audit_log(obj=self.shelter, target_type="SHELTER", include_snapshot=True)[0].events
+        inserted = next(event for event in events if event.kind == "INSERT")
 
-        self.assertEqual(len(actions), 1)
-        event = actions[0].events[0]
-        changes = event.field_changes or {}
-        self.assertNotIn("day", changes)
-        self.assertEqual(changes["start time"], ["09:00:00", "10:00:00"])
-        self.assertEqual(changes["end time"], ["17:00:00", "18:00:00"])
-        # The UI renders "Every day" from the null; the copy stays in the UI.
-        self.assertIsNone((event.context or {})["day"])
+        for rendered in (inserted.field_changes or {}, inserted.snapshot or {}):
+            self.assertFalse(any("cycle" in key.lower() or "duration" in key.lower() for key in rendered))
 
-    def test_schedule_netting_respects_the_event_cap(self) -> None:
-        """Netting shares the action's event budget instead of emitting past it."""
+    def test_snapshot_resolves_fk_labels(self) -> None:
         with audit_context(label="seed"):
-            self.shelter.schedules.all().delete()
-            for start in (time(9, 0), time(10, 0), time(11, 0)):
-                Schedule.objects.create(
-                    shelter=self.shelter,
-                    day=DayOfWeekChoices.MONDAY,
-                    start_time=start,
-                    end_time=time(17, 0),
-                )
+            demographic = Demographic.objects.create(name=DemographicChoices.COUPLES)
         with audit_context(user=self.user):
-            self.shelter.schedules.all().delete()
-            for start in (time(9, 30), time(10, 30), time(11, 30)):
-                Schedule.objects.create(
-                    shelter=self.shelter,
-                    day=DayOfWeekChoices.MONDAY,
-                    start_time=start,
-                    end_time=time(17, 0),
-                )
+            Schedule.objects.create(
+                shelter=self.shelter,
+                day=DayOfWeekChoices.MONDAY,
+                start_time=time(10, 0),
+                end_time=time(18, 0),
+                demographic=demographic,
+            )
 
-        with mock.patch("audit.selectors.MAX_EVENTS_PER_ACTION", 2):
-            actions = audit_log(obj=self.shelter, target_type="SHELTER")
+        events = audit_log(obj=self.shelter, target_type="SHELTER", include_snapshot=True)[0].events
+        inserted = next(event for event in events if event.kind == "INSERT")
 
-        self.assertEqual(len(actions), 1)
-        self.assertTrue(actions[0].truncated)
-        self.assertEqual(len(actions[0].events), 2)
+        self.assertEqual((inserted.snapshot or {})["shelter"], "Scheduled Shelter")
+        self.assertEqual((inserted.snapshot or {})["demographic"], "couples")
+
+    def test_two_objects_in_one_context_stay_separate(self) -> None:
+        """Each object's log reports its own row, even when one save writes both."""
+        with audit_context(label="seed"):
+            other = Shelter.objects.create(name="Other Scheduled Shelter")
+            other_slot = Schedule.objects.create(
+                shelter=other,
+                day=DayOfWeekChoices.MONDAY,
+                start_time=time(9, 0),
+                end_time=time(17, 0),
+            )
+        with audit_context(user=self.user):
+            self.slot.start_time = time(10, 0)
+            self.slot.save()
+            other_slot.start_time = time(10, 0)
+            other_slot.save()
+
+        for obj in (self.shelter, other):
+            events = [
+                event
+                for action in audit_log(obj=obj, target_type="SHELTER")
+                for event in action.events
+                if event.action.startswith("shelter.schedule")
+            ]
+
+            self.assertEqual([event.action for event in events], ["shelter.schedule.update"])
+            self.assertTrue(all(event.target_id == str(obj.pk) for event in events))
 
 
 class ObjectAuditLogScheduleServiceTestCase(TestCase):
@@ -1938,7 +1802,11 @@ class ObjectAuditLogScheduleServiceTestCase(TestCase):
                     end_time=time(17, 0),
                 )
 
-    def test_multi_day_save_nets_one_update_per_day(self) -> None:
+    def test_upsert_records_one_update_per_slot(self) -> None:
+        """Editing two slots in one save writes two updates, each with its day."""
+        monday = self.shelter.schedules.get(day=DayOfWeekChoices.MONDAY)
+        tuesday = self.shelter.schedules.get(day=DayOfWeekChoices.TUESDAY)
+
         with audit_context(user=self.user):
             shelter_update(
                 user=self.user,
@@ -1946,12 +1814,21 @@ class ObjectAuditLogScheduleServiceTestCase(TestCase):
                     "id": self.shelter.pk,
                     "schedules": [
                         {
+                            "id": str(monday.pk),
                             "schedule_type": ScheduleTypeChoices.OPERATING,
-                            "days": [DayOfWeekChoices.MONDAY, DayOfWeekChoices.TUESDAY],
+                            "days": [DayOfWeekChoices.MONDAY],
                             "start_time": time(10, 0),
                             "end_time": time(18, 0),
-                        }
+                        },
+                        {
+                            "id": str(tuesday.pk),
+                            "schedule_type": ScheduleTypeChoices.OPERATING,
+                            "days": [DayOfWeekChoices.TUESDAY],
+                            "start_time": time(10, 0),
+                            "end_time": time(18, 0),
+                        },
                     ],
+                    "schedule_types": [ScheduleTypeChoices.OPERATING],
                 },
             )
 
@@ -1968,6 +1845,30 @@ class ObjectAuditLogScheduleServiceTestCase(TestCase):
             changes = event.field_changes or {}
             self.assertEqual(changes["start time"], ["09:00:00", "10:00:00"])
             self.assertEqual(changes["end time"], ["17:00:00", "18:00:00"])
+
+    def test_new_multi_day_entry_creates_one_row_per_day(self) -> None:
+        """``days`` fans out to one row, so one entry is two events."""
+        with audit_context(user=self.user):
+            shelter_update(
+                user=self.user,
+                data={
+                    "id": self.shelter.pk,
+                    "schedules": [
+                        {
+                            "schedule_type": ScheduleTypeChoices.OPERATING,
+                            "days": [DayOfWeekChoices.WEDNESDAY, DayOfWeekChoices.THURSDAY],
+                            "start_time": time(9, 0),
+                            "end_time": time(17, 0),
+                        }
+                    ],
+                    "schedule_types": [ScheduleTypeChoices.OPERATING],
+                },
+            )
+
+        events = audit_log(obj=self.shelter, target_type="SHELTER")[0].events
+        added = [event for event in events if event.action == "shelter.schedule.add"]
+
+        self.assertEqual(sorted((event.field_changes or {})["day"][1] for event in added), ["Thursday", "Wednesday"])
 
 
 class ObjectAuditActorsSelectorTestCase(TestCase):
@@ -2145,34 +2046,22 @@ class ObjectAuditActorsSelectorTestCase(TestCase):
 
         self.assertEqual(by_id[str(renamed.pk)].label, "Rosa Parks")
 
-    def test_schedule_saves_rank_by_written_rows_not_rendered_events(self) -> None:
-        """Ordering counts raw rows: a full-replacement save writes two per slot (§13)."""
+    def test_actor_ranking_counts_written_rows_not_rendered_events(self) -> None:
+        """A summary line stands for several writes; ranking must count the rows."""
         scheduler = baker.make(User, first_name="Sched", last_name="Uler", email="sched@example.com")
         editor = baker.make(User, first_name="Edit", last_name="Or", email="edit@example.com")
 
         with audit_context(label="seed"):
-            self.shelter.schedules.all().delete()
-            for hour in (9, 10, 11):
-                Schedule.objects.create(
-                    shelter=self.shelter,
-                    day=DayOfWeekChoices.MONDAY,
-                    start_time=time(hour, 0),
-                    end_time=time(hour, 30),
-                )
+            room = Room.objects.create(shelter=self.shelter, name="Room A")
+            bed = Bed.objects.create(shelter=self.shelter, room=room, name="Bed A")
 
-        # One save that changes a single slot renders one netted event but writes
-        # six rows: three removes plus three adds.
+        # Three bed writes collapse into one summary line (§32).
         with audit_context(user=scheduler):
-            self.shelter.schedules.all().delete()
-            for hour in (9, 10, 11):
-                start = time(9, 15) if hour == 9 else time(hour, 0)
-                Schedule.objects.create(
-                    shelter=self.shelter,
-                    day=DayOfWeekChoices.MONDAY,
-                    start_time=start,
-                    end_time=time(hour, 30),
-                )
-        for index in range(4):
+            for name in ("Bed B", "Bed C", "Bed D"):
+                bed.name = name
+                bed.save()
+
+        for index in range(2):
             with audit_context(user=editor):
                 self.shelter.name = f"edit-{index}"
                 self.shelter.save()
@@ -2184,10 +2073,9 @@ class ObjectAuditActorsSelectorTestCase(TestCase):
         ]
         labels = [actor.label for actor in object_audit_actors(obj=self.shelter, target_type="SHELTER")]
 
-        self.assertEqual(rendered, [1])  # netting collapsed six writes into one event
-        # Counted as rendered events the editor (4) would outrank the scheduler
-        # (1); counted as written rows the scheduler (6) ranks first. The count is
-        # written rows, so this pins the documented metric.
+        self.assertEqual(rendered, [1])
+        # Rendered events would rank the editor (2) above the scheduler (1);
+        # written rows do the opposite, and that is the documented metric.
         self.assertLess(labels.index("Sched Uler"), labels.index("Edit Or"))
 
     def test_room_and_bed_targets_scope_the_actor_list(self) -> None:

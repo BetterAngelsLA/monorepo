@@ -612,6 +612,31 @@ def _scalar_changes(
     return {f: [render(f, old), render(f, new)] for f, (old, new) in diff.items() if f not in hidden}
 
 
+def _schedule_context(row: Any, resolver: _LabelResolver, hidden_fields: Collection[str] = ()) -> dict[str, Any] | None:
+    """Return the unchanged identity a schedule event needs to be readable (§13).
+
+    ``pgh_diff`` only carries the fields that changed, so the day and the schedule
+    type — which cannot change without becoming a different slot — have to come
+    from the row. They let the log read ``Changed Operating Hours: Wednesday
+    06:00 - 18:00 -> 05:00 - 18:00`` instead of a bare ``start time`` diff.
+
+    A null ``day`` means "every day" (see ``Schedule.day``) and is rendered as
+    such by the UI. Withheld fields never reach the context (§18).
+    """
+    model_label = row.pgh_obj_model
+    fk_fields = _fk_fields(model_label)
+    fields = _field_meta(model_label)
+    data = row.pgh_data or {}
+
+    context = {
+        field: _render_value(field, data.get(field), fk_fields, fields, resolver)
+        for field in ("day", "schedule_type")
+        if field not in hidden_fields
+    }
+
+    return _render_keys(context, model_label) or None
+
+
 def _render_keys(changes: dict[str, Any], model_label: str) -> dict[str, Any]:
     """Re-key a raw-``attname`` change map to display names (§13)."""
     keys = _display_keys(model_label)
@@ -677,209 +702,6 @@ def _merge_scalar(
             target[key][1] = new
         else:
             target[key] = [old, new]
-
-
-# Schedules are upserted by id now (``_sync_schedules``), so a slot edit arrives as
-# a real ``ScheduleEvent`` update. Netting is kept for clients that still replace
-# the set — omitting the ids deletes and re-creates the rows, which would read as
-# a deletion plus a creation the user never made. These rows are netted back into
-# a per-slot change; select them by model, not by a duplicated label prefix, so a
-# label rename cannot silently disable netting. A future full-replacement child
-# needs the same treatment explicitly.
-
-
-def _schedule_events(
-    rows: list[Any],
-    *,
-    target_type: str,
-    target_id: str,
-    resolver: _LabelResolver,
-    max_events: int | None = None,
-    include_snapshot: bool = False,
-    hidden_fields: Mapping[str, Collection[str]] | None = None,
-) -> tuple[list[AuditEventData], dict[tuple[str, Any, str], list[Any]], bool]:
-    """Net a full-replacement schedule save into per-slot changes (§13).
-
-    ``shelter_update`` replaces the schedule set wholesale, so a single field edit
-    emits a ``.remove`` of the old slot and an ``.add`` of the new one. Match the
-    pair by identity — every field except the editable time window — and emit one
-    UPDATE event per slot whose times actually changed. Slots that were genuinely
-    added or removed keep their INSERT/DELETE events.
-
-    Netting is scoped to the *time window*: an edit that changes an identity field
-    (dates, condition, demographic, exception flag, schedule type, day) is still
-    rendered as a DELETE plus an INSERT, because pairing across identities could
-    merge two unrelated slots. A paired UPDATE is emitted only for the
-    unambiguous case -- exactly one residual remove and one residual add for the
-    identity -- because a replacement re-creates every row and more than one
-    residual has no stable provenance to pair on; those rows render as genuine
-    DELETE/INSERT events. *hidden_fields* filters the synthesized diff, its
-    context and the snapshot alike, so a withheld value cannot reach any output
-    shape (§18).
-
-    *max_events* is the remaining per-action event budget (the same
-    ``MAX_EVENTS_PER_ACTION`` counter the caller uses): netting shares it rather
-    than emitting past the cap. *include_snapshot*/*hidden_fields* mirror
-    ``object_audit_log``: a netted UPDATE snapshots the post-change state (the
-    old row is gone). A netted event's unchanged slot identity (day, schedule
-    type) is returned in the event's ``context``, never in ``field_changes``.
-    Returns ``(events, per_slot_changes, truncated)``.
-    """
-
-    def identity(data: dict[str, Any]) -> tuple[Any, ...]:
-        return (
-            data.get("schedule_type"),
-            data.get("day"),
-            str(data.get("start_date")),
-            str(data.get("end_date")),
-            data.get("is_exception"),
-            data.get("condition"),
-            str(data.get("demographic_id")),
-        )
-
-    adds_by_identity: dict[tuple[Any, ...], list[Any]] = defaultdict(list)
-    removes_by_identity: dict[tuple[Any, ...], list[Any]] = defaultdict(list)
-    for row in rows:
-        bucket = adds_by_identity if row.pgh_label.endswith(".add") else removes_by_identity
-        bucket[identity(row.pgh_data or {})].append(row)
-
-    events: list[AuditEventData] = []
-    action_changes: dict[tuple[str, Any, str], list[Any]] = {}
-
-    def remember(row: Any, changes: dict[str, list[Any]]) -> None:
-        """Record a netted row's display-name changes under the action's key."""
-        owner = str(row.pgh_obj_model or row.pgh_model)
-        for field_name, pair in changes.items():
-            action_changes[(owner, row.pgh_obj_id, field_name)] = pair
-
-    def emit(
-        row: Any,
-        changes: dict[str, list[Any]],
-        *,
-        kind: str | None = None,
-        action: str | None = None,
-        context: dict[str, Any] | None = None,
-    ) -> bool:
-        """Append one netted event, respecting the caller's remaining budget.
-
-        *context* is the event's unchanged identity (a netted slot's day/type),
-        kept out of ``changes`` so ``field_changes`` never reports a no-op.
-        Returns False when the budget is exhausted, so callers stop netting and
-        report ``truncated`` instead of emitting past the per-action cap.
-        """
-        if max_events is not None and len(events) >= max_events:
-            return False
-        hidden = (hidden_fields or {}).get(row.pgh_obj_model, ())
-        events.append(
-            AuditEventData(
-                timestamp=row.pgh_created_at,
-                actor=_actor(row),
-                kind=kind or _kind(row.pgh_label),
-                action=action or row.pgh_label,
-                target_type=target_type,
-                target_id=target_id,
-                field_changes={f: list(pair) for f, pair in changes.items()},
-                snapshot=_snapshot(row, resolver, hidden) if include_snapshot else None,
-                context=context,
-            )
-        )
-        remember(row, changes)
-        return True
-
-    for ident, adds in adds_by_identity.items():
-        removes = removes_by_identity.get(ident, [])
-
-        # First pair slots whose times are identical: the replacement re-created
-        # them unchanged, so they are not a change at all. The removes are bucketed
-        # by their time window, so this match is a dict lookup; rows in a bucket are
-        # interchangeable (they carry identical times).
-        unchanged: dict[tuple[Any, Any], list[Any]] = defaultdict(list)
-        for rem in removes:
-            rd = rem.pgh_data or {}
-            unchanged[(rd.get("start_time"), rd.get("end_time"))].append(rem)
-
-        changed_adds: list[Any] = []
-        for add in adds:
-            data = add.pgh_data or {}
-            matching = unchanged.get((data.get("start_time"), data.get("end_time")))
-            if matching:
-                matching.pop()
-            else:
-                changed_adds.append(add)
-
-        # Whatever is left are time edits (or genuine add/remove). A full
-        # replacement re-creates every row, so more than one residual add/remove
-        # for an identity has no stable provenance: pairing them positionally
-        # would invent a before/after (two shifted windows can zip into the wrong
-        # pairs). Net only the unambiguous 1:1 case and render the rest as real
-        # DELETE + INSERT events.
-        removes = [rem for bucket in unchanged.values() for rem in bucket]
-        paired = 1 if len(removes) == 1 and len(changed_adds) == 1 else 0
-
-        for add, rem in zip(changed_adds[:paired], removes[:paired]):
-            data = add.pgh_data or {}
-            old = rem.pgh_data or {}
-            model_label = add.pgh_obj_model
-            fk_fields = _fk_fields(model_label)
-            fields = _field_meta(model_label)
-
-            def render(
-                field: str, value: Any, _fk: dict[str, str] = fk_fields, _fields: dict[str, Any] = fields
-            ) -> Any:
-                return _render_value(field, value, _fk, _fields, resolver)
-
-            # A withheld field must not reach any output shape, exactly as in
-            # ``_scalar_changes``/``_snapshot`` (§18); the same set filters the
-            # synthesized diff and its context.
-            hidden = (hidden_fields or {}).get(model_label, ())
-            diffs = {
-                field: [render(field, old.get(field)), render(field, data.get(field))]
-                for field in ("start_time", "end_time")
-                if field not in hidden and old.get(field) != data.get(field)
-            }
-            if not diffs:
-                continue
-            # ``field_changes`` carries only the real time diffs (§13). The slot's
-            # unchanged identity travels separately in ``context`` so the UI can
-            # label the event without the API reporting a change that never
-            # happened. A null ``day`` means "every day" (Schedule.day help text)
-            # and stays null, so the UI owns that copy.
-            context = {
-                field: render(field, data.get(field)) for field in ("day", "schedule_type") if field not in hidden
-            }
-            # Render raw attnames to display names at the edge, like every other
-            # path (§13): a netted update and an add/remove for the same model must
-            # key ``field_changes`` identically.
-            if not emit(
-                add,
-                _render_keys(diffs, model_label),
-                kind="UPDATE",
-                action="shelter.schedule.update",
-                context=_render_keys(context, model_label) or None,
-            ):
-                return events, action_changes, True
-
-        for add in changed_adds[paired:]:  # genuinely new slots
-            hidden = (hidden_fields or {}).get(add.pgh_obj_model, ())
-            if not emit(add, _render_keys(_scalar_changes(add, resolver, hidden), add.pgh_obj_model)):
-                return events, action_changes, True
-
-        for rem in removes[paired:]:  # genuinely deleted slots
-            hidden = (hidden_fields or {}).get(rem.pgh_obj_model, ())
-            if not emit(rem, _render_keys(_scalar_changes(rem, resolver, hidden), rem.pgh_obj_model)):
-                return events, action_changes, True
-
-    # Identities with removes but no adds: every slot of that shape was deleted.
-    for ident, removes in removes_by_identity.items():
-        if ident in adds_by_identity:
-            continue
-        for rem in removes:
-            hidden = (hidden_fields or {}).get(rem.pgh_obj_model, ())
-            if not emit(rem, _render_keys(_scalar_changes(rem, resolver, hidden), rem.pgh_obj_model)):
-                return events, action_changes, True
-
-    events.sort(key=lambda event: event.timestamp)
-    return events, action_changes, False
 
 
 def _finalize(value: Any, resolver: _LabelResolver) -> Any:
@@ -1324,7 +1146,6 @@ def _build_action(
     events: list[AuditEventData] = []
     summarized: set[tuple[str, Any, str]] = set()
     truncated = False
-    schedule_rows: list[Any] = []
 
     for row in rows:
         # Stop before doing any per-row work (including the action-level rollup)
@@ -1360,12 +1181,6 @@ def _build_action(
                     summary=_summary_line(row, kind),
                 )
             )
-            continue
-
-        if row.pgh_obj_model == Schedule._meta.label and (
-            row.pgh_label.endswith(".add") or row.pgh_label.endswith(".remove")
-        ):
-            schedule_rows.append(row)
             continue
 
         meta = _m2m_meta(row.pgh_model)
@@ -1417,25 +1232,17 @@ def _build_action(
                 target_id=target_id,
                 field_changes=None if no_base else {f: list(pair) for f, pair in changes.items()},
                 snapshot=_snapshot(row, resolver, hidden) if include_snapshot else None,
+                # A schedule row's diff only carries the fields that changed, so
+                # the slot identity comes from the row itself (§13).
+                context=(
+                    _schedule_context(row, resolver, hidden)
+                    if row.pgh_obj_model == Schedule._meta.label and _kind(row.pgh_label) == "UPDATE"
+                    else None
+                ),
             )
         )
 
-    # Schedules arrive as a full-replacement remove/add set; net them per slot.
-    # They share the action's remaining event budget, so netting cannot emit past
-    # ``MAX_EVENTS_PER_ACTION`` (the cap the loop above enforces for other rows).
-    schedule_events, schedule_changes, schedule_truncated = _schedule_events(
-        schedule_rows,
-        target_type=target_type,
-        target_id=target_id,
-        resolver=resolver,
-        max_events=max(0, MAX_EVENTS_PER_ACTION - len(events)),
-        include_snapshot=include_snapshot,
-        hidden_fields=hidden_by_model,
-    )
-    truncated = truncated or schedule_truncated
-    events.extend(schedule_events)
     events.sort(key=lambda event: event.timestamp)
-    scalar_changes.update(schedule_changes)
 
     action_changes: dict[str, Any] = {}
     for (owner, obj_id, name), scalar_pair in scalar_changes.items():

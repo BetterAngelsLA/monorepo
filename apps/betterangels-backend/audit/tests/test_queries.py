@@ -598,24 +598,21 @@ class ObjectAuditLogQueryTestCase(GraphQLBaseTestCase):
     # ── schedule netting (§13) ───────────────────────────────────────────────
 
     def test_schedule_update_exposes_slot_context_not_a_noop_change(self) -> None:
-        """A netted slot's identity is ``context``; ``fieldChanges`` is only diffs."""
+        """A schedule slot's identity is ``context``; ``fieldChanges`` is only diffs."""
         self.graphql_client.force_login(self.org_1_case_manager_1)
         with audit_context(user=self.org_1_case_manager_1):
-            Schedule.objects.create(
+            slot = Schedule.objects.create(
                 shelter=self.shelter,
                 day=DayOfWeekChoices.MONDAY,
                 start_time=time(9, 0),
                 end_time=time(17, 0),
             )
-        # ``shelter_update`` replaces the schedule set wholesale.
+        # The upsert updates the row in place; the day never changes, so it can
+        # only reach the client through ``context``.
         with audit_context(user=self.org_1_case_manager_1):
-            self.shelter.schedules.all().delete()
-            Schedule.objects.create(
-                shelter=self.shelter,
-                day=DayOfWeekChoices.MONDAY,
-                start_time=time(10, 0),
-                end_time=time(18, 0),
-            )
+            slot.start_time = time(10, 0)
+            slot.end_time = time(18, 0)
+            slot.save()
 
         response = self._query("SHELTER", self.shelter.id)
         actions = response["data"]["objectAuditLog"]["results"]
