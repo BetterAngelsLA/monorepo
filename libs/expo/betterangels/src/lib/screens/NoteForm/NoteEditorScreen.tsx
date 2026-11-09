@@ -61,7 +61,7 @@ export default function NoteEditorScreen(props: NoteEditorScreenProps) {
     skip: isCreateMode,
   });
 
-  const [updateNote, { error: updateError }] = useMutation(UpdateNoteDocument);
+  const [updateNote] = useMutation(UpdateNoteDocument);
   const [createNote] = useMutation(CreateNoteDocument);
   const [deleteNote] = useMutation(DeleteNoteDocument);
 
@@ -145,7 +145,9 @@ export default function NoteEditorScreen(props: NoteEditorScreenProps) {
         // join).  Throw rather than return: the catch below surfaces it, while
         // returning would navigate away as if the note had been saved.
         if (!activeOrgId) {
-          throw new Error('Cannot create an interaction without an active organization.');
+          throw new Error(
+            'Cannot create an interaction without an active organization.',
+          );
         }
 
         const result = await createNote({
@@ -173,10 +175,12 @@ export default function NoteEditorScreen(props: NoteEditorScreenProps) {
         const updated = result.data?.updateNote;
         if (!updated || !('id' in updated)) {
           // A rejection comes back as `OperationInfo`, not an error, so
-          // `result.data` is truthy even when the save failed.  `updateError`
-          // is undefined for exactly this case — the payload's messages are the
-          // only reason the server gave, so surface those.
-          const reason = updated?.messages?.map((message) => message.message).join('; ') || 'unknown';
+          // `result.data` is truthy even when the save failed, and the mutation's
+          // `error` is undefined for exactly this case — the payload's messages
+          // are the only reason the server gave, so surface those.
+          const reason =
+            updated?.messages?.map((message) => message.message).join('; ') ||
+            'unknown';
           throw new Error(`Failed to update interaction: ${reason}`);
         }
       }
