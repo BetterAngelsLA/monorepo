@@ -173,8 +173,11 @@ export default function NoteEditorScreen(props: NoteEditorScreenProps) {
         const updated = result.data?.updateNote;
         if (!updated || !('id' in updated)) {
           // A rejection comes back as `OperationInfo`, not an error, so
-          // `result.data` is truthy even when the save failed.
-          throw new Error(`Failed to update interaction: ${updateError}`);
+          // `result.data` is truthy even when the save failed.  `updateError`
+          // is undefined for exactly this case — the payload's messages are the
+          // only reason the server gave, so surface those.
+          const reason = updated?.messages?.map((message) => message.message).join('; ') || 'unknown';
+          throw new Error(`Failed to update interaction: ${reason}`);
         }
       }
 
