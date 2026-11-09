@@ -146,7 +146,7 @@ def _create_schedules(shelter: Shelter, schedules_data: List[Dict[str, Any]]) ->
 
 def _schedule_type_label(schedule_type: ScheduleTypeChoices) -> str:
     """``ScheduleTypeChoices.OPERATING`` -> ``Operating Hours``, for messages."""
-    return schedule_type.label
+    return str(schedule_type.label)
 
 
 def _sync_schedules(
@@ -204,9 +204,9 @@ def _sync_schedules(
             raise ValidationError({"schedules": f"Schedule {key} appears more than once in the payload."})
         kept.add(key)
 
-    for key, row in existing.items():
+    for key, stored in existing.items():
         if key not in kept:
-            row.delete()
+            stored.delete()
 
     for key, row in specs:
         if key is None:
