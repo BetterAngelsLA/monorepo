@@ -1,7 +1,7 @@
 from typing import Any, Dict, List, Optional
 
 from django.core.exceptions import ValidationError
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from organizations.models import Organization
 
 from accounts.models import PermissionGroup, User
@@ -45,6 +45,7 @@ def _validate(task: Task) -> None:
     task.validate_constraints()
 
 
+@transaction.atomic
 def task_create(
     *,
     user: User,
@@ -91,6 +92,7 @@ def task_create(
     return created
 
 
+@transaction.atomic
 def task_create_legacy(
     *,
     user: User,
@@ -155,12 +157,18 @@ def task_update(
     data: Dict[str, Any],
 ) -> Task:
     """Update a Task. Caller is responsible for permission checks."""
-    for field, value in data.items():
-        if field != "id":
-            setattr(task, field, value)
+    fields = [field for field in data if field != "id"]
+    if not fields:
+        return task
+
+    for field in fields:
+        setattr(task, field, data[field])
 
     _validate(task)
-    task.save()
+    # Write the payload's columns, not the whole row: a concurrent edit to any
+    # other column must survive.  ``updated_at`` is ``auto_now``, so it only
+    # refreshes when it is named.
+    task.save(update_fields=[*fields, "updated_at"])
     return task
 
 

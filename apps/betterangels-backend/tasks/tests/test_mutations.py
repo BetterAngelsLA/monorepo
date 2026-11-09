@@ -27,8 +27,9 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         client_profile = baker.make(ClientProfile)
         assert self.org
 
-        # The service validates constraints without re-querying each parent FK.
-        expected_query_count = 18
+        # 18 for the write path (the service skips the per-FK existence queries)
+        # plus the savepoint that makes a multi-task batch all-or-nothing.
+        expected_query_count = 20
         with self.assertNumQueriesWithoutCache(expected_query_count):
             variables = {
                 "clientProfile": str(client_profile.pk),

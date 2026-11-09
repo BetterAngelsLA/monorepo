@@ -87,7 +87,10 @@ def resolve_create_org(
         permission_group = resolve_permission_group(user, template=template)
     except PermissionError as exc:
         raise PermissionDenied(PERMISSION_DENIED_MESSAGE) from exc
-    # Group membership alone is not authority: the group must carry *perm* too.
+    # The legacy arm, deliberately: a build in a compat window has no payload
+    # org, so it is authorized exactly as it was before the cutover — group
+    # membership plus the model permission the group must carry.  The
+    # domain-authority paths use the grant selectors instead.
     if not user.has_perm(perm):
         raise PermissionDenied(PERMISSION_DENIED_MESSAGE)
     return permission_group.organization, permission_group

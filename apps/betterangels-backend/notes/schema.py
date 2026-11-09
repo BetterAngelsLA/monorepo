@@ -13,6 +13,7 @@ from strawberry_django.mutations import resolvers
 from strawberry_django.pagination import OffsetPaginated
 from strawberry_django.permissions import HasPerm
 
+import notes.selectors as note_selectors
 from accounts.models import User
 from accounts.selectors import resolve_permission_group
 from accounts.types import OrganizationFilter, OrganizationOrder, OrganizationType
@@ -108,21 +109,9 @@ class Query:
         ordering: Optional[list[OrganizationOrder]] = None,
         filters: Optional[OrganizationFilter] = None,
     ) -> QuerySet[Organization]:
-        """Organizations where the current user can read notes.
-
-        The Interactions org filter drives a notes screen, so it follows the note
-        read authority rather than legacy group membership: a grant-only
-        caseworker used to get ``[]`` here while the notes list showed them rows.
-        """
+        """Organizations where the current user can read notes."""
         user = cast(User, get_current_user(info))
-
-        from common.permissions.selectors import ALL, scopes
-
-        scope: Any = scopes(user, NotePermissions.VIEW)
-        queryset: QuerySet[Organization] = (
-            Organization.objects.all() if scope is ALL else Organization.objects.filter(pk__in=scope)
-        )
-        return queryset
+        return note_selectors.readable_note_orgs(user)
 
 
 @strawberry.type

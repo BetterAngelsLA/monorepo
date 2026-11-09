@@ -5,18 +5,21 @@ never raise (styleguide — "selectors answer, utils refuse").  They take a
 ``User``, not a GraphQL ``Info``, so they are testable without a request.
 """
 
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any, Optional, cast
 
 from django.db.models import BooleanField, Case, F, Value, When
+from organizations.models import Organization
 
 from accounts.models import User
+from common.permissions.selectors import ALL, scopes
 from notes.permissions import NotePermissions, PrivateDetailsPermissions
+
+if TYPE_CHECKING:
+    from django.db.models import QuerySet
 
 
 def perm_org_ids(user: User, perm: str) -> Optional[list[int]]:
     """Org ids where *user* holds *perm*; ``None`` for the global tier (all)."""
-    from common.permissions.selectors import ALL, scopes
-
     s = scopes(user, perm)
     if s is ALL:
         return None
@@ -55,3 +58,16 @@ def private_details_case(user: User) -> Any:
         When(organization_id__in=org_ids, then=F("private_details")),
         default=Value(None),
     )
+
+
+def readable_note_orgs(user: User) -> "QuerySet[Organization]":
+    """Organizations where *user* may read notes — the Interactions org filter.
+
+    The filter drives a notes screen, so it follows the note read authority
+    rather than legacy group membership: a grant-only caseworker used to get an
+    empty filter while the notes list showed them rows.
+    """
+    scope = scopes(user, NotePermissions.VIEW)
+    if scope is ALL:
+        return cast("QuerySet[Organization]", Organization.objects.all())
+    return cast("QuerySet[Organization]", Organization.objects.filter(pk__in=scope))
