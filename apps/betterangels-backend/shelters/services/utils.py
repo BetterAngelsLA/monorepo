@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, overload
+from typing import Any, Dict, List, Optional, overload
 
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -144,27 +144,55 @@ def _create_schedules(shelter: Shelter, schedules_data: List[Dict[str, Any]]) ->
         Schedule.objects.bulk_create([Schedule(shelter=shelter, **row) for row in rows])
 
 
-def _sync_schedules(shelter: Shelter, schedules_data: List[Dict[str, Any]]) -> None:
+def _schedule_type_label(schedule_type: ScheduleTypeChoices) -> str:
+    """``ScheduleTypeChoices.OPERATING`` -> ``Operating Hours``, for messages."""
+    return schedule_type.label
+
+
+def _sync_schedules(
+    shelter: Shelter,
+    schedules_data: List[Dict[str, Any]],
+    *,
+    schedule_types: Optional[List[ScheduleTypeChoices]] = None,
+) -> None:
     """Reconcile a shelter's schedules with the submitted set.
 
-    The payload is authoritative: an entry carrying an ``id`` updates that row in
-    place, an entry without one creates a row, and a row whose id is absent is
-    deleted. Updating in place is the point — the write then records only what
-    changed, so the audit log can report an edit as an edit instead of a delete
-    plus a create.
+    Within the payload's *scope*, the payload is authoritative: an entry carrying
+    an ``id`` updates that row in place, an entry without one creates a row, and a
+    row whose id is absent is deleted. Updating in place is the point — the write
+    then records only what changed, so the audit log can report an edit as an edit
+    instead of a delete plus a create.
+
+    *schedule_types* narrows the scope to the types being edited, so saving the
+    Operating Hours tab cannot revert Intake or Meal Service from a stale client
+    snapshot. ``None`` keeps the older meaning — the payload covers the shelter's
+    whole schedule — for clients that send the complete set.
 
     Ids must belong to *this* shelter (an id from another organization is an input
     error, not a silent no-op) and may appear once. The caller runs inside a
     transaction and the slot key is deferrable, so a save may swap two slots' times
     without tripping the unique constraint mid-flight.
     """
+    scope = set(schedule_types) if schedule_types is not None else None
+
     specs: List[tuple[str | None, Dict[str, Any]]] = []
     for entry in schedules_data:
         raw_id = entry.get("id")
         for row in _schedule_rows(entry):
+            if scope is not None and row["schedule_type"] not in scope:
+                raise ValidationError(
+                    {
+                        "schedules": (
+                            f"A {_schedule_type_label(row['schedule_type'])} entry was submitted "
+                            "but that type is not in scheduleTypes."
+                        )
+                    }
+                )
             specs.append((str(raw_id) if raw_id else None, row))
 
-    existing = {str(row.id): row for row in shelter.schedules.select_for_update()}
+    existing = {
+        str(row.id): row for row in shelter.schedules.select_for_update() if scope is None or row.schedule_type in scope
+    }
 
     kept: set[str] = set()
     for key, _row in specs:

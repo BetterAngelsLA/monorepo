@@ -3451,6 +3451,7 @@ input UpdateShelterInput {
   funders: [FunderChoices!]
   location: ShelterLocationInput
   schedules: [ScheduleInput!]
+  scheduleTypes: [ScheduleTypeChoices!]
   services: [ServiceInput!]
   additionalContacts: [ShelterContactInfoInput!]
 }

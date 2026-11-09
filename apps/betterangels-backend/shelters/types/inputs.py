@@ -214,6 +214,11 @@ class UpdateShelterInput:
     # Nested input types
     location: Maybe[Optional[ShelterLocationInput]] = UNSET
     schedules: Maybe[Optional[List[ScheduleInput]]] = UNSET
+    #: The schedule types this payload covers. Rows of those types that the
+    #: payload omits are deleted, and every row of every other type is left
+    #: alone — so saving one tab cannot revert another. Omit (older clients) to
+    #: treat ``schedules`` as the shelter's complete set.
+    schedule_types: Maybe[Optional[List[ScheduleTypeChoices]]] = UNSET
     services: Maybe[Optional[List[ServiceInput]]] = UNSET
     additional_contacts: Maybe[Optional[List[ShelterContactInfoInput]]] = UNSET
 

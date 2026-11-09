@@ -461,6 +461,50 @@ class SyncSchedulesTestCase(TestCase):
         self.assertEqual(Schedule.objects.filter(shelter=self.shelter).count(), 2)
         self.assertTrue(Schedule.objects.filter(shelter=self.shelter, day=DayOfWeekChoices.TUESDAY).exists())
 
+    def test_scope_leaves_other_types_untouched(self) -> None:
+        """Saving one tab must not revert another: rows outside the scope stay."""
+        intake = Schedule.objects.create(
+            shelter=self.shelter,
+            schedule_type=ScheduleTypeChoices.INTAKE,
+            day=DayOfWeekChoices.MONDAY,
+            start_time=datetime.time(8, 0),
+            end_time=datetime.time(9, 0),
+        )
+
+        _sync_schedules(
+            self.shelter,
+            [self._entry(id=self.slot.pk, start_time=datetime.time(10, 0))],
+            schedule_types=[ScheduleTypeChoices.OPERATING],
+        )
+
+        self.slot.refresh_from_db()
+        intake.refresh_from_db()
+        self.assertEqual(self.slot.start_time, datetime.time(10, 0))
+        self.assertEqual(intake.start_time, datetime.time(8, 0))
+
+    def test_scope_clears_only_its_own_type(self) -> None:
+        """An empty payload for the scope deletes that type, and only that type."""
+        intake = Schedule.objects.create(
+            shelter=self.shelter,
+            schedule_type=ScheduleTypeChoices.INTAKE,
+            day=DayOfWeekChoices.MONDAY,
+            start_time=datetime.time(8, 0),
+            end_time=datetime.time(9, 0),
+        )
+
+        _sync_schedules(self.shelter, [], schedule_types=[ScheduleTypeChoices.OPERATING])
+
+        self.assertFalse(Schedule.objects.filter(pk=self.slot.pk).exists())
+        self.assertTrue(Schedule.objects.filter(pk=intake.pk).exists())
+
+    def test_entry_outside_the_scope_is_rejected(self) -> None:
+        with self.assertRaises(ValidationError):
+            _sync_schedules(
+                self.shelter,
+                [self._entry(schedule_type=ScheduleTypeChoices.INTAKE)],
+                schedule_types=[ScheduleTypeChoices.OPERATING],
+            )
+
     def test_deletes_rows_absent_from_the_payload(self) -> None:
         """The payload is authoritative: a slot left out is removed."""
         _sync_schedules(self.shelter, [])

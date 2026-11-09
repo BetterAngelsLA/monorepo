@@ -330,6 +330,9 @@ def shelter_update(*, user: "User", data: Dict[str, Any]) -> Shelter:
     has_services = "services" in data
     has_contacts = "additional_contacts" in data
     additional_contacts = data.pop("additional_contacts", None)
+    # The scope of a schedules payload: which types it is authoritative for.
+    # Left out by older clients, which send the complete set.
+    schedule_types = data.pop("schedule_types", None)
 
     scalar_data, m2m_data, schedules_data = _prepare_shelter_data(data, _SHELTER_M2M_FIELDS)
     raw_services: List[Any] = m2m_data.pop("services", []) or []
@@ -348,7 +351,7 @@ def shelter_update(*, user: "User", data: Dict[str, Any]) -> Shelter:
         _apply_additional_contacts(shelter, additional_contacts or [])
 
     if has_schedules:
-        _sync_schedules(shelter, schedules_data)
+        _sync_schedules(shelter, schedules_data, schedule_types=schedule_types)
 
     if cities_served_ids is not None:
         shelter.cities_served.set(cities_served_ids)

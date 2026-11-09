@@ -1370,11 +1370,19 @@ class UpdateShelterSchedulesTestCase(ShelterTestCase, TestCase):
         entry.update(overrides)
         return entry
 
-    def _update(self, schedules: list[dict[str, Any]]) -> dict:
-        return self.execute_graphql(
-            self.UPDATE_MUTATION,
-            {"data": {"id": str(self.shelter.pk), "schedules": schedules}},
-        )
+    def _update(
+        self,
+        schedules: list[dict[str, Any]],
+        schedule_types: list[str] | None = None,
+    ) -> dict:
+        data: dict[str, Any] = {
+            "id": str(self.shelter.pk),
+            "schedules": schedules,
+        }
+        if schedule_types is not None:
+            data["scheduleTypes"] = schedule_types
+
+        return self.execute_graphql(self.UPDATE_MUTATION, {"data": data})
 
     def test_schedule_id_round_trips_and_updates_in_place(self) -> None:
         response = self._update([self._entry(id=str(self.slot.pk), startTime="10:00:00")])
@@ -1390,6 +1398,27 @@ class UpdateShelterSchedulesTestCase(ShelterTestCase, TestCase):
 
         self.assertIsNone(response.get("errors"))
         self.assertFalse(Schedule.objects.filter(pk=self.slot.pk).exists())
+
+    def test_saving_one_type_leaves_the_others_alone(self) -> None:
+        """The payload names its scope, so a stale tab cannot revert another type."""
+        intake = Schedule.objects.create(
+            shelter=self.shelter,
+            schedule_type=ScheduleTypeChoices.INTAKE,
+            day=DayOfWeekChoices.MONDAY,
+            start_time=time(8, 0),
+            end_time=time(9, 0),
+        )
+
+        response = self._update(
+            [self._entry(id=str(self.slot.pk), startTime="10:00:00")],
+            schedule_types=["OPERATING"],
+        )
+
+        self.assertIsNone(response.get("errors"))
+        intake.refresh_from_db()
+        self.assertEqual(intake.start_time, time(8, 0))
+        self.slot.refresh_from_db()
+        self.assertEqual(self.slot.start_time, time(10, 0))
 
     def test_unknown_schedule_id_is_rejected(self) -> None:
         response = self._update([self._entry(id="999999")])
