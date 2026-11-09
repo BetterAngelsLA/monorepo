@@ -27,7 +27,7 @@ from typing import Any
 import pytest
 
 from common.graphql.permission_checkers import can_anywhere_checker
-from common.models import WRITE_SHARED, OrgScoped
+from common.models import AccessClass, OrgScoped
 
 #: Modules known to gate with the row-invariant checker.  The coverage test
 #: recomputes this by scanning every ``schema.py``/``types.py`` under ``apps``,
@@ -44,7 +44,7 @@ ROW_INVARIANT_MODULES = {
 PLATFORM_SHARED_MODULES = {
     "clients.schema": (
         "the client family is platform-shared (org_via=None) and declares "
-        "access.write=WRITE_SHARED, so any holder of the permission may act on "
+        "access.write=AccessClass.SHARED, so any holder of the permission may act on "
         "any row — the gate and the declaration agree (RFC 0002)"
     ),
 }
@@ -152,22 +152,28 @@ def _collect(module_name: str) -> tuple[list[str], list[str]]:
 
 
 def _modules_using_the_transport() -> set[str]:
-    """Every module under ``apps`` that imports the checker, by identity."""
+    """Every module under ``apps`` that gates with the checker, by identity.
+
+    Every ``.py`` in every app, not just ``schema.py``/``types.py``: a gate in a
+    service or a view would otherwise be invisible to the registry while the
+    docstring here claimed full coverage.  The name is used as a cheap file
+    filter only — whether a module *has* a gate is still decided by parsing it
+    and resolving the call by identity.
+    """
     found: set[str] = set()
-    for app_dir in (Path(__file__).resolve().parents[2]).iterdir():
-        if not (app_dir / "__init__.py").exists():
+    apps_root = Path(__file__).resolve().parents[2]
+    for source_path in apps_root.glob("*/**/*.py"):
+        if not (source_path.parent / "__init__.py").exists():
             continue
-        for filename in ("schema.py", "types.py"):
-            source_path = app_dir / filename
-            if not source_path.exists():
-                continue
-            module_name = f"{app_dir.name}.{filename.removesuffix('.py')}"
-            try:
-                sites, _ = _collect(module_name)
-            except Exception:  # pragma: no cover - a module that cannot import is not our concern
-                continue
-            if sites:
-                found.add(module_name)
+        if "can_anywhere_checker" not in source_path.read_text():
+            continue
+        module_name = ".".join(source_path.relative_to(apps_root).with_suffix("").parts)
+        try:
+            sites, _ = _collect(module_name)
+        except Exception:  # pragma: no cover - a module that cannot import is not our concern
+            continue
+        if sites:
+            found.add(module_name)
     return found
 
 
@@ -193,7 +199,7 @@ def test_platform_shared_exemptions_are_justified() -> None:
         model = getattr(client_models, name)
         assert issubclass(model, OrgScoped)
         assert model.org_via is None, f"{name} is no longer platform-shared — exempt it per site"
-        assert model.access.write == WRITE_SHARED, f"{name} is no longer SHARED-write — exempt it per site"
+        assert model.access.write == AccessClass.SHARED, f"{name} is no longer SHARED-write — exempt it per site"
 
 
 @pytest.mark.parametrize("module_name", sorted(ROW_INVARIANT_MODULES - PLATFORM_SHARED_MODULES.keys()))
