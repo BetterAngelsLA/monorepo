@@ -25,6 +25,7 @@ export function hydrateWeekly(schedules: ScheduleType[]): WeeklyFormState {
 
     state[entry.day].ranges.push({
       _id: entry.id ?? `${entry.day}-${state[entry.day].ranges.length}`,
+      serverId: entry.id ?? undefined,
       startTime: toHHMM(entry.startTime),
       endTime: toHHMM(entry.endTime),
     });
@@ -36,6 +37,7 @@ export function hydrateWeekly(schedules: ScheduleType[]): WeeklyFormState {
 export function hydrateExceptions(schedules: ScheduleType[]): ExceptionEntry[] {
   return schedules.map((s) => ({
     localId: s.id ?? crypto.randomUUID(),
+    serverId: s.id ?? undefined,
     startDate: s.startDate ?? '',
     endDate: s.endDate ?? s.startDate ?? '',
     closedAllDay: !s.startTime && !s.endTime,
@@ -59,12 +61,13 @@ export function buildScheduleInputs(
   for (const { value: day } of ORDERED_DAYS) {
     const { ranges } = weekly[day];
 
-    for (const { startTime, endTime } of ranges) {
+    for (const { serverId, startTime, endTime } of ranges) {
       if (!startTime || !endTime) {
         continue;
       }
 
       inputs.push({
+        id: serverId,
         scheduleType,
         days: [day],
         startTime: toHHMMSS(startTime),
@@ -80,6 +83,7 @@ export function buildScheduleInputs(
     }
 
     inputs.push({
+      id: ex.serverId,
       scheduleType,
       startDate: ex.startDate,
       endDate: ex.endDate || ex.startDate,
