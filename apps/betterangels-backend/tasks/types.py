@@ -136,11 +136,10 @@ class CreateTaskInput:
     assignee_id: Maybe[ID | None]
     status: Optional[TaskStatusEnum]
     # The acting org (ADR 0001 §5, RFC 0003): authority is ``require_can`` at
-    # this org and the created row's ``organization``.  The nested note-tasks
-    # input derives it from the parent note instead.  Optional during the
-    # compat window — a build that predates the payload org falls back to the
-    # legacy caseworker group; the strict flip makes it required again.
-    organization_id: Optional[ID]
+    # this org and the created row's ``organization``.  Required — a build that
+    # predates it gets a GraphQL validation error rather than a silent fallback
+    # into whichever group the caller happens to hold.
+    organization_id: ID
 
 
 @strawberry_django.input(models.Task, partial=True)
