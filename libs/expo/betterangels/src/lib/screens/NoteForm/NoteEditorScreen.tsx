@@ -173,8 +173,7 @@ export default function NoteEditorScreen(props: NoteEditorScreenProps) {
         const updated = result.data?.updateNote;
         if (!updated || !('id' in updated)) {
           // A rejection comes back as `OperationInfo`, not an error, so
-          // `result.data` is truthy and the screen used to navigate away as if
-          // the save had worked.
+          // `result.data` is truthy even when the save failed.
           throw new Error(`Failed to update interaction: ${updateError}`);
         }
       }

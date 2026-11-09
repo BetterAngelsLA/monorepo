@@ -147,7 +147,7 @@ class ResolveNoteAttachmentUploadsTest(TestCase):
         mock_generic: MagicMock,
         mock_assign: MagicMock,
     ) -> None:
-        """No legacy group is the blessed post-cutover state, not a refusal.
+        """No legacy group is the post-cutover state, not a refusal.
 
         Authority is the caller's note gate; the guardian rows are the legacy
         arm.  A holder with no ``CASEWORKER`` group must still get their

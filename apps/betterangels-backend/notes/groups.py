@@ -41,9 +41,6 @@ NOTE_PERMS = [
 CASEWORKER = TemplateConfig(
     name="Caseworker",
     permissions=[
-        # Note bundle.  The write cutover removed the guardian write paths, so
-        # model-level CHANGE/DELETE can no longer over-permit through
-        # ``filter_for_user`` — they mirror the Role bundle.
         *NOTE_PERMS,
         # ServiceRequest: ADD only.  SR writes gate through the owning note's
         # org (SR is not org-scoped yet — its ``service`` hop cannot resolve);

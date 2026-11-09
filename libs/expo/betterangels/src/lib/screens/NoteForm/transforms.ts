@@ -47,9 +47,9 @@ export function buildNotePayload(
   if (include('tasks')) {
     payload.tasks = form.tasks.map((task) => ({
       // Drafts carry a local `temp-…` id until they are persisted.  Sending it
-      // as the GraphQL id makes the backend reject the whole mutation (an id
-      // that is not on the note is a permission refusal), and the note editor
-      // used to swallow that.  Only a persisted id identifies a row to diff.
+      // as the GraphQL id makes the backend reject the whole mutation — an id
+      // that is not on the note is a permission refusal.  Only a persisted id
+      // identifies a row to diff.
       id: task.id && !task.id.startsWith('temp-') ? task.id : undefined,
       summary: task.summary || '',
       // `??`, not `||`: a cleared description is `''` and must be written, not

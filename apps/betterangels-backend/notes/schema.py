@@ -79,8 +79,7 @@ class Query:
     notes: OffsetPaginated[NoteType] = strawberry_django.offset_paginated(
         permission_classes=[IsAuthenticated],
         # SHARED read (RFC 0003 slice 2): a holder sees every note, a non-holder
-        # gets an empty page — the legacy guardian-prefilter shape, kept for
-        # parity.  Same declarative pattern as tasks and the client family.
+        # gets an empty page — the same declarative pattern as tasks.
         extensions=[HasPerm(perms=[NotePermissions.VIEW], perm_checker=can_anywhere_checker, fail_silently=True)],
     )
 
@@ -402,11 +401,10 @@ class Mutation:
 
         note = get_writable_or_deny(Note.objects.all(), data.note_id, user, NotePermissions.CHANGE)
 
-        # Authority is the note gate above.  The guardian rows the service
-        # mirrors are the legacy arm, so a grant-only holder — the blessed
-        # post-cutover state — has no group to mirror onto and must not be
-        # refused here (``resolve_permission_group`` raises ``PermissionError``,
-        # which would otherwise escape as an unhandled error).
+        # Authority is the note gate above.  A grant-only holder has no legacy
+        # group to mirror onto, so that lookup must not refuse them —
+        # ``resolve_permission_group`` raises ``PermissionError``, which would
+        # otherwise escape as an unhandled error.
         try:
             permission_group = resolve_permission_group(
                 user, template=CASEWORKER, organization_id=str(note.organization_id)

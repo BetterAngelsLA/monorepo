@@ -87,10 +87,7 @@ def resolve_create_org(
         permission_group = resolve_permission_group(user, template=template)
     except PermissionError as exc:
         raise PermissionDenied(PERMISSION_DENIED_MESSAGE) from exc
-    # Group membership alone is not authority: the group still has to carry
-    # *perm*.  The extensions this replaced checked `has_perm` before the
-    # resolver ran, so dropping it would let a customised group without the
-    # permission create.
+    # Group membership alone is not authority: the group must carry *perm* too.
     if not user.has_perm(perm):
         raise PermissionDenied(PERMISSION_DENIED_MESSAGE)
     return permission_group.organization, permission_group

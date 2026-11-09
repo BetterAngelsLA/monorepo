@@ -43,9 +43,6 @@ class TaskGrantAuthorityTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
 
     def setUp(self) -> None:
         super().setUp()
-        # Provision the code-owned Role rows so OrgRoleManager mirrors Grants
-        # for role-backed memberships (CASEWORKER_ROLE carries the task bundle
-        # added by the cutover).
         sync_roles()
         self.client_profile = baker.make(ClientProfile)
         self.task = baker.make(
@@ -57,7 +54,6 @@ class TaskGrantAuthorityTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             self._grant_permission(user, perm, org, role_name=role_name)
 
     def test_role_backed_caseworker_has_full_task_crud(self) -> None:
-        # Sanity: the mirrored Grant is what authorizes — nothing else.
         self.assertTrue(
             self.org_1_case_manager_1.grants.filter(scope_org=self.org_1, role__name=CASEWORKER.name).exists()
         )

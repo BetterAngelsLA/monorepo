@@ -54,8 +54,7 @@ class Query:
     @strawberry_django.offset_paginated(
         permission_classes=[IsAuthenticated],
         # SHARED read (RFC 0003): a holder sees every task, a non-holder gets an
-        # empty page — the legacy guardian-prefilter shape, kept for parity.
-        # Same declarative pattern as the client family (RFC 0002).
+        # empty page — the same declarative pattern as the client family.
         extensions=[HasPerm(perms=[Task.perms.VIEW], perm_checker=can_anywhere_checker, fail_silently=True)],
     )
     def tasks(self, info: Info, ordering: Optional[list[TaskOrder]] = None) -> OffsetPaginated[TaskType]:
