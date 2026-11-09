@@ -1,5 +1,10 @@
-import { ConditionChoices, DayOfWeekChoices } from '@monorepo/react/shelter';
+import {
+  ConditionChoices,
+  DayOfWeekChoices,
+  ScheduleTypeChoices,
+} from '@monorepo/react/shelter';
 import { scheduleFormSchema, timeRangeSchema } from './formSchema';
+import { buildScheduleInputs } from './utils';
 import type { WeeklyFormState } from './types';
 import { buildDefaultWeeklyState } from './WeeklyScheduleEditor';
 
@@ -133,6 +138,45 @@ describe('scheduleFormSchema', () => {
         exceptions: [{ ...openException, startDate: '24/12/2026' }],
       }),
     ).toContain('Invalid date format (YYYY-MM-DD)');
+  });
+
+  it('keeps a saved range id through validation', () => {
+    const weekly = weeklyWithMondayRanges([
+      { startTime: '09:00', endTime: '12:00' },
+    ]);
+
+    weekly[DayOfWeekChoices.Monday].ranges[0].serverId = 'row-1';
+
+    const result = scheduleFormSchema.safeParse({ weekly, exceptions: [] });
+
+    expect(result.success).toBe(true);
+
+    // Parsing is what the form submits with; dropping this key makes every save
+    // a delete-and-recreate instead of an in-place update.
+    const inputs = buildScheduleInputs(
+      ScheduleTypeChoices.Operating,
+      result.data!.weekly,
+      result.data!.exceptions,
+    );
+
+    expect(inputs[0].id).toBe('row-1');
+  });
+
+  it('keeps a saved exception id through validation', () => {
+    const result = scheduleFormSchema.safeParse({
+      weekly: buildDefaultWeeklyState(),
+      exceptions: [{ ...openException, serverId: 'row-2' }],
+    });
+
+    expect(result.success).toBe(true);
+
+    const inputs = buildScheduleInputs(
+      ScheduleTypeChoices.Operating,
+      result.data!.weekly,
+      result.data!.exceptions,
+    );
+
+    expect(inputs[0].id).toBe('row-2');
   });
 
   it('rejects two weekly ranges that start at the same time', () => {

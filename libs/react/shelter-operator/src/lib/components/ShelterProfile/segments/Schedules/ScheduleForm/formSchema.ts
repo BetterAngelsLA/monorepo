@@ -15,6 +15,10 @@ const dateField = z
 export const timeRangeSchema = z
   .object({
     _id: z.string(),
+    // The saved row this range came from. Declared so the parsed form values
+    // keep it: zod drops undeclared keys, and losing it turns every save into a
+    // delete-and-recreate.
+    serverId: z.string().optional(),
     startTime: timeField,
     endTime: timeField,
   })
@@ -67,6 +71,7 @@ export const weeklyFormStateSchema = z
 
 const exceptionBaseFields = {
   localId: z.string(),
+  serverId: z.string().optional(),
   startDate: dateField,
   endDate: dateField,
   condition: z.enum(ConditionChoices).optional(),
