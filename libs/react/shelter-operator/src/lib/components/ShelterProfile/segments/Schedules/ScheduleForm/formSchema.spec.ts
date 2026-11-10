@@ -215,6 +215,34 @@ describe('scheduleFormSchema', () => {
     ).toEqual([]);
   });
 
+  it('does not flag two ranges that have no time yet', () => {
+    expect(
+      issueMessages({
+        weekly: weeklyWithMondayRanges([
+          { startTime: '', endTime: '' },
+          { startTime: '', endTime: '' },
+        ]),
+        exceptions: [],
+      }),
+    ).not.toContain('Another range already starts at ');
+  });
+
+  it('puts an all-day duplicate on the date field that is on screen', () => {
+    const result = scheduleFormSchema.safeParse({
+      weekly: buildDefaultWeeklyState(),
+      exceptions: [
+        { ...openException, localId: 'e1', closedAllDay: true },
+        { ...openException, localId: 'e2', closedAllDay: true },
+      ],
+    });
+
+    const duplicate = result.error?.issues.find((issue) =>
+      issue.message.startsWith('Another exception'),
+    );
+
+    expect(duplicate?.path).toEqual(['exceptions', 1, 'startDate']);
+  });
+
   it('rejects two exceptions covering the same date and start time', () => {
     expect(
       issueMessages({

@@ -32,30 +32,38 @@ export const dayScheduleSchema = z.object({
 });
 
 /**
- * Two ranges on one day cannot start at the same time: the stored key is
- * `(shelter, schedule type, day, start time, start date)`, so the second one is
- * a duplicate the API would refuse. Flag it in the form instead.
+ * Flag the second and later items that share a key.
+ *
+ * The stored key is `(shelter, schedule type, day, start time, start date)`, so
+ * two rows with the same key are the same row to the API and the form catches it
+ * before submit. An item whose key is empty already fails its own field check
+ * (a range with no time yet) — reporting it as a duplicate would be noise and
+ * would interpolate an empty value into the message.
  */
-const noDuplicateStarts = (
-  ranges: { startTime: string }[],
+const flagDuplicateKeys = <T,>(
+  items: T[],
+  keyOf: (item: T) => string,
   ctx: z.RefinementCtx,
-  pathPrefix: (string | number)[],
+  issueFor: (
+    item: T,
+    index: number,
+  ) => { message: string; path: (string | number)[] },
 ) => {
-  const firstIndexByStart = new Map<string, number>();
+  const seen = new Set<string>();
 
-  ranges.forEach((range, index) => {
-    const firstIndex = firstIndexByStart.get(range.startTime);
+  items.forEach((item, index) => {
+    const key = keyOf(item);
 
-    if (firstIndex === undefined) {
-      firstIndexByStart.set(range.startTime, index);
+    if (!key) {
       return;
     }
 
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: `Another range already starts at ${range.startTime}`,
-      path: [...pathPrefix, index, 'startTime'],
-    });
+    if (!seen.has(key)) {
+      seen.add(key);
+      return;
+    }
+
+    ctx.addIssue({ code: z.ZodIssueCode.custom, ...issueFor(item, index) });
   });
 };
 
@@ -63,7 +71,15 @@ export const weeklyFormStateSchema = z
   .record(z.enum(DayOfWeekChoices), dayScheduleSchema)
   .superRefine((weekly, ctx) => {
     for (const [day, schedule] of Object.entries(weekly)) {
-      noDuplicateStarts(schedule.ranges, ctx, [day, 'ranges']);
+      flagDuplicateKeys(
+        schedule.ranges,
+        (range) => range.startTime,
+        ctx,
+        (range, index) => ({
+          message: `Another range already starts at ${range.startTime}`,
+          path: [day, 'ranges', index, 'startTime'],
+        }),
+      );
     }
   });
 
@@ -106,6 +122,9 @@ export const exceptionEntrySchema = z
     path: ['endDate'],
   });
 
+/** Stands in for "no start time" in the exception key: a closure is all day. */
+const allDayKey = 'all-day';
+
 /**
  * Exception rows are keyed by date and start time too, so two entries covering
  * the same date at the same starting time are the same row to the API.
@@ -113,23 +132,20 @@ export const exceptionEntrySchema = z
 const exceptionListSchema = z
   .array(exceptionEntrySchema)
   .superRefine((entries, ctx) => {
-    const firstIndexByStart = new Map<string, number>();
-
-    entries.forEach((entry, index) => {
-      const key = `${entry.startDate} ${entry.closedAllDay ? '' : entry.startTime}`;
-      const firstIndex = firstIndexByStart.get(key);
-
-      if (firstIndex === undefined) {
-        firstIndexByStart.set(key, index);
-        return;
-      }
-
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+    flagDuplicateKeys(
+      entries,
+      (entry) =>
+        entry.startDate
+          ? `${entry.startDate} ${entry.closedAllDay ? allDayKey : entry.startTime}`
+          : '',
+      ctx,
+      (entry, index) => ({
         message: 'Another exception already covers this date and start time',
-        path: [index, 'startTime'],
-      });
-    });
+        // An all-day entry hides its time inputs, so the issue has to land on a
+        // field that is on screen or the form blocks Save with nothing to show.
+        path: [index, entry.closedAllDay ? 'startDate' : 'startTime'],
+      }),
+    );
   });
 
 export const scheduleFormSchema = z.object({
