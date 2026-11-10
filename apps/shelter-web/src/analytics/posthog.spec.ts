@@ -5,8 +5,8 @@ import { buildInitConfig, handoffJoined } from './posthog';
  * covers the address typed into the location search; the suggestion list
  * renders that address as text, so it is blocked instead.
  *
- * None of this records anything until the PostHog project has "Record user
- * sessions" enabled — the config below only decides *how* to record.
+ * The project decides *whether* anything records; this decides only what a
+ * recording is allowed to contain.
  */
 it('records this site but never leaves an input unmasked', () => {
   const config = buildInitConfig({ handoff: {} });
