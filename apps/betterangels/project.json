@@ -3,25 +3,17 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "apps/betterangels/src",
   "projectType": "application",
-  "tags": [
-    "type:app",
-    "scope:betterangels"
-  ],
+  "tags": ["type:app", "scope:betterangels"],
   "targets": {
     "export-web": {
       "executor": "nx:run-commands",
       "cache": true,
-      "dependsOn": [
-        "write-eas-env",
-        "sync-deps"
-      ],
+      "dependsOn": ["write-eas-env", "sync-deps"],
       "options": {
         "cwd": "apps/betterangels",
         "command": "node ../../tools/scripts/require-web-monitoring-env.mjs && EXPO_WEB_BASE_URL=$(node ../../tools/shared/print-base-path.mjs) npx expo export --platform web --output-dir ../../dist/apps/betterangels --clear"
       },
-      "outputs": [
-        "{workspaceRoot}/dist/apps/betterangels"
-      ],
+      "outputs": ["{workspaceRoot}/dist/apps/betterangels"],
       "inputs": [
         "production",
         "^production",
@@ -64,6 +56,9 @@
           "env": "EXPO_PUBLIC_NEW_RELIC_WEB_LICENSE_KEY"
         },
         {
+          "env": "EXPO_PUBLIC_POSTHOG_API_KEY"
+        },
+        {
           "fileset": "{workspaceRoot}/tools/scripts/require-web-monitoring-env.mjs"
         },
         {
@@ -93,9 +88,7 @@
     "deploy": {
       "executor": "nx:run-commands",
       "cache": false,
-      "dependsOn": [
-        "export-web"
-      ],
+      "dependsOn": ["export-web"],
       "options": {
         "command": "node tools/deploy/cloudfront-deploy.mjs"
       },
@@ -111,9 +104,7 @@
     "post-pr-preview": {
       "executor": "nx:run-commands",
       "cache": false,
-      "dependsOn": [
-        "deploy"
-      ],
+      "dependsOn": ["deploy"],
       "options": {
         "command": "node tools/scripts/post-preview-comment.js --url=https://outreach.dev.betterangels.la"
       },
@@ -137,15 +128,11 @@
       }
     },
     "test": {
-      "outputs": [
-        "{workspaceRoot}/coverage/{projectRoot}"
-      ],
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
         "passWithNoTests": true
       },
-      "dependsOn": [
-        "privacy-test"
-      ]
+      "dependsOn": ["privacy-test"]
     },
     "typecheck": {
       "executor": "nx:run-commands",
@@ -164,9 +151,7 @@
     "lint": {
       "executor": "@nx/eslint:lint",
       "options": {
-        "lintFilePatterns": [
-          "apps/betterangels/**/*.{ts,tsx,js,jsx}"
-        ]
+        "lintFilePatterns": ["apps/betterangels/**/*.{ts,tsx,js,jsx}"]
       }
     },
     "e2e": {
@@ -224,10 +209,7 @@
     "eas-update": {
       "executor": "nx:run-commands",
       "cache": false,
-      "dependsOn": [
-        "write-eas-env",
-        "copy-lockfile"
-      ],
+      "dependsOn": ["write-eas-env", "copy-lockfile"],
       "options": {
         "command": "node tools/scripts/eas-update.mjs --project betterangels --profile preview"
       },
@@ -257,11 +239,16 @@
         "production",
         "^production",
         {
-          "externalDependencies": [
-            "@newrelic/browser-agent"
-          ]
+          "externalDependencies": ["@newrelic/browser-agent"]
         }
       ]
+    },
+    "submit": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "options": {
+        "command": "APP_ENV_EXPORTS=\"$(node tools/scripts/write-eas-env.mjs --project betterangels --profile production --print-only)\" && eval \"$APP_ENV_EXPORTS\" && cd apps/betterangels && eas submit"
+      }
     }
   }
 }

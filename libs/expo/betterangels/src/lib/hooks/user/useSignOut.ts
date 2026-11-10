@@ -1,7 +1,6 @@
 import { gql } from '@apollo/client';
 import { useMutation } from '@apollo/client/react';
 import { useCallback } from 'react';
-import { getAnalyticsClient } from '../../analytics/client';
 import { endReferralDraftSession } from '../../draft/referralDraftStorage';
 import useClearLocalSession from './useClearLocalSession';
 
@@ -30,9 +29,6 @@ export default function useSignOut() {
     // Local teardown is shared with the /auth screen — see
     // `useClearLocalSession`.
     await clearLocalSession();
-
-    // A shared tablet must not merge two workers' sessions.
-    getAnalyticsClient()?.reset();
   }, [logout, clearLocalSession]);
 
   return { signOut, loading, error };

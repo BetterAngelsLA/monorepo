@@ -73,13 +73,14 @@ it('does not fall back to file persistence', async () => {
 
 it('tags every event with the deployment it came from', async () => {
   vi.stubEnv('EXPO_PUBLIC_POSTHOG_API_KEY', 'phc_test');
-  vi.stubEnv('EXPO_PUBLIC_APP_ENV', 'production');
+  // Distinctive on purpose: 'production' would also match a hardcoded default.
+  vi.stubEnv('EXPO_PUBLIC_APP_ENV', 'staging');
 
   const { getAnalyticsClient } = await importClient();
   const client = getAnalyticsClient();
 
   expect(client?.register).toHaveBeenCalledWith(
-    expect.objectContaining({ environment: 'production', platform: 'ios' }),
+    expect.objectContaining({ environment: 'staging', platform: 'ios' }),
   );
 });
 

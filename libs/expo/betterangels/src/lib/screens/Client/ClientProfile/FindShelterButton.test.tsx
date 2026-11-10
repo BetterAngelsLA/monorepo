@@ -146,3 +146,27 @@ it('does not block the tap on a slow analytics flush', async () => {
 
   expect(WebBrowser.openBrowserAsync).toHaveBeenCalled();
 });
+
+// The flag pair is derived from the client's ids, so an "always true" regression
+// has to fail here rather than pass on the happy path alone.
+it('reports no handoff when the client has no identity yet', async () => {
+  analytics.state.client = {
+    capture: analytics.capture,
+    flush: () => Promise.resolve(),
+    getDistinctId: () => '',
+    getSessionId: () => '',
+  };
+
+  await render(<FindShelterButton />);
+
+  await fireEvent.press(screen.getByText('Find Shelter'));
+
+  expect(WebBrowser.openBrowserAsync).toHaveBeenCalledWith(
+    'https://shelter.betterangels.la/',
+  );
+  expect(analytics.capture).toHaveBeenCalledWith('shelter_search_opened', {
+    source: 'client_profile',
+    handoff: false,
+    handoff_person: false,
+  });
+});

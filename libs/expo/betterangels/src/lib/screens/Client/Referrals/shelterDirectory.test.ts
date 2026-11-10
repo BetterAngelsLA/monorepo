@@ -1,5 +1,13 @@
 import { shelterDirectoryUrl, shelterHomeUrl } from './shelterDirectory';
 
+/** Both parsers share a resolver, so both must reject the same shapes. */
+const UNUSABLE_BASE_URLS = [
+  '',
+  'not a URL',
+  'file:///tmp/shelters',
+  'https://user:password@example.com',
+];
+
 it.each([
   [
     'https://api.prod.betterangels.la',
@@ -48,14 +56,12 @@ it('does not let local configuration redirect production or demo IDs', () => {
   ).toBe('https://shelter.dev.betterangels.la/shelter/9');
 });
 
-it.each([
-  '',
-  'not a URL',
-  'file:///tmp/shelters',
-  'https://user:password@example.com',
-])('ignores unusable directory configuration: %s', (url) => {
-  expect(shelterDirectoryUrl('http://localhost:8001', '9', url)).toBeNull();
-});
+it.each(UNUSABLE_BASE_URLS)(
+  'ignores unusable directory configuration: %s',
+  (url) => {
+    expect(shelterDirectoryUrl('http://localhost:8001', '9', url)).toBeNull();
+  },
+);
 
 it.each(['', ' ', '.', '..'])(
   'does not create a detail URL for invalid ID %j',
@@ -97,11 +103,9 @@ it('does not let local site configuration redirect production or demo IDs', () =
   ).toBe('https://shelter.dev.betterangels.la/');
 });
 
-it.each([
-  '',
-  'not a URL',
-  'file:///tmp/shelters',
-  'https://user:password@example.com',
-])('ignores unusable site configuration: %s', (url) => {
-  expect(shelterHomeUrl('http://localhost:8001', url)).toBeNull();
-});
+it.each(UNUSABLE_BASE_URLS)(
+  'ignores unusable site configuration: %s',
+  (url) => {
+    expect(shelterHomeUrl('http://localhost:8001', url)).toBeNull();
+  },
+);
