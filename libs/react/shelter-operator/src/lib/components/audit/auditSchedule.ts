@@ -90,32 +90,47 @@ function clock(value: unknown): string | null {
 }
 
 function windowOf(start: unknown, end: unknown): string {
-  return `${clock(start) ?? '\u2014'} - ${clock(end) ?? '\u2014'}`;
+  const from = clock(start);
+  const to = clock(end);
+
+  // An exception with no times closes the whole day; two dashes would read as
+  // missing data rather than "all day".
+  return from === null && to === null
+    ? 'all day'
+    : `${from ?? '\u2014'} - ${to ?? '\u2014'}`;
+}
+
+/** `2026-12-25`, or `2026-12-24 - 2026-12-26` when the exception spans days. */
+function dateSpan(start: string | null, end: string | null): string | null {
+  if (!start) {
+    return null;
+  }
+
+  return end && end !== start ? `${start} - ${end}` : start;
 }
 
 /**
  * One-line form of a schedule event:
  * `Added Operating Hours: Thursday 06:00 - 16:00`.
  *
- * A schedule save replaces the whole slot set, so every field of an added or
- * removed row has exactly one side: rendering it as a `before → after` pair (what
- * the field-change view does) spends a line per column to say what the slot is.
- * The line keeps what a reader needs — direction, day, type, the exception flag
- * and the time window — and drops the row id and the owning shelter, which are
- * the same for every slot in the action.
+ * Every field of an added or removed row has exactly one side, so rendering it as
+ * a `before → after` pair (what the field-change view does) spends a line per
+ * column to say what the slot is. The line keeps what a reader needs — direction,
+ * type, when the slot applies (`Wednesday`, `2026-12-25`, or `all day`), the
+ * exception flag and the time window — and drops the row id and the owning
+ * shelter, which are the same for every slot in the action.
  *
- * A time change has two real sides, so it keeps an arrow
- * inside the same one-line shape.
+ * A time change has two real sides, so it keeps an arrow inside the same
+ * one-line shape.
  *
- * NOTE: `context` carries the day and type of a time change but not the
- * exception flag (it is part of the netting identity, so it never changes there),
- * so a changed line cannot mark an exception slot. `start date`, `end date`,
- * `condition` and `demographic` are likewise not part of this line.
+ * The identity comes from `context` (day and type for a weekly slot; the dates and
+ * exception flag for an exception) or, for an add or a remove, from the row's own
+ * one-sided fields. `condition` and `demographic` are not part of this line.
  *
  * An `UPDATE` with no `context` predates the current server (which always sends
- * the slot identity for one). It carries no identity and
- * often only one side of the window, so this returns `null` and the caller renders
- * the field changes it does have rather than an invented "Every day".
+ * the slot identity for one). It carries no identity and often only one side of
+ * the window, so this returns `null` and the caller renders the field changes it
+ * does have rather than an invented "Every day".
  */
 export function formatScheduleEvent(
   event: Pick<AuditEvent, 'action' | 'kind' | 'fieldChanges' | 'context'>,
@@ -132,14 +147,13 @@ export function formatScheduleEvent(
   // the slot has no day. An `UPDATE` with neither is unlabelled, not day-less.
   const identityKnown =
     changeText(changes, 'day') !== null ||
-    Object.prototype.hasOwnProperty.call(context, 'day');
+    Object.prototype.hasOwnProperty.call(context, 'day') ||
+    context['is exception'] === true;
 
   if (event.kind === AuditEventKind.Update && !identityKnown) {
     return null;
   }
 
-  const day =
-    changeText(changes, 'day') ?? contextText(context, 'day') ?? 'Every day';
   const scheduleType =
     changeText(changes, 'schedule type') ??
     contextText(context, 'schedule type') ??
@@ -147,8 +161,21 @@ export function formatScheduleEvent(
 
   const exceptionPair = scalarPair(changes, 'is exception');
   const isException =
-    exceptionPair !== null &&
-    (exceptionPair[0] === true || exceptionPair[1] === true);
+    exceptionPair !== null
+      ? exceptionPair[0] === true || exceptionPair[1] === true
+      : context['is exception'] === true;
+
+  // An exception is scoped by its dates, so its dates are the "when"; a weekly
+  // slot is scoped by its day. A day-less weekly slot applies every day.
+  const exceptionDates = isException
+    ? dateSpan(
+        changeText(changes, 'start date') ?? contextText(context, 'start date'),
+        changeText(changes, 'end date') ?? contextText(context, 'end date'),
+      )
+    : null;
+  const day =
+    changeText(changes, 'day') ?? contextText(context, 'day') ?? 'Every day';
+  const when = exceptionDates ?? day;
 
   // Type first, then the day: a reader scanning the log groups by what kind of
   // hours changed before which day it was.
@@ -157,7 +184,7 @@ export function formatScheduleEvent(
   if (event.kind === AuditEventKind.Insert) {
     return {
       tone: 'added',
-      text: `Added ${label}: ${day} ${windowOf(
+      text: `Added ${label}: ${when} ${windowOf(
         changeValue(changes, 'start time'),
         changeValue(changes, 'end time'),
       )}`,
@@ -167,7 +194,7 @@ export function formatScheduleEvent(
   if (event.kind === AuditEventKind.Delete) {
     return {
       tone: 'removed',
-      text: `Removed ${label}: ${day} ${windowOf(
+      text: `Removed ${label}: ${when} ${windowOf(
         changeValue(changes, 'start time'),
         changeValue(changes, 'end time'),
       )}`,
@@ -192,13 +219,13 @@ export function formatScheduleEvent(
 
     return {
       tone: 'changed',
-      text: `Changed ${label}: ${day} ${field} ${clock(pair[0]) ?? '\u2014'} \u2192 ${clock(pair[1]) ?? '\u2014'}`,
+      text: `Changed ${label}: ${when} ${field} ${clock(pair[0]) ?? '\u2014'} \u2192 ${clock(pair[1]) ?? '\u2014'}`,
     };
   }
 
   return {
     tone: 'changed',
-    text: `Changed ${label}: ${day} ${windowOf(
+    text: `Changed ${label}: ${when} ${windowOf(
       startPair[0],
       endPair[0],
     )} \u2192 ${windowOf(startPair[1], endPair[1])}`,

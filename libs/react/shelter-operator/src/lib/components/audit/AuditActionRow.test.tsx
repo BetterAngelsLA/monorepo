@@ -248,6 +248,55 @@ describe('AuditActionRow', () => {
     expect(screen.queryByText(/Schedule 32/)).toBeNull();
   });
 
+  it('renders a weekly line and an exception line from one save', () => {
+    render(
+      <AuditActionRow
+        action={makeAction({
+          fieldChanges: {
+            'Schedule 1 start time': ['09:00:00', '10:00:00'],
+            'Schedule 1 end time': ['17:00:00', '18:00:00'],
+            'Schedule 2 end time': ['12:00:00', '14:00:00'],
+          },
+          events: [
+            makeEvent({
+              action: 'shelter.schedule.update',
+              kind: AuditEventKind.Update,
+              context: { day: 'Monday', 'schedule type': 'Operating Hours' },
+              fieldChanges: {
+                'start time': ['09:00:00', '10:00:00'],
+                'end time': ['17:00:00', '18:00:00'],
+              },
+            }),
+            makeEvent({
+              action: 'shelter.schedule.update',
+              kind: AuditEventKind.Update,
+              context: {
+                'schedule type': 'Operating Hours',
+                'is exception': true,
+                'start date': '2026-12-25',
+                'end date': '2026-12-25',
+              },
+              fieldChanges: { 'end time': ['12:00:00', '14:00:00'] },
+            }),
+          ],
+        })}
+      />,
+    );
+
+    expect(
+      screen.getByText(
+        'Changed Operating Hours: Monday 09:00 - 17:00 \u2192 10:00 - 18:00',
+      ),
+    ).not.toBeNull();
+    // Both events render as lines, so neither change is left to the diff block.
+    expect(
+      screen.getByText(
+        'Changed Operating Hours (Exception): 2026-12-25 end time 12:00 \u2192 14:00',
+      ),
+    ).not.toBeNull();
+    expect(screen.queryByText(/Schedule \d/)).toBeNull();
+  });
+
   it('shows the diff of an unlabelled schedule update instead of a line', () => {
     // Rows written before the server sent the slot identity cannot be labelled.
     render(

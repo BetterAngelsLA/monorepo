@@ -59,29 +59,75 @@ describe('formatScheduleEvent', () => {
     });
   });
 
-  it('marks an exception slot', () => {
-    const day = addedSlot().fieldChanges.day;
-    const startTime = addedSlot().fieldChanges['start time'];
-    const endTime = addedSlot().fieldChanges['end time'];
-    const scheduleType = addedSlot().fieldChanges['schedule type'];
-
+  it('labels an exception with its dates instead of a day', () => {
     const exception = addedSlot({
       fieldChanges: {
-        day,
-        'start time': startTime,
-        'end time': endTime,
-        'schedule type': scheduleType,
+        'start date': [null, '2026-12-25'],
+        'end date': [null, '2026-12-25'],
+        'start time': [null, '10:00:00'],
+        'end time': [null, '12:00:00'],
+        'schedule type': [null, 'Operating Hours'],
         'is exception': [null, true],
       },
     });
 
     expect(formatScheduleEvent(exception)?.text).toBe(
-      'Added Operating Hours (Exception): Thursday 06:00 - 16:00',
+      'Added Operating Hours (Exception): 2026-12-25 10:00 - 12:00',
     );
   });
 
-  it('reads the day and type of a netted change from its context', () => {
-    // A netted time change: the slot kept its identity, only the window moved.
+  it('spans the dates of a multi-day exception', () => {
+    const exception = addedSlot({
+      fieldChanges: {
+        'start date': [null, '2026-12-24'],
+        'end date': [null, '2026-12-26'],
+        'start time': [null, '10:00:00'],
+        'end time': [null, '12:00:00'],
+        'schedule type': [null, 'Operating Hours'],
+        'is exception': [null, true],
+      },
+    });
+
+    expect(formatScheduleEvent(exception)?.text).toBe(
+      'Added Operating Hours (Exception): 2026-12-24 - 2026-12-26 10:00 - 12:00',
+    );
+  });
+
+  it('renders an exception with no times as all day', () => {
+    const closure = addedSlot({
+      fieldChanges: {
+        'start date': [null, '2026-12-26'],
+        'end date': [null, '2026-12-26'],
+        'schedule type': [null, 'Operating Hours'],
+        'is exception': [null, true],
+      },
+    });
+
+    expect(formatScheduleEvent(closure)?.text).toBe(
+      'Added Operating Hours (Exception): 2026-12-26 all day',
+    );
+  });
+
+  it('takes an exception update identity from its context', () => {
+    const changed = {
+      action: 'shelter.schedule.update',
+      kind: AuditEventKind.Update,
+      context: {
+        'schedule type': 'Operating Hours',
+        'is exception': true,
+        'start date': '2026-12-25',
+        'end date': '2026-12-25',
+      },
+      fieldChanges: { 'end time': ['12:00:00', '14:00:00'] },
+    };
+
+    expect(formatScheduleEvent(changed)?.text).toBe(
+      'Changed Operating Hours (Exception): 2026-12-25 end time 12:00 \u2192 14:00',
+    );
+  });
+
+  it('reads the day and type of a time change from its context', () => {
+    // A time change: the slot kept its identity, only the window moved.
     const changed = {
       action: 'shelter.schedule.update',
       kind: AuditEventKind.Update,
@@ -126,7 +172,7 @@ describe('formatScheduleEvent', () => {
     );
   });
 
-  it('shows a dash for a missing time window', () => {
+  it('renders a slot with no times as all day', () => {
     const noTimes = addedSlot({
       fieldChanges: {
         day: [null, 'Monday'],
@@ -135,7 +181,7 @@ describe('formatScheduleEvent', () => {
     });
 
     expect(formatScheduleEvent(noTimes)?.text).toBe(
-      'Added Operating Hours: Monday \u2014 - \u2014',
+      'Added Operating Hours: Monday all day',
     );
   });
 
