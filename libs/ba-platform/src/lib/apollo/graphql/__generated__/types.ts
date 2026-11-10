@@ -3454,7 +3454,7 @@ export type ScheduleInput = {
   endTime?: InputMaybe<Scalars['Time']['input']>;
   id?: InputMaybe<Scalars['ID']['input']>;
   isException?: Scalars['Boolean']['input'];
-  scheduleType?: ScheduleTypeChoices;
+  scheduleType?: InputMaybe<ScheduleTypeChoices>;
   startDate?: InputMaybe<Scalars['Date']['input']>;
   startTime?: InputMaybe<Scalars['Time']['input']>;
 };

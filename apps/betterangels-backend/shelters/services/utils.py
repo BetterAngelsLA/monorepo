@@ -101,17 +101,31 @@ def _prepare_shelter_data(
     return data, m2m_data, schedules_data
 
 
-def _schedule_rows(entry: Dict[str, Any]) -> List[Dict[str, Any]]:
+def _schedule_rows(entry: Dict[str, Any], *, schedule_type: ScheduleTypeChoices | None = None) -> List[Dict[str, Any]]:
     """Expand one schedule input into per-day row kwargs.
 
     ``days`` fans out to one row per day; absent or empty means a single row with
     ``day=None`` (every day).
+
+    *schedule_type* is the type being saved, for the update path. The entry's own
+    ``schedule_type`` is then redundant: it is checked when present and ignored
+    otherwise, so an edit does not have to repeat the tab it came from. The create
+    path passes nothing and keeps the ``OPERATING`` default.
     """
     # Resolve enum values to their raw strings for TextChoicesField
     raw_type = entry.get("schedule_type")
-    schedule_type = (
-        ScheduleTypeChoices(getattr(raw_type, "value", raw_type)) if raw_type else ScheduleTypeChoices.OPERATING
-    )
+    entry_type = ScheduleTypeChoices(getattr(raw_type, "value", raw_type)) if raw_type else None
+    if schedule_type is not None and entry_type is not None and entry_type != schedule_type:
+        raise ValidationError(
+            {
+                "schedules": (
+                    f"{_schedule_type_label(entry_type)} entry submitted while saving "
+                    f"{_schedule_type_label(schedule_type)}."
+                )
+            }
+        )
+
+    schedule_type = schedule_type or entry_type or ScheduleTypeChoices.OPERATING
 
     raw_condition = entry.get("condition")
     condition: ConditionChoices | None = (
@@ -207,16 +221,7 @@ def _sync_schedules(
                 {"schedules": (f"Schedule {raw_id} cannot be sent with more than one day; submit one entry per day.")}
             )
 
-        for row in _schedule_rows(entry):
-            if row["schedule_type"] != schedule_type:
-                raise ValidationError(
-                    {
-                        "schedules": (
-                            f"{_schedule_type_label(row['schedule_type'])} entry submitted while saving "
-                            f"{_schedule_type_label(schedule_type)}."
-                        )
-                    }
-                )
+        for row in _schedule_rows(entry, schedule_type=schedule_type):
             specs.append((str(raw_id) if raw_id else None, row))
 
     # The stored key is (shelter, type, day, start time, start date). A payload

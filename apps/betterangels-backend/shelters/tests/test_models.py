@@ -2,6 +2,7 @@ import datetime
 import random
 from typing import Any
 
+from django.core.exceptions import ValidationError
 from django.db import IntegrityError, connection, transaction
 from django.test import TestCase
 from model_bakery import baker
@@ -814,25 +815,24 @@ class CreateSchedulesServiceTestCase(TestCase):
             {DayOfWeekChoices.MONDAY, DayOfWeekChoices.TUESDAY, DayOfWeekChoices.WEDNESDAY},
         )
 
-    def test_empty_days_creates_every_day_row(self) -> None:
-        """An empty days list creates a single row with day=None (every day)."""
+    def test_empty_days_is_rejected(self) -> None:
+        """An empty list reads as "no days", not "every day" — omit it instead."""
         from shelters.services.utils import _create_schedules
 
-        _create_schedules(
-            self.shelter,
-            [
-                {
-                    "schedule_type": ScheduleTypeChoices.OPERATING,
-                    "days": [],
-                    "start_time": datetime.time(9, 0),
-                    "end_time": datetime.time(17, 0),
-                }
-            ],
-        )
-        self.assertEqual(self.shelter.schedules.count(), 1)
-        schedule = self.shelter.schedules.first()
-        assert schedule is not None
-        self.assertIsNone(schedule.day)
+        with self.assertRaisesMessage(ValidationError, "days cannot be empty"):
+            _create_schedules(
+                self.shelter,
+                [
+                    {
+                        "schedule_type": ScheduleTypeChoices.OPERATING,
+                        "days": [],
+                        "start_time": datetime.time(9, 0),
+                        "end_time": datetime.time(17, 0),
+                    }
+                ],
+            )
+
+        self.assertEqual(self.shelter.schedules.count(), 0)
 
     def test_no_days_key_creates_every_day_row(self) -> None:
         """Omitting the 'days' key entirely creates a single row with day=None."""

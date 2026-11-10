@@ -56,7 +56,10 @@ class ScheduleInput:
     #: whose id is absent from a submitted set is deleted (the payload is
     #: authoritative for its schedule type).
     id: Optional[ID] = None
-    schedule_type: ScheduleTypeChoices = ScheduleTypeChoices.OPERATING
+    #: The slot's type. On update it is redundant — `UpdateShelterInput.scheduleType`
+    #: names the tab being saved — so it is checked only when present; a new entry
+    #: defaults to OPERATING.
+    schedule_type: Optional[ScheduleTypeChoices] = None
     #: Days the slot repeats on; one row is created per day. Omit it for a slot
     #: that applies every day — an empty list is rejected rather than read as
     #: "every day".

@@ -538,6 +538,18 @@ class SyncSchedulesTestCase(TestCase):
 
         self.assertTrue(Schedule.objects.filter(pk=intake.pk).exists())
 
+    def test_an_entry_may_omit_its_type_and_take_the_scope(self) -> None:
+        """The save already names the type; repeating it per entry is optional."""
+        _sync_schedules(
+            self.shelter,
+            [self._entry(id=self.slot.pk, schedule_type=None, start_time=datetime.time(10, 0))],
+            schedule_type=ScheduleTypeChoices.OPERATING,
+        )
+
+        self.slot.refresh_from_db()
+        self.assertEqual(self.slot.start_time, datetime.time(10, 0))
+        self.assertEqual(self.slot.schedule_type, ScheduleTypeChoices.OPERATING)
+
     def test_entry_of_another_type_is_rejected(self) -> None:
         with self.assertRaises(ValidationError):
             _sync_schedules(
