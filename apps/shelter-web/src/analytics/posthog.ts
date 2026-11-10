@@ -1,41 +1,22 @@
+import {
+  ShelterSearchEvent,
+  decodeShelterHandoff,
+  type ShelterHandoff,
+} from '@monorepo/shared/analytics';
+
 /**
  * PostHog for the public shelter site.
  *
  * This app is anonymous — there is no sign-in to join on — so a visit is only
  * linked to an outreach-app session when the app hands one over in the URL
- * fragment. The outreach app writes `ba_did` / `ba_sid` (see
- * `libs/expo/betterangels/src/lib/analytics/shelterHandoff.ts`); this file
- * feeds them into `bootstrap`, which makes the landing page continue that
- * session instead of starting a new one.
+ * fragment. The outreach app writes `ba_did` / `ba_sid`; this file feeds them
+ * into `bootstrap`, which makes the landing page continue that session instead
+ * of starting a new one.
  *
- * The event name is the second half of a funnel whose first half is
- * `shelter_search_opened` in the app. Renaming either one breaks the funnel
- * silently, so keep them together.
+ * The parameter names, the event name and the decoder all come from
+ * `@monorepo/shared/analytics`, which the app writes with — that module is the
+ * contract, this one is only this app's half of it.
  */
-const SHELTER_SEARCH_LANDED_EVENT = 'shelter_search_landed';
-
-export const HANDOFF_DISTINCT_ID_PARAM = 'ba_did';
-export const HANDOFF_SESSION_ID_PARAM = 'ba_sid';
-
-export type Handoff = {
-  distinctId?: string;
-  sessionId?: string;
-};
-
-/**
- * Reads the handoff out of a `window.location.hash` value.
- *
- * Exported for the test that pins the parameter names: they are a contract with
- * the app, and nothing else in this app reads them.
- */
-export function readHandoff(hash: string): Handoff {
-  const params = new URLSearchParams(hash.replace(/^#/, ''));
-
-  return {
-    distinctId: params.get(HANDOFF_DISTINCT_ID_PARAM) ?? undefined,
-    sessionId: params.get(HANDOFF_SESSION_ID_PARAM) ?? undefined,
-  };
-}
 
 /**
  * Drops the fragment from the address bar before anything captures a URL.
@@ -50,7 +31,7 @@ function stripHandoffFromUrl(): void {
 }
 
 export function initAnalytics(): void {
-  const handoff = readHandoff(window.location.hash);
+  const handoff = decodeShelterHandoff(window.location.hash);
   const isHandoff = Boolean(handoff.distinctId || handoff.sessionId);
 
   // Before the key check: the fragment is an identifier in the address bar
@@ -91,7 +72,7 @@ export function initAnalytics(): void {
         environment: import.meta.env.MODE,
       });
 
-      posthog.capture(SHELTER_SEARCH_LANDED_EVENT, {
+      posthog.capture(ShelterSearchEvent.Landed, {
         handoff: Boolean(handoff.sessionId),
         handoff_person: Boolean(handoff.distinctId),
         entry_path: window.location.pathname,
@@ -106,7 +87,7 @@ export function initAnalytics(): void {
  * The options handed to `posthog.init`, factored out so the parts that are a
  * privacy or contract decision can be asserted in a test rather than only read.
  */
-export function buildInitConfig({ handoff }: { handoff: Handoff }) {
+export function buildInitConfig({ handoff }: { handoff: ShelterHandoff }) {
   return {
     /**
      * Never record this site, even when the PostHog project has session

@@ -11,7 +11,7 @@ import {
   flushAnalytics,
   useAnalytics,
 } from '../../../analytics';
-import { withShelterHandoff } from '../../../analytics/shelterHandoff';
+import { withShelterHandoff } from '@monorepo/shared/analytics';
 import { shelterHomeUrl } from '../Referrals/shelterDirectory';
 
 /**

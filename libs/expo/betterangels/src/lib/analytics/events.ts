@@ -1,18 +1,20 @@
+import { ShelterSearchEvent } from '@monorepo/shared/analytics';
+
 /**
- * Event names and their properties.
+ * Event names and their properties for this app.
  *
- * Two rules for everything in this file:
+ * `shelter_search_opened` and `shelter_search_landed` are a pair: the first is
+ * sent here, the second by shelter-web, and the funnel across both is the whole
+ * point of the handoff. The names live in `@monorepo/shared/analytics` so the
+ * two apps cannot disagree about them.
  *
- * 1. No client data. Events describe what a user did, never who they did it
- *    for — no names, notes, dates of birth, or client ids.
- * 2. `shelter_search_opened` and `shelter_search_landed` are a pair. The first
- *    is sent by this app, the second by shelter-web, and a funnel across both
- *    is the whole point of the handoff in `shelterHandoff.ts`. Renaming one
- *    breaks the funnel silently, so they live side by side here.
+ * Everything in this file must be free of client data — no names, notes, dates
+ * of birth, or client ids. Events describe what a worker did, never who they
+ * did it for.
  */
 export const AnalyticsEvent = {
-  ShelterSearchOpened: 'shelter_search_opened',
-  ShelterSearchFailed: 'shelter_search_failed',
+  ShelterSearchOpened: ShelterSearchEvent.Opened,
+  ShelterSearchFailed: ShelterSearchEvent.Failed,
 } as const;
 
 export type AnalyticsEventName =
