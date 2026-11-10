@@ -9,6 +9,7 @@ import { EnvironmentSwitcherProvider } from '@monorepo/ba-platform';
 import {
   AppUpdatePrompt,
   ErrorCrashView,
+  useAnalyticsInit,
   useNewRelic,
 } from '@monorepo/expo/betterangels';
 import { asyncStorageAdapter } from '@monorepo/expo/shared/utils';
@@ -56,6 +57,7 @@ const ENVIRONMENTS = buildApiEnvironments({
 
 export default function RootLayout() {
   useNewRelic();
+  useAnalyticsInit();
 
   return (
     <FontLoader>

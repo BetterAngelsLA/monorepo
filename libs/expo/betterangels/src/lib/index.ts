@@ -1,3 +1,4 @@
+export * from './analytics';
 export * from './apollo';
 export * from './constants';
 export * from './errors';

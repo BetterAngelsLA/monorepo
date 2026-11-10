@@ -1,4 +1,4 @@
-import { shelterDirectoryUrl } from './shelterDirectory';
+import { shelterDirectoryUrl, shelterHomeUrl } from './shelterDirectory';
 
 it.each([
   [
@@ -65,3 +65,43 @@ it.each(['', ' ', '.', '..'])(
     ).toBeNull();
   },
 );
+
+// The home URL is the shelter site's entry point. It deliberately points at the
+// root rather than `/search`: that route is the map's search overlay, and both
+// of its exits navigate back to the root.
+it.each([
+  ['https://api.prod.betterangels.la', 'https://shelter.betterangels.la/'],
+  ['https://api.dev.betterangels.la', 'https://shelter.dev.betterangels.la/'],
+])('opens the site root that matches %s', (api, expected) => {
+  expect(shelterHomeUrl(api)).toBe(expected);
+});
+
+it('supports an explicitly configured site root for the local backend', () => {
+  expect(
+    shelterHomeUrl('http://localhost:8001', 'http://localhost:8083/'),
+  ).toBe('http://localhost:8083/');
+});
+
+it('keeps a deployment base path and drops query and fragment', () => {
+  expect(
+    shelterHomeUrl(
+      'http://localhost:8001',
+      'http://localhost:8083/preview/?old=1#old',
+    ),
+  ).toBe('http://localhost:8083/preview/');
+});
+
+it('does not let local site configuration redirect production or demo IDs', () => {
+  expect(
+    shelterHomeUrl('https://api.dev.betterangels.la', 'http://localhost:8083'),
+  ).toBe('https://shelter.dev.betterangels.la/');
+});
+
+it.each([
+  '',
+  'not a URL',
+  'file:///tmp/shelters',
+  'https://user:password@example.com',
+])('ignores unusable site configuration: %s', (url) => {
+  expect(shelterHomeUrl('http://localhost:8001', url)).toBeNull();
+});

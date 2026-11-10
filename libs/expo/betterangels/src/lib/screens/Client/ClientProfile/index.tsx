@@ -14,6 +14,7 @@ import { ImportantNotesCard } from './ClientProfileCards/ImportantNotesCard';
 import { PersonalInfoCard } from './ClientProfileCards/PersonalInfoCard';
 import { RelevantContactsCard } from './ClientProfileCards/RelevantContactsCard';
 import { ExpandableProfileContainer } from './ExpandableProfileContainer';
+import { FindShelterButton } from './FindShelterButton';
 import { getEditButtonRoute } from './utils/getEditButtonRoute';
 
 interface ProfileProps {
@@ -59,6 +60,8 @@ export default function ClientProfileView(props: ProfileProps) {
   return (
     <MainScrollContainer ref={scrollRef} bg={Colors.NEUTRAL_EXTRA_LIGHT}>
       <View testID="screen-client-profile">
+        <FindShelterButton />
+
         <ExpandableProfileContainer
           card={ClientProfileSectionEnum.FullName}
           openCard={expandedCard}
