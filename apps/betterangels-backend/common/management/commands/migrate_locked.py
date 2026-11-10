@@ -1,9 +1,15 @@
-"""Apply pending migrations under a database-wide advisory lock.
+"""Apply migrations under a database-wide advisory lock.
 
 ``manage.py migrate`` is not safe against a *concurrent* second run: each process
 computes its own plan and both can try the same DDL. This command serialises
 migration with a session-level Postgres advisory lock (``pglock.advisory``),
 which is what lets a web task run it on start instead of a dedicated stage.
+
+``migrate`` is also what runs the pre/post-migrate handlers, where
+``accounts.apps`` applies the code-owned roles and permission templates. Those
+rows change with the release rather than with the schema, so an empty plan is
+not a no-op: the handlers have to run on every start, and under the same lock —
+outside it they would race an in-flight migration and each other.
 
 The wait is bounded: ``pg_advisory_lock`` blocks inside Postgres (no polling)
 under a ``lock_timeout`` of ``--timeout`` seconds, so a stuck holder raises
@@ -19,8 +25,6 @@ from typing import Any
 
 import pglock
 from django.core.management import BaseCommand, CommandError, call_command
-from django.db import DEFAULT_DB_ALIAS, connections
-from django.db.migrations.executor import MigrationExecutor
 
 #: High 32 bits of the advisory-lock key; "MIGR" is a mnemonic. Advisory locks are a
 #: shared namespace on the database, so this keeps the migration lock clear of
@@ -34,7 +38,7 @@ _DEFAULT_TIMEOUT_SECONDS = 1800
 
 
 class Command(BaseCommand):
-    help = "Apply pending migrations, serialised with a Postgres advisory lock."
+    help = "Apply migrations, serialised with a Postgres advisory lock."
 
     def add_arguments(self, parser: Any) -> None:
         parser.add_argument(
@@ -48,13 +52,6 @@ class Command(BaseCommand):
         if timeout < 0:
             raise CommandError("--timeout must be zero or positive")
 
-        connection = connections[DEFAULT_DB_ALIAS]
-
-        # Cheap path: every deploy with no schema change stops here, without taking a lock.
-        if not self._pending(connection):
-            self.stdout.write("no pending migrations")
-            return
-
         lock = pglock.advisory(
             _MIGRATION_LOCK_KEY,
             timeout=None if timeout == 0 else timeout,
@@ -65,18 +62,9 @@ class Command(BaseCommand):
             raise CommandError(f"another process held the migration lock for more than {timeout}s")
 
         try:
-            # Re-check under the lock: the holder may have applied them while we waited.
-            if self._pending(connection):
-                self.stdout.write("applying migrations")
-                call_command("migrate", interactive=False, verbosity=1)
-            else:
-                self.stdout.write("migrations already applied by another process")
+            # An empty plan still runs the pre/post-migrate handlers.
+            call_command("migrate", interactive=False, verbosity=1)
         finally:
             # The session releases the lock on exit either way; this just frees waiters sooner.
             with contextlib.suppress(Exception):
                 lock.release()
-
-    @staticmethod
-    def _pending(connection: Any) -> bool:
-        executor = MigrationExecutor(connection)
-        return bool(executor.migration_plan(executor.loader.graph.leaf_nodes()))
