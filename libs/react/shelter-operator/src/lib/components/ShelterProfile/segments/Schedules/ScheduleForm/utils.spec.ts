@@ -7,6 +7,7 @@ import {
 import type { ExceptionEntry } from './types';
 import {
   buildScheduleInputs,
+  unrepresentableInputs,
   hydrateExceptions,
   hydrateWeekly,
   toHHMM,
@@ -63,8 +64,24 @@ describe('hydrateWeekly', () => {
     ]);
 
     expect(weekly[DayOfWeekChoices.Monday].ranges).toStrictEqual([
-      { _id: 'a', serverId: 'a', startTime: '09:00', endTime: '17:00' },
-      { _id: 'b', serverId: 'b', startTime: '18:00', endTime: '20:00' },
+      {
+        _id: 'a',
+        serverId: 'a',
+        startTime: '09:00',
+        endTime: '17:00',
+        condition: undefined,
+        startDate: undefined,
+        endDate: undefined,
+      },
+      {
+        _id: 'b',
+        serverId: 'b',
+        startTime: '18:00',
+        endTime: '20:00',
+        condition: undefined,
+        startDate: undefined,
+        endDate: undefined,
+      },
     ]);
   });
 
@@ -78,7 +95,15 @@ describe('hydrateWeekly', () => {
     ]);
 
     expect(weekly[DayOfWeekChoices.Monday].ranges).toStrictEqual([
-      { _id: 's1', serverId: 's1', startTime: '09:00', endTime: '17:00' },
+      {
+        _id: 's1',
+        serverId: 's1',
+        startTime: '09:00',
+        endTime: '17:00',
+        condition: undefined,
+        startDate: undefined,
+        endDate: undefined,
+      },
     ]);
     expect(weekly[DayOfWeekChoices.Sunday].ranges).toStrictEqual([]);
     expect(weekly[DayOfWeekChoices.Tuesday].ranges).toStrictEqual([]);
@@ -161,6 +186,64 @@ describe('hydrateExceptions', () => {
   });
 });
 
+describe('hidden weekly fields', () => {
+  it('carries a condition the editor cannot show through to the payload', () => {
+    const weekly = hydrateWeekly([
+      schedule({
+        id: 'a',
+        day: DayOfWeekChoices.Monday,
+        startTime: '09:00:00',
+        endTime: '17:00:00',
+        condition: ConditionChoices.Heat,
+      }),
+    ]);
+
+    const [input] = buildScheduleInputs(OPERATING, weekly, []);
+
+    // The save writes the whole row, so dropping this here clears it.
+    expect(input.condition).toBe(ConditionChoices.Heat);
+  });
+});
+
+describe('unrepresentableInputs', () => {
+  it('sends a day-less slot back unchanged so the save does not delete it', () => {
+    const everyDay = schedule({
+      id: 'row-ever',
+      day: null,
+      startTime: '06:00:00',
+      endTime: '18:00:00',
+      condition: ConditionChoices.Heat,
+    });
+
+    expect(
+      unrepresentableInputs([everyDay], ScheduleTypeChoices.Operating),
+    ).toStrictEqual([
+      {
+        id: 'row-ever',
+        scheduleType: ScheduleTypeChoices.Operating,
+        startTime: '06:00:00',
+        endTime: '18:00:00',
+        startDate: undefined,
+        endDate: undefined,
+        condition: ConditionChoices.Heat,
+        isException: false,
+      },
+    ]);
+  });
+
+  it('ignores day-specific and exception rows', () => {
+    expect(
+      unrepresentableInputs(
+        [
+          schedule({ id: 'mon', day: DayOfWeekChoices.Monday }),
+          schedule({ id: 'ex', isException: true, startDate: '2026-12-25' }),
+        ],
+        ScheduleTypeChoices.Operating,
+      ),
+    ).toEqual([]);
+  });
+});
+
 describe('buildScheduleInputs', () => {
   it('builds weekly inputs in day order, skipping incomplete ranges', () => {
     const weekly = buildDefaultWeeklyState();
@@ -180,6 +263,9 @@ describe('buildScheduleInputs', () => {
         days: [DayOfWeekChoices.Monday],
         startTime: '09:00:00',
         endTime: '17:00:00',
+        startDate: undefined,
+        endDate: undefined,
+        condition: undefined,
         isException: false,
       },
       {
@@ -188,6 +274,9 @@ describe('buildScheduleInputs', () => {
         days: [DayOfWeekChoices.Sunday],
         startTime: '22:00:00',
         endTime: '23:30:00',
+        startDate: undefined,
+        endDate: undefined,
+        condition: undefined,
         isException: false,
       },
     ]);

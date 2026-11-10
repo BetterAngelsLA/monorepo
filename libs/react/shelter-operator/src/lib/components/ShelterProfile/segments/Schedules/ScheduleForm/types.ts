@@ -10,6 +10,14 @@ export type TimeRange = {
   serverId?: string;
   startTime: string; // "HH:MM"
   endTime: string; // "HH:MM"
+  /**
+   * Round-tripped, not edited here: the weekly editor has no condition or
+   * seasonal-bound controls, and the save writes the whole row. Dropping them
+   * would clear what the admin set.
+   */
+  condition?: ConditionChoices;
+  startDate?: string; // "YYYY-MM-DD"
+  endDate?: string; // "YYYY-MM-DD"
 };
 
 /** Per-day form state. Empty ranges = no hours configured (closed). */

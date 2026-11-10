@@ -141,6 +141,20 @@ describe('scheduleFormSchema', () => {
     ).toContain('Invalid date format (YYYY-MM-DD)');
   });
 
+  it('keeps the hidden weekly fields through validation', () => {
+    const weekly = weeklyWithMondayRanges([
+      { startTime: '09:00', endTime: '12:00' },
+    ]);
+
+    weekly[DayOfWeekChoices.Monday].ranges[0].condition = ConditionChoices.Heat;
+
+    const result = scheduleFormSchema.safeParse({ weekly, exceptions: [] });
+
+    expect(
+      result.data?.weekly[DayOfWeekChoices.Monday].ranges[0].condition,
+    ).toBe(ConditionChoices.Heat);
+  });
+
   it('keeps a saved range id through validation', () => {
     const weekly = weeklyWithMondayRanges([
       { startTime: '09:00', endTime: '12:00' },

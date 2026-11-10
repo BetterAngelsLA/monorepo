@@ -21,6 +21,11 @@ export const timeRangeSchema = z
     serverId: z.string().optional(),
     startTime: timeField,
     endTime: timeField,
+    // Round-tripped, not edited: declared so parsing keeps them and the save
+    // does not clear a condition or seasonal bound the weekly UI cannot show.
+    condition: z.enum(ConditionChoices).optional(),
+    startDate: dateField.optional(),
+    endDate: dateField.optional(),
   })
   .refine((r) => r.startTime < r.endTime, {
     message: 'Start time must be before end time',
@@ -40,7 +45,7 @@ export const dayScheduleSchema = z.object({
  * (a range with no time yet) — reporting it as a duplicate would be noise and
  * would interpolate an empty value into the message.
  */
-const flagDuplicateKeys = <T,>(
+const flagDuplicateKeys = <T>(
   items: T[],
   keyOf: (item: T) => string,
   ctx: z.RefinementCtx,
