@@ -252,7 +252,13 @@ class CreateSchedulesTestCase(TestCase):
         """An entry with no 'days' key creates a single Schedule with day=None."""
         _create_schedules(
             self.shelter,
-            [{"start_time": datetime.time(9, 0), "end_time": datetime.time(17, 0)}],
+            [
+                {
+                    "schedule_type": ScheduleTypeChoices.OPERATING,
+                    "start_time": datetime.time(9, 0),
+                    "end_time": datetime.time(17, 0),
+                }
+            ],
         )
         schedules = Schedule.objects.filter(shelter=self.shelter)
         self.assertEqual(schedules.count(), 1)
@@ -264,21 +270,21 @@ class CreateSchedulesTestCase(TestCase):
     def test_entry_with_multiple_days_fans_out(self) -> None:
         """An entry with N days creates N Schedule rows."""
         days = [DayOfWeekChoices.MONDAY, DayOfWeekChoices.WEDNESDAY, DayOfWeekChoices.FRIDAY]
-        _create_schedules(self.shelter, [{"days": days}])
+        _create_schedules(self.shelter, [{"schedule_type": ScheduleTypeChoices.OPERATING, "days": days}])
         self.assertEqual(Schedule.objects.filter(shelter=self.shelter).count(), 3)
 
     def test_created_days_match_input(self) -> None:
         """Each created Schedule has the correct day value."""
         days = [DayOfWeekChoices.TUESDAY, DayOfWeekChoices.THURSDAY]
-        _create_schedules(self.shelter, [{"days": days}])
+        _create_schedules(self.shelter, [{"schedule_type": ScheduleTypeChoices.OPERATING, "days": days}])
         created_days = set(Schedule.objects.filter(shelter=self.shelter).values_list("day", flat=True))
         self.assertEqual(created_days, {DayOfWeekChoices.TUESDAY.value, DayOfWeekChoices.THURSDAY.value})
 
-    def test_default_schedule_type_is_operating(self) -> None:
-        """Missing schedule_type defaults to OPERATING."""
-        _create_schedules(self.shelter, [{}])
-        schedule = Schedule.objects.get(shelter=self.shelter)
-        self.assertEqual(schedule.schedule_type, ScheduleTypeChoices.OPERATING)
+    def test_a_create_entry_must_name_its_type(self) -> None:
+        """Nothing is defaulted: an omitted type is an error, not Operating Hours."""
+        with self.assertRaisesMessage(ValidationError, "schedule_type is required"):
+            _create_schedules(self.shelter, [{}])
+        self.assertEqual(self.shelter.schedules.count(), 0)
 
     def test_schedule_type_set_from_enum(self) -> None:
         """Explicit schedule_type enum is stored correctly."""
@@ -288,25 +294,28 @@ class CreateSchedulesTestCase(TestCase):
 
     def test_condition_set_from_enum(self) -> None:
         """Condition enum is stored on the created row."""
-        _create_schedules(self.shelter, [{"condition": ConditionChoices.HEAT}])
+        _create_schedules(
+            self.shelter,
+            [{"schedule_type": ScheduleTypeChoices.OPERATING, "condition": ConditionChoices.HEAT}],
+        )
         schedule = Schedule.objects.get(shelter=self.shelter)
         self.assertEqual(schedule.condition, ConditionChoices.HEAT)
 
     def test_condition_absent_is_none(self) -> None:
         """Missing condition results in None on the row."""
-        _create_schedules(self.shelter, [{}])
+        _create_schedules(self.shelter, [{"schedule_type": ScheduleTypeChoices.OPERATING}])
         schedule = Schedule.objects.get(shelter=self.shelter)
         self.assertIsNone(schedule.condition)
 
     def test_is_exception_default_false(self) -> None:
         """is_exception defaults to False when not provided."""
-        _create_schedules(self.shelter, [{}])
+        _create_schedules(self.shelter, [{"schedule_type": ScheduleTypeChoices.OPERATING}])
         schedule = Schedule.objects.get(shelter=self.shelter)
         self.assertFalse(schedule.is_exception)
 
     def test_is_exception_set_true(self) -> None:
         """is_exception=True is stored correctly."""
-        _create_schedules(self.shelter, [{"is_exception": True}])
+        _create_schedules(self.shelter, [{"schedule_type": ScheduleTypeChoices.OPERATING, "is_exception": True}])
         schedule = Schedule.objects.get(shelter=self.shelter)
         self.assertTrue(schedule.is_exception)
 
@@ -316,6 +325,7 @@ class CreateSchedulesTestCase(TestCase):
             self.shelter,
             [
                 {
+                    "schedule_type": ScheduleTypeChoices.OPERATING,
                     "start_time": datetime.time(8, 0),
                     "end_time": datetime.time(20, 0),
                     "start_date": datetime.date(2025, 1, 1),
@@ -538,17 +548,14 @@ class SyncSchedulesTestCase(TestCase):
 
         self.assertTrue(Schedule.objects.filter(pk=intake.pk).exists())
 
-    def test_an_entry_may_omit_its_type_and_take_the_scope(self) -> None:
-        """The save already names the type; repeating it per entry is optional."""
-        _sync_schedules(
-            self.shelter,
-            [self._entry(id=self.slot.pk, schedule_type=None, start_time=datetime.time(10, 0))],
-            schedule_type=ScheduleTypeChoices.OPERATING,
-        )
-
-        self.slot.refresh_from_db()
-        self.assertEqual(self.slot.start_time, datetime.time(10, 0))
-        self.assertEqual(self.slot.schedule_type, ScheduleTypeChoices.OPERATING)
+    def test_an_entry_without_a_type_is_rejected(self) -> None:
+        """The entry names its type; the scope only has to agree with it."""
+        with self.assertRaisesMessage(ValidationError, "schedule_type is required"):
+            _sync_schedules(
+                self.shelter,
+                [self._entry(id=self.slot.pk, schedule_type=None)],
+                schedule_type=ScheduleTypeChoices.OPERATING,
+            )
 
     def test_entry_of_another_type_is_rejected(self) -> None:
         with self.assertRaises(ValidationError):

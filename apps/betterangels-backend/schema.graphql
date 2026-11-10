@@ -2669,7 +2669,7 @@ type SampleType {
 
 input ScheduleInput {
   id: ID = null
-  scheduleType: ScheduleTypeChoices = null
+  scheduleType: ScheduleTypeChoices!
   days: [DayOfWeekChoices!] = null
   startTime: Time = null
   endTime: Time = null

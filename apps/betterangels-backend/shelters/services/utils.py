@@ -107,15 +107,17 @@ def _schedule_rows(entry: Dict[str, Any], *, schedule_type: ScheduleTypeChoices 
     ``days`` fans out to one row per day; absent or empty means a single row with
     ``day=None`` (every day).
 
-    *schedule_type* is the type being saved, for the update path. The entry's own
-    ``schedule_type`` is then redundant: it is checked when present and ignored
-    otherwise, so an edit does not have to repeat the tab it came from. The create
-    path passes nothing and keeps the ``OPERATING`` default.
+    *schedule_type* is the type being saved, for the update path: the entry's own
+    ``schedule_type`` is then redundant but must agree with it. Every entry names
+    its type — nothing is defaulted, so an omitted type is an error rather than
+    silently Operating Hours.
     """
     # Resolve enum values to their raw strings for TextChoicesField
     raw_type = entry.get("schedule_type")
     entry_type = ScheduleTypeChoices(getattr(raw_type, "value", raw_type)) if raw_type else None
-    if schedule_type is not None and entry_type is not None and entry_type != schedule_type:
+    if entry_type is None:
+        raise ValidationError({"schedules": "schedule_type is required on every schedule entry."})
+    if schedule_type is not None and entry_type != schedule_type:
         raise ValidationError(
             {
                 "schedules": (
@@ -125,7 +127,7 @@ def _schedule_rows(entry: Dict[str, Any], *, schedule_type: ScheduleTypeChoices 
             }
         )
 
-    schedule_type = schedule_type or entry_type or ScheduleTypeChoices.OPERATING
+    schedule_type = entry_type
 
     raw_condition = entry.get("condition")
     condition: ConditionChoices | None = (
