@@ -25,8 +25,8 @@
         { "env": "VITE_APP_BASE_PATH" },
         { "env": "VITE_SHELTER_API_URL" },
         { "env": "VITE_SHELTER_GOOGLE_MAPS_API_KEY" },
-        { "env": "VITE_POSTHOG_API_KEY" },
-        { "env": "VITE_POSTHOG_HOST" }
+        { "env": "VITE_SHELTER_POSTHOG_API_KEY" },
+        { "env": "VITE_SHELTER_POSTHOG_HOST" }
       ],
       "outputs": ["{workspaceRoot}/dist/apps/shelter-web"],
       "options": {

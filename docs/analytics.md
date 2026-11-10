@@ -68,15 +68,15 @@ flushes itself.
 
 ## Configuration
 
-| Variable                      | Used by     | Notes                                                                    |
-| ----------------------------- | ----------- | ------------------------------------------------------------------------ |
-| `EXPO_PUBLIC_POSTHOG_API_KEY` | app         | Public project token, inlined into the bundle. Unset disables analytics. |
-| `EXPO_PUBLIC_POSTHOG_HOST`    | app         | Set per build profile in `eas.json`.                                     |
-| `VITE_POSTHOG_API_KEY`        | shelter-web | Same project token. Unset disables analytics.                            |
-| `VITE_POSTHOG_HOST`           | shelter-web | Set in CI; `https://us.i.posthog.com` when absent.                       |
+| Variable                       | Used by     | Notes                                                                    |
+| ------------------------------ | ----------- | ------------------------------------------------------------------------ |
+| `EXPO_PUBLIC_POSTHOG_API_KEY`  | app         | Public project token, inlined into the bundle. Unset disables analytics. |
+| `EXPO_PUBLIC_POSTHOG_HOST`     | app         | Set per build profile in `eas.json`.                                     |
+| `VITE_SHELTER_POSTHOG_API_KEY` | shelter-web | Same project token. Unset disables analytics.                            |
+| `VITE_SHELTER_POSTHOG_HOST`    | shelter-web | Set in CI; `https://us.i.posthog.com` when absent.                       |
 
-Secrets live in GitHub as `EXPO_PUBLIC_POSTHOG_API_KEY`, `VITE_POSTHOG_API_KEY`
-and `VITE_POSTHOG_HOST`, and flow into builds the same way the New Relic and
+Secrets live in GitHub as `EXPO_PUBLIC_POSTHOG_API_KEY`, `VITE_SHELTER_POSTHOG_API_KEY`
+and `VITE_SHELTER_POSTHOG_HOST`, and flow into builds the same way the New Relic and
 Google Maps keys do. `write-eas-env.mjs` passes any `EXPO_PUBLIC_*` through, so
 no extra plumbing is needed when a key is added to CI.
 
@@ -171,14 +171,14 @@ client identifier to be useful, it needs a different design.
 ## Verifying locally
 
 1. Set `EXPO_PUBLIC_POSTHOG_API_KEY` in `apps/betterangels/.env.local` and
-   `VITE_POSTHOG_API_KEY` in the shell that runs `nx serve shelter-web`.
+   `VITE_SHELTER_POSTHOG_API_KEY` in the shell that runs `nx serve shelter-web`.
 2. Run a development build, sign in, open a client profile, tap **Find
    Shelter**.
 3. In PostHog: _Activity → Live events_ should show `shelter_search_opened`
    followed by `shelter_search_landed` with the same `$session_id`.
 
 If the second event carries a different session, the fragment did not reach
-`bootstrap` — check that `VITE_POSTHOG_API_KEY` was set for the **build**, not
+`bootstrap` — check that `VITE_SHELTER_POSTHOG_API_KEY` was set for the **build**, not
 just the dev server, since Vite inlines `VITE_*` at transform time.
 
 ## Known limits
