@@ -71,12 +71,23 @@ export function initAnalytics(): void {
 
 /** Options for `posthog.init`, factored out so the privacy decisions below can
  * be asserted in a test. */
+/**
+ * PostHog's managed reverse proxy: first-party DNS for this site, so requests
+ * are not on a blocker's list of analytics domains. The proxy forwards
+ * ingestion, `/static/*` and `/array/*`; `ui_host` stays PostHog's own domain so
+ * the toolbar and links resolve.
+ */
+const POSTHOG_PROXY_HOST = 'https://e.betterangels.la';
+const POSTHOG_UI_HOST = 'https://us.posthog.com';
+
 export function buildInitConfig({
   handoff,
 }: {
   handoff: ShelterHandoff;
 }): Partial<PostHogConfig> {
   return {
+    api_host: POSTHOG_PROXY_HOST,
+    ui_host: POSTHOG_UI_HOST,
     // Pin the config-era rather than inheriting whatever the SDK does by
     // default, so a dependency bump cannot change capture behaviour silently.
     defaults: '2026-08-30',
