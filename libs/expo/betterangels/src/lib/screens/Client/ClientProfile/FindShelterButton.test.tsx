@@ -12,6 +12,13 @@ import { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 import { FindShelterButton } from './FindShelterButton';
 
+// The component falls back to EXPO_PUBLIC_SHELTER_WEB_URL when the API origin
+// is unknown. CI exports it and a dev shell may not, so pin its absence before
+// the module graph loads — otherwise this file asserts differently per machine.
+vi.hoisted(() => {
+  delete process.env.EXPO_PUBLIC_SHELTER_WEB_URL;
+});
+
 // The shared barrels pull in native-backed components (maps, PDF, pickers)
 // whose native halves do not exist under test. Stub the two the button renders.
 vi.mock('@monorepo/expo/shared/ui-components', () => ({
