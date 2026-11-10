@@ -27,7 +27,9 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         client_profile = baker.make(ClientProfile)
         assert self.org
 
-        expected_query_count = 22
+        # 18 for the write path (the service skips the per-FK existence queries)
+        # plus the savepoint that makes a multi-task batch all-or-nothing.
+        expected_query_count = 20
         with self.assertNumQueriesWithoutCache(expected_query_count):
             variables = {
                 "clientProfile": str(client_profile.pk),
@@ -84,7 +86,7 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             "teamId": str(self.org_1_team_1.pk),
         }
 
-        expected_query_count = 19
+        expected_query_count = 17
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.update_task_fixture(variables)
 
