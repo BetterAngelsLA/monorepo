@@ -1400,11 +1400,14 @@ write path started upserting:
   `context` (`{"day": "Monday", "schedule type": "Operating Hours"}`) for every
   `UPDATE`. They are not changes: `field_changes` never reports a no-op pair. A
   null `day` ("every day") stays null and the UI owns that copy.
-- **Exception slots carry no `context`.** An exception has a null `day` (it is
-  scoped by its dates), so "every day" would be a false label; such an update
-  renders as a plain diff until the UI owns a date-scoped label. Withheld fields
-  (§18) are filtered from `field_changes`, `context` and `snapshot`, exactly as
-  `_scalar_changes`/`_snapshot` do for every other row.
+- **Exception slots carry their dates as identity.** An exception has a null
+  `day` (it is scoped by its dates), so "every day" would be a false label; its
+  `context` therefore holds `schedule type`, `is exception` and the two dates
+  (ISO strings, since `context` is a JSON scalar), and the UI labels the line with
+  the date or date span instead of a day. Withheld fields (§18) are filtered from
+  `field_changes`, `context` and `snapshot`, exactly as
+  `_scalar_changes`/`_snapshot` do for every other row — including the dates, so a
+  redacted field cannot reappear through identity.
 - **A replace-shaped save reads as remove/add.** A client that omits the ids still
   replaces the set; the log then shows the deletions and creations it really
   performed rather than synthesising a story about them.

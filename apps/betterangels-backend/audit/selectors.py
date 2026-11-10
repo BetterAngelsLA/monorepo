@@ -24,7 +24,7 @@ import base64
 import json
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import date, datetime
 from functools import lru_cache
 from typing import Any, Collection, Mapping, Sequence, cast
 from uuid import UUID
@@ -694,24 +694,28 @@ def _schedule_context(row: Any, resolver: _LabelResolver, hidden_fields: Collect
 
     A null ``day`` means "every day" (see ``Schedule.day``) and is rendered as
     such by the UI. An *exception* row also has a null ``day`` — it is scoped by
-    its dates instead — so it gets no context here: "every day" would be a false
-    statement, and the date-scoped label is the log UI's problem, not this
-    field's. Those events render as a plain diff. Withheld fields never reach the
-    context (§18).
+    its dates instead — so it sends ``is exception`` and its dates as identity and
+    never a day: "every day" would be a false statement. Dates are rendered as
+    ISO strings because ``context`` is a JSON scalar. Withheld fields never reach
+    the context (§18).
     """
     model_label = row.pgh_obj_model
     fk_fields = _fk_fields(model_label)
     fields = _field_meta(model_label)
     data = row.pgh_data or {}
 
-    if data.get("is_exception"):
-        return None
+    identity_fields = (
+        ("schedule_type", "is_exception", "start_date", "end_date")
+        if data.get("is_exception")
+        else ("day", "schedule_type")
+    )
 
-    context = {
-        field: _render_value(field, data.get(field), fk_fields, fields, resolver)
-        for field in ("day", "schedule_type")
-        if field not in hidden_fields
-    }
+    context: dict[str, Any] = {}
+    for field_name in identity_fields:
+        if field_name in hidden_fields:
+            continue
+        value = _render_value(field_name, data.get(field_name), fk_fields, fields, resolver)
+        context[field_name] = value.isoformat() if isinstance(value, (date, datetime)) else value
 
     return _render_keys(context, model_label) or None
 

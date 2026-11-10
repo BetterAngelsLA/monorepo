@@ -1730,13 +1730,13 @@ class ObjectAuditLogScheduleEventsTestCase(TestCase):
         self.assertEqual(event.context, {"day": None, "schedule type": "Operating Hours"})
         self.assertEqual(event.field_changes, {"end time": ["17:00:00", "18:00:00"]})
 
-    def test_exception_slot_update_gets_no_day_identity(self) -> None:
-        """An exception is scoped by date, not day: "every day" would be a lie."""
+    def test_exception_slot_update_carries_its_dates_as_identity(self) -> None:
+        """An exception is scoped by date, so its dates travel instead of a day."""
         with audit_context(user=self.user):
             exception = Schedule.objects.create(
                 shelter=self.shelter,
                 start_date=date(2026, 12, 25),
-                end_date=date(2026, 12, 25),
+                end_date=date(2026, 12, 27),
                 start_time=time(10, 0),
                 end_time=time(12, 0),
                 is_exception=True,
@@ -1748,8 +1748,40 @@ class ObjectAuditLogScheduleEventsTestCase(TestCase):
         event = audit_log(obj=self.shelter, target_type="SHELTER")[0].events[0]
 
         self.assertEqual(event.kind, "UPDATE")
-        self.assertIsNone(event.context)
+        self.assertEqual(
+            event.context,
+            {
+                "schedule type": "Operating Hours",
+                "is exception": True,
+                "start date": "2026-12-25",
+                "end date": "2026-12-27",
+            },
+        )
         self.assertEqual(event.field_changes, {"end time": ["12:00:00", "14:00:00"]})
+
+    def test_a_moved_exception_does_not_report_its_old_date_as_identity(self) -> None:
+        """The date it moved to is a change; identity must not repeat it."""
+        with audit_context(user=self.user):
+            exception = Schedule.objects.create(
+                shelter=self.shelter,
+                start_date=date(2026, 12, 25),
+                end_date=date(2026, 12, 25),
+                start_time=time(10, 0),
+                end_time=time(12, 0),
+                is_exception=True,
+            )
+        with audit_context(user=self.user):
+            exception.start_date = date(2026, 12, 26)
+            exception.end_date = date(2026, 12, 26)
+            exception.save()
+
+        event = audit_log(obj=self.shelter, target_type="SHELTER")[0].events[0]
+
+        self.assertEqual(event.context, {"schedule type": "Operating Hours", "is exception": True})
+        self.assertEqual(
+            event.field_changes,
+            {"start date": ["2026-12-25", "2026-12-26"], "end date": ["2026-12-25", "2026-12-26"]},
+        )
 
     def test_a_changed_day_is_not_reported_as_identity(self) -> None:
         """An id-carrying entry can move a slot; the change wins over context."""
