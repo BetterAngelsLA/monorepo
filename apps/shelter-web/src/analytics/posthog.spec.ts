@@ -1,10 +1,12 @@
-import { buildInitConfig } from './posthog';
+import { buildInitConfig, handoffJoined } from './posthog';
 
 /**
- * Replay runs here as well as in the app, but this site is DOM-recorded, so the
- * masking is per element. `maskAllInputs` covers the address typed into the
- * location search; the suggestion list renders that address as text, so it is
- * blocked instead.
+ * This site is DOM-recorded, so the masking is per element. `maskAllInputs`
+ * covers the address typed into the location search; the suggestion list
+ * renders that address as text, so it is blocked instead.
+ *
+ * None of this records anything until the PostHog project has "Record user
+ * sessions" enabled — the config below only decides *how* to record.
  */
 it('records this site but never leaves an input unmasked', () => {
   const config = buildInitConfig({ handoff: {} });
@@ -37,4 +39,13 @@ it('sends through the first-party proxy so blockers do not match the domain', ()
   expect(config.api_host).toBe('https://k.betterangels.la');
   // The toolbar and in-app links must still resolve to PostHog itself.
   expect(config.ui_host).toBe('https://us.posthog.com');
+});
+
+it('reports a join only when the receiver kept the handed session', () => {
+  const handed = { distinctId: 'distinct-1', sessionId: 'session-1' };
+
+  expect(handoffJoined(handed, 'session-1')).toBe(true);
+  // posthog-js mints a new session when it rejects the bootstrapped id.
+  expect(handoffJoined(handed, 'session-minted')).toBe(false);
+  expect(handoffJoined({ distinctId: 'distinct-1' }, undefined)).toBe(false);
 });

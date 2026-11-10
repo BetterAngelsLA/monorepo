@@ -1,5 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { POSTHOG_PROXY_HOST } from '@monorepo/shared/shelter-handoff';
+import {
+  POSTHOG_PROXY_HOST,
+  type ShelterHandoff,
+} from '@monorepo/shared/shelter-handoff';
 import PostHog from 'posthog-react-native';
 import { Platform } from 'react-native';
 import { analyticsConfig } from './config';
@@ -72,4 +75,39 @@ export function getAnalyticsClient(): PostHog | null {
  */
 export function resetAnalyticsClient(): void {
   client = undefined;
+}
+
+/**
+ * The distinct id this app tied to a worker, once `identify()` has run.
+ *
+ * Kept beside the client rather than read from it: the SDK has no public "is
+ * this id a person?" accessor, and the handoff has to answer exactly that.
+ */
+let identifiedDistinctId: string | null = null;
+
+/** Called by `AnalyticsIdentity` when the signed-in worker's id is attached. */
+export function markAnalyticsIdentified(userId: string): void {
+  identifiedDistinctId = userId;
+}
+
+/**
+ * The identity to carry across a handoff.
+ *
+ * The distinct id travels **only** while it still matches the id this app
+ * identified: shelter-web reads a handed-over distinct id as a known person
+ * (`isIdentifiedID`), so an anonymous one would create a person record for
+ * nobody. Sign-out resets the client to a fresh anonymous id, which the
+ * comparison then drops on its own.
+ */
+export function getHandoffIdentity(): ShelterHandoff {
+  const client = getAnalyticsClient();
+  const currentDistinctId = client?.getDistinctId();
+
+  return {
+    distinctId:
+      identifiedDistinctId && currentDistinctId === identifiedDistinctId
+        ? currentDistinctId
+        : undefined,
+    sessionId: client?.getSessionId(),
+  };
 }

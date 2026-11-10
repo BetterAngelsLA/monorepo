@@ -1,99 +1,69 @@
-import { useApiConfig } from '@monorepo/ba-platform';
-import { ExternalLinkOutlinedIcon } from '@monorepo/expo/shared/icons';
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { HouseLineIcon } from '@monorepo/expo/shared/icons';
+import { Colors } from '@monorepo/expo/shared/static';
 import { Button, TextRegular } from '@monorepo/expo/shared/ui-components';
-import * as WebBrowser from 'expo-web-browser';
-import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import {
-  AnalyticsEvent,
-  ShelterSearchSource,
-  flushAnalytics,
-  useAnalytics,
-} from '../../../analytics';
-import { withShelterHandoff } from '@monorepo/shared/shelter-handoff';
-import { shelterHomeUrl } from '../Referrals/shelterDirectory';
+import { ShelterSearchSource } from '../../../analytics';
+import { useOpenShelterSearch } from '../../../shelter/useOpenShelterSearch';
 
 /**
  * Opens the shelter site from a client profile, recording the departure and
  * handing the session over in the URL.
+ *
+ * Rendered as a pill in the client header rather than a full-width button in
+ * the profile body: it belongs with the client-level actions, and a full row
+ * above the cards pushed the client's own information down the screen.
  */
 export function FindShelterButton() {
-  const { apiUrl } = useApiConfig();
-  const { capture, getIdentity } = useAnalytics();
-  const [error, setError] = useState(false);
-
-  const url = shelterHomeUrl(
-    apiUrl,
-    process.env['EXPO_PUBLIC_SHELTER_WEB_URL'],
+  const { open, error, opening, canOpen } = useOpenShelterSearch(
+    ShelterSearchSource.ClientProfile,
   );
 
-  if (!url) {
+  if (!canOpen) {
     return null;
-  }
-
-  async function openShelterSearch() {
-    // Repeated because TypeScript does not carry the render guard's narrowing
-    // into a hoisted function.
-    if (!url) return;
-
-    setError(false);
-
-    const identity = getIdentity();
-    const target = withShelterHandoff(url, identity);
-
-    capture(AnalyticsEvent.ShelterSearchOpened, {
-      source: ShelterSearchSource.ClientProfile,
-      handoff: Boolean(identity.sessionId),
-      handoff_person: Boolean(identity.distinctId),
-    });
-
-    // Opening a browser can suspend the app before the batch timer fires.
-    await flushAnalytics();
-
-    try {
-      await WebBrowser.openBrowserAsync(target);
-    } catch {
-      // No landing event will follow this press, so say so rather than leaving
-      // a start with no end.
-      capture(AnalyticsEvent.ShelterSearchFailed, {
-        source: ShelterSearchSource.ClientProfile,
-      });
-      setError(true);
-    }
   }
 
   return (
     <View style={styles.container}>
       <Button
-        title="Find Shelter"
+        testID="find-shelter-profile-btn"
+        title="Find shelter"
         variant="secondary"
-        size="full"
+        size="auto"
+        height="md"
+        fontSize="sm"
+        borderRadius={50}
+        accessibilityLabel="Find shelter"
         accessibilityHint="opens the shelter search site in your browser"
-        icon={<ExternalLinkOutlinedIcon size="sm" color={Colors.PRIMARY} />}
-        onPress={openShelterSearch}
+        disabled={opening}
+        icon={<HouseLineIcon size="sm" color={Colors.PRIMARY} />}
+        onPress={open}
       />
       {error && (
-        <TextRegular
-          accessibilityLiveRegion="polite"
-          color={Colors.ERROR_DARK}
-          mt="xs"
-          textAlign="center"
-        >
-          Could not open the shelter search. Please try again.
-        </TextRegular>
+        <View style={styles.error}>
+          <TextRegular
+            accessibilityLiveRegion="polite"
+            color={Colors.ERROR_DARK}
+            mt="xxs"
+            textAlign="right"
+          >
+            Could not open the shelter search. Please try again.
+          </TextRegular>
+        </View>
       )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  /**
-   * Full-bleed on purpose: the profile cards below are `width: '100%'` with no
-   * horizontal margin, so any horizontal padding here would make the button
-   * narrower than the stack it sits on.
-   */
+  /** Right-aligned: it sits at the end of the header's name row. */
   container: {
-    marginBottom: Spacings.sm,
+    alignItems: 'flex-end',
+  },
+  /**
+   * The header row has room for a pill, not a sentence — so the failure wraps
+   * beneath the control that caused it instead of stretching the row.
+   */
+  error: {
+    maxWidth: 200,
   },
 });

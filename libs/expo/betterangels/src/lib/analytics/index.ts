@@ -1,5 +1,10 @@
 export { analyticsConfig } from './config';
-export { getAnalyticsClient, resetAnalyticsClient } from './client';
+export {
+  getAnalyticsClient,
+  getHandoffIdentity,
+  markAnalyticsIdentified,
+  resetAnalyticsClient,
+} from './client';
 export {
   AnalyticsEvent,
   ShelterSearchSource,

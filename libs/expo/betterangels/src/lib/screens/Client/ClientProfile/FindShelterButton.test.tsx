@@ -10,6 +10,7 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 import * as WebBrowser from 'expo-web-browser';
 import { ReactNode } from 'react';
 import { Text, View } from 'react-native';
+import { shouldFlushBeforeOpen } from '../../../shelter/useOpenShelterSearch';
 import { FindShelterButton } from './FindShelterButton';
 
 // The component falls back to EXPO_PUBLIC_SHELTER_WEB_URL when the API origin
@@ -31,7 +32,7 @@ vi.mock('@monorepo/expo/shared/ui-components', () => ({
 }));
 
 vi.mock('@monorepo/expo/shared/icons', () => ({
-  ExternalLinkOutlinedIcon: () => <View />,
+  HouseLineIcon: () => <View />,
 }));
 
 vi.mock('expo-web-browser', () => ({ openBrowserAsync: vi.fn() }));
@@ -68,6 +69,12 @@ const analytics = vi.hoisted(() => {
 
 vi.mock('../../../analytics/client', () => ({
   getAnalyticsClient: () => analytics.state.client,
+  // Mirrors the shipped rule: the distinct id only travels while the client is
+  // identified, the session id travels whenever there is one.
+  getHandoffIdentity: () => ({
+    distinctId: analytics.state.client?.getDistinctId() || undefined,
+    sessionId: analytics.state.client?.getSessionId() || undefined,
+  }),
 }));
 
 beforeEach(() => {
@@ -86,7 +93,7 @@ beforeEach(() => {
 it('opens the shelter site with the session in the fragment', async () => {
   await render(<FindShelterButton />);
 
-  await fireEvent.press(screen.getByText('Find Shelter'));
+  await fireEvent.press(screen.getByText('Find shelter'));
 
   expect(WebBrowser.openBrowserAsync).toHaveBeenCalledWith(
     'https://shelter.betterangels.la/#ba_did=distinct-1&ba_sid=session-1',
@@ -96,7 +103,7 @@ it('opens the shelter site with the session in the fragment', async () => {
 it('records the tap with the source and whether the session travelled', async () => {
   await render(<FindShelterButton />);
 
-  await fireEvent.press(screen.getByText('Find Shelter'));
+  await fireEvent.press(screen.getByText('Find shelter'));
 
   expect(analytics.capture).toHaveBeenCalledWith('shelter_search_opened', {
     source: 'client_profile',
@@ -110,7 +117,7 @@ it('still opens the site when analytics is not configured', async () => {
 
   await render(<FindShelterButton />);
 
-  await fireEvent.press(screen.getByText('Find Shelter'));
+  await fireEvent.press(screen.getByText('Find shelter'));
 
   expect(WebBrowser.openBrowserAsync).toHaveBeenCalledWith(
     'https://shelter.betterangels.la/',
@@ -123,7 +130,7 @@ it('renders nothing when no shelter site matches the environment', async () => {
 
   await render(<FindShelterButton />);
 
-  expect(screen.queryByText('Find Shelter')).toBeNull();
+  expect(screen.queryByText('Find shelter')).toBeNull();
 });
 
 it('reports a failed open instead of leaving a start with no end', async () => {
@@ -133,7 +140,7 @@ it('reports a failed open instead of leaving a start with no end', async () => {
 
   await render(<FindShelterButton />);
 
-  await fireEvent.press(screen.getByText('Find Shelter'));
+  await fireEvent.press(screen.getByText('Find shelter'));
 
   expect(analytics.capture).toHaveBeenCalledWith('shelter_search_failed', {
     source: 'client_profile',
@@ -149,7 +156,7 @@ it('does not block the tap on a slow analytics flush', async () => {
 
   await render(<FindShelterButton />);
 
-  await fireEvent.press(screen.getByText('Find Shelter'));
+  await fireEvent.press(screen.getByText('Find shelter'));
 
   expect(WebBrowser.openBrowserAsync).toHaveBeenCalled();
 });
@@ -166,7 +173,7 @@ it('reports no handoff when the client has no identity yet', async () => {
 
   await render(<FindShelterButton />);
 
-  await fireEvent.press(screen.getByText('Find Shelter'));
+  await fireEvent.press(screen.getByText('Find shelter'));
 
   expect(WebBrowser.openBrowserAsync).toHaveBeenCalledWith(
     'https://shelter.betterangels.la/',
@@ -176,4 +183,37 @@ it('reports no handoff when the client has no identity yet', async () => {
     handoff: false,
     handoff_person: false,
   });
+});
+
+it('opens once when pressed twice before the browser takes over', async () => {
+  // A second tab is both a duplicate event and the popup a browser refuses.
+  let release: () => void = () => undefined;
+
+  vi.mocked(WebBrowser.openBrowserAsync).mockReturnValue(
+    new Promise<void>((resolve) => {
+      release = resolve;
+    }) as never,
+  );
+
+  await render(<FindShelterButton />);
+
+  // The browser stays open between the two presses, so the first press is still
+  // in flight when the second arrives — that is the double tap to guard.
+  const firstPress = fireEvent.press(screen.getByText('Find shelter'));
+  await new Promise((resolve) => setTimeout(resolve, 0));
+
+  await fireEvent.press(screen.getByText('Find shelter'));
+
+  expect(WebBrowser.openBrowserAsync).toHaveBeenCalledTimes(1);
+
+  release();
+  await firstPress;
+});
+
+// The flush buys native nothing on web and costs the user activation that
+// `window.open` needs, so the two platforms must disagree here.
+it('flushes before opening on native only', () => {
+  expect(shouldFlushBeforeOpen('ios')).toBe(true);
+  expect(shouldFlushBeforeOpen('android')).toBe(true);
+  expect(shouldFlushBeforeOpen('web')).toBe(false);
 });

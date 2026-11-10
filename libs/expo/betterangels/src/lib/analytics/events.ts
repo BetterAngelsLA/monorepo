@@ -16,6 +16,7 @@ export type AnalyticsEventName =
 
 export const ShelterSearchSource = {
   ClientProfile: 'client_profile',
+  ClientPicker: 'client_picker',
 } as const;
 
 export type ShelterSearchSource =

@@ -23,10 +23,9 @@ import { MainContainer, UploadProgressBar } from '../../ui-components';
 import { ClientHeader } from './ClientHeader';
 import { ClientNavMenu } from './ClientNavMenu';
 import ClientProfileView from './ClientProfile';
-import ClientTabs, {
-  ClientViewTabEnum,
-  resolveClientTab,
-} from './ClientTabs';
+import { FindShelterButton } from './ClientProfile/FindShelterButton';
+import ClientTabs, { ClientViewTabEnum, resolveClientTab } from './ClientTabs';
+import { shouldShowShelterAction } from './shouldShowShelterAction';
 import Docs from './Docs';
 import Interactions from './Interactions';
 import { InteractionLocations } from './Locations';
@@ -199,7 +198,16 @@ export default function Client({
         {/* Hidden rather than unmounted: a fresh image element means the browser
             lays out and decodes the profile photo again. */}
         <Activity mode={showHeader ? 'visible' : 'hidden'}>
-          <ClientHeader client={data?.clientProfile} />
+          <ClientHeader
+            client={data?.clientProfile}
+            // Profile only: with the referrals flag on this header also shows
+            // on Interactions, Tasks and Docs, where a shelter action is noise.
+            action={
+              shouldShowShelterAction(activeTab) ? (
+                <FindShelterButton />
+              ) : undefined
+            }
+          />
         </Activity>
         <UploadProgressBar />
         <ClientTabs selectedTab={activeTab} setTab={setTab} />

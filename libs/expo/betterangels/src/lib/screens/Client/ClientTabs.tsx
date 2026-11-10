@@ -12,15 +12,9 @@ import {
 } from 'react-native';
 import { FeatureFlags } from '../../static';
 import { useActiveReferralGates } from '../../hooks/referral/useReferralGates';
+import { ClientViewTabEnum } from './clientViewTab';
 
-export enum ClientViewTabEnum {
-  Profile = 'Profile',
-  Docs = 'Docs',
-  Interactions = 'Interactions',
-  Locations = 'Locations',
-  Tasks = 'Tasks',
-  Referrals = 'Referrals',
-}
+export { ClientViewTabEnum } from './clientViewTab';
 
 const orderedTabs: ClientViewTabEnum[] = [
   ClientViewTabEnum.Profile,

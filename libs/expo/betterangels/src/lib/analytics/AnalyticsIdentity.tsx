@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useUser } from '../providers/user/UserProvider';
-import { getAnalyticsClient } from './client';
+import { getAnalyticsClient, markAnalyticsIdentified } from './client';
 
 /**
  * Attaches the signed-in worker to the analytics session.
@@ -19,6 +19,9 @@ export function AnalyticsIdentity() {
       return;
     }
 
+    // The handoff only carries a distinct id that matches this, so the shelter
+    // site never promotes an anonymous id to a person.
+    markAnalyticsIdentified(String(userId));
     getAnalyticsClient()?.identify(String(userId));
   }, [userId]);
 

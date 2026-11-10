@@ -63,12 +63,28 @@ export function initAnalytics(): void {
       posthog.capture(ShelterSearchEvent.Landed, {
         handoff: Boolean(handoff.sessionId),
         handoff_person: Boolean(handoff.distinctId),
+        handoff_matched: handoffJoined(handoff, posthog.get_session_id?.()),
         entry_path: window.location.pathname,
       });
     })
     .catch(() => {
       // Analytics must never break the page it is measuring.
     });
+}
+
+/**
+ * Whether the handed-over session was actually adopted.
+ *
+ * posthog-js validates a bootstrapped session id (a UUIDv7 no older than 24
+ * hours) and silently starts a fresh session when it rejects one. So "an id
+ * arrived" and "the receiver took it" are different facts, and only both
+ * together mean the app visit and this one are the same session.
+ */
+export function handoffJoined(
+  handoff: ShelterHandoff,
+  acceptedSessionId: string | undefined,
+): boolean {
+  return Boolean(handoff.sessionId && acceptedSessionId === handoff.sessionId);
 }
 
 /** Options for `posthog.init`, factored out so the privacy decisions below can
@@ -100,6 +116,13 @@ export function buildInitConfig({
       maskAllInputs: true,
       blockSelector: '.ph-no-capture',
     },
+    /**
+     * posthog-js drops traffic from user agents it reads as automated. A dev
+     * build is the only place one runs (the e2e suite), so it opts out; every
+     * deployed build keeps the filter, which is the only traffic worth
+     * protecting.
+     */
+    ...(import.meta.env.DEV ? { opt_out_useragent_filter: true } : {}),
     // Continue the app's session when it handed one over. `sessionID` is only
     // meaningful alongside `distinctID`.
     ...(handoff.distinctId

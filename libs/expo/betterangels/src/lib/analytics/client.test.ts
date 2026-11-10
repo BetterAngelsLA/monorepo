@@ -120,3 +120,33 @@ it('sends natively straight to PostHog, not through the web proxy', async () => 
   const [{ options }] = posthog.PostHogMock.calls;
   expect(options['host']).toBeUndefined();
 });
+
+it('carries the distinct id only once identify() tied it to a worker', async () => {
+  vi.stubEnv('EXPO_PUBLIC_POSTHOG_API_KEY', 'phc_test');
+  const { getAnalyticsClient, getHandoffIdentity, markAnalyticsIdentified } =
+    await importClient();
+
+  const sessionId = '018f4c0e-0000-7000-8000-000000000000';
+  getAnalyticsClient();
+
+  // Anonymous: the receiver would file a person who is nobody.
+  expect(getHandoffIdentity()).toEqual({ distinctId: undefined, sessionId });
+
+  markAnalyticsIdentified('distinct-1');
+  expect(getHandoffIdentity()).toEqual({ distinctId: 'distinct-1', sessionId });
+});
+
+it('stops carrying the distinct id after the client is reset', async () => {
+  vi.stubEnv('EXPO_PUBLIC_POSTHOG_API_KEY', 'phc_test');
+  const { getAnalyticsClient, getHandoffIdentity, markAnalyticsIdentified } =
+    await importClient();
+
+  const client = getAnalyticsClient();
+  markAnalyticsIdentified('distinct-1');
+
+  // Sign-out resets the client; the id after that is anonymous, so the
+  // comparison has to drop it without anyone remembering to clear the marker.
+  client!.getDistinctId = () => 'anonymous-after-reset';
+
+  expect(getHandoffIdentity().distinctId).toBeUndefined();
+});

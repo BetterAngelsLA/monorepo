@@ -1,6 +1,6 @@
 import type { ShelterHandoff } from '@monorepo/shared/shelter-handoff';
 import { useCallback } from 'react';
-import { getAnalyticsClient } from './client';
+import { getAnalyticsClient, getHandoffIdentity } from './client';
 import type { AnalyticsEventName, AnalyticsEventProperties } from './events';
 
 type Capture = <E extends AnalyticsEventName>(
@@ -30,14 +30,7 @@ export function useAnalytics(): {
    * time, so a `reset()`/sign-out between those two moments cannot send a
    * stale session.
    */
-  const getIdentity = useCallback<GetIdentity>(() => {
-    const client = getAnalyticsClient();
-
-    return {
-      distinctId: client?.getDistinctId(),
-      sessionId: client?.getSessionId(),
-    };
-  }, []);
+  const getIdentity = useCallback<GetIdentity>(() => getHandoffIdentity(), []);
 
   return { capture, getIdentity };
 }

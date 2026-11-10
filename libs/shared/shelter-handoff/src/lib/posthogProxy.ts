@@ -8,6 +8,10 @@
  *
  * Native needs neither: there is no browser, no blocker and no CORS in the app
  * runtime, so `client.ts` only sets `host` on web.
+ *
+ * Not covered by a PostHog BAA: the managed proxy adds a hop PostHog does not
+ * process the agreement for. If this data ever needs a BAA, the proxy has to be
+ * one we host ourselves rather than this hostname.
  */
 export const POSTHOG_PROXY_HOST = 'https://k.betterangels.la';
 
