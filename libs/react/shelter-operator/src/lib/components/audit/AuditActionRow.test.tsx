@@ -233,17 +233,16 @@ describe('AuditActionRow', () => {
       />,
     );
 
+    // The whole set, in tone order: a duplicated or extra line would fail here.
     expect(
-      screen.getByText('Removed Operating Hours: Wednesday 20:10 - 23:10'),
-    ).not.toBeNull();
-    expect(
-      screen.getByText(
-        'Changed Operating Hours: Wednesday 16:23 - 17:23 \u2192 17:23 - 20:23',
-      ),
-    ).not.toBeNull();
-    expect(
-      screen.getByText('Added Operating Hours: Wednesday 17:23 - 19:23'),
-    ).not.toBeNull();
+      screen
+        .getAllByText(/^(Removed|Changed|Added) /)
+        .map((element) => element.textContent),
+    ).toEqual([
+      'Removed Operating Hours: Wednesday 20:10 - 23:10',
+      'Changed Operating Hours: Wednesday 16:23 - 17:23 \u2192 17:23 - 20:23',
+      'Added Operating Hours: Wednesday 17:23 - 19:23',
+    ]);
     // The lines replace the merged changes; nothing is repeated below them.
     expect(screen.queryByText(/Schedule 32/)).toBeNull();
   });
@@ -284,17 +283,48 @@ describe('AuditActionRow', () => {
     );
 
     expect(
-      screen.getByText(
-        'Changed Operating Hours: Monday 09:00 - 17:00 \u2192 10:00 - 18:00',
-      ),
-    ).not.toBeNull();
+      screen.getAllByText(/^Changed /).map((element) => element.textContent),
+    ).toEqual([
+      'Changed Operating Hours: Monday 09:00 - 17:00 \u2192 10:00 - 18:00',
+      'Changed Operating Hours (Exception): 2026-12-25 end time 12:00 \u2192 14:00',
+    ]);
     // Both events render as lines, so neither change is left to the diff block.
+    expect(screen.queryByText(/Schedule \d/)).toBeNull();
+  });
+
+  it('keeps an unlabelled schedule change when another row renders a line', () => {
+    render(
+      <AuditActionRow
+        action={makeAction({
+          fieldChanges: {
+            'Schedule 1 start time': ['09:00:00', '10:00:00'],
+            'Schedule 9 end time': ['12:00:00', '14:00:00'],
+          },
+          events: [
+            makeEvent({
+              action: 'shelter.schedule.update',
+              kind: AuditEventKind.Update,
+              context: { day: 'Monday', 'schedule type': 'Operating Hours' },
+              fieldChanges: { 'start time': ['09:00:00', '10:00:00'] },
+            }),
+            makeEvent({
+              action: 'shelter.schedule.update',
+              kind: AuditEventKind.Update,
+              context: null,
+              fieldChanges: { 'end time': ['12:00:00', '14:00:00'] },
+            }),
+          ],
+        })}
+      />,
+    );
+
     expect(
       screen.getByText(
-        'Changed Operating Hours (Exception): 2026-12-25 end time 12:00 \u2192 14:00',
+        'Changed Operating Hours: Monday start time 09:00 \u2192 10:00',
       ),
     ).not.toBeNull();
-    expect(screen.queryByText(/Schedule \d/)).toBeNull();
+    // The second row has no identity to label, so its change stays visible.
+    expect(screen.getByText('Schedule 9 end time:')).not.toBeNull();
   });
 
   it('shows the diff of an unlabelled schedule update instead of a line', () => {

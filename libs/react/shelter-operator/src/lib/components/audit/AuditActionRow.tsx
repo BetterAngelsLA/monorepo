@@ -7,6 +7,7 @@ import { AuditChangesView } from './AuditChangesView';
 import { AuditScheduleEvent } from './AuditScheduleEvent';
 import {
   formatScheduleEvent,
+  isScheduleEvent,
   withoutScheduleChanges,
   type ScheduleChangeTone,
 } from './auditSchedule';
@@ -42,37 +43,47 @@ export function AuditActionRow({ action }: { action: AuditAction }) {
 
   // Each schedule row renders as one line instead of a column-by-column diff
   // whose every pair has a null side. The same lines replace the merged changes
-  // those rows contributed to the card.
-  const scheduleLines = useMemo(
-    () =>
-      action.events
-        .map((event, index) => ({
-          index,
-          line: formatScheduleEvent(event),
-        }))
-        .filter(
-          (
-            entry,
-          ): entry is {
-            index: number;
-            line: NonNullable<ReturnType<typeof formatScheduleEvent>>;
-          } => entry.line !== null,
-        )
-        .sort(
-          (a, b) =>
-            TONE_ORDER[a.line.tone] - TONE_ORDER[b.line.tone] ||
-            a.index - b.index,
-        )
-        .map((entry) => entry.line),
-    [action.events],
-  );
+  // those rows contributed to the card — but only when *every* schedule row got
+  // a line: an unlabelled row (written before the server sent the slot identity)
+  // has no line, and stripping its change would hide it altogether.
+  const { scheduleLines, everyScheduleRowRendered } = useMemo(() => {
+    const entries = action.events.map((event, index) => ({
+      index,
+      schedule: isScheduleEvent(event),
+      line: formatScheduleEvent(event),
+    }));
+
+    const lines = entries
+      .filter(
+        (
+          entry,
+        ): entry is {
+          index: number;
+          schedule: true;
+          line: NonNullable<ReturnType<typeof formatScheduleEvent>>;
+        } => entry.line !== null,
+      )
+      .sort(
+        (a, b) =>
+          TONE_ORDER[a.line.tone] - TONE_ORDER[b.line.tone] ||
+          a.index - b.index,
+      )
+      .map((entry) => entry.line);
+
+    return {
+      scheduleLines: lines,
+      everyScheduleRowRendered:
+        lines.length > 0 &&
+        entries.every((entry) => !entry.schedule || entry.line !== null),
+    };
+  }, [action.events]);
 
   const otherChanges = useMemo(
     () =>
-      scheduleLines.length > 0
+      everyScheduleRowRendered
         ? withoutScheduleChanges(action.fieldChanges)
         : action.fieldChanges,
-    [action.fieldChanges, scheduleLines.length],
+    [action.fieldChanges, everyScheduleRowRendered],
   );
 
   // Summarized events (§32) are one-liners, not field changes: a shelter action
