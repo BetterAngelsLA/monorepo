@@ -1,4 +1,4 @@
-import { readHandoff } from './posthog';
+import { buildInitConfig, readHandoff } from './posthog';
 
 /**
  * The handoff parameters are a contract with the outreach app
@@ -36,4 +36,39 @@ it('returns nothing for an empty, unrelated, or absent fragment', () => {
     distinctId: undefined,
     sessionId: undefined,
   });
+});
+
+/**
+ * Replay is on for the outreach app and deliberately off here. `posthog-js`
+ * starts recording by itself when the project enables it, so the only thing
+ * holding that back is this option — assert it rather than trusting the default.
+ */
+it('never records this public site, even when the project enables replay', () => {
+  const config = buildInitConfig({
+    host: 'https://us.i.posthog.com',
+    handoff: {},
+  });
+
+  expect(config.disable_session_recording).toBe(true);
+});
+
+it('continues the handed-over session when one arrives', () => {
+  const config = buildInitConfig({
+    host: 'https://us.i.posthog.com',
+    handoff: { distinctId: 'distinct-1', sessionId: 'session-1' },
+  });
+
+  expect(config.bootstrap).toEqual({
+    distinctID: 'distinct-1',
+    sessionID: 'session-1',
+  });
+});
+
+it('does not bootstrap without a distinct id', () => {
+  const config = buildInitConfig({
+    host: 'https://us.i.posthog.com',
+    handoff: { sessionId: 'session-1' },
+  });
+
+  expect(config.bootstrap).toBeUndefined();
 });

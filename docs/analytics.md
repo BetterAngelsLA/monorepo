@@ -143,15 +143,32 @@ screen that renders client data).
 
 ### Consent
 
-Replay is materially more invasive than the timing and error data New Relic
-collects, and the basis for New Relic (`apps/betterangels/src/monitoring/privacy.ts`,
-privacy-policy acceptance at sign-in) was written for that narrower scope. The
-SDK defaults to opted in (`defaultOptIn: true`); this app does not gate it.
+**Decision: recordings are on for the app, off for the public shelter site.**
 
-This needs an explicit decision before replay is enabled for real users, and the
-outcome belongs here. If the policy requires a separate analytics opt-in, set
-`defaultOptIn: false` in `client.ts` and call `optIn()` where acceptance is
-recorded. Until then, treat replay storage as holding client-adjacent data.
+The app is a logged-in staff tool, the same basis New Relic already rests on
+(privacy-policy acceptance at sign-in, see
+`apps/betterangels/src/monitoring/privacy.ts`), and client data is masked per the
+table above plus `ReplayMask`. The SDK is left opted in (`defaultOptIn`), so
+recording covers every signed-in session.
+
+The shelter site is explicitly unlike that: it is public, anonymous, and renders
+the visitor's own location on a map. `disable_session_recording: true` in
+`apps/shelter-web/src/analytics/posthog.ts` keeps it that way, and a test pins
+it — without that option, flipping recordings on at project level would start
+recording the site silently, because that is the `posthog-js` default.
+
+Two things this decision does **not** cover, and both live outside this repo:
+
+1. **The PostHog project setting.** "Record user sessions" must be on in Project
+   Settings, or the native SDK declines to start and logs
+   `The native SDK refused to start session recording, usually because its remote
+config is not loaded yet`. That setting is also the remote kill switch: turn
+   it off and the app stops recording without a release.
+2. **The shelter site's privacy policy** is a Termly embed (see Known limits) and
+   does not mention analytics or recordings. It must before that site ships this.
+
+If the policy ever demands a separate analytics opt-in, set `defaultOptIn: false`
+in `client.ts` and call `optIn()` where acceptance is recorded.
 
 ## What must never be sent
 
@@ -194,6 +211,7 @@ just the dev server, since Vite inlines `VITE_*` at transform time.
   (Skia, `react-native-svg` canvases) — wrap those in `ReplayMask`.
 - shelter-web loads `posthog-js` as a separate chunk so it stays off the critical
   path for a map-heavy page; its `$pageview` therefore lands a moment after load.
+- shelter-web records no sessions by design — see Consent.
 - The shelter site's privacy policy is a Termly embed
   (`libs/react/shelter/src/lib/pages/policy/PolicyPage.tsx`), so it cannot be
   updated from this repo. **Someone with Termly access must add analytics to it

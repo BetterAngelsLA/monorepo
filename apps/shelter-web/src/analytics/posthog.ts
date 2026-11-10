@@ -79,20 +79,15 @@ export function initAnalytics(): void {
    */
   void import('posthog-js')
     .then(({ default: posthog }) => {
-      posthog.init(apiKey, {
-        api_host:
-          import.meta.env.VITE_SHELTER_POSTHOG_HOST || 'https://us.i.posthog.com',
-        // Continue the app's session when it handed one over. `sessionID` is
-        // only meaningful alongside `distinctID`.
-        ...(handoff.distinctId
-          ? {
-              bootstrap: {
-                distinctID: handoff.distinctId,
-                sessionID: handoff.sessionId,
-              },
-            }
-          : {}),
-      });
+      posthog.init(
+        apiKey,
+        buildInitConfig({
+          host:
+            import.meta.env.VITE_SHELTER_POSTHOG_HOST ||
+            'https://us.i.posthog.com',
+          handoff,
+        }),
+      );
 
       posthog.register({
         app: 'shelter-web',
@@ -108,4 +103,41 @@ export function initAnalytics(): void {
     .catch(() => {
       // Analytics must never break the page it is measuring.
     });
+}
+
+/**
+ * The options handed to `posthog.init`, factored out so the parts that are a
+ * privacy or contract decision can be asserted in a test rather than only read.
+ */
+export function buildInitConfig({
+  host,
+  handoff,
+}: {
+  host: string;
+  handoff: Handoff;
+}) {
+  return {
+    api_host: host,
+    /**
+     * Never record this site, even when the PostHog project has session
+     * recordings switched on.
+     *
+     * Recording here is not a config tweak: shelter.betterangels.la is public,
+     * renders the visitor's own location on a map, and is reached from a client
+     * record in the app. Turning project-level replay on would otherwise start
+     * recording it silently, because this is the posthog-js default. Enabling
+     * it would be a deliberate change with its own review.
+     */
+    disable_session_recording: true,
+    // Continue the app's session when it handed one over. `sessionID` is only
+    // meaningful alongside `distinctID`.
+    ...(handoff.distinctId
+      ? {
+          bootstrap: {
+            distinctID: handoff.distinctId,
+            sessionID: handoff.sessionId,
+          },
+        }
+      : {}),
+  };
 }
