@@ -41,9 +41,10 @@ class AccessClass(StrEnum):
     """
 
 
-# Kept as module-level names: call sites and checks compare against these, and
-# ``StrEnum`` members compare equal to their values, so existing string
-# literals in tests keep working.
+# The RFC 0002 / ADR 0001 prose names, kept as module-level aliases because the
+# older decisions and their tests use them.  New code should reach for
+# ``AccessClass`` directly; ``StrEnum`` members compare equal to their values, so
+# the two spellings cannot drift.
 WRITE_SHARED = AccessClass.SHARED
 WRITE_OBJECT = AccessClass.OBJECT
 
@@ -55,8 +56,8 @@ class Access:
     One declaration slot, separate from reach (``org_via``): ``None`` leaves the
     derived rules in charge, an explicit class names what the selectors enforce.
     Declared on :class:`BaseModel`, so a model that is *not* ``OrgScoped`` can
-    still name its class — the attachments do, and without the slot they could
-    only ever fail closed.
+    still name its class.  ``Attachment`` is that case: it declares no reach, so
+    without a class it could only ever fail closed.
 
     ``write`` values:
 
@@ -66,12 +67,13 @@ class Access:
     * :data:`AccessClass.SHARED` — any holder of the permission anywhere.
     * :data:`AccessClass.OBJECT` — reserved until the object arm has a consumer.
 
-    ``read`` is the read direction's reserved slot: ``ACCESS_GLOBAL`` lands with
-    its first consumer (a platform-only field), and ``permissions.E007`` refuses
-    any value here until ``visible`` implements it.
+    The read direction is not here yet: it lands with its first consumer (a
+    platform-only field) as ``read: AccessClass | None``.  Adding the field then
+    is backward compatible — every declaration constructs ``Access`` by keyword —
+    and keeping the container means the slot does not have to change shape when
+    it does.
     """
 
-    read: AccessClass | None = None
     write: AccessClass | None = None
 
 

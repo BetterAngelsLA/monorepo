@@ -346,16 +346,19 @@ def writable(qs: "QuerySet", user: "User", perm: str) -> "QuerySet":
     * **Fail-closed default** — all rows only for the global tier (``scopes``
       is ALL); ``WRITE_OBJECT`` sits here until the object arm wires grants.
     """
-    from common.models import WRITE_SHARED, Access, OrgScoped
+    from common.models import WRITE_SHARED, OrgScoped
 
     model = qs.model
-    access = getattr(model, "access", None) or Access()
+    # Both bases declare the slot, so ``None`` here means a model from outside
+    # the app (Django, pghistory) — treat it as undeclared rather than crash.
+    access = getattr(model, "access", None)
+    write = access.write if access is not None else None
     if issubclass(model, OrgScoped) and model.org_via is not None:
         return visible(qs, user, perm)
-    if access.write == WRITE_SHARED:
-        # A reachless model can name SHARED too — that is the slot's whole point
-        # for the attachments, which are not ``OrgScoped`` and would otherwise
-        # only ever fail closed.
+    if write == WRITE_SHARED:
+        # A reachless model can name SHARED too — that is why the slot lives on
+        # ``BaseModel``.  ``Attachment`` is the case: it declares no org reach,
+        # so without a class it could only ever fail closed.
         return qs if can_anywhere(user, perm) else qs.none()
     if not issubclass(model, OrgScoped):
         return qs.none()
@@ -398,10 +401,11 @@ def can_obj(user: "User", perm: str, obj: "Model") -> bool:
     is the gate.  The classes live in :func:`writable`'s docstring; an
     equivalence test pins the two so they cannot drift.
     """
-    from common.models import WRITE_SHARED, Access, OrgScoped
+    from common.models import WRITE_SHARED, OrgScoped
 
     model = obj.__class__
-    access = getattr(model, "access", None) or Access()
+    access = getattr(model, "access", None)
+    write = access.write if access is not None else None
     if issubclass(model, OrgScoped) and model.org_via is not None:
         # Own-org columns are read from the row; a hop reads just the org id
         # column from the database, because a cached parent can be stale after a
@@ -424,7 +428,7 @@ def can_obj(user: "User", perm: str, obj: "Model") -> bool:
         if row is None:
             return False
         return any(value in s for value in row if value is not None)
-    if access.write == WRITE_SHARED:
+    if write == WRITE_SHARED:
         return can_anywhere(user, perm)
     if not issubclass(model, OrgScoped):
         return False

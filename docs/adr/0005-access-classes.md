@@ -87,12 +87,13 @@ client-document cutover picks, it has to pick a class explicitly.
 These are named here so the gap is documented rather than implied by a slot that
 does nothing:
 
-- **The read direction.** `access.read` exists and E007 refuses every value.
-  The first consumer is the platform-only field (`ContactInfo`,
-  `shelters/models/shelter.py`), currently gated by a centralized
-  `can_globally` permission class rather than by declaration. When `visible()`
-  implements the read direction, `AccessClass.GLOBAL` becomes its first value
-  and that class can drop out.
+- **The read direction.** `Access` has no `read` field yet — shipping one that
+  only a check can reject is a placeholder, not an API. It lands with its first
+  consumer, the platform-only field (`ContactInfo`, `shelters/models/shelter.py`),
+  currently gated by a centralized `can_globally` permission class rather than by
+  declaration; `AccessClass.GLOBAL` becomes its first value and that class can
+  drop out. Adding the field is backward compatible — every declaration
+  constructs `Access` by keyword.
 - **`AccessClass.GLOBAL` as a *write* class** — the org-anchored narrowing
   ("global tier only", which reach cannot express).
 - **A rowless predicate** (`can_model`) so a caller can ask the class question

@@ -283,15 +283,20 @@ def _write_access_note(obj: "Model") -> str:
     from common.models import WRITE_OBJECT, WRITE_SHARED, OrgScoped
 
     model = type(obj)
-    if not issubclass(model, OrgScoped):
-        return "write scope: the model does not declare OrgScoped — can_obj() fails closed (no one may write)"
-    if model.org_via is not None:
+    access = getattr(model, "access", None)
+    write = access.write if access is not None else None
+
+    if issubclass(model, OrgScoped) and model.org_via is not None:
         return "write scope ORG — the row must sit in an org the user holds this permission in (scopes())"
-    write = model.access.write
     if write == WRITE_SHARED:
         return "write scope SHARED — any holder of the permission may act (can_anywhere)"
     if write == WRITE_OBJECT:
         return "write scope OBJECT — per-record object grants"
+    if not issubclass(model, OrgScoped):
+        return (
+            "write scope fail-closed — the model declares no OrgScoped reach and no write class: "
+            "can_obj() admits no one"
+        )
     return "write scope fail-closed — platform-shared model with no declared write class: only the global tier may act"
 
 

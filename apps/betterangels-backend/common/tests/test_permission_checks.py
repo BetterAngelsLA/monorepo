@@ -220,17 +220,6 @@ class AccessDeclarationChecksTestCase(TestCase):
         self.assertEqual(len(errors), 1)
         self.assertIn("not an AccessClass", errors[0].msg)
 
-    def test_e007_fires_when_a_read_class_is_declared_before_the_slice(self) -> None:
-        from unittest.mock import patch
-
-        from clients.models import ClientProfile
-
-        with patch.object(ClientProfile, "access", Access(read=cast("AccessClass", "global"))):
-            errors = _errors_with(check_access_declarations(None), "permissions.E007")
-
-        self.assertEqual(len(errors), 1)
-        self.assertIn("reserved", errors[0].msg)
-
     def test_e007_fires_when_the_class_is_an_unrecognized_string(self) -> None:
         from unittest.mock import patch
 

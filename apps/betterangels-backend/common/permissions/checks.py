@@ -11,7 +11,7 @@ there is nothing to guard.
 
 from __future__ import annotations
 
-from typing import Any, cast
+from typing import Any
 
 from django.core.checks import Error, Tags, register
 
@@ -260,8 +260,6 @@ def check_access_declarations(app_configs: Any, **kwargs: Any) -> list[Error]:
     * ``AccessClass.OBJECT`` stays reserved until the object arm turns on with
       the clients cutover (ADR 0001 §2.5) — declaring it today would route
       writes to a predicate nothing can satisfy;
-    * ``access.read`` is reserved until ``visible`` implements the read
-      direction.
     """
     from django.apps import apps
 
@@ -285,27 +283,17 @@ def check_access_declarations(app_configs: Any, **kwargs: Any) -> list[Error]:
             )
             continue
 
-        if access.read is not None:
-            errors.append(
-                Error(
-                    f"{model.__name__}.access.read = {access.read!r} is reserved.",
-                    hint="The read direction lands with its first consumer; declare only access.write for now.",
-                    obj=model,
-                    id="permissions.E007",
-                )
-            )
-
-        write = access.write
+        # ``Access.write`` is typed ``AccessClass | None``, so a type checker
+        # sees the isinstance below as unreachable — it is the guard for a
+        # declaration edited after the fact, which is the only way a bad value
+        # reaches this function.
+        write: object = access.write
         if write is None:
             continue
-        # ``Access.write`` is typed ``AccessClass | None``, so this reads as
-        # unreachable to a type checker — it is the guard for a declaration
-        # edited at runtime, which is the only way a bad value can reach here.
-        bad_write = cast("object", write)
-        if not isinstance(bad_write, AccessClass):
+        if not isinstance(write, AccessClass):
             errors.append(
                 Error(
-                    f"{model.__name__}.access.write = {bad_write!r} is not an AccessClass.",
+                    f"{model.__name__}.access.write = {write!r} is not an AccessClass.",
                     hint="Use the enum: AccessClass.SHARED (or .OBJECT once the arm lands).",
                     obj=model,
                     id="permissions.E007",
