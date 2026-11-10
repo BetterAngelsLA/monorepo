@@ -8,6 +8,3 @@ export const ShelterSearchEvent = {
   Failed: 'shelter_search_failed',
   Landed: 'shelter_search_landed',
 } as const;
-
-export type ShelterSearchEventName =
-  (typeof ShelterSearchEvent)[keyof typeof ShelterSearchEvent];
