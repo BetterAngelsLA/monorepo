@@ -370,6 +370,24 @@ class ExplainPermissionTestCase(TestCase):
         self.assertTrue(result.cut_over)
         self.assertFalse(any("has not cut over" in note for note in result.notes))
 
+    def test_explain_accepts_a_meta_only_permission(self) -> None:
+        """FAILS until ``_split_perm`` checks the same catalog as ``_perm_parts``.
+
+        ``notes.view_note_private_details`` is declared in ``Note.Meta.permissions``
+        and carried by the scoped Caseworker role, but it is absent from the
+        product-modeled catalog.  The enforcement path (``scopes``/``can``) accepts
+        it through the union catalog, so the debugger must too — otherwise it
+        refuses to explain exactly the kind of denial it exists for.
+        """
+        from notes.permissions import PrivateDetailsPermissions
+
+        holder = baker.make(User)
+
+        result = explain(holder, PrivateDetailsPermissions.VIEW, org=self.org_a)
+
+        self.assertFalse(result.verdict)
+        self.assertEqual(result.verdict, can(holder, PrivateDetailsPermissions.VIEW, org=self.org_a))
+
     # ── delegated arm ─────────────────────────────────────────────────────
 
     def test_delegation_allows_where_the_user_acts(self) -> None:
@@ -434,6 +452,31 @@ class ExplainPermissionTestCase(TestCase):
         self.assertTrue(result.verdict)
         self.assertEqual(result.verdict, can_obj(alice, ClientProfile.perms.VIEW, client))
         self.assertTrue(any("SHARED" in note for note in result.notes))
+
+    def test_reachless_model_with_a_declared_class_explains_as_shared(self) -> None:
+        """Pins the explain fix: a reachless model that names SHARED says so.
+
+        ``_write_access_note`` used to report "fails closed" for any model without
+        ``OrgScoped`` before reading ``access.write``, contradicting ``can_obj`` in
+        the same call.  No model declares this combination yet, so the branch needs
+        a patched declaration; without this test the fix can be removed silently.
+        """
+        from unittest.mock import patch
+
+        from common.models import Access, AccessClass, Attachment
+
+        alice = baker.make(User)
+        grant_create(user=alice, role=self.shelter_role, scope_org=self.org_a)
+        attachment = baker.make(Attachment)
+
+        with patch.object(Attachment, "access", Access(write=AccessClass.SHARED)):
+            result = explain(alice, Shelter.perms.VIEW, obj=attachment)
+
+            # Inside the patch: after it exits, ``Attachment`` is reachless again
+            # and ``can_obj`` would fail closed.
+            self.assertTrue(result.verdict)
+            self.assertEqual(result.verdict, can_obj(alice, Shelter.perms.VIEW, attachment))
+            self.assertTrue(any("SHARED" in note for note in result.notes))
 
     # ── input validation ──────────────────────────────────────────────────
 

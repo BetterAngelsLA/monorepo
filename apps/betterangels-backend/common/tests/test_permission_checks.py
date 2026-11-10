@@ -231,3 +231,43 @@ class AccessDeclarationChecksTestCase(TestCase):
 
         self.assertEqual(len(errors), 1)
         self.assertIn("not an AccessClass", errors[0].msg)
+
+    def test_e007_fires_when_access_is_not_an_access_declaration(self) -> None:
+        """Pins the guard a hand-edited declaration hits.
+
+        The type system refuses this in normal code, so E007 is the only runtime
+        guard for a class body edited after the fact.  Deleting the ``isinstance``
+        branch (or its ``continue``) must fail here.
+        """
+        from unittest.mock import patch
+
+        from clients.models import ClientProfile
+
+        with patch.object(ClientProfile, "access", "WRITE_SHARED"):
+            errors = _errors_with(check_access_declarations(None), "permissions.E007")
+
+        self.assertEqual(len(errors), 1)
+        self.assertIn("is not an Access declaration", errors[0].msg)
+
+    def test_e007_validates_a_declaration_inherited_from_an_abstract_base(self) -> None:
+        """FAILS until E007 resolves ``access`` through the MRO.
+
+        ``check_access_declarations`` reads ``model.__dict__`` only, so a
+        declaration on an abstract (non-model) base — enforced on every concrete
+        subclass, never visited by ``apps.get_models()`` — escapes the deploy
+        check.  If the own-declaration-only policy is deliberate, delete this test
+        and document the policy on E007 instead.
+        """
+        from unittest.mock import patch
+
+        class _AbstractMixin:  # a mixin, not a model: absent from apps.get_models()
+            access = "SHARED"  # the hand-edit E007 exists to catch
+
+        class _Concrete(_AbstractMixin):
+            pass
+
+        with patch("django.apps.apps.get_models", return_value=[_Concrete]):
+            errors = _errors_with(check_access_declarations(None), "permissions.E007")
+
+        self.assertEqual(len(errors), 1)
+        self.assertIn("is not an Access declaration", errors[0].msg)
