@@ -458,6 +458,30 @@ class SyncSchedulesTestCase(TestCase):
         self.slot.refresh_from_db()
         self.assertEqual(self.slot.start_time, datetime.time(10, 0))
 
+    def test_an_update_keeps_fields_the_payload_cannot_express(self) -> None:
+        """``demographic`` is not on ScheduleInput, so an update must preserve it.
+
+        The id-carrying entry makes this an in-place update: no delete, no create,
+        no audit churn, and the stored FK survives because ``_sync_schedules``
+        only writes the keys the payload carries.
+        """
+        demographic = Demographic.objects.create(name=DemographicChoices.COUPLES)
+        self.slot.demographic = demographic
+        self.slot.save()
+        original_pk = self.slot.pk
+
+        _sync_schedules(
+            self.shelter,
+            [self._entry(id=self.slot.pk, start_time=datetime.time(10, 0))],
+            schedule_type=ScheduleTypeChoices.OPERATING,
+        )
+
+        self.slot.refresh_from_db()
+        self.assertEqual(Schedule.objects.filter(shelter=self.shelter).count(), 1)
+        self.assertEqual(self.slot.pk, original_pk)
+        self.assertEqual(self.slot.demographic_id, demographic.pk)
+        self.assertEqual(self.slot.start_time, datetime.time(10, 0))
+
     def test_unchanged_entry_does_not_touch_the_row(self) -> None:
         """A save that matches what is stored must not date the row or log an edit."""
         before = self.slot.updated_at

@@ -95,6 +95,11 @@ describe('DateOrRangePicker', () => {
     render(<Harness initial={DATE_RANGE} />);
 
     fireEvent.click(screen.getByRole('button', { name: /remove end date/i }));
+
+    // Collapsing really does clear the end date in the stored state, so the
+    // restore below is the ref doing the work, not a retained field.
+    expect(pickerState()).toBe('2026-12-24|2026-12-24|false');
+
     fireEvent.click(screen.getByRole('button', { name: /add end date/i }));
 
     // The user chose 12-26; collapsing the range must not cost them that.
