@@ -185,6 +185,9 @@ class Schedule(OrgScoped, BaseModel):
                 fields=["shelter", "schedule_type", "day", "start_time", "start_date"],
                 name="unique_schedule_per_shelter_type_day_time_date",
                 nulls_distinct=False,
+                # Deferred so an upsert can swap two slots' times inside one
+                # transaction: the intermediate state is briefly a duplicate.
+                deferrable=models.Deferrable.DEFERRED,
             ),
             models.CheckConstraint(
                 condition=(
