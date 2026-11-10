@@ -72,14 +72,16 @@ can still run the app.
 
 ## Session replay
 
-Enabled on iOS and Android only. It needs `@posthog/react-native-plugin` plus
-the `posthog-react-native/expo` config plugin, so:
+Enabled on iOS and Android only. It needs `@posthog/react-native-plugin`, which
+autolinks like any other native module — **no Expo config plugin**, so there is
+nothing to add to `app.config.js` and no prebuild step for a developer to run.
+EAS prebuilds on the worker as usual.
 
 - **Expo Go cannot load it.** Use a development build (`eas build --profile
 development` or `npx expo run:ios`).
-- **Android needs API 26+.** `app.config.js` declares `minSdkVersion: 26`
-  explicitly through `expo-build-properties` so a future default change cannot
-  silently stop recording.
+- **Android needs API 26+.** The app keeps Expo's default `minSdkVersion` (24),
+  so recording is simply absent on API 24–25 devices rather than those devices
+  being dropped. Do not raise `minSdkVersion` for this.
 - Recordings are **screenshots**, not wireframes. The React Native SDK has no
   view-hierarchy serialiser.
 
@@ -141,6 +143,7 @@ just the dev server, since Vite inlines `VITE_*` at transform time.
   `bootstrap` accepts `distinctId` but not `sessionId`, so a future deep link can
   join the person but not the session.
 - Replay covers the app only. shelter-web sent analytics but no recordings.
-- Android: no replay on API 25 and below, which is now excluded by `minSdk`.
+- Android: no replay on API 25 and below. Those devices still run the app; their
+  sessions are captured as events, just not as recordings.
 - iOS: PostHog's native replay masks text but cannot mask custom-painted content
   (Skia, `react-native-svg` canvases) — wrap those in `PostHogMaskView`.

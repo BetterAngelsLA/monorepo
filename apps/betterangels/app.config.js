@@ -110,9 +110,6 @@ export default {
     plugins: [
       'newrelic-react-native-agent',
       '@config-plugins/react-native-pdf',
-      // Wires the native modules PostHog session replay needs. Analytics alone
-      // works without it; replay does not, and Expo Go cannot load it.
-      'posthog-react-native/expo',
       [
         'expo-build-properties',
         {
@@ -129,12 +126,6 @@ export default {
               OTHER_LDFLAGS:
                 '$(inherited) -weak_framework WidgetKit -weak_framework ActivityKit',
             },
-          },
-          android: {
-            // PostHog session replay requires API 26+. Declared explicitly so a
-            // future default change cannot silently drop recording on devices
-            // the build still supports.
-            minSdkVersion: 26,
           },
         },
       ],
