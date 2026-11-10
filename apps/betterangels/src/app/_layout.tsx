@@ -7,6 +7,7 @@ import { Platform } from 'react-native';
 
 import { EnvironmentSwitcherProvider } from '@monorepo/ba-platform';
 import {
+  AnalyticsIdentity,
   AppUpdatePrompt,
   ErrorCrashView,
   useAnalyticsInit,
@@ -69,6 +70,7 @@ export default function RootLayout() {
         >
           <BaDataProviders>
             <AppUpdatePrompt />
+            <AnalyticsIdentity />
             <StatusBar style={Platform.OS === 'ios' ? 'light' : 'auto'} />
             <AppRoutesStack />
           </BaDataProviders>

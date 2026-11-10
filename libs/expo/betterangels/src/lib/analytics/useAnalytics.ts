@@ -5,7 +5,7 @@ import type { ShelterHandoff } from './shelterHandoff';
 
 type Capture = <E extends AnalyticsEventName>(
   event: E,
-  properties: AnalyticsEventProperties[E],
+  properties?: AnalyticsEventProperties[E],
 ) => void;
 
 type GetIdentity = () => ShelterHandoff;

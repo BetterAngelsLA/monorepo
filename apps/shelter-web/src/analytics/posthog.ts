@@ -1,5 +1,3 @@
-import posthog from 'posthog-js';
-
 /**
  * PostHog for the public shelter site.
  *
@@ -16,15 +14,21 @@ import posthog from 'posthog-js';
  */
 const SHELTER_SEARCH_LANDED_EVENT = 'shelter_search_landed';
 
-const HANDOFF_DISTINCT_ID_PARAM = 'ba_did';
-const HANDOFF_SESSION_ID_PARAM = 'ba_sid';
+export const HANDOFF_DISTINCT_ID_PARAM = 'ba_did';
+export const HANDOFF_SESSION_ID_PARAM = 'ba_sid';
 
-type Handoff = {
+export type Handoff = {
   distinctId?: string;
   sessionId?: string;
 };
 
-function readHandoff(hash: string): Handoff {
+/**
+ * Reads the handoff out of a `window.location.hash` value.
+ *
+ * Exported for the test that pins the parameter names: they are a contract with
+ * the app, and nothing else in this app reads them.
+ */
+export function readHandoff(hash: string): Handoff {
   const params = new URLSearchParams(hash.replace(/^#/, ''));
 
   return {
@@ -46,6 +50,15 @@ function stripHandoffFromUrl(): void {
 }
 
 export function initAnalytics(): void {
+  const handoff = readHandoff(window.location.hash);
+  const isHandoff = Boolean(handoff.distinctId || handoff.sessionId);
+
+  // Before the key check: the fragment is an identifier in the address bar
+  // whether or not this build can send events, so it always comes out.
+  if (isHandoff) {
+    stripHandoffFromUrl();
+  }
+
   const apiKey = import.meta.env.VITE_POSTHOG_API_KEY;
 
   if (!apiKey) {
@@ -58,32 +71,41 @@ export function initAnalytics(): void {
     return;
   }
 
-  const handoff = readHandoff(window.location.hash);
-  const isHandoff = Boolean(handoff.distinctId || handoff.sessionId);
+  /**
+   * Loaded on demand so posthog-js stays out of the first chunk. This page is
+   * a map, and the analytics bundle has no business competing with it for the
+   * main thread before first paint. The cost is that `$pageview` is captured a
+   * moment after load rather than during it.
+   */
+  void import('posthog-js')
+    .then(({ default: posthog }) => {
+      posthog.init(apiKey, {
+        api_host:
+          import.meta.env.VITE_POSTHOG_HOST || 'https://us.i.posthog.com',
+        // Continue the app's session when it handed one over. `sessionID` is
+        // only meaningful alongside `distinctID`.
+        ...(handoff.distinctId
+          ? {
+              bootstrap: {
+                distinctID: handoff.distinctId,
+                sessionID: handoff.sessionId,
+              },
+            }
+          : {}),
+      });
 
-  stripHandoffFromUrl();
+      posthog.register({
+        app: 'shelter-web',
+        environment: import.meta.env.MODE,
+      });
 
-  posthog.init(apiKey, {
-    api_host: import.meta.env.VITE_POSTHOG_HOST || 'https://us.i.posthog.com',
-    // Continue the app's session when it handed one over. `sessionID` is only
-    // meaningful alongside `distinctID`.
-    ...(handoff.distinctId
-      ? {
-          bootstrap: {
-            distinctID: handoff.distinctId,
-            sessionID: handoff.sessionId,
-          },
-        }
-      : {}),
-  });
-
-  posthog.register({
-    app: 'shelter-web',
-    environment: import.meta.env.MODE,
-  });
-
-  posthog.capture(SHELTER_SEARCH_LANDED_EVENT, {
-    handoff: isHandoff,
-    entry_path: `${window.location.pathname}${window.location.search}`,
-  });
+      posthog.capture(SHELTER_SEARCH_LANDED_EVENT, {
+        handoff: Boolean(handoff.sessionId),
+        handoff_person: Boolean(handoff.distinctId),
+        entry_path: window.location.pathname,
+      });
+    })
+    .catch(() => {
+      // Analytics must never break the page it is measuring.
+    });
 }

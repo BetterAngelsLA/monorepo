@@ -12,6 +12,7 @@
  */
 export const AnalyticsEvent = {
   ShelterSearchOpened: 'shelter_search_opened',
+  ShelterSearchFailed: 'shelter_search_failed',
 } as const;
 
 export type AnalyticsEventName =
@@ -24,10 +25,28 @@ export const ShelterSearchSource = {
 export type ShelterSearchSource =
   (typeof ShelterSearchSource)[keyof typeof ShelterSearchSource];
 
+/**
+ * The two handoff flags are separate because they mean different things on the
+ * receiving side, and only one of them decides whether the funnel's two steps
+ * share a session:
+ *
+ * - `handoff` — the session id travelled, so shelter-web continues *this*
+ *   session. False means step 2 will be a new session, even though the same
+ *   person may have arrived.
+ * - `handoff_person` — the distinct id travelled, so the visit is attributed to
+ *   the same person either way.
+ */
+export type ShelterSearchHandoffProperties = {
+  handoff: boolean;
+  handoff_person: boolean;
+};
+
 export type AnalyticsEventProperties = {
   [AnalyticsEvent.ShelterSearchOpened]: {
     source: ShelterSearchSource;
-    /** True when the shelter URL carried this session's PostHog identity. */
-    handoff: boolean;
+  } & ShelterSearchHandoffProperties;
+  /** The browser refused to open, so no landing event should be expected. */
+  [AnalyticsEvent.ShelterSearchFailed]: {
+    source: ShelterSearchSource;
   };
 };

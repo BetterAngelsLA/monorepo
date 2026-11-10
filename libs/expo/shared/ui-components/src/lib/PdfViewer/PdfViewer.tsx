@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View } from 'react-native';
 import PDF from 'react-native-pdf';
 import Loading from '../Loading';
+import { ReplayMask } from '../ReplayMask';
 import TextMedium from '../TextMedium';
 
 import * as Crypto from 'expo-crypto';
@@ -149,7 +150,7 @@ export default function PdfViewer({
   }
 
   return (
-    <View style={{ flex: 1 }}>
+    <ReplayMask style={{ flex: 1 }}>
       <PDF
         key={localUri || url} // force clean remount when source path changes
         source={{
@@ -166,7 +167,7 @@ export default function PdfViewer({
           onError?.(e);
         }}
       />
-    </View>
+    </ReplayMask>
   );
 }
 

@@ -51,6 +51,7 @@ const analytics = vi.hoisted(() => {
     state: {
       client: null as null | {
         capture: typeof capture;
+        flush: () => Promise<void>;
         getDistinctId: () => string;
         getSessionId: () => string;
       },
@@ -69,6 +70,7 @@ beforeEach(() => {
   apiConfig.apiUrl = 'https://api.prod.betterangels.la';
   analytics.state.client = {
     capture: analytics.capture,
+    flush: () => Promise.resolve(),
     getDistinctId: () => 'distinct-1',
     getSessionId: () => 'session-1',
   };
@@ -92,6 +94,7 @@ it('records the tap with the source and whether the session travelled', async ()
   expect(analytics.capture).toHaveBeenCalledWith('shelter_search_opened', {
     source: 'client_profile',
     handoff: true,
+    handoff_person: true,
   });
 });
 
@@ -114,4 +117,32 @@ it('renders nothing when no shelter site matches the environment', async () => {
   await render(<FindShelterButton />);
 
   expect(screen.queryByText('Find Shelter')).toBeNull();
+});
+
+it('reports a failed open instead of leaving a start with no end', async () => {
+  vi.mocked(WebBrowser.openBrowserAsync).mockRejectedValueOnce(
+    new Error('no browser'),
+  );
+
+  await render(<FindShelterButton />);
+
+  await fireEvent.press(screen.getByText('Find Shelter'));
+
+  expect(analytics.capture).toHaveBeenCalledWith('shelter_search_failed', {
+    source: 'client_profile',
+  });
+  expect(
+    screen.getByText('Could not open the shelter search. Please try again.'),
+  ).toBeOnTheScreen();
+});
+
+it('does not block the tap on a slow analytics flush', async () => {
+  // The flush is bounded; a hung network must not hold the screen.
+  analytics.state.client!.flush = () => new Promise<void>(() => undefined);
+
+  await render(<FindShelterButton />);
+
+  await fireEvent.press(screen.getByText('Find Shelter'));
+
+  expect(WebBrowser.openBrowserAsync).toHaveBeenCalled();
 });

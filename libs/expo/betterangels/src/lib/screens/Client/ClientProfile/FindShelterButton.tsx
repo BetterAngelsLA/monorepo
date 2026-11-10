@@ -8,6 +8,7 @@ import { StyleSheet, View } from 'react-native';
 import {
   AnalyticsEvent,
   ShelterSearchSource,
+  flushAnalytics,
   useAnalytics,
 } from '../../../analytics';
 import { withShelterHandoff } from '../../../analytics/shelterHandoff';
@@ -47,12 +48,23 @@ export function FindShelterButton() {
 
     capture(AnalyticsEvent.ShelterSearchOpened, {
       source: ShelterSearchSource.ClientProfile,
-      handoff: Boolean(identity.distinctId && identity.sessionId),
+      handoff: Boolean(identity.sessionId),
+      handoff_person: Boolean(identity.distinctId),
     });
+
+    // Opening a browser can suspend this app before the client's batch timer
+    // fires; without this the event that starts the funnel is the one that
+    // gets lost. Bounded, so a slow network cannot stall the tap.
+    await flushAnalytics();
 
     try {
       await WebBrowser.openBrowserAsync(target);
     } catch {
+      // No landing event will follow this press, so say so rather than leaving
+      // a start with no end.
+      capture(AnalyticsEvent.ShelterSearchFailed, {
+        source: ShelterSearchSource.ClientProfile,
+      });
       setError(true);
     }
   }
@@ -82,8 +94,12 @@ export function FindShelterButton() {
 }
 
 const styles = StyleSheet.create({
+  /**
+   * Full-bleed on purpose: the profile cards below are `width: '100%'` with no
+   * horizontal margin, so any horizontal padding here would make the button
+   * narrower than the stack it sits on.
+   */
   container: {
-    paddingHorizontal: Spacings.sm,
-    marginBottom: Spacings.xs,
+    marginBottom: Spacings.sm,
   },
 });
