@@ -9,16 +9,17 @@ import { Platform } from 'react-native';
  * on. A missing key leaves the app silent rather than sending events to a
  * default project.
  *
- * Key and host are public by design: they ship inside the JS bundle, exactly
- * like the New Relic browser license key.
+ * The key is public by design: it ships inside the JS bundle, exactly like the
+ * New Relic browser license key.
+ *
+ * No host is configured: the SDK defaults to US Cloud. Point it at
+ * `https://eu.i.posthog.com` (or a self-hosted instance) in `client.ts` if the
+ * project ever moves region.
  */
 const apiKey = process.env['EXPO_PUBLIC_POSTHOG_API_KEY'] ?? '';
-const host =
-  process.env['EXPO_PUBLIC_POSTHOG_HOST'] ?? 'https://us.i.posthog.com';
 
 export const analyticsConfig = {
   apiKey,
-  host,
   enabled: apiKey.length > 0,
   /** Every event carries these, so the app and shelter-web share filters. */
   commonProperties: {

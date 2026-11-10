@@ -44,17 +44,13 @@ it('returns nothing for an empty, unrelated, or absent fragment', () => {
  * holding that back is this option — assert it rather than trusting the default.
  */
 it('never records this public site, even when the project enables replay', () => {
-  const config = buildInitConfig({
-    host: 'https://us.i.posthog.com',
-    handoff: {},
-  });
+  const config = buildInitConfig({ handoff: {} });
 
   expect(config.disable_session_recording).toBe(true);
 });
 
 it('continues the handed-over session when one arrives', () => {
   const config = buildInitConfig({
-    host: 'https://us.i.posthog.com',
     handoff: { distinctId: 'distinct-1', sessionId: 'session-1' },
   });
 
@@ -66,7 +62,6 @@ it('continues the handed-over session when one arrives', () => {
 
 it('does not bootstrap without a distinct id', () => {
   const config = buildInitConfig({
-    host: 'https://us.i.posthog.com',
     handoff: { sessionId: 'session-1' },
   });
 

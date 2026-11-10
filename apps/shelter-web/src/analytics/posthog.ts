@@ -84,15 +84,7 @@ export function initAnalytics(): void {
    */
   void import('posthog-js')
     .then(({ default: posthog }) => {
-      posthog.init(
-        apiKey,
-        buildInitConfig({
-          host:
-            import.meta.env.VITE_POSTHOG_HOST ||
-            'https://us.i.posthog.com',
-          handoff,
-        }),
-      );
+      posthog.init(apiKey, buildInitConfig({ handoff }));
 
       posthog.register({
         app: 'shelter-web',
@@ -114,15 +106,8 @@ export function initAnalytics(): void {
  * The options handed to `posthog.init`, factored out so the parts that are a
  * privacy or contract decision can be asserted in a test rather than only read.
  */
-export function buildInitConfig({
-  host,
-  handoff,
-}: {
-  host: string;
-  handoff: Handoff;
-}) {
+export function buildInitConfig({ handoff }: { handoff: Handoff }) {
   return {
-    api_host: host,
     /**
      * Never record this site, even when the PostHog project has session
      * recordings switched on.

@@ -29,7 +29,6 @@ export function getAnalyticsClient(): PostHog | null {
   client =
     analyticsConfig.enabled && hasRuntime()
       ? new PostHog(analyticsConfig.apiKey, {
-          host: analyticsConfig.host,
           /**
            * AsyncStorage is the only persistence backend that works on every
            * target this app ships to. The SDK's default file persistence needs
