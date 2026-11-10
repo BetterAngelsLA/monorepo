@@ -578,7 +578,11 @@ class SyncSchedulesTestCase(TestCase):
             )
 
     def test_swaps_two_slots_times_in_one_payload(self) -> None:
-        """The unique key is deferred, so a swap does not trip it mid-flight."""
+        """The unique key is deferred, so a swap does not trip it mid-flight.
+
+        An immediate constraint would raise on the first update, while the other
+        row still holds the time being moved to.
+        """
         second = Schedule.objects.create(
             shelter=self.shelter,
             schedule_type=ScheduleTypeChoices.OPERATING,

@@ -214,11 +214,11 @@ class ScheduleModelTestCase(TestCase):
         )
 
     def test_unique_constraint_same_type(self) -> None:
-        """A duplicate slot key is rejected at commit.
+        """A duplicate slot key is rejected, forcing the deferred check to run.
 
-        The constraint is deferred so an upsert can swap two slots' times inside
-        one transaction, so the check is forced here instead of firing on the
-        INSERT.
+        This is the rejection case only: an `IntegrityError` is raised whether the
+        constraint is immediate or deferred. `test_time_swap_needs_deferred_constraint`
+        is what pins the deferral.
         """
         Schedule.objects.create(
             shelter=self.shelter,
@@ -237,6 +237,40 @@ class ScheduleModelTestCase(TestCase):
             )
             with connection.cursor() as cursor:
                 cursor.execute("SET CONSTRAINTS ALL IMMEDIATE")
+
+    def test_time_swap_needs_deferred_constraint(self) -> None:
+        """The deferral is load-bearing: a swap is briefly a duplicate key.
+
+        With an immediate constraint the first UPDATE collides with the row that
+        still holds the other slot's time, so this passes only while the slot key
+        is deferred. The rows are swapped inside one transaction, as an upsert
+        does when two slots exchange hours.
+        """
+        first = Schedule.objects.create(
+            shelter=self.shelter,
+            schedule_type=ScheduleTypeChoices.OPERATING,
+            day=DayOfWeekChoices.MONDAY,
+            start_time=datetime.time(9, 0),
+            end_time=datetime.time(17, 0),
+        )
+        second = Schedule.objects.create(
+            shelter=self.shelter,
+            schedule_type=ScheduleTypeChoices.OPERATING,
+            day=DayOfWeekChoices.MONDAY,
+            start_time=datetime.time(13, 0),
+            end_time=datetime.time(17, 0),
+        )
+
+        with transaction.atomic():
+            first.start_time = datetime.time(13, 0)
+            first.save()
+            second.start_time = datetime.time(9, 0)
+            second.save()
+
+        first.refresh_from_db()
+        second.refresh_from_db()
+        self.assertEqual(first.start_time, datetime.time(13, 0))
+        self.assertEqual(second.start_time, datetime.time(9, 0))
 
     def test_different_types_same_day_allowed(self) -> None:
         Schedule.objects.create(
