@@ -34,7 +34,7 @@ it('does not bootstrap without a distinct id', () => {
 it('sends through the first-party proxy so blockers do not match the domain', () => {
   const config = buildInitConfig({ handoff: {} });
 
-  expect(config.api_host).toBe('https://e.betterangels.la');
+  expect(config.api_host).toBe('https://k.betterangels.la');
   // The toolbar and in-app links must still resolve to PostHog itself.
   expect(config.ui_host).toBe('https://us.posthog.com');
 });

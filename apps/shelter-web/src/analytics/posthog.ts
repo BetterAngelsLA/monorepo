@@ -77,7 +77,7 @@ export function initAnalytics(): void {
  * ingestion, `/static/*` and `/array/*`; `ui_host` stays PostHog's own domain so
  * the toolbar and links resolve.
  */
-const POSTHOG_PROXY_HOST = 'https://e.betterangels.la';
+const POSTHOG_PROXY_HOST = 'https://k.betterangels.la';
 const POSTHOG_UI_HOST = 'https://us.posthog.com';
 
 export function buildInitConfig({
