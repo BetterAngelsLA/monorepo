@@ -1,4 +1,4 @@
-import type { ShelterHandoff } from '@monorepo/shared/analytics';
+import type { ShelterHandoff } from '@monorepo/shared/shelter-handoff';
 import { useCallback } from 'react';
 import { getAnalyticsClient } from './client';
 import type { AnalyticsEventName, AnalyticsEventProperties } from './events';

@@ -2,7 +2,7 @@ import {
   ShelterSearchEvent,
   decodeShelterHandoff,
   type ShelterHandoff,
-} from '@monorepo/shared/analytics';
+} from '@monorepo/shared/shelter-handoff';
 
 /**
  * PostHog for the public shelter site.
@@ -14,7 +14,7 @@ import {
  * of starting a new one.
  *
  * The parameter names, the event name and the decoder all come from
- * `@monorepo/shared/analytics`, which the app writes with — that module is the
+ * `@monorepo/shared/shelter-handoff`, which the app writes with — that module is the
  * contract, this one is only this app's half of it.
  */
 

@@ -1,11 +1,11 @@
-import { ShelterSearchEvent } from '@monorepo/shared/analytics';
+import { ShelterSearchEvent } from '@monorepo/shared/shelter-handoff';
 
 /**
  * Event names and their properties for this app.
  *
  * `shelter_search_opened` and `shelter_search_landed` are a pair: the first is
  * sent here, the second by shelter-web, and the funnel across both is the whole
- * point of the handoff. The names live in `@monorepo/shared/analytics` so the
+ * point of the handoff. The names live in `@monorepo/shared/shelter-handoff` so the
  * two apps cannot disagree about them.
  *
  * Everything in this file must be free of client data — no names, notes, dates
