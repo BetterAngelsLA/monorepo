@@ -59,12 +59,12 @@ export function initAnalytics(): void {
     stripHandoffFromUrl();
   }
 
-  const apiKey = import.meta.env.VITE_SHELTER_POSTHOG_API_KEY;
+  const apiKey = import.meta.env.VITE_POSTHOG_API_KEY;
 
   if (!apiKey) {
     if (import.meta.env.DEV) {
       console.warn(
-        '[analytics] VITE_SHELTER_POSTHOG_API_KEY is not set; analytics is disabled.',
+        '[analytics] VITE_POSTHOG_API_KEY is not set; analytics is disabled.',
       );
     }
 
@@ -83,7 +83,7 @@ export function initAnalytics(): void {
         apiKey,
         buildInitConfig({
           host:
-            import.meta.env.VITE_SHELTER_POSTHOG_HOST ||
+            import.meta.env.VITE_POSTHOG_HOST ||
             'https://us.i.posthog.com',
           handoff,
         }),

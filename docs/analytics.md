@@ -68,15 +68,15 @@ flushes itself.
 
 ## Configuration
 
-| Variable                       | Used by     | Notes                                                                    |
-| ------------------------------ | ----------- | ------------------------------------------------------------------------ |
-| `EXPO_PUBLIC_POSTHOG_API_KEY`  | app         | Public project token, inlined into the bundle. Unset disables analytics. |
-| `EXPO_PUBLIC_POSTHOG_HOST`     | app         | Set per build profile in `eas.json`.                                     |
-| `VITE_SHELTER_POSTHOG_API_KEY` | shelter-web | Same project token. Unset disables analytics.                            |
-| `VITE_SHELTER_POSTHOG_HOST`    | shelter-web | Set in CI; `https://us.i.posthog.com` when absent.                       |
+| Variable                      | Used by     | Notes                                                                    |
+| ----------------------------- | ----------- | ------------------------------------------------------------------------ |
+| `EXPO_PUBLIC_POSTHOG_API_KEY` | app         | Public project token, inlined into the bundle. Unset disables analytics. |
+| `EXPO_PUBLIC_POSTHOG_HOST`    | app         | Set per build profile in `eas.json`.                                     |
+| `VITE_POSTHOG_API_KEY`        | shelter-web | Same project token. Unset disables analytics.                            |
+| `VITE_POSTHOG_HOST`           | shelter-web | Set in CI; `https://us.i.posthog.com` when absent.                       |
 
-Secrets live in GitHub as `EXPO_PUBLIC_POSTHOG_API_KEY`, `VITE_SHELTER_POSTHOG_API_KEY`
-and `VITE_SHELTER_POSTHOG_HOST`, and flow into builds the same way the New Relic and
+Secrets live in GitHub as `EXPO_PUBLIC_POSTHOG_API_KEY`, `VITE_POSTHOG_API_KEY`
+and `VITE_POSTHOG_HOST`, and flow into builds the same way the New Relic and
 Google Maps keys do. `write-eas-env.mjs` passes any `EXPO_PUBLIC_*` through, so
 no extra plumbing is needed when a key is added to CI.
 
@@ -84,21 +84,29 @@ A missing key is not an error: the app opens the shelter site without a
 fragment and sends nothing. That is deliberate, so a developer without a token
 can still run the app.
 
-### One token, two names
+### One token, one name per bundler
 
-Both apps hold the **same** project token and host, in variables with different
-names. That is not drift:
+There is one project token, but two variable names, because the prefix belongs
+to the bundler: Expo only inlines `EXPO_PUBLIC_*`, Vite only inlines `VITE_*`.
+Neither can read the other's.
 
-- The prefix is not ours to choose. Expo inlines `EXPO_PUBLIC_*`; Vite inlines
-  `VITE_*`. One variable name cannot serve both builds.
-- The token identifies a **project**, and both apps must point at the _same_
-  project or the handoff does nothing. `bootstrap` and funnels are both
-  project-scoped: two projects means two unrelated users and two funnels that
-  never join.
-- The token is public by design — it is compiled into both bundles — so keeping
-  the same value in two CI secrets is a rotation convenience, not a secret.
+Inside the Vite family the name is deliberately **generic** — `VITE_POSTHOG_*`,
+not `VITE_SHELTER_POSTHOG_*` — because the token is the same for every Vite app:
 
-When rotating, change both. When they diverge, the funnel breaks silently:
+- In CI the name resolves for **every** app in one build: workflow env is
+  process-wide and Vite exposes `process.env.VITE_*`, so one secret feeds
+  shelter-web, admin and wildfires without another line per app.
+- Locally it does **not** travel. Each Vite app roots `.env` at its own
+  directory, so a new app still needs its own `.env` entry with the same name.
+- An app that should report to a _different_ project must use its own prefixed
+  variable and stop reading this one. Don't repurpose the generic name for that.
+
+The token identifies a **project**, and both apps must point at the _same_
+project or the handoff does nothing — `bootstrap` and funnels are both
+project-scoped, so two projects means two unrelated users and two funnels that
+never join. The token is public by design: it is compiled into both bundles.
+
+When rotating, change both names. When they diverge, the funnel breaks silently:
 `handoff` keeps arriving, the landing event keeps arriving, and they never line
 up.
 
@@ -206,14 +214,14 @@ client identifier to be useful, it needs a different design.
 ## Verifying locally
 
 1. Set `EXPO_PUBLIC_POSTHOG_API_KEY` in `apps/betterangels/.env.local` and
-   `VITE_SHELTER_POSTHOG_API_KEY` in the shell that runs `nx serve shelter-web`.
+   `VITE_POSTHOG_API_KEY` in the shell that runs `nx serve shelter-web`.
 2. Run a development build, sign in, open a client profile, tap **Find
    Shelter**.
 3. In PostHog: _Activity → Live events_ should show `shelter_search_opened`
    followed by `shelter_search_landed` with the same `$session_id`.
 
 If the second event carries a different session, the fragment did not reach
-`bootstrap` — check that `VITE_SHELTER_POSTHOG_API_KEY` was set for the **build**, not
+`bootstrap` — check that `VITE_POSTHOG_API_KEY` was set for the **build**, not
 just the dev server, since Vite inlines `VITE_*` at transform time.
 
 ## Known limits
