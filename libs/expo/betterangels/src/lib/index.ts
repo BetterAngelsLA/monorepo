@@ -1,6 +1,4 @@
 export * from './analytics';
-// Not re-exported by the analytics barrel: mounting it pulls the user provider
-// (and expo-router) into every consumer, including tests that only need events.
 export { AnalyticsIdentity } from './analytics/AnalyticsIdentity';
 export * from './apollo';
 export * from './constants';
