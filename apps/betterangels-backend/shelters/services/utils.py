@@ -189,13 +189,21 @@ def _sync_schedules(
     specs: List[tuple[str | None, Dict[str, Any]]] = []
     for entry in schedules_data:
         raw_id = entry.get("id")
+        # ``days`` fans one entry out to one row per day, which an id cannot name:
+        # the id belongs to a single stored row.
+        days = entry.get("days") or [None]
+        if raw_id and len(days) > 1:
+            raise ValidationError(
+                {"schedules": (f"Schedule {raw_id} cannot be sent with more than one day; submit one entry per day.")}
+            )
+
         for row in _schedule_rows(entry):
             if row["schedule_type"] != schedule_type:
                 raise ValidationError(
                     {
                         "schedules": (
-                            f"A {_schedule_type_label(row['schedule_type'])} entry was submitted "
-                            f"for a {_schedule_type_label(schedule_type)} save."
+                            f"{_schedule_type_label(row['schedule_type'])} entry submitted while saving "
+                            f"{_schedule_type_label(schedule_type)}."
                         )
                     }
                 )

@@ -530,6 +530,15 @@ class SyncSchedulesTestCase(TestCase):
                 schedule_type=ScheduleTypeChoices.OPERATING,
             )
 
+    def test_an_id_with_several_days_is_rejected_as_such(self) -> None:
+        """The id names one stored row, so a fan-out is a different mistake."""
+        with self.assertRaisesMessage(ValidationError, "cannot be sent with more than one day"):
+            _sync_schedules(
+                self.shelter,
+                [self._entry(id=self.slot.pk, days=[DayOfWeekChoices.MONDAY, DayOfWeekChoices.TUESDAY])],
+                schedule_type=ScheduleTypeChoices.OPERATING,
+            )
+
     def test_deletes_rows_absent_from_the_payload(self) -> None:
         """The payload is authoritative: a slot left out is removed."""
         _sync_schedules(self.shelter, [], schedule_type=ScheduleTypeChoices.OPERATING)
