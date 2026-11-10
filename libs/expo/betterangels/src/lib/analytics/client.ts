@@ -52,6 +52,11 @@ export function getAnalyticsClient(): PostHog | null {
            * "replay is broken" rather than erroring. Android needs API 26+; the
            * app keeps minSdk 24, so older devices lose recordings, not the app.
            */
+          /**
+           * Native only. The browser build renders client profiles as DOM, so
+           * recording it would capture that page text — a privacy decision
+           * rather than a config toggle, and not one this change makes.
+           */
           enableSessionReplay: Platform.OS !== 'web',
           sessionReplayConfig: {
             maskAllTextInputs: true,
