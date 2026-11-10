@@ -1,9 +1,30 @@
-"""Read-side authorization selectors (ADR 0001 §2.4, §2.10).
+"""Authorization selectors (ADR 0001 §2.4, §2.10, RFC 0002 §Precondition).
 
-Pull-only: given a user, a permission, and a queryset, return the rows the user
-may exercise that permission on.  Follows the repo's service/selector pattern
+Pull-only: given a user, a permission, and (usually) a queryset, answer what
+authority the user holds.  This module is the single place the org-scope and
+write-tier rules live; it follows the repo's service/selector pattern
 (docs/styleguides/python.md): no side effects; memoized per request on the user
 instance, mirroring ``ModelBackend._perm_cache``.
+
+Layers, scope math to mutation gate:
+
+* ``scopes`` / ``global_permissions`` — the raw material: the org set (or
+  ``ALL``) in which the user holds *perm*.
+* ``visible`` / ``writable`` — the **queryset** layer: scope a queryset to the
+  rows the user may exercise *perm* on, for reads / writes respectively.
+  Callers compose freely on the result (``get``, ``first``,
+  ``filter(…).exists()``) — or take the whole row set for a list.
+* ``can`` / ``can_obj`` / ``can_anywhere`` — verdicts: authority at an org
+  (creates), on one row (``can_obj`` is ``writable`` applied to a row), or
+  anywhere.
+* ``get_writable_or_deny`` (``common.permissions.utils``) — the mutation
+  leaf: fetch a write target through ``writable``, or deny.  Mutation gates
+  fetch through it (or through ``writable`` directly for non-pk shapes) —
+  never from a raw manager.
+
+Read scope and write scope are chosen independently (RFC 0002 §Precondition):
+``visible`` answers the read rule, ``writable`` the write rule — one is never
+reused for the other (a SHARED-read model still writes org-scoped).
 
 The global tier is read explicitly (superuser, global Role in ``user.groups``,
 ``user_permissions``) — NOT ``user.has_perm`` — until the legacy
@@ -302,6 +323,39 @@ def visible(qs: "QuerySet", user: "User", perm: str, *, in_org: int | str | None
     if in_org is not None and s is not ALL and paths:
         qs = qs.filter(reduce(or_, (Q(**{p: in_org}) for p in paths)))
     return qs
+
+
+def writable(qs: "QuerySet", user: "User", perm: str) -> "QuerySet":
+    """The rows of *qs* on which *user* may exercise *perm* **for writes**.
+
+    ``can_obj`` as a queryset filter (RFC 0002 §Precondition — write scope is
+    chosen independently of read scope).  ``can_obj`` answers the same
+    question about a row already in hand without issuing the query.  Mutation gates fetch through this
+    instead of fetching unfiltered and checking ``can_obj`` afterwards: the
+    fetch itself is the gate (a forbidden row is simply unfetchable), and one
+    query does the work of two.  The org arm reuses :func:`visible` *with the
+    write perm* — literally the predicate ``can_obj`` resolves for a row.
+
+    Tiers (kept in lockstep with :func:`can_obj` — the row check is the
+    cheaper of the two, so it keeps its own implementation and an equivalence
+    test pins them):
+
+    * **ORG** (org-anchored, ``org_via`` not ``None``) — ``visible(qs, …)``.
+    * **SHARED** (``write_tier = WRITE_SHARED``) — all rows iff the user holds
+      *perm* anywhere, none otherwise.
+    * **Fail-closed default** — all rows only for the global tier (``scopes``
+      is ALL); ``WRITE_OBJECT`` sits here until the object arm wires grants.
+    """
+    from common.models import WRITE_SHARED, OrgScoped
+
+    model = qs.model
+    if not issubclass(model, OrgScoped):
+        return qs.none()
+    if model.org_via is not None:
+        return visible(qs, user, perm)
+    if model.write_tier == WRITE_SHARED:
+        return qs if can_anywhere(user, perm) else qs.none()
+    return qs if scopes(user, perm) is ALL else qs.none()
 
 
 def can(user: "User", perm: str, *, org: Any) -> bool:

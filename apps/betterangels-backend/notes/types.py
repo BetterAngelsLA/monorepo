@@ -4,18 +4,12 @@ from typing import List, Optional
 import strawberry
 import strawberry_django
 from django.db.models import (
-    BooleanField,
-    Case,
     Exists,
-    F,
     OuterRef,
     Q,
     QuerySet,
-    Value,
-    When,
 )
-from strawberry import ID, Info, Maybe, auto
-from strawberry_django.utils.query import filter_for_user
+from strawberry import ID, UNSET, Info, Maybe, auto
 
 from accounts.models import PermissionGroup, User
 from accounts.types import OrganizationType, UserType
@@ -29,8 +23,8 @@ from common.graphql.types import (
 )
 from common.models import Attachment
 from common.org_types import REGISTRY
+from notes import selectors as note_selectors
 from notes.enums import ServiceRequestTypeEnum
-from notes.permissions import NotePermissions, PrivateDetailsPermissions
 from tasks.types import TaskType
 from teams.types import TeamType
 
@@ -179,20 +173,7 @@ class NoteType:
 
     @strawberry_django.field(
         annotate={
-            "_can_edit": lambda info: Case(
-                When(
-                    Exists(
-                        filter_for_user(
-                            models.Note.objects.all(),
-                            info.context.request.user,
-                            [NotePermissions.CHANGE],
-                        ).filter(pk=OuterRef("pk"))
-                    ),
-                    then=Value(True),
-                ),
-                default=Value(False),
-                output_field=BooleanField(),
-            ),
+            "_can_edit": lambda info: note_selectors.can_edit_case(info.context.request.user),
         }
     )
     def user_can_edit(self, root: models.Note) -> bool:
@@ -200,19 +181,7 @@ class NoteType:
 
     @strawberry_django.field(
         annotate={
-            "_private_details": lambda info: Case(
-                When(
-                    Exists(
-                        filter_for_user(
-                            models.Note.objects.all(),
-                            info.context.request.user,
-                            [PrivateDetailsPermissions.VIEW],
-                        )
-                    ),
-                    then=F("private_details"),
-                ),
-                default=Value(None),
-            ),
+            "_private_details": lambda info: note_selectors.private_details_case(info.context.request.user),
         }
     )
     def private_details(self, root: models.Note) -> Optional[str]:
@@ -232,10 +201,18 @@ class CreateNoteServiceInput:
 
 @strawberry.input
 class CreateNoteTaskInput:
-    """A task to create and attach to the note."""
+    """A task to create, or — when ``id`` is set — to update on the note.
 
+    Omitting ``id`` creates.  A payload with no ids at all is a legacy
+    replace-all: older builds send the whole list without ids, so the note's
+    tasks are still deleted and recreated for them.
+    """
+
+    id: Optional[ID] = None
     summary: str
-    description: Optional[str] = None
+    # ``Maybe`` so an in-place update can tell "leave it alone" (omitted) from
+    # "clear it" (explicit null); ``Optional`` collapses both to ``None``.
+    description: Maybe[str | None] = UNSET
     status: Optional[int] = None  # Task.Status int choices (0=TO_DO, 1=IN_PROGRESS, 2=COMPLETED)
     team_id: Maybe[ID | None]
     assignee_id: Maybe[ID | None]
@@ -246,8 +223,10 @@ class UpdateNoteInput:
     """
     Input for updating a note with all nested relations.
     Omitted fields are left unchanged — UNSET for the plain ``Optional``
-    fields, absent (``None``) for the ``Maybe`` ones. Nested relation fields
-    use replace-all semantics (existing items are removed, new ones created).
+    fields, absent (``None``) for the ``Maybe`` ones. Nested task items carrying
+    an ``id`` are updated in place, items without one are created, and the tasks
+    the payload no longer names are deleted (a payload with no ids is a legacy
+    replace-all).
     """
 
     id: ID
@@ -293,6 +272,13 @@ class CreateNoteInput:
     client_profile: Optional[ID] = None
     is_submitted: Optional[bool] = False
     interacted_at: Optional[datetime] = None
+
+    # The acting org (ADR 0001 §5, RFC 0003 slice 2): authority is
+    # ``require_can`` at this org and the created row's ``organization``.
+    # Optional during the compat window — a build that predates the payload
+    # org falls back to the legacy caseworker group; the strict flip makes it
+    # required again.
+    organization_id: Optional[ID] = None
 
     # Nested relations
     location: Optional[LocationInput] = None
