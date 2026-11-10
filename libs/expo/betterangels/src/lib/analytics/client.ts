@@ -37,13 +37,21 @@ export function getAnalyticsClient(): PostHog | null {
            */
           customStorage: AsyncStorage,
           /**
-           * Session replay records screenshots, because a React Native view
-           * hierarchy cannot be serialised into a wireframe. The masking flags
-           * below are the SDK defaults for this SDK, but they are set
-           * explicitly: they are the only thing keeping client names, notes,
-           * uploaded documents and photo-library content out of a recording,
-           * and a future default change must not silently unmask a vulnerable
-           * population's data. See docs/analytics.md before relaxing one.
+           * Recording is on for this app by decision: it is a logged-in staff
+           * tool, and client data is masked below and by `ReplayMask`. The
+           * public shelter site deliberately does NOT record — see
+           * `apps/shelter-web/src/analytics/posthog.ts`.
+           *
+           * Replay records screenshots, because a React Native view hierarchy
+           * cannot be serialised into a wireframe. The masking flags below are
+           * this SDK's defaults, but they are set explicitly: they are the only
+           * thing keeping client names, notes, uploaded documents and
+           * photo-library content out of a recording, and a future default
+           * change must not silently unmask a vulnerable population's data.
+           *
+           * Replay needs Android API 26+ at runtime. The app keeps Expo's
+           * default minSdk (24), so older devices lose recordings, not the app —
+           * do not raise minSdkVersion for this.
            */
           enableSessionReplay: Platform.OS !== 'web',
           sessionReplayConfig: {

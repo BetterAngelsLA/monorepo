@@ -76,6 +76,11 @@ export function initAnalytics(): void {
    * a map, and the analytics bundle has no business competing with it for the
    * main thread before first paint. The cost is that `$pageview` is captured a
    * moment after load rather than during it.
+   *
+   * Note for end-to-end tests: posthog-js drops traffic whose user agent,
+   * `userAgentData.brands` or `navigator.webdriver` looks automated, silently.
+   * A Playwright run needs `opt_out_useragent_filter: true` to observe
+   * anything.
    */
   void import('posthog-js')
     .then(({ default: posthog }) => {

@@ -14,6 +14,11 @@
  *
  * `ba_did` / `ba_sid` are deliberately short and opaque. They map to PostHog's
  * own `distinctID` / `sessionID` bootstrap options on the receiving side.
+ *
+ * The session id is a UUIDv7 and PostHog discards one whose timestamp is more
+ * than 24 hours old: the person link survives, the session does not, and the
+ * `handoff` flag still reports true because it records what was sent, not what
+ * was accepted.
  */
 export const HANDOFF_DISTINCT_ID_PARAM = 'ba_did';
 export const HANDOFF_SESSION_ID_PARAM = 'ba_sid';
