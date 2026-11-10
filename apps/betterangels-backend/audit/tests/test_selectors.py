@@ -1685,6 +1685,18 @@ class ObjectAuditLogScheduleEventsTestCase(TestCase):
         self.assertIsNone(event.context)
         self.assertEqual(event.field_changes, {"end time": ["12:00:00", "14:00:00"]})
 
+    def test_a_changed_day_is_not_reported_as_identity(self) -> None:
+        """An id-carrying entry can move a slot; the change wins over context."""
+        with audit_context(user=self.user):
+            self.slot.day = DayOfWeekChoices.TUESDAY
+            self.slot.save()
+
+        event = audit_log(obj=self.shelter, target_type="SHELTER")[0].events[0]
+
+        self.assertEqual(event.field_changes, {"day": ["Monday", "Tuesday"]})
+        # The schedule type is still whatever the slot is; the day is not.
+        self.assertEqual(event.context, {"schedule type": "Operating Hours"})
+
     def test_hidden_fields_are_redacted_from_changes_and_the_context(self) -> None:
         """A withheld raw attname never reaches the diff or the slot identity (§18)."""
         with audit_context(user=self.user):

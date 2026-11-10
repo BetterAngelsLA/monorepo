@@ -1229,6 +1229,14 @@ def _build_action(
         # INSERT/DELETE render from ``pgh_data`` and the through-table path has
         # no ``pgh_obj`` to diff against at all.
         no_base = _kind(row.pgh_label) == "UPDATE" and row.pgh_diff is None
+        # A schedule row's identity is the part of it the write did not change. An
+        # id-carrying entry may move a slot to another day, so ``day`` can be both
+        # a change and (stale) context; the change wins.
+        schedule_context = None
+        if row.pgh_obj_model == Schedule._meta.label and _kind(row.pgh_label) == "UPDATE":
+            context = _schedule_context(row, resolver, hidden) or {}
+            schedule_context = {field: value for field, value in context.items() if field not in changes} or None
+
         events.append(
             AuditEventData(
                 timestamp=row.pgh_created_at,
@@ -1239,13 +1247,7 @@ def _build_action(
                 target_id=target_id,
                 field_changes=None if no_base else {f: list(pair) for f, pair in changes.items()},
                 snapshot=_snapshot(row, resolver, hidden) if include_snapshot else None,
-                # A schedule row's diff only carries the fields that changed, so
-                # the slot identity comes from the row itself (§13).
-                context=(
-                    _schedule_context(row, resolver, hidden)
-                    if row.pgh_obj_model == Schedule._meta.label and _kind(row.pgh_label) == "UPDATE"
-                    else None
-                ),
+                context=schedule_context,
             )
         )
 
