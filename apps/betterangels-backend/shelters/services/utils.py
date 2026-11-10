@@ -201,7 +201,10 @@ def _sync_schedules(
     it alone: an entry carrying an ``id`` updates that row in place, an entry
     without one creates a row, and a row of that type whose id is absent is
     deleted. Every other type is left untouched, so saving Operating Hours cannot
-    revert Intake or Meal Service from a stale client snapshot. Updating in place
+    revert Intake or Meal Service from a stale client snapshot. Within the type the
+    payload is still a snapshot: a save from a tab that predates a slot someone
+    else added deletes that slot. Explicit deletes (the client knows every id it
+    removed) are the fix if that ever bites. Updating in place
     is the point — the write then records only what changed, so the audit log can
     report an edit as an edit instead of a delete plus a create.
 
@@ -209,6 +212,12 @@ def _sync_schedules(
     error, not a silent no-op) and may appear once. The caller runs inside a
     transaction and the slot key is deferrable, so a save may swap two slots' times
     without tripping the unique constraint mid-flight.
+
+    The shelter row is locked first. Locking its schedule rows would not stop a
+    concurrent insert of the same slot key under READ COMMITTED, and a deferred
+    violation then fires at COMMIT — outside this function, where nothing can turn
+    it into an ``OperationInfo``. Locking the shelter makes schedule saves for one
+    shelter take turns.
     """
     specs: List[tuple[str | None, Dict[str, Any]]] = []
     for entry in schedules_data:
@@ -234,9 +243,10 @@ def _sync_schedules(
             raise ValidationError({"schedules": _duplicate_slot_message(row)})
         seen_slots.add(slot_key)
 
-    # Lock every row of the shelter: the scope decides what may be written, not
-    # what a concurrent save may be doing to the other types.
-    existing = {str(row.id): row for row in shelter.schedules.select_for_update()}
+    # Serialise every schedule write for this shelter before reading the set.
+    Shelter.objects.select_for_update().get(pk=shelter.pk)
+
+    existing = {str(row.id): row for row in shelter.schedules.all()}
     in_scope = {key: row for key, row in existing.items() if row.schedule_type == schedule_type}
 
     kept: set[str] = set()
