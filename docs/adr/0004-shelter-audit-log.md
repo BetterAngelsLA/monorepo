@@ -2173,6 +2173,8 @@ changed — display names only, never values, since the values belong to the
 object's own log; a create or delete lists nothing, because every field of the row
 is new or gone. The list is the union across the action's writes of that object,
 so a collapsed line does not under-report a second save in the same request.
+A field withheld from the caller (§18) is dropped from that list as well: naming
+it would leak a change `field_changes` deliberately hides.
 Mechanical columns are excluded, as in `field_changes`. They carry an
 empty `field_changes` and never a snapshot, even when `include_snapshot=True`.
 The line is omitted unless the caller holds `Bed.VIEW` / `Room.VIEW` in the
@@ -2182,7 +2184,11 @@ pruned from the aggregate with `across()`, so an action containing only hidden
 rows disappears instead of surfacing as an empty action. A write that changed only
 mechanical columns — edit → save with nothing edited still moves `updated_at` — is
 not an event at all, on the anchor and on a summarized object alike, so it cannot
-render as a card with no content. An action left with no events is dropped from
+render as a card with no content. The test is the **unfiltered** diff: a write
+whose only changes were fields withheld from this caller (§18) is still an event,
+rendered with those fields filtered out, because dropping it would hide that the
+object was modified; an opt-in snapshot does not turn an empty diff into an event
+either. An action left with no events is dropped from
 the page; the cursor still advances past its key, so a dropped action cannot stall
 pagination. The action verb is
 derived from the anchored object's rows, so a related-only write reads as a

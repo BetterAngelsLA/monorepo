@@ -540,16 +540,18 @@ def _humanize_label(label: str) -> str:
     return " ".join(part[:1].upper() + part[1:] for part in label.split("_") if part)
 
 
-def _summary_fields(row: Any) -> list[str]:
+def _summary_fields(row: Any, hidden_fields: Collection[str] = ()) -> list[str]:
     """Display names of the fields an ``UPDATE`` changed, in row order (§32).
 
     What moved, not what it moved to: the values stay in the object's own log.
     Mechanical columns are dropped for the same reason ``_scalar_changes`` drops
     them — ``updated_at`` moves on every write and says nothing about the edit.
+    A field withheld for the caller (§18) is dropped too: naming it would leak a
+    change the caller cannot see, exactly as it would in ``field_changes``.
     """
     labels = _display_keys(row.pgh_obj_model)
     pk_attname = _pk_attname(row.pgh_obj_model)
-    excluded = _MECHANICAL_FIELDS | _generated_fields(row.pgh_obj_model)
+    excluded = _MECHANICAL_FIELDS | _generated_fields(row.pgh_obj_model) | set(hidden_fields)
 
     fields: list[str] = []
     for attname in row.pgh_diff or {}:
@@ -567,6 +569,7 @@ def _summary_fields_by_line(
     *,
     target_model_label: str | None,
     hidden_summary_models: Collection[str],
+    hidden_fields: Mapping[str, Collection[str]] | None = None,
 ) -> dict[tuple[str, Any, str], list[str]]:
     """Per collapsed summary line, the union of the fields its rows changed (§32).
 
@@ -583,7 +586,7 @@ def _summary_fields_by_line(
             continue
 
         key = (row.pgh_obj_model, row.pgh_obj_id, "UPDATE")
-        for label in _summary_fields(row):
+        for label in _summary_fields(row, (hidden_fields or {}).get(row.pgh_obj_model, ())):
             if label not in fields_by_key[key]:
                 fields_by_key[key].append(label)
 
@@ -1243,6 +1246,7 @@ def _build_action(
         rows,
         target_model_label=target_model_label,
         hidden_summary_models=hidden_summary_models,
+        hidden_fields=hidden_by_model,
     )
 
     for row in rows:
@@ -1337,7 +1341,13 @@ def _build_action(
         # puts an empty "Changed" card in the log, so it is not an event at all.
         # ``no_base`` stays (the diff is missing, not empty) and an INSERT/DELETE
         # is a real creation or deletion even when no column is renderable.
-        if not changes and not no_base and snapshot is None and _kind(row.pgh_label) == "UPDATE":
+        #
+        # "Empty" is measured on the *unfiltered* diff: a write that only touched
+        # fields withheld from this caller (§18) is still a real change worth
+        # recording — its rendered output is filtered, but dropping the whole
+        # event would hide that the object was modified at all. A snapshot does
+        # not make a no-op into an event either, which is why it is not consulted.
+        if not changes and not no_base and _kind(row.pgh_label) == "UPDATE" and not _scalar_changes(row, resolver):
             continue
 
         # A schedule row's identity is the part of it the write did not change. An

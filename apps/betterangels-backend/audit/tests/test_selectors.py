@@ -156,6 +156,31 @@ class ObjectAuditLogSelectorTestCase(TestCase):
         self.assertNotIn(f"Bed {self.bed.pk} name", changes)
         self.assertEqual(_summaries(actions[0]), [f"Updated Bed: Renamed Bed ({self.bed.pk}) Name"])
 
+    def test_a_withheld_field_is_not_named_in_a_summary(self) -> None:
+        """A summary names fields, so a withheld one must not appear there (§18).
+
+        ``_scalar_changes`` filters the field out of ``field_changes``; naming it
+        in the one-line summary would leak the same change through a side door.
+        """
+        self.bed.notes = "private note"
+        self.bed.save()
+
+        with audit_context(user=self.user):
+            self.bed.name = "Renamed Bed"
+            self.bed.notes = "still private"
+            self.bed.save()
+
+        actions = audit_log(
+            obj=self.shelter,
+            target_type="SHELTER",
+            hidden_fields={"shelters.Bed": ("notes",)},
+        )
+
+        (summary,) = _summaries(actions[0])
+        self.assertIn("Name", summary)
+        self.assertNotIn("Notes", summary)
+        self.assertNotIn("notes", summary)
+
     def test_one_action_touching_two_rows_of_a_model_keeps_them_separate(self) -> None:
         """Two rows of the *same* model render as two summary lines (§13, §32).
 
@@ -1160,6 +1185,16 @@ class AuditDisplayScopeTestCase(TestCase):
             bed.save()
 
         self.assertEqual(self._log(), [])
+
+    def test_no_op_save_is_not_reported_even_with_snapshots(self) -> None:
+        """A snapshot is not content: a save that changed nothing stays invisible."""
+        with audit_context(user=self.user):
+            self.shelter.save()
+
+        actions = audit_log(obj=self.shelter, target_type="SHELTER", include_snapshot=True)
+        events = [event for action in actions for event in action.events]
+
+        self.assertEqual(events, [])
 
     def test_no_op_shelter_save_is_not_reported(self) -> None:
         """The anchored object gets the same treatment as a summarized one."""
