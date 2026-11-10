@@ -21,7 +21,7 @@ describe('shelterReportRoute', () => {
 });
 
 describe('legacyProfileRoutes', () => {
-  it('points every retired segment at a current one', () => {
+  it('declares a redirect target that is a live child, from a retired segment', () => {
     const current: string[] = Object.values(profileRouteConfig.children);
 
     for (const { from, to } of legacyProfileRoutes) {

@@ -162,8 +162,9 @@ class ObjectAuditLogSelectorTestCase(TestCase):
         ``_scalar_changes`` filters the field out of ``field_changes``; naming it
         in the one-line summary would leak the same change through a side door.
         """
-        self.bed.notes = "private note"
-        self.bed.save()
+        with audit_context(label="seed"):
+            self.bed.notes = "private note"
+            self.bed.save()
 
         with audit_context(user=self.user):
             self.bed.name = "Renamed Bed"
@@ -1185,6 +1186,25 @@ class AuditDisplayScopeTestCase(TestCase):
             bed.save()
 
         self.assertEqual(self._log(), [])
+
+    def test_a_write_that_only_touched_hidden_fields_is_still_an_event(self) -> None:
+        """Emptiness is measured before redaction: the edit happened (§18).
+
+        A caller who cannot see the field still learns that the object was
+        modified; what it was modified to stays hidden.
+        """
+        with audit_context(user=self.user):
+            self.shelter.overall_rating = 5
+            self.shelter.save()
+
+        actions = audit_log(
+            obj=self.shelter,
+            target_type="SHELTER",
+            hidden_fields={"shelters.Shelter": ("overall_rating",)},
+        )
+
+        self.assertEqual(len(actions), 1)
+        self.assertEqual(actions[0].events[0].field_changes, {})
 
     def test_no_op_save_is_not_reported_even_with_snapshots(self) -> None:
         """A snapshot is not content: a save that changed nothing stays invisible."""
