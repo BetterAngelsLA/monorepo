@@ -7,23 +7,14 @@ import {
 /**
  * PostHog for the public shelter site.
  *
- * This app is anonymous — there is no sign-in to join on — so a visit is only
- * linked to an outreach-app session when the app hands one over in the URL
- * fragment. The outreach app writes `ba_did` / `ba_sid`; this file feeds them
- * into `bootstrap`, which makes the landing page continue that session instead
- * of starting a new one.
- *
- * The parameter names, the event name and the decoder all come from
- * `@monorepo/shared/shelter-handoff`, which the app writes with — that module is the
- * contract, this one is only this app's half of it.
+ * The site is anonymous, so a visit joins an outreach-app session only when the
+ * app hands one over in the URL fragment. This is the receiving half of that
+ * contract; the parameter names, decoder and funnel event names come from
+ * `@monorepo/shared/shelter-handoff`.
  */
 
-/**
- * Drops the fragment from the address bar before anything captures a URL.
- *
- * Without this the handoff id would land in `$current_url` on every event and
- * in the referrer if the visitor navigates away.
- */
+/** Drops the fragment before anything captures a URL, so the handoff id never
+ * reaches `$current_url` or a `Referer`. */
 function stripHandoffFromUrl(): void {
   const { pathname, search } = window.location;
 
@@ -53,15 +44,12 @@ export function initAnalytics(): void {
   }
 
   /**
-   * Loaded on demand so posthog-js stays out of the first chunk. This page is
-   * a map, and the analytics bundle has no business competing with it for the
-   * main thread before first paint. The cost is that `$pageview` is captured a
-   * moment after load rather than during it.
+   * Loaded on demand to keep posthog-js off the main thread of a map-heavy page;
+   * `$pageview` therefore lands a moment after load.
    *
-   * Note for end-to-end tests: posthog-js drops traffic whose user agent,
-   * `userAgentData.brands` or `navigator.webdriver` looks automated, silently.
-   * A Playwright run needs `opt_out_useragent_filter: true` to observe
-   * anything.
+   * For e2e: posthog-js silently drops traffic whose user agent,
+   * `userAgentData.brands` or `navigator.webdriver` looks automated, so a
+   * Playwright run needs `opt_out_useragent_filter: true`.
    */
   void import('posthog-js')
     .then(({ default: posthog }) => {
@@ -83,27 +71,21 @@ export function initAnalytics(): void {
     });
 }
 
-/**
- * The options handed to `posthog.init`, factored out so the parts that are a
- * privacy or contract decision can be asserted in a test rather than only read.
- */
+/** Options for `posthog.init`, factored out so the privacy decisions below can
+ * be asserted in a test. */
 export function buildInitConfig({ handoff }: { handoff: ShelterHandoff }) {
   return {
     /**
-     * Session recording is on for this site, and unlike the app it is DOM-based
-     * (rrweb), not screenshots — so masking is per element, not per pixel.
+     * Replay here is DOM-based (rrweb), so masking is per element rather than
+     * per pixel.
      *
-     * What that means in practice:
+     * `maskAllInputs` covers the address a visitor types into the location
+     * search — the one piece of personal data this site receives — and is
+     * pinned despite being the default. The autocomplete renders that address as
+     * text rather than in an input, so it is blocked instead.
      *
-     * - `maskAllInputs` masks every field, including the address a visitor
-     *   types into the location search. It is `posthog-js`'s default; pinned
-     *   because the visitor's own address is the one piece of personal data this
-     *   site can receive.
-     * - `blockSelector` removes the autocomplete suggestions, because those
-     *   render the address as plain text rather than in an input.
-     * - The map is a canvas inside the Maps SDK and records as a blank area
-     *   either way, so it is not blocked — blocking it would only put a grey
-     *   rectangle over the page's main content, not hide anything extra.
+     * The map is a canvas and records blank either way; blocking it would only
+     * put a grey rectangle over the page's main content.
      */
     session_recording: {
       maskAllInputs: true,

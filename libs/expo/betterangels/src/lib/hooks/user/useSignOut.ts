@@ -31,8 +31,7 @@ export default function useSignOut() {
     // `useClearLocalSession`.
     await clearLocalSession();
 
-    // Start the next person as a new identity instead of inheriting this one.
-    // A shared outreach tablet must not merge two workers' sessions.
+    // A shared tablet must not merge two workers' sessions.
     getAnalyticsClient()?.reset();
   }, [logout, clearLocalSession]);
 

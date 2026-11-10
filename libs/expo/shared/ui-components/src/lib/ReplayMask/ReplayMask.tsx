@@ -7,15 +7,13 @@ type TProps = ViewProps & { children: ReactNode };
 /**
  * Hides a subtree from PostHog session replay.
  *
- * Replay on React Native records **screenshots**, and the SDK's automatic
- * masking only covers text, text inputs, images and iOS system pickers. Native
- * surfaces — a rendered PDF, a live camera feed, a map — are drawn by their own
- * UIKit/Android views and pass through unmasked, so they have to be opted out
- * explicitly.
+ * The SDK masks text, inputs, images and iOS pickers automatically, but native
+ * views — a PDF, a camera feed, a map — are drawn by their own UIKit/Android
+ * surfaces and pass through unmasked.
  *
- * Use this around anything that can show a client's document, location or
- * surroundings. It renders as a plain `View` carrying `ph-no-capture`, so it is
- * a drop-in replacement for a layout `View` and does not change what is drawn.
+ * Renders a `View` carrying `ph-no-capture`, so it is a drop-in replacement for
+ * a layout `View` around anything showing a client's document, location or
+ * surroundings.
  */
 export function ReplayMask({ children, ...viewProps }: TProps) {
   return <PostHogMaskView {...viewProps}>{children}</PostHogMaskView>;

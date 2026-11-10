@@ -1,16 +1,10 @@
 import { ShelterSearchEvent } from '@monorepo/shared/shelter-handoff';
 
 /**
- * Event names and their properties for this app.
+ * This app's event names and properties.
  *
- * `shelter_search_opened` and `shelter_search_landed` are a pair: the first is
- * sent here, the second by shelter-web, and the funnel across both is the whole
- * point of the handoff. The names live in `@monorepo/shared/shelter-handoff` so the
- * two apps cannot disagree about them.
- *
- * Everything in this file must be free of client data — no names, notes, dates
- * of birth, or client ids. Events describe what a worker did, never who they
- * did it for.
+ * Nothing here may carry client data — no names, notes, dates of birth or client
+ * ids. Events describe what a worker did, never who they did it for.
  */
 export const AnalyticsEvent = {
   ShelterSearchOpened: ShelterSearchEvent.Opened,
@@ -28,15 +22,9 @@ export type ShelterSearchSource =
   (typeof ShelterSearchSource)[keyof typeof ShelterSearchSource];
 
 /**
- * The two handoff flags are separate because they mean different things on the
- * receiving side, and only one of them decides whether the funnel's two steps
- * share a session:
- *
- * - `handoff` — the session id travelled, so shelter-web continues *this*
- *   session. False means step 2 will be a new session, even though the same
- *   person may have arrived.
- * - `handoff_person` — the distinct id travelled, so the visit is attributed to
- *   the same person either way.
+ * Two flags because they decide different things downstream: `handoff` means the
+ * session id travelled, so step 2 shares this session; `handoff_person` means
+ * the distinct id did, so the visit is at least the same person.
  */
 export type ShelterSearchHandoffProperties = {
   handoff: boolean;

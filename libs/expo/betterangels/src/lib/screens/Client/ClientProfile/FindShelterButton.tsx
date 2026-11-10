@@ -15,12 +15,8 @@ import { withShelterHandoff } from '@monorepo/shared/shelter-handoff';
 import { shelterHomeUrl } from '../Referrals/shelterDirectory';
 
 /**
- * Opens the shelter site from a client profile.
- *
- * The tap is captured here rather than in a generic link component because the
- * event and the URL have to be built from the same identity: the event records
- * that the worker left, and the URL fragment is what lets shelter-web record
- * that they arrived as the same session.
+ * Opens the shelter site from a client profile, recording the departure and
+ * handing the session over in the URL.
  */
 export function FindShelterButton() {
   const { apiUrl } = useApiConfig();
@@ -37,8 +33,8 @@ export function FindShelterButton() {
   }
 
   async function openShelterSearch() {
-    // The render guard below already returned for this case; repeated because
-    // TypeScript does not carry a narrowing into a hoisted function.
+    // Repeated because TypeScript does not carry the render guard's narrowing
+    // into a hoisted function.
     if (!url) return;
 
     setError(false);
@@ -52,9 +48,7 @@ export function FindShelterButton() {
       handoff_person: Boolean(identity.distinctId),
     });
 
-    // Opening a browser can suspend this app before the client's batch timer
-    // fires; without this the event that starts the funnel is the one that
-    // gets lost. Bounded, so a slow network cannot stall the tap.
+    // Opening a browser can suspend the app before the batch timer fires.
     await flushAnalytics();
 
     try {

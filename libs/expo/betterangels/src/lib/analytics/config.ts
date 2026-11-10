@@ -2,19 +2,11 @@ import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 
 /**
- * PostHog configuration, resolved from `EXPO_PUBLIC_*` at build time.
+ * Resolved from `EXPO_PUBLIC_*` at build time, so a bundle cut without a key
+ * cannot enable analytics at runtime.
  *
- * `EXPO_PUBLIC_` values are inlined per bundle, so a build cut without a key can
- * never enable analytics — the same property the New Relic browser agent relies
- * on. A missing key leaves the app silent rather than sending events to a
- * default project.
- *
- * The key is public by design: it ships inside the JS bundle, exactly like the
- * New Relic browser license key.
- *
- * No host is configured: the SDK defaults to US Cloud. Point it at
- * `https://eu.i.posthog.com` (or a self-hosted instance) in `client.ts` if the
- * project ever moves region.
+ * The key is public — it ships in the JS bundle. No host is set: the SDK
+ * defaults to US Cloud, and `client.ts` is where to point it elsewhere.
  */
 const apiKey = process.env['EXPO_PUBLIC_POSTHOG_API_KEY'] ?? '';
 

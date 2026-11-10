@@ -51,14 +51,12 @@ export function shelterDirectoryUrl(
 }
 
 /**
- * The shelter site's entry point — the map and search experience at its root.
+ * The shelter site's entry point: the map and search experience at its root.
  *
- * Not `/search`: that route is the name/location form the map opens as an
- * overlay, and both of its exits navigate back to the root. Sending someone
- * there directly drops them into a modal with no map behind it.
+ * Not `/search` — that route is the search form the map opens as an overlay,
+ * and both of its exits navigate back to the root.
  *
- * Returned without a query or fragment so `withShelterHandoff` can attach the
- * PostHog identity as the only fragment.
+ * Returned without a query or fragment, so a handoff fragment is the only one.
  */
 export function shelterHomeUrl(
   apiUrl: string,

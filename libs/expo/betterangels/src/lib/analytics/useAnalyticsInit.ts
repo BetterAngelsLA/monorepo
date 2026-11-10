@@ -2,12 +2,8 @@ import { useEffect } from 'react';
 import { getAnalyticsClient } from './client';
 
 /**
- * Starts PostHog once, at the root of the app.
- *
- * Without this the client would be created by whichever screen happens to send
- * the first event, so the app-lifecycle events (installed, updated, opened) and
- * the session start would all be missing from the beginning of a session.
- * Idempotent: `getAnalyticsClient` is a singleton.
+ * Starts PostHog once at the app root, so app-lifecycle events and the session
+ * start are captured even if no screen sends anything. Idempotent.
  */
 export function useAnalyticsInit(): void {
   useEffect(() => {

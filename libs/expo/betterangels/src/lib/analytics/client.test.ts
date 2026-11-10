@@ -1,14 +1,9 @@
 /**
- * The PostHog client's own configuration.
+ * The client's own configuration.
  *
- * This file exists because of one invariant: session replay records
- * **screenshots**, and the masking flags below are the only thing keeping client
- * names, notes, documents and photo-picker content out of a recording. A future
- * refactor that drops one of them would be invisible in every other test — the
- * button still opens, the event still fires, the funnel still looks healthy.
- *
- * Same reasoning as `apps/betterangels/src/monitoring/privacy.node-test.ts`,
- * which pins New Relic's masking against the installed agent.
+ * The replay masks asserted below are the only thing keeping client data out of
+ * a screenshot recording, and dropping one breaks no other test. Same reasoning
+ * as `apps/betterangels/src/monitoring/privacy.node-test.ts` for New Relic.
  */
 const posthog = vi.hoisted(() => {
   const calls: Array<{ apiKey: string; options: Record<string, unknown> }> = [];
