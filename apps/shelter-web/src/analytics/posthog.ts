@@ -3,6 +3,7 @@ import {
   decodeShelterHandoff,
   type ShelterHandoff,
 } from '@monorepo/shared/shelter-handoff';
+import type { PostHogConfig } from 'posthog-js';
 
 /**
  * PostHog for the public shelter site.
@@ -55,10 +56,7 @@ export function initAnalytics(): void {
     .then(({ default: posthog }) => {
       posthog.init(apiKey, buildInitConfig({ handoff }));
 
-      posthog.register({
-        app: 'shelter-web',
-        environment: import.meta.env.MODE,
-      });
+      posthog.register({ app: 'shelter-web' });
 
       posthog.capture(ShelterSearchEvent.Landed, {
         handoff: Boolean(handoff.sessionId),
@@ -73,8 +71,15 @@ export function initAnalytics(): void {
 
 /** Options for `posthog.init`, factored out so the privacy decisions below can
  * be asserted in a test. */
-export function buildInitConfig({ handoff }: { handoff: ShelterHandoff }) {
+export function buildInitConfig({
+  handoff,
+}: {
+  handoff: ShelterHandoff;
+}): Partial<PostHogConfig> {
   return {
+    // Pin the config-era rather than inheriting whatever the SDK does by
+    // default, so a dependency bump cannot change capture behaviour silently.
+    defaults: '2026-08-30',
     /**
      * Replay here is DOM-based (rrweb), so masking is per element rather than
      * per pixel.
@@ -98,6 +103,10 @@ export function buildInitConfig({ handoff }: { handoff: ShelterHandoff }) {
           bootstrap: {
             distinctID: handoff.distinctId,
             sessionID: handoff.sessionId,
+            // The app only hands over an id after `identify(user.id)`, so this
+            // is a known person; without it the visit lands as anonymous and
+            // never attaches to that profile.
+            isIdentifiedID: true,
           },
         }
       : {}),

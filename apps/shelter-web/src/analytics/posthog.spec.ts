@@ -21,6 +21,7 @@ it('continues the handed-over session when one arrives', () => {
   expect(config.bootstrap).toEqual({
     distinctID: 'distinct-1',
     sessionID: 'session-1',
+    isIdentifiedID: true,
   });
 });
 
