@@ -238,6 +238,15 @@ just the dev server, since Vite inlines `VITE_*` at transform time.
 - shelter-web loads `posthog-js` as a separate chunk so it stays off the critical
   path for a map-heavy page; its `$pageview` therefore lands a moment after load.
 - shelter-web records no sessions by design — see Consent.
+- **Automated browsers are dropped.** `posthog-js` filters traffic whose user
+  agent, `userAgentData.brands` or `navigator.webdriver` looks automated, and it
+  does so silently. `apps/shelter-e2e` will therefore never see an event unless
+  the build under test sets `opt_out_useragent_filter: true`.
+- **`handoff: true` means an id was sent, not that PostHog accepted it.** A
+  bootstrapped session id whose embedded UUIDv7 timestamp is older than 24 h is
+  discarded and a fresh session is minted, with the person link intact. The app
+  mints one per session (30 minute expiry), so this only shows up in fixtures
+  and replays of old traffic — but it is why the flag cannot be trusted alone.
 - The shelter site's privacy policy is a Termly embed
   (`libs/react/shelter/src/lib/pages/policy/PolicyPage.tsx`), so it cannot be
   updated from this repo. **Someone with Termly access must add analytics to it
