@@ -265,13 +265,16 @@ def _sync_schedules(
             raise ValidationError({"schedules": f"Schedule {key} appears more than once in the payload."})
         kept.add(key)
 
-    for key, stored in in_scope.items():
-        if key not in kept:
-            stored.delete()
+    # One statement per kind instead of one per row; pghistory's triggers are
+    # row-level, so the audit log still gets an event per row.
+    removed = [stored.pk for key, stored in in_scope.items() if key not in kept]
+    if removed:
+        Schedule.objects.filter(pk__in=removed).delete()
 
+    created: List[Dict[str, Any]] = []
     for key, row in specs:
         if key is None:
-            Schedule.objects.create(shelter=shelter, **row)
+            created.append(row)
             continue
 
         target = in_scope[key]
@@ -286,6 +289,9 @@ def _sync_schedules(
         for field_name in changed:
             setattr(target, field_name, row[field_name])
         target.save(update_fields=[*changed, "updated_at"])
+
+    if created:
+        Schedule.objects.bulk_create([Schedule(shelter=shelter, **row) for row in created])
 
 
 def _validate_subset_attributes(shelter: Shelter, m2m_data: Dict[str, List[Any]]) -> None:
