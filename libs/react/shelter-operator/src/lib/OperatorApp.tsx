@@ -46,6 +46,7 @@ import {
 import { SignIn } from './pages/signIn';
 import { OperatorAuthProvider } from './providers';
 import {
+  legacyProfileRoutes,
   mgmtRouteConfig,
   paths,
   profileRouteConfig,
@@ -90,6 +91,14 @@ export function OperatorApp() {
               path={profileRouteConfig.children.schedule}
               element={<ShelterSchedulePage />}
             />
+            {/* Old links to the Operating Hours tab. */}
+            {legacyProfileRoutes.map(({ from, to }) => (
+              <Route
+                key={from}
+                path={from}
+                element={<Navigate to={to} replace />}
+              />
+            ))}
             <Route
               path={profileRouteConfig.children.policies}
               element={<ShelterPoliciesPage />}
