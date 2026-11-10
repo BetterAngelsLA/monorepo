@@ -84,6 +84,24 @@ A missing key is not an error: the app opens the shelter site without a
 fragment and sends nothing. That is deliberate, so a developer without a token
 can still run the app.
 
+### One token, two names
+
+Both apps hold the **same** project token and host, in variables with different
+names. That is not drift:
+
+- The prefix is not ours to choose. Expo inlines `EXPO_PUBLIC_*`; Vite inlines
+  `VITE_*`. One variable name cannot serve both builds.
+- The token identifies a **project**, and both apps must point at the _same_
+  project or the handoff does nothing. `bootstrap` and funnels are both
+  project-scoped: two projects means two unrelated users and two funnels that
+  never join.
+- The token is public by design — it is compiled into both bundles — so keeping
+  the same value in two CI secrets is a rotation convenience, not a secret.
+
+When rotating, change both. When they diverge, the funnel breaks silently:
+`handoff` keeps arriving, the landing event keeps arriving, and they never line
+up.
+
 ## Session replay
 
 Enabled on iOS and Android only. It needs `@posthog/react-native-plugin`, which
