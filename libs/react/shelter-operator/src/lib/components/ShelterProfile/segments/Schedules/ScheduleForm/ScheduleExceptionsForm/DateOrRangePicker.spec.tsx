@@ -91,6 +91,26 @@ describe('DateOrRangePicker', () => {
     expect(pickerState()).toBe('2026-12-26|2026-12-26|true');
   });
 
+  it('restores the end date when the range is turned back on', () => {
+    render(<Harness initial={DATE_RANGE} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /remove end date/i }));
+    fireEvent.click(screen.getByRole('button', { name: /add end date/i }));
+
+    // The user chose 12-26; collapsing the range must not cost them that.
+    expect(dateInput('End date').value).toBe('2026-12-26');
+  });
+
+  it('falls back to the next day when the remembered end is not after the start', () => {
+    render(<Harness initial={DATE_RANGE} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /remove end date/i }));
+    setDate('Date', '2026-12-28');
+    fireEvent.click(screen.getByRole('button', { name: /add end date/i }));
+
+    expect(dateInput('End date').value).toBe('2026-12-29');
+  });
+
   it('collapses to a single day when the end date is removed', () => {
     render(<Harness initial={DATE_RANGE} />);
 

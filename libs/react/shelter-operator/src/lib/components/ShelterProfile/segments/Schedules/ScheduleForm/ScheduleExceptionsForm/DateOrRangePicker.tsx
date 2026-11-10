@@ -1,3 +1,5 @@
+import { addDays, format, parseISO } from 'date-fns';
+import { useRef } from 'react';
 import { Input } from '../../../../../base-ui/input';
 import type { ExceptionEntry } from '../types';
 
@@ -11,18 +13,16 @@ type TProps = {
   disabled?: boolean;
 };
 
-/** Adds days in UTC so a date-only value cannot shift across DST boundaries. */
-function addDays(date: string, days: number): string {
-  if (!date) return '';
-
-  const next = new Date(date);
-  next.setUTCDate(next.getUTCDate() + days);
-
-  return next.toISOString().slice(0, 10);
+/** The day after *date*, as a date-only string. */
+function nextDay(date: string): string {
+  return date ? format(addDays(parseISO(date), 1), 'yyyy-MM-dd') : '';
 }
 
 export function DateOrRangePicker(props: TProps) {
   const { isDateRange, startDate, endDate, onChange, disabled } = props;
+  // The end date before the range was collapsed: toggling back should restore
+  // what the user chose, not silently reset it to start + 1.
+  const lastEndDate = useRef('');
 
   // A single-day exception is stored with endDate mirroring startDate, so the
   // payload stays complete while only one field is shown.
@@ -36,10 +36,17 @@ export function DateOrRangePicker(props: TProps) {
   // including equal start and end dates — never shows or hides the end field.
   const handleToggleRange = () => {
     if (isDateRange) {
+      lastEndDate.current = endDate;
       onChange({ isDateRange: false, endDate: startDate });
-    } else {
-      onChange({ isDateRange: true, endDate: addDays(startDate, 1) });
+      return;
     }
+
+    const remembered = lastEndDate.current;
+    onChange({
+      isDateRange: true,
+      endDate:
+        remembered && remembered > startDate ? remembered : nextDay(startDate),
+    });
   };
 
   return (
@@ -60,7 +67,10 @@ export function DateOrRangePicker(props: TProps) {
             label="End date"
             value={endDate}
             min={startDate}
-            onChange={(e) => onChange({ endDate: e.target.value })}
+            onChange={(e) => {
+              lastEndDate.current = e.target.value;
+              onChange({ endDate: e.target.value });
+            }}
             disabled={disabled}
             className="w-44"
           />
