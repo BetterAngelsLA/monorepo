@@ -1,5 +1,6 @@
 import { Radiuses } from '@monorepo/expo/shared/static';
 import { Image } from 'expo-image';
+import { ReplayMask } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -36,16 +37,20 @@ export default function ImageGrid({
     <View onLayout={onLayout}>
       <View style={[styles.container, { margin: -baseMargin }]}>
         {images?.map((image) => (
-          <Image
+          <ReplayMask
+            key={image.id}
             style={[
               styles.image,
               { width: imageSize, height: imageSize, margin: baseMargin },
             ]}
-            source={{ uri: image.url }}
-            contentFit="cover"
-            accessibilityIgnoresInvertColors
-            key={image.id}
-          />
+          >
+            <Image
+              style={StyleSheet.absoluteFill}
+              source={{ uri: image.url }}
+              contentFit="cover"
+              accessibilityIgnoresInvertColors
+            />
+          </ReplayMask>
         ))}
       </View>
     </View>
