@@ -1,4 +1,5 @@
 import type { Page } from '@playwright/test';
+import { randomBytes } from 'node:crypto';
 import { gunzipSync } from 'node:zlib';
 
 /**
@@ -22,11 +23,7 @@ const CAPTURE_PATH = /\/(e|i\/v0\/e|batch|capture)\/?$/;
 /** A UUIDv7 — the only version the SDK accepts for a bootstrapped session. */
 export function uuidv7(): string {
   const ms = Date.now();
-  const bytes = Buffer.alloc(16);
-
-  for (let index = 0; index < 16; index += 1) {
-    bytes[index] = Math.floor(Math.random() * 256);
-  }
+  const bytes = randomBytes(16);
 
   // 48 bits of milliseconds fit a double exactly, so no BigInt is needed — and
   // bitwise operators would truncate to 32 bits.
