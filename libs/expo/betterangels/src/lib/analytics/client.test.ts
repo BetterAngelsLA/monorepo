@@ -108,3 +108,14 @@ it('constructs one client no matter how many call sites ask for it', async () =>
   expect(getAnalyticsClient()).not.toBe(first);
   expect(posthog.PostHogMock.calls).toHaveLength(2);
 });
+
+// The test engine runs as native, which is the case that must stay direct.
+it('sends natively straight to PostHog, not through the web proxy', async () => {
+  vi.stubEnv('EXPO_PUBLIC_POSTHOG_API_KEY', 'phc_test');
+
+  const { getAnalyticsClient } = await importClient();
+  getAnalyticsClient();
+
+  const [{ options }] = posthog.PostHogMock.calls;
+  expect(options['host']).toBeUndefined();
+});

@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { POSTHOG_PROXY_HOST } from '@monorepo/shared/shelter-handoff';
 import PostHog from 'posthog-react-native';
 import { Platform } from 'react-native';
 import { analyticsConfig } from './config';
@@ -25,6 +26,12 @@ export function getAnalyticsClient(): PostHog | null {
   client =
     analyticsConfig.enabled && hasRuntime()
       ? new PostHog(analyticsConfig.apiKey, {
+          /**
+           * The web build is a browser, so it faces the same blockers as the
+           * shelter site and goes through the same first-party proxy. Native
+           * does not: no browser, no blocker, no CORS.
+           */
+          ...(Platform.OS === 'web' ? { host: POSTHOG_PROXY_HOST } : {}),
           /** The default file persistence needs expo-file-system, which has no
            * web build; AsyncStorage works on every target. */
           customStorage: AsyncStorage,
