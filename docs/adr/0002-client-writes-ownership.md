@@ -237,7 +237,7 @@ When product adopts org ownership/transfer, `ClientProfile` gains
 ## Open sub-decisions (for the cutover PR, not this RFC)
 
 - Exact declaration form for the decoupled scopes (now `Access(write=…)` / `Access.read`
-  alongside `org_via`, ADR 0004) and the E00x checks that keep it honest at deploy time.
+  alongside `org_via`, ADR 0005) and the E00x checks that keep it honest at deploy time.
   Concretely: an E00x that **requires a declared write tier to be explicit and
   auditable** — e.g. it fires when a *scoped* Role carries a permission whose model
   declares a SHARED write tier without a tier-table entry, so parity SHARED writes

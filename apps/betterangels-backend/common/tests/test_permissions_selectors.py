@@ -1,6 +1,7 @@
 """Tests for the read-side authorization selectors (ADR 0001 §2.4, §2.10)."""
 
 from typing import Any
+from unittest.mock import patch
 
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
@@ -11,6 +12,7 @@ from model_bakery import baker
 from accounts.models import Role, User
 from accounts.services import grant_create, grant_delegate, role_assign, role_remove, sync_roles
 from accounts.tests.baker_recipes import organization_recipe
+from common.models import Access, AccessClass, Attachment
 from common.permissions.selectors import (
     ALL,
     can,
@@ -275,6 +277,32 @@ class GrantSelectorsTestCase(TestCase):
         # the instance, so the repeat check pays only for that column read.
         with self.assertNumQueries(1):
             self.assertTrue(can_obj(bob, ContactInfo.perms.VIEW, contact))
+
+    def test_a_reachless_model_can_declare_a_shared_write_class(self) -> None:
+        """The slot lives on ``BaseModel`` so a reachless model can use it.
+
+        ``Attachment`` declares no ``OrgScoped`` reach, so without a declared
+        class it fails closed for everyone — the write class is the only way to
+        say "any holder of the permission may act" about it, which is exactly
+        what the client-document cutover needs.
+        """
+        alice = baker.make(User)
+        grant_create(user=alice, role=self.shelter_role, scope_org=self.org_a)
+        attachment = baker.make(Attachment)
+
+        with patch.object(Attachment, "access", Access(write=AccessClass.SHARED)):
+            admitted = set(writable(Attachment.objects.all(), alice, Shelter.perms.VIEW).values_list("pk", flat=True))
+            self.assertTrue(can_obj(alice, Shelter.perms.VIEW, attachment))
+
+        self.assertEqual(admitted, {attachment.pk})
+
+    def test_a_reachless_model_without_a_class_still_fails_closed(self) -> None:
+        alice = baker.make(User)
+        grant_create(user=alice, role=self.shelter_role, scope_org=self.org_a)
+        attachment = baker.make(Attachment)
+
+        self.assertEqual(list(writable(Attachment.objects.all(), alice, Shelter.perms.VIEW)), [])
+        self.assertFalse(can_obj(alice, Shelter.perms.VIEW, attachment))
 
     def test_writable_is_can_obj_as_a_queryset(self) -> None:
         """writable() admits exactly the rows can_obj() admits (one predicate).

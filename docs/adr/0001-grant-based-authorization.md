@@ -411,7 +411,7 @@ subquery, not a re-derivation.
 - The arm is `OBJECT_ARM_ENABLED = False` until the clients cutover ships (finding F9);
   it is turned on with its first consumer, not before.
 - **Write classes are in (RFC 0002 §Precondition, 2026-09-09; folded into
-  `Access.write`, ADR 0004).** `OrgScoped.access.write` lets a model declare its write
+  `Access.write`, ADR 0005).** `OrgScoped.access.write` lets a model declare its write
   scope independently of `org_via` (its read scope): `writable()`/`can_obj` use the ORG
   filter for org-anchored models (derived default), a declared SHARED class for
   platform-shared models whose writes are shared-by-role-anywhere (`ClientProfile`

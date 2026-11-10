@@ -11,7 +11,7 @@ there is nothing to guard.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 from django.core.checks import Error, Tags, register
 
@@ -246,30 +246,31 @@ def check_object_grant_principal_is_a_user(app_configs: Any, **kwargs: Any) -> l
 
 @register(Tags.models)
 def check_access_declarations(app_configs: Any, **kwargs: Any) -> list[Error]:
-    """E007 — ``access`` declarations must be legal (ADR 0004, RFC 0002 §Precondition).
+    """E007 — ``access`` declarations must be legal (ADR 0005).
 
     ``access.write`` is consulted by :func:`common.permissions.selectors.writable`
-    independently of ``org_via``:
+    and :func:`~common.permissions.selectors.can_obj`, for every model:
 
-    * only a platform-shared model (``org_via = None``) may declare a write
-      class — org-anchored models derive the ORG write scope from their org
-      anchor;
-    * ``WRITE_OBJECT`` stays reserved until the object arm turns on with the
-      clients cutover (ADR 0001 §2.5) — declaring it today would silently route
-      writes to an object-grant predicate nothing can satisfy;
-    * an unknown value is an error, not a silent fall back — a typo must not
-      enforce nothing like what it claims (ADR 0004 layer 1);
-    * ``access.read`` is reserved until the access-classes slice lands.
+    * an **org-anchored** model (``org_via`` not ``None``) derives ORG from its
+      org anchor and must not declare a write class;
+    * a **platform-shared or reachless** model may declare one, and either way
+      the value must be an :class:`~common.models.AccessClass` — a bare string
+      or the constant's name is refused, because nothing else type-checks a
+      class attribute and a typo must not enforce nothing like what it claims;
+    * ``AccessClass.OBJECT`` stays reserved until the object arm turns on with
+      the clients cutover (ADR 0001 §2.5) — declaring it today would route
+      writes to a predicate nothing can satisfy;
+    * ``access.read`` is reserved until ``visible`` implements the read
+      direction.
     """
     from django.apps import apps
 
-    from common.models import WRITE_OBJECT, WRITE_SHARED, Access, OrgScoped
+    from common.models import WRITE_OBJECT, Access, AccessClass, OrgScoped
 
     errors: list[Error] = []
-    valid_write = {WRITE_SHARED, WRITE_OBJECT}
     for model in apps.get_models():
-        if not issubclass(model, OrgScoped):
-            continue
+        # Only a model's *own* declaration counts; the BaseModel default is the
+        # derived rule, not a declaration.
         access = model.__dict__.get("access")
         if access is None:
             continue
@@ -283,44 +284,49 @@ def check_access_declarations(app_configs: Any, **kwargs: Any) -> list[Error]:
                 )
             )
             continue
+
         if access.read is not None:
             errors.append(
                 Error(
                     f"{model.__name__}.access.read = {access.read!r} is reserved.",
-                    hint="Read classes land with the access-classes slice (ADR 0004); "
-                    "declare only access.write for now.",
+                    hint="The read direction lands with its first consumer; declare only access.write for now.",
                     obj=model,
                     id="permissions.E007",
                 )
             )
+
         write = access.write
         if write is None:
             continue
-        if model.org_via is not None:
+        # ``Access.write`` is typed ``AccessClass | None``, so this reads as
+        # unreachable to a type checker — it is the guard for a declaration
+        # edited at runtime, which is the only way a bad value can reach here.
+        bad_write = cast("object", write)
+        if not isinstance(bad_write, AccessClass):
+            errors.append(
+                Error(
+                    f"{model.__name__}.access.write = {bad_write!r} is not an AccessClass.",
+                    hint="Use the enum: AccessClass.SHARED (or .OBJECT once the arm lands).",
+                    obj=model,
+                    id="permissions.E007",
+                )
+            )
+            continue
+        if issubclass(model, OrgScoped) and model.org_via is not None:
             errors.append(
                 Error(
                     f"{model.__name__}.access.write = {write!r} on an org-anchored model.",
-                    hint="Org-anchored models derive the ORG write scope from org_via; "
-                    "only a platform-shared model (org_via = None) declares a write class.",
+                    hint="Org-anchored models derive the ORG write scope from org_via; only a "
+                    "platform-shared or reachless model declares a write class.",
                     obj=model,
                     id="permissions.E007",
                 )
             )
-        elif write not in valid_write:
-            errors.append(
-                Error(
-                    f"{model.__name__}.access.write = {write!r} is not a known class.",
-                    hint=f"Legal values: None, WRITE_SHARED ({WRITE_SHARED!r}), "
-                    f"WRITE_OBJECT ({WRITE_OBJECT!r}, reserved).",
-                    obj=model,
-                    id="permissions.E007",
-                )
-            )
-        elif write == WRITE_OBJECT:
+        elif write is WRITE_OBJECT:
             errors.append(
                 Error(
                     f"{model.__name__}.access.write = {write!r} is reserved.",
-                    hint="The object-grant arm (WRITE_OBJECT) turns on with the clients "
+                    hint="The object-grant arm (AccessClass.OBJECT) turns on with the clients "
                     "cutover (ADR 0001 §2.5) — do not declare it before then.",
                     obj=model,
                     id="permissions.E007",

@@ -1,5 +1,6 @@
 import json
 from dataclasses import dataclass
+from enum import StrEnum
 from typing import Any, ClassVar, Dict, Iterator, Optional, cast
 
 from django.contrib.contenttypes.fields import GenericForeignKey
@@ -19,55 +20,79 @@ from common.files.utils import get_unique_file_path
 from common.permissions.utils import PermissionSet
 
 
+class AccessClass(StrEnum):
+    """The closed vocabulary a model may name in :class:`Access` (ADR 0005).
+
+    An enum rather than bare strings: the declaration is a class attribute, so
+    nothing else type-checks it.  ``Access(write="shared")`` would be caught by
+    ``permissions.E007`` at deploy time, but ``Access(write=WRITE_SHARED)`` where
+    ``WRITE_SHARED`` is some other string — or the constant's *name* rather than
+    its value — would not.  As an enum both are type errors.
+    """
+
+    SHARED = "shared"
+    """Any holder of the permission anywhere may act (``can_anywhere``)."""
+
+    OBJECT = "object"
+    """Only an object ``Grant`` on the row (or the global tier) may act.
+
+    Reserved — the object arm turns on with the clients cutover (ADR 0001 §2.5);
+    ``permissions.E007`` refuses it until then.
+    """
+
+
+# Kept as module-level names: call sites and checks compare against these, and
+# ``StrEnum`` members compare equal to their values, so existing string
+# literals in tests keep working.
+WRITE_SHARED = AccessClass.SHARED
+WRITE_OBJECT = AccessClass.OBJECT
+
+
+@dataclass(frozen=True)
+class Access:
+    """Authority classes for a model's rows, per direction (ADR 0005).
+
+    One declaration slot, separate from reach (``org_via``): ``None`` leaves the
+    derived rules in charge, an explicit class names what the selectors enforce.
+    Declared on :class:`BaseModel`, so a model that is *not* ``OrgScoped`` can
+    still name its class — the attachments do, and without the slot they could
+    only ever fail closed.
+
+    ``write`` values:
+
+    * ``None`` — derive: ORG for an org-anchored model (``org_via`` not
+      ``None``); fail closed otherwise (only the global tier may act) — the safe
+      default (finding C1).
+    * :data:`AccessClass.SHARED` — any holder of the permission anywhere.
+    * :data:`AccessClass.OBJECT` — reserved until the object arm has a consumer.
+
+    ``read`` is the read direction's reserved slot: ``ACCESS_GLOBAL`` lands with
+    its first consumer (a platform-only field), and ``permissions.E007`` refuses
+    any value here until ``visible`` implements it.
+    """
+
+    read: AccessClass | None = None
+    write: AccessClass | None = None
+
+
 class BaseModel(models.Model):
     class perms(PermissionSet):
         pass
+
+    access: ClassVar[Access] = Access()
+    """Authority classes for this model's rows (ADR 0005).
+
+    ``access.write`` is consulted by :func:`~common.permissions.selectors.writable`
+    and :func:`~common.permissions.selectors.can_obj`.  An org-anchored model
+    derives ORG from ``org_via`` and must not declare one (``permissions.E007``);
+    a platform-shared or reachless model names its class here, or fails closed.
+    """
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         abstract = True
-
-
-# Access classes (ADR 0004; RFC 0002 §Precondition / ADR 0001 §2.5).
-# ``writable``/``can_obj`` consult a model's write scope independently of
-# ``org_via`` (its read scope).  ORG is the derived default for any org-anchored
-# model (``org_via`` not ``None``) and needs no declaration; these constants are
-# the explicit values a model names when the derived default is not what its
-# writes need.
-WRITE_SHARED = "shared"
-"""Platform-shared write class: any holder of the permission anywhere may act."""
-
-WRITE_OBJECT = "object"
-"""Object-grant write class: only an object ``Grant`` (or the global tier) may act.
-
-Reserved — the object arm turns on with the clients cutover (ADR 0001 §2.5);
-``permissions.E007`` refuses it until then.
-"""
-
-
-@dataclass(frozen=True)
-class Access:
-    """Authority classes for a model's rows, per direction (ADR 0004).
-
-    One declaration slot, separate from reach (``org_via``): ``None`` leaves the
-    derived rules in charge, explicit values name the class the selectors
-    enforce.  The ``read`` side is reserved — read classes land with the
-    access-classes slice (ADR 0004).
-
-    ``write`` values:
-
-    * ``None`` — derive: ORG for an org-anchored model (``org_via`` not
-      ``None``); fail closed for a platform-shared model (only the global tier
-      may act) — the safe default (finding C1).
-    * :data:`WRITE_SHARED` — any holder of the permission anywhere may act.
-    * :data:`WRITE_OBJECT` — reserved until the object arm wires its first
-      consumer.
-    """
-
-    read: str | None = None
-    write: str | None = None
 
 
 class OrgScoped(models.Model):
@@ -88,15 +113,10 @@ class OrgScoped(models.Model):
     org_via: ClassVar[tuple[str, ...] | None] = ()
     _org_paths: ClassVar[tuple[str, ...] | None] = None
 
+    # ``OrgScoped`` is a sibling of ``BaseModel``, not a subclass (models mix in
+    # whichever they need), so the slot is declared here as well as there.  Same
+    # default, so a model inheriting both resolves to the same value.
     access: ClassVar[Access] = Access()
-    """Authority classes for this model's rows (ADR 0004).
-
-    ``access.write`` is consulted by :func:`common.permissions.selectors.writable`
-    (:func:`~common.permissions.selectors.can_obj`) for a platform-shared model
-    (``org_via = None``); org-anchored models derive the ORG write scope from
-    their org anchor and must not declare one (``permissions.E007``).
-    ``access.read`` is reserved until the access-classes slice lands.
-    """
 
     class Meta:
         abstract = True

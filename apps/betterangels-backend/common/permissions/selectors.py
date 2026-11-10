@@ -346,15 +346,19 @@ def writable(qs: "QuerySet", user: "User", perm: str) -> "QuerySet":
     * **Fail-closed default** — all rows only for the global tier (``scopes``
       is ALL); ``WRITE_OBJECT`` sits here until the object arm wires grants.
     """
-    from common.models import WRITE_SHARED, OrgScoped
+    from common.models import WRITE_SHARED, Access, OrgScoped
 
     model = qs.model
+    access = getattr(model, "access", None) or Access()
+    if issubclass(model, OrgScoped) and model.org_via is not None:
+        return visible(qs, user, perm)
+    if access.write == WRITE_SHARED:
+        # A reachless model can name SHARED too — that is the slot's whole point
+        # for the attachments, which are not ``OrgScoped`` and would otherwise
+        # only ever fail closed.
+        return qs if can_anywhere(user, perm) else qs.none()
     if not issubclass(model, OrgScoped):
         return qs.none()
-    if model.org_via is not None:
-        return visible(qs, user, perm)
-    if model.access.write == WRITE_SHARED:
-        return qs if can_anywhere(user, perm) else qs.none()
     return qs if scopes(user, perm) is ALL else qs.none()
 
 
@@ -380,25 +384,25 @@ def can_obj(user: "User", perm: str, obj: "Model") -> bool:
     * **ORG** (derived default for an org-anchored model, ``org_via`` not
       ``None``) — the row must sit in an org the user can exercise *perm* in.
       Unchanged from the pre-tier contract.
-    * **SHARED** (``access.write = WRITE_SHARED`` on a platform-shared model) —
-      any holder of *perm* anywhere may act (``can_anywhere``).
-      ``ClientProfile`` declares this to match ``main`` (RFC 0002 decision #1).
-    * **Fail-closed default** for a platform-shared model with no declared class
-      (finding C1 / RFC 0002): the read rule never feeds an undeclared write —
-      only the global tier (``scopes`` is ALL) may act, until an object grant
-      covers the row once the object arm is wired at the clients cutover.
+    * **SHARED** (``access.write = AccessClass.SHARED``, platform-shared or
+      reachless) — any holder of *perm* anywhere may act (``can_anywhere``).
+      ``ClientProfile`` declares this to match ``main`` (RFC 0002 decision #1);
+      a reachless model may declare it too, which is why the slot lives on
+      ``BaseModel``.
+    * **Fail-closed default** — a platform-shared model with no declared class
+      acts only for the global tier (finding C1 / RFC 0002), and a reachless
+      model (no ``OrgScoped``) fails closed outright.
 
     Kept for callers that already hold a row (services, ``explain``); mutation
     gates should instead fetch *through* :func:`writable` so the fetch itself
     is the gate.  The classes live in :func:`writable`'s docstring; an
     equivalence test pins the two so they cannot drift.
     """
-    from common.models import WRITE_SHARED, OrgScoped
+    from common.models import WRITE_SHARED, Access, OrgScoped
 
     model = obj.__class__
-    if not issubclass(model, OrgScoped):
-        return False
-    if model.org_via is not None:
+    access = getattr(model, "access", None) or Access()
+    if issubclass(model, OrgScoped) and model.org_via is not None:
         # Own-org columns are read from the row; a hop reads just the org id
         # column from the database, because a cached parent can be stale after a
         # re-point and the object graph cannot prove it is current.
@@ -420,8 +424,10 @@ def can_obj(user: "User", perm: str, obj: "Model") -> bool:
         if row is None:
             return False
         return any(value in s for value in row if value is not None)
-    if model.access.write == WRITE_SHARED:
+    if access.write == WRITE_SHARED:
         return can_anywhere(user, perm)
+    if not issubclass(model, OrgScoped):
+        return False
     s = scopes(user, perm)
     return s is ALL
 

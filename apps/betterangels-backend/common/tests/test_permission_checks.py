@@ -1,5 +1,7 @@
 """Tests for the grant system checks (ADR 0001 §2.7, ``permissions.E001``–E007)."""
 
+from typing import cast
+
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.db import models as django_models
@@ -8,7 +10,7 @@ from model_bakery import baker
 
 from accounts.models import Grant, Role, User
 from accounts.tests.baker_recipes import organization_recipe
-from common.models import WRITE_OBJECT, WRITE_SHARED, Access, Attachment, OrgScoped
+from common.models import WRITE_OBJECT, WRITE_SHARED, Access, AccessClass, Attachment, OrgScoped
 from common.permissions.checks import (
     _org_via_errors_for_model,
     check_access_declarations,
@@ -174,7 +176,7 @@ class GrantSystemChecksTestCase(TestCase):
 
 
 class AccessDeclarationChecksTestCase(TestCase):
-    """E007 — ``access`` declarations must be legal (ADR 0004, RFC 0002 §Precondition)."""
+    """E007 — ``access`` declarations must be legal (ADR 0005, RFC 0002 §Precondition)."""
 
     def test_e007_is_quiet_for_clientprofile_shared_declaration(self) -> None:
         from clients.models import ClientProfile
@@ -205,23 +207,25 @@ class AccessDeclarationChecksTestCase(TestCase):
         self.assertIn("reserved", errors[0].msg)
 
     def test_e007_fires_on_an_unknown_write_class(self) -> None:
-        """A typo must not silently fall back to the derived default (ADR 0004)."""
+        """A typo must not silently fall back to the derived default (ADR 0005)."""
         from unittest.mock import patch
 
         from clients.models import ClientProfile
 
-        with patch.object(ClientProfile, "access", Access(write="sharred")):
+        # ``cast`` because the type system already refuses this — the check is
+        # the runtime guard for a declaration the type checker never saw.
+        with patch.object(ClientProfile, "access", Access(write=cast("AccessClass", "sharred"))):
             errors = _errors_with(check_access_declarations(None), "permissions.E007")
 
         self.assertEqual(len(errors), 1)
-        self.assertIn("not a known class", errors[0].msg)
+        self.assertIn("not an AccessClass", errors[0].msg)
 
     def test_e007_fires_when_a_read_class_is_declared_before_the_slice(self) -> None:
         from unittest.mock import patch
 
         from clients.models import ClientProfile
 
-        with patch.object(ClientProfile, "access", Access(read="global")):
+        with patch.object(ClientProfile, "access", Access(read=cast("AccessClass", "global"))):
             errors = _errors_with(check_access_declarations(None), "permissions.E007")
 
         self.assertEqual(len(errors), 1)
@@ -233,8 +237,8 @@ class AccessDeclarationChecksTestCase(TestCase):
         from clients.models import ClientProfile
 
         # The constant's *name* as a literal — the hand-edit E007 must catch.
-        with patch.object(ClientProfile, "access", Access(write="WRITE_SHARED")):
+        with patch.object(ClientProfile, "access", Access(write=cast("AccessClass", "WRITE_SHARED"))):
             errors = _errors_with(check_access_declarations(None), "permissions.E007")
 
         self.assertEqual(len(errors), 1)
-        self.assertIn("not a known class", errors[0].msg)
+        self.assertIn("not an AccessClass", errors[0].msg)
