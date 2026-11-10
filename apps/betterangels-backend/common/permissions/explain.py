@@ -63,21 +63,28 @@ class Explanation:
 
 
 def _split_perm(perm: str) -> tuple[str, str]:
-    """Split and validate *perm* — format *and* existence in the modeled registry.
+    """Split and validate *perm* — format *and* existence.
 
     A typo (``shelters.view_shelterx``) would otherwise walk every arm, find
     nothing, and report a denial indistinguishable from a real one: a debugger
     answering "no authority" for a permission that does not exist.
+
+    The catalog is the same one the predicates use.  Checking the narrower
+    product catalog here made the debugger refuse permissions the enforcement
+    path accepts — ``notes.view_note_private_details`` is declared in
+    ``Note.Meta.permissions`` and carried by the scoped Caseworker role, but is
+    absent from the product registry — which is exactly the denial it exists to
+    explain.
     """
     app_label, _, codename = perm.partition(".")
     if not app_label or not codename:
         raise ValueError(f"permission must be 'app_label.codename', got {perm!r}")
 
-    from common.permissions.utils import modeled_permission_strings
+    from common.permissions.utils import known_permission_strings
 
-    modeled = modeled_permission_strings()
-    if perm not in modeled:
-        hint = get_close_matches(perm, sorted(modeled), n=3, cutoff=0.6)
+    known = known_permission_strings()
+    if str(perm) not in known:
+        hint = get_close_matches(str(perm), sorted(known), n=3, cutoff=0.6)
         suggestion = f"  Did you mean: {', '.join(hint)}?" if hint else ""
         raise ValueError(f"unknown permission {perm!r} — not a product-modeled permission.{suggestion}")
     return app_label, codename

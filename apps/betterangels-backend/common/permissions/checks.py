@@ -267,10 +267,13 @@ def check_access_declarations(app_configs: Any, **kwargs: Any) -> list[Error]:
 
     errors: list[Error] = []
     for model in apps.get_models():
-        # Only a model's *own* declaration counts; the BaseModel default is the
-        # derived rule, not a declaration.
-        access = model.__dict__.get("access")
-        if access is None:
+        # Resolve through the MRO so a declaration on an abstract base is
+        # checked — the selectors honour it on every concrete subclass, so
+        # skipping it would enforce a rule the deploy check never sees.  The
+        # ``BaseModel``/``OrgScoped`` default is the derived rule, not a
+        # declaration, and compares equal to ``Access()``.
+        access = getattr(model, "access", None)
+        if access is None or access == Access():
             continue
         if not isinstance(access, Access):
             errors.append(
