@@ -45,10 +45,21 @@ class ShelterLocationInput:
 
 @strawberry.input
 class ScheduleInput:
-    #: Existing row to update. Omitted on a new slot; a row whose id is absent from
-    #: the submitted set is deleted (the payload is authoritative).
+    """One schedule slot.
+
+    An entry is a **full row**: every field left out is written with its default,
+    so send the whole slot. ``demographic`` is not expressible here; a row updated
+    in place keeps the one it has, a row created here has none.
+    """
+
+    #: Existing row to update. Only valid on update — create rejects it. A row
+    #: whose id is absent from a submitted set is deleted (the payload is
+    #: authoritative for its schedule type).
     id: Optional[ID] = None
     schedule_type: ScheduleTypeChoices = ScheduleTypeChoices.OPERATING
+    #: Days the slot repeats on; one row is created per day. Omit it for a slot
+    #: that applies every day — an empty list is rejected rather than read as
+    #: "every day".
     days: Optional[List[DayOfWeekChoices]] = None
     start_time: Optional[time] = None
     end_time: Optional[time] = None

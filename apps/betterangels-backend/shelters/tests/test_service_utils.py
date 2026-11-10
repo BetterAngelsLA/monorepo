@@ -227,6 +227,22 @@ class CreateSchedulesTestCase(TestCase):
     def setUp(self) -> None:
         self.shelter = Shelter.objects.create(name="Test Shelter")
 
+    def test_an_id_on_a_new_entry_is_rejected(self) -> None:
+        """Create takes no ids: only an update names an existing row."""
+        with self.assertRaisesMessage(ValidationError, "cannot carry an id"):
+            _create_schedules(
+                self.shelter,
+                [
+                    {
+                        "id": "1",
+                        "schedule_type": ScheduleTypeChoices.OPERATING,
+                        "days": [DayOfWeekChoices.MONDAY],
+                        "start_time": datetime.time(9, 0),
+                        "end_time": datetime.time(17, 0),
+                    }
+                ],
+            )
+
     def test_empty_list_creates_no_schedules(self) -> None:
         """Calling with an empty list is a no-op."""
         _create_schedules(self.shelter, [])
@@ -556,6 +572,15 @@ class SyncSchedulesTestCase(TestCase):
             set(Schedule.objects.filter(shelter=self.shelter).values_list("day", flat=True)),
             {DayOfWeekChoices.TUESDAY, DayOfWeekChoices.WEDNESDAY},
         )
+
+    def test_empty_days_is_rejected(self) -> None:
+        """An empty list reads as "no days", not "every day"."""
+        with self.assertRaisesMessage(ValidationError, "days cannot be empty"):
+            _sync_schedules(
+                self.shelter,
+                [self._entry(days=[])],
+                schedule_type=ScheduleTypeChoices.OPERATING,
+            )
 
     def test_rejects_a_duplicate_slot_with_a_readable_message(self) -> None:
         """The stored key repeats, so the save is refused before the DB sees it."""

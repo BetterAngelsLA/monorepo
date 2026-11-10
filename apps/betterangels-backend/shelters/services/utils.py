@@ -118,8 +118,14 @@ def _schedule_rows(entry: Dict[str, Any]) -> List[Dict[str, Any]]:
         ConditionChoices(getattr(raw_condition, "value", raw_condition)) if raw_condition else None
     )
 
+    raw_days = entry.get("days")
+    if raw_days is not None and not raw_days:
+        # ``or [None]`` would silently turn this into an every-day slot, which is
+        # the opposite of what a client clearing ``days`` means to say.
+        raise ValidationError({"schedules": "days cannot be empty; omit it to mean every day."})
+
     rows: List[Dict[str, Any]] = []
-    for raw_day in entry.get("days") or [None]:
+    for raw_day in raw_days or [None]:
         rows.append(
             {
                 "schedule_type": schedule_type,
@@ -138,6 +144,10 @@ def _schedule_rows(entry: Dict[str, Any]) -> List[Dict[str, Any]]:
 
 def _create_schedules(shelter: Shelter, schedules_data: List[Dict[str, Any]]) -> None:
     """Bulk-create Schedule rows from a list of input dicts (create-only path)."""
+    for entry in schedules_data:
+        if entry.get("id"):
+            raise ValidationError({"schedules": "A new schedule entry cannot carry an id; ids update existing rows."})
+
     rows = [row for entry in schedules_data for row in _schedule_rows(entry)]
 
     if rows:
