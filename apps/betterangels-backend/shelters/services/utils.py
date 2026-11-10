@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, overload
+from typing import Any, Dict, List, overload
 
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -169,38 +169,33 @@ def _sync_schedules(
     shelter: Shelter,
     schedules_data: List[Dict[str, Any]],
     *,
-    schedule_types: Optional[List[ScheduleTypeChoices]] = None,
+    schedule_type: ScheduleTypeChoices,
 ) -> None:
-    """Reconcile a shelter's schedules with the submitted set.
+    """Reconcile one schedule type with the submitted set.
 
-    Within the payload's *scope*, the payload is authoritative: an entry carrying
-    an ``id`` updates that row in place, an entry without one creates a row, and a
-    row whose id is absent is deleted. Updating in place is the point — the write
-    then records only what changed, so the audit log can report an edit as an edit
-    instead of a delete plus a create.
-
-    *schedule_types* narrows the scope to the types being edited, so saving the
-    Operating Hours tab cannot revert Intake or Meal Service from a stale client
-    snapshot. ``None`` keeps the older meaning — the payload covers the shelter's
-    whole schedule — for clients that send the complete set.
+    *schedule_type* is the tab being saved, and the payload is authoritative for
+    it alone: an entry carrying an ``id`` updates that row in place, an entry
+    without one creates a row, and a row of that type whose id is absent is
+    deleted. Every other type is left untouched, so saving Operating Hours cannot
+    revert Intake or Meal Service from a stale client snapshot. Updating in place
+    is the point — the write then records only what changed, so the audit log can
+    report an edit as an edit instead of a delete plus a create.
 
     Ids must belong to *this* shelter (an id from another organization is an input
     error, not a silent no-op) and may appear once. The caller runs inside a
     transaction and the slot key is deferrable, so a save may swap two slots' times
     without tripping the unique constraint mid-flight.
     """
-    scope = set(schedule_types) if schedule_types is not None else None
-
     specs: List[tuple[str | None, Dict[str, Any]]] = []
     for entry in schedules_data:
         raw_id = entry.get("id")
         for row in _schedule_rows(entry):
-            if scope is not None and row["schedule_type"] not in scope:
+            if row["schedule_type"] != schedule_type:
                 raise ValidationError(
                     {
                         "schedules": (
                             f"A {_schedule_type_label(row['schedule_type'])} entry was submitted "
-                            "but that type is not in scheduleTypes."
+                            f"for a {_schedule_type_label(schedule_type)} save."
                         )
                     }
                 )
@@ -219,7 +214,7 @@ def _sync_schedules(
     # Lock every row of the shelter: the scope decides what may be written, not
     # what a concurrent save may be doing to the other types.
     existing = {str(row.id): row for row in shelter.schedules.select_for_update()}
-    in_scope = {key: row for key, row in existing.items() if scope is None or row.schedule_type in scope}
+    in_scope = {key: row for key, row in existing.items() if row.schedule_type == schedule_type}
 
     kept: set[str] = set()
     for key, _row in specs:
@@ -228,7 +223,11 @@ def _sync_schedules(
         if key not in existing:
             raise ValidationError({"schedules": f"Schedule {key} does not belong to this shelter."})
         if key not in in_scope:
-            raise ValidationError({"schedules": f"Schedule {key} is not a schedule type in scheduleTypes."})
+            raise ValidationError(
+                {
+                    "schedules": f"Schedule {key} is not one of this shelter's {_schedule_type_label(schedule_type)} slots."
+                }
+            )
         if key in kept:
             raise ValidationError({"schedules": f"Schedule {key} appears more than once in the payload."})
         kept.add(key)

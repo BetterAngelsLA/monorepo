@@ -1849,7 +1849,7 @@ class ObjectAuditLogScheduleServiceTestCase(TestCase):
                             "end_time": time(18, 0),
                         },
                     ],
-                    "schedule_types": [ScheduleTypeChoices.OPERATING],
+                    "schedule_type": ScheduleTypeChoices.OPERATING,
                 },
             )
 
@@ -1882,7 +1882,7 @@ class ObjectAuditLogScheduleServiceTestCase(TestCase):
                             "end_time": time(17, 0),
                         }
                     ],
-                    "schedule_types": [ScheduleTypeChoices.OPERATING],
+                    "schedule_type": ScheduleTypeChoices.OPERATING,
                 },
             )
 

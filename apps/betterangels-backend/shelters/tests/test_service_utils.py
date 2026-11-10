@@ -425,6 +425,7 @@ class SyncSchedulesTestCase(TestCase):
         _sync_schedules(
             self.shelter,
             [self._entry(id=self.slot.pk, start_time=datetime.time(10, 0))],
+            schedule_type=ScheduleTypeChoices.OPERATING,
         )
 
         self.assertEqual(Schedule.objects.filter(shelter=self.shelter).count(), 1)
@@ -435,7 +436,7 @@ class SyncSchedulesTestCase(TestCase):
         """A save that matches what is stored must not date the row or log an edit."""
         before = self.slot.updated_at
 
-        _sync_schedules(self.shelter, [self._entry(id=self.slot.pk)])
+        _sync_schedules(self.shelter, [self._entry(id=self.slot.pk)], schedule_type=ScheduleTypeChoices.OPERATING)
 
         self.slot.refresh_from_db()
         self.assertEqual(self.slot.updated_at, before)
@@ -443,7 +444,11 @@ class SyncSchedulesTestCase(TestCase):
     def test_changed_entry_touches_the_row(self) -> None:
         before = self.slot.updated_at
 
-        _sync_schedules(self.shelter, [self._entry(id=self.slot.pk, start_time=datetime.time(10, 0))])
+        _sync_schedules(
+            self.shelter,
+            [self._entry(id=self.slot.pk, start_time=datetime.time(10, 0))],
+            schedule_type=ScheduleTypeChoices.OPERATING,
+        )
 
         self.slot.refresh_from_db()
         self.assertGreater(self.slot.updated_at, before)
@@ -455,14 +460,15 @@ class SyncSchedulesTestCase(TestCase):
                 self._entry(id=self.slot.pk),
                 self._entry(days=[DayOfWeekChoices.TUESDAY]),
             ],
+            schedule_type=ScheduleTypeChoices.OPERATING,
         )
 
         self.assertTrue(Schedule.objects.filter(pk=self.slot.pk).exists())
         self.assertEqual(Schedule.objects.filter(shelter=self.shelter).count(), 2)
         self.assertTrue(Schedule.objects.filter(shelter=self.shelter, day=DayOfWeekChoices.TUESDAY).exists())
 
-    def test_scope_leaves_other_types_untouched(self) -> None:
-        """Saving one tab must not revert another: rows outside the scope stay."""
+    def test_other_types_are_untouched(self) -> None:
+        """Saving one tab must not revert another: rows of other types stay."""
         intake = Schedule.objects.create(
             shelter=self.shelter,
             schedule_type=ScheduleTypeChoices.INTAKE,
@@ -474,7 +480,7 @@ class SyncSchedulesTestCase(TestCase):
         _sync_schedules(
             self.shelter,
             [self._entry(id=self.slot.pk, start_time=datetime.time(10, 0))],
-            schedule_types=[ScheduleTypeChoices.OPERATING],
+            schedule_type=ScheduleTypeChoices.OPERATING,
         )
 
         self.slot.refresh_from_db()
@@ -482,8 +488,8 @@ class SyncSchedulesTestCase(TestCase):
         self.assertEqual(self.slot.start_time, datetime.time(10, 0))
         self.assertEqual(intake.start_time, datetime.time(8, 0))
 
-    def test_scope_clears_only_its_own_type(self) -> None:
-        """An empty payload for the scope deletes that type, and only that type."""
+    def test_clearing_one_type_leaves_the_others(self) -> None:
+        """An empty payload deletes the submitted type, and only that type."""
         intake = Schedule.objects.create(
             shelter=self.shelter,
             schedule_type=ScheduleTypeChoices.INTAKE,
@@ -492,13 +498,13 @@ class SyncSchedulesTestCase(TestCase):
             end_time=datetime.time(9, 0),
         )
 
-        _sync_schedules(self.shelter, [], schedule_types=[ScheduleTypeChoices.OPERATING])
+        _sync_schedules(self.shelter, [], schedule_type=ScheduleTypeChoices.OPERATING)
 
         self.assertFalse(Schedule.objects.filter(pk=self.slot.pk).exists())
         self.assertTrue(Schedule.objects.filter(pk=intake.pk).exists())
 
-    def test_id_outside_the_scope_is_rejected_with_its_own_message(self) -> None:
-        """The row exists; it is simply not part of this payload's scope."""
+    def test_id_of_another_type_is_rejected_with_its_own_message(self) -> None:
+        """The row exists; it is simply not a row of the submitted type."""
         intake = Schedule.objects.create(
             shelter=self.shelter,
             schedule_type=ScheduleTypeChoices.INTAKE,
@@ -507,26 +513,26 @@ class SyncSchedulesTestCase(TestCase):
             end_time=datetime.time(9, 0),
         )
 
-        with self.assertRaisesMessage(ValidationError, "not a schedule type in scheduleTypes"):
+        with self.assertRaisesMessage(ValidationError, "is not one of this shelter's Operating Hours slots"):
             _sync_schedules(
                 self.shelter,
                 [self._entry(id=intake.pk)],
-                schedule_types=[ScheduleTypeChoices.OPERATING],
+                schedule_type=ScheduleTypeChoices.OPERATING,
             )
 
         self.assertTrue(Schedule.objects.filter(pk=intake.pk).exists())
 
-    def test_entry_outside_the_scope_is_rejected(self) -> None:
+    def test_entry_of_another_type_is_rejected(self) -> None:
         with self.assertRaises(ValidationError):
             _sync_schedules(
                 self.shelter,
                 [self._entry(schedule_type=ScheduleTypeChoices.INTAKE)],
-                schedule_types=[ScheduleTypeChoices.OPERATING],
+                schedule_type=ScheduleTypeChoices.OPERATING,
             )
 
     def test_deletes_rows_absent_from_the_payload(self) -> None:
         """The payload is authoritative: a slot left out is removed."""
-        _sync_schedules(self.shelter, [])
+        _sync_schedules(self.shelter, [], schedule_type=ScheduleTypeChoices.OPERATING)
 
         self.assertFalse(Schedule.objects.filter(shelter=self.shelter).exists())
 
@@ -534,6 +540,7 @@ class SyncSchedulesTestCase(TestCase):
         _sync_schedules(
             self.shelter,
             [self._entry(days=[DayOfWeekChoices.TUESDAY, DayOfWeekChoices.WEDNESDAY])],
+            schedule_type=ScheduleTypeChoices.OPERATING,
         )
 
         self.assertEqual(
@@ -550,6 +557,7 @@ class SyncSchedulesTestCase(TestCase):
                     self._entry(start_time=datetime.time(9, 0), end_time=datetime.time(12, 0)),
                     self._entry(start_time=datetime.time(9, 0), end_time=datetime.time(17, 0)),
                 ],
+                schedule_type=ScheduleTypeChoices.OPERATING,
             )
 
         self.assertIn("Monday", str(raised.exception))
@@ -565,7 +573,7 @@ class SyncSchedulesTestCase(TestCase):
         )
 
         with self.assertRaises(ValidationError):
-            _sync_schedules(self.shelter, [self._entry(id=foreign.pk)])
+            _sync_schedules(self.shelter, [self._entry(id=foreign.pk)], schedule_type=ScheduleTypeChoices.OPERATING)
 
         self.assertTrue(Schedule.objects.filter(pk=foreign.pk).exists())
         self.assertTrue(Schedule.objects.filter(pk=self.slot.pk).exists())
@@ -575,6 +583,7 @@ class SyncSchedulesTestCase(TestCase):
             _sync_schedules(
                 self.shelter,
                 [self._entry(id=self.slot.pk), self._entry(id=self.slot.pk)],
+                schedule_type=ScheduleTypeChoices.OPERATING,
             )
 
     def test_swaps_two_slots_times_in_one_payload(self) -> None:
@@ -598,6 +607,7 @@ class SyncSchedulesTestCase(TestCase):
                     self._entry(id=self.slot.pk, start_time=datetime.time(10, 0)),
                     self._entry(id=second.pk, start_time=datetime.time(9, 0)),
                 ],
+                schedule_type=ScheduleTypeChoices.OPERATING,
             )
 
         self.slot.refresh_from_db()
