@@ -1,11 +1,11 @@
-export { BaPrivatePage } from './BaPrivatePage';
 export { ShelterActivityPage } from './ActivityPage';
+export { BaPrivatePage } from './BaPrivatePage';
 export { ShelterBasicInfoPage } from './BasicInfoPage';
 export { ShelterDetailsPage } from './DetailsPage';
 export { ShelterEcosystemPage } from './EcosystemPage';
 export { ShelterEntryRequirementsPage } from './EntryRequirementsPage';
 export { ShelterMediaPage } from './MediaPage';
-export { ShelterOperatingHoursPage } from './OperatingHoursPage';
 export { ShelterPoliciesPage } from './PoliciesPage';
+export { ShelterSchedulePage } from './SchedulePage';
 export { ShelterServicesPage } from './ServicesPage';
 export { ShelterSleepingDetailsPage } from './SleepingDetailsPage';

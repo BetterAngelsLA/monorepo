@@ -40,10 +40,10 @@ export function ShelterProfileLinks(props: IProps) {
         <Sidebar.Link
           to={shelterProfileRoute(
             shelterId,
-            profileRouteConfig.children.operatingHours,
+            profileRouteConfig.children.schedule,
           )}
           isActive={isShelterProfileRoute(pathname, {
-            segment: profileRouteConfig.children.operatingHours,
+            segment: profileRouteConfig.children.schedule,
           })}
           collapsed={!isOpen}
           replace

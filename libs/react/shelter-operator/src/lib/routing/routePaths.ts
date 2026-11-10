@@ -58,7 +58,7 @@ export const profileRouteConfig = {
   root: '/operator/shelter/:shelterId/profile',
   children: {
     basic: 'basic-info',
-    operatingHours: 'operating-hours',
+    schedule: 'schedule',
     policies: 'policies',
     details: 'details',
     sleepingDetails: 'sleeping-details',

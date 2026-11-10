@@ -38,8 +38,8 @@ import {
   ShelterEcosystemPage,
   ShelterEntryRequirementsPage,
   ShelterMediaPage,
-  ShelterOperatingHoursPage,
   ShelterPoliciesPage,
+  ShelterSchedulePage,
   ShelterServicesPage,
   ShelterSleepingDetailsPage,
 } from './pages/shelterProfile';
@@ -87,8 +87,8 @@ export function OperatorApp() {
               element={<ShelterBasicInfoPage />}
             />
             <Route
-              path={profileRouteConfig.children.operatingHours}
-              element={<ShelterOperatingHoursPage />}
+              path={profileRouteConfig.children.schedule}
+              element={<ShelterSchedulePage />}
             />
             <Route
               path={profileRouteConfig.children.policies}
