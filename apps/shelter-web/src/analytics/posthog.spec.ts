@@ -1,14 +1,16 @@
 import { buildInitConfig } from './posthog';
 
 /**
- * Replay is on for the outreach app and deliberately off here. `posthog-js`
- * starts recording by itself when the project enables it, so the only thing
- * holding that back is this option — assert it rather than trusting the default.
+ * Replay runs here as well as in the app, but this site is DOM-recorded, so the
+ * masking is per element. `maskAllInputs` covers the address typed into the
+ * location search; the suggestion list renders that address as text, so it is
+ * blocked instead.
  */
-it('never records this public site, even when the project enables replay', () => {
+it('records this site but never leaves an input unmasked', () => {
   const config = buildInitConfig({ handoff: {} });
 
-  expect(config.disable_session_recording).toBe(true);
+  expect(config.session_recording?.maskAllInputs).toBe(true);
+  expect(config.session_recording?.blockSelector).toBe('.ph-no-capture');
 });
 
 it('continues the handed-over session when one arrives', () => {

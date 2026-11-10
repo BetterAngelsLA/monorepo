@@ -90,16 +90,25 @@ export function initAnalytics(): void {
 export function buildInitConfig({ handoff }: { handoff: ShelterHandoff }) {
   return {
     /**
-     * Never record this site, even when the PostHog project has session
-     * recordings switched on.
+     * Session recording is on for this site, and unlike the app it is DOM-based
+     * (rrweb), not screenshots — so masking is per element, not per pixel.
      *
-     * Recording here is not a config tweak: shelter.betterangels.la is public,
-     * renders the visitor's own location on a map, and is reached from a client
-     * record in the app. Turning project-level replay on would otherwise start
-     * recording it silently, because this is the posthog-js default. Enabling
-     * it would be a deliberate change with its own review.
+     * What that means in practice:
+     *
+     * - `maskAllInputs` masks every field, including the address a visitor
+     *   types into the location search. It is `posthog-js`'s default; pinned
+     *   because the visitor's own address is the one piece of personal data this
+     *   site can receive.
+     * - `blockSelector` removes the autocomplete suggestions, because those
+     *   render the address as plain text rather than in an input.
+     * - The map is a canvas inside the Maps SDK and records as a blank area
+     *   either way, so it is not blocked — blocking it would only put a grey
+     *   rectangle over the page's main content, not hide anything extra.
      */
-    disable_session_recording: true,
+    session_recording: {
+      maskAllInputs: true,
+      blockSelector: '.ph-no-capture',
+    },
     // Continue the app's session when it handed one over. `sessionID` is only
     // meaningful alongside `distinctID`.
     ...(handoff.distinctId

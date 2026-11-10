@@ -176,7 +176,9 @@ export function AddressAutocomplete(props: TProps) {
       />
 
       {predictions.length > 0 && (
-        <ul className="mt-4" role="listbox">
+        // The suggestions render what the visitor typed as plain text, so
+        // session replay would record their address even with inputs masked.
+        <ul className="mt-4 ph-no-capture" role="listbox">
           {predictions.map(({ placeId, mainText, secondaryText }, idx) => (
             <li
               key={placeId}
