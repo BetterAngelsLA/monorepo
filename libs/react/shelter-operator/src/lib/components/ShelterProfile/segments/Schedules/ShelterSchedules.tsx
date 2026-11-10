@@ -20,6 +20,34 @@ type TProps = {
   shelterId: string;
 };
 
+/** Carries the server's own wording so the toast can show it verbatim. */
+class ScheduleSaveError extends Error {}
+
+/**
+ * The server's rejection text, joined, or undefined when the response carries a
+ * payload instead of an `OperationInfo`.
+ */
+export function operationInfoMessage(
+  result:
+    | {
+        __typename?: string;
+        messages?: ({ message: string } | null)[] | null;
+      }
+    | null
+    | undefined,
+): string | undefined {
+  if (result?.__typename !== 'OperationInfo') {
+    return undefined;
+  }
+
+  const message = (result.messages ?? [])
+    .map((entry) => entry?.message)
+    .filter(Boolean)
+    .join(' ');
+
+  return message || undefined;
+}
+
 export function ShelterSchedules(props: TProps) {
   const { shelterId } = props;
 
@@ -68,14 +96,22 @@ export function ShelterSchedules(props: TProps) {
         return;
       }
 
-      throw new Error('unexpected query error');
+      // The API rejects a save with a reason (a duplicate slot, an unknown id, a
+      // type mismatch). Showing "an unexpected error occurred" instead throws
+      // away the only thing the operator can act on.
+      throw new ScheduleSaveError(
+        operationInfoMessage(result) ?? 'An unexpected error occurred.',
+      );
     } catch (e) {
       console.error(`[updateShelter error]: ${e}.`);
 
       showToast({
         status: 'error',
         title: isDelete ? 'Delete failed' : 'Update failed',
-        description: 'An unexpected error occurred.',
+        description:
+          e instanceof ScheduleSaveError
+            ? e.message
+            : 'An unexpected error occurred.',
       });
     }
   }
