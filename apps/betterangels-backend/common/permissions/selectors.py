@@ -51,7 +51,28 @@ ALL = object()
 
 
 def _perm_parts(perm: str) -> tuple[str, str]:
-    app_label, codename = perm.split(".", 1)
+    """Split ``app_label.codename``, refusing a codename nothing declares.
+
+    A typo used to be indistinguishable from a denial: ``can`` returned ``False``
+    and the caller reported "permission denied" for a permission that does not
+    exist.  The catalog checked here is the same one the frontend gates on, so a
+    name missing from it could never be granted anyway — failing loudly turns a
+    silent bug into a stack trace.
+    """
+    from common.permissions.utils import known_permission_strings
+
+    # ``TextChoices`` members are ``str`` subclasses that hash by identity, so a
+    # member never matches its own value in a set — normalise before looking up.
+    name = str(perm)
+    try:
+        app_label, codename = name.split(".", 1)
+    except ValueError as exc:
+        raise ValueError(f"{name!r} is not 'app_label.codename'.") from exc
+    if name not in known_permission_strings():
+        raise ValueError(
+            f"{name!r} is not a declared permission. Use the model's ``perms`` set or its "
+            "``*Permissions`` enum — an undeclared name can never be granted."
+        )
     return app_label, codename
 
 

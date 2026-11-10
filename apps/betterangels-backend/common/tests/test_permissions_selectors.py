@@ -278,6 +278,28 @@ class GrantSelectorsTestCase(TestCase):
         with self.assertNumQueries(1):
             self.assertTrue(can_obj(bob, ContactInfo.perms.VIEW, contact))
 
+    def test_an_undeclared_permission_fails_loudly(self) -> None:
+        """A typo must not read as a denial.
+
+        ``can`` returning ``False`` for a codename nothing declares is
+        indistinguishable from a real refusal — the caller reports "permission
+        denied" for a permission that does not exist, and the bug survives
+        review.  The catalog answers the same question ``has_perm`` does.
+        """
+        alice = baker.make(User)
+
+        with self.assertRaisesMessage(ValueError, "is not a declared permission"):
+            can(alice, "notes.viewnote", org=self.org_a)
+        with self.assertRaisesMessage(ValueError, "is not a declared permission"):
+            scopes(alice, "notes.viewnote")
+
+    def test_a_declared_permission_still_answers(self) -> None:
+        """The guard is a name check, not an authority check."""
+        alice = baker.make(User)
+        grant_create(user=alice, role=self.shelter_role, scope_org=self.org_a)
+
+        self.assertTrue(can(alice, Shelter.perms.VIEW, org=self.org_a))
+
     def test_a_reachless_model_can_declare_a_shared_write_class(self) -> None:
         """The slot lives on ``BaseModel`` so a reachless model can use it.
 
