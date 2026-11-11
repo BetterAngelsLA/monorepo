@@ -37,7 +37,7 @@ from clients.enums import (
     VeteranStatusEnum,
 )
 from common.constants import CALIFORNIA_ID_REGEX
-from common.models import WRITE_SHARED, Access, Attachment, BaseModel, OrgScoped, PhoneNumber
+from common.models import Access, AccessClass, Attachment, BaseModel, OrgScoped, PhoneNumber
 from common.permissions.utils import PermissionSet
 
 DOC_READY_NAMESPACES = [
@@ -140,7 +140,7 @@ class HmisProfile(ClientFamilyMember, OrgScoped, BaseModel):
     # platform-shared for reads, SHARED for writes — any holder of the
     # permission may act.
     org_via = None
-    access = Access(write=WRITE_SHARED)
+    access = Access(write=AccessClass.SHARED)
 
     client_profile = models.ForeignKey("ClientProfile", on_delete=models.CASCADE, related_name="hmis_profiles")
     hmis_id = models.CharField(max_length=50)
@@ -229,7 +229,7 @@ class ClientProfile(OrgScoped, AbstractClientProfile):
     # from model-level perms on the CASEWORKER group (global-tier behavior in
     # disguise), so the cutover preserves that as "holds the permission
     # anywhere" — can_obj(user, clients.change_clientprofile, row) == can_anywhere.
-    access = Access(write=WRITE_SHARED)
+    access = Access(write=AccessClass.SHARED)
 
     objects = ClientProfileManager()  # hides merged profiles by default
     gender = TextChoicesField(choices_enum=GenderEnum, blank=True, null=True)
@@ -333,7 +333,7 @@ class ClientDocument(Attachment):
 class SocialMediaProfile(ClientFamilyMember, OrgScoped, BaseModel):
     # Client family — ClientProfile's write class (RFC 0002), see HmisProfile.
     org_via = None
-    access = Access(write=WRITE_SHARED)
+    access = Access(write=AccessClass.SHARED)
 
     client_profile = models.ForeignKey(ClientProfile, on_delete=models.CASCADE, related_name="social_media_profiles")
     platform = TextChoicesField(choices_enum=SocialMediaEnum)
@@ -348,7 +348,7 @@ class SocialMediaProfile(ClientFamilyMember, OrgScoped, BaseModel):
 class ClientContact(ClientFamilyMember, OrgScoped, BaseModel):
     # Client family — ClientProfile's write class (RFC 0002), see HmisProfile.
     org_via = None
-    access = Access(write=WRITE_SHARED)
+    access = Access(write=AccessClass.SHARED)
 
     client_profile = models.ForeignKey(ClientProfile, on_delete=models.CASCADE, related_name="contacts")
     name = models.CharField(max_length=100, null=True, blank=True)
@@ -367,7 +367,7 @@ class ClientContact(ClientFamilyMember, OrgScoped, BaseModel):
 class ClientHouseholdMember(ClientFamilyMember, OrgScoped, BaseModel):
     # Client family — ClientProfile's write class (RFC 0002), see HmisProfile.
     org_via = None
-    access = Access(write=WRITE_SHARED)
+    access = Access(write=AccessClass.SHARED)
 
     client_profile = models.ForeignKey(ClientProfile, on_delete=models.CASCADE, related_name="household_members")
     name = models.CharField(max_length=100, null=True, blank=True)

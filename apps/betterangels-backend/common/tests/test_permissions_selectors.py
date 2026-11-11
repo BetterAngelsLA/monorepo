@@ -344,7 +344,7 @@ class GrantSelectorsTestCase(TestCase):
             self.assertEqual(can_obj(alice, Shelter.perms.VIEW, shelter), shelter.pk in admitted)
 
     def test_writable_shared_tier_is_all_or_none(self) -> None:
-        """WRITE_SHARED: every row fetchable iff the perm is held somewhere."""
+        """AccessClass.SHARED: every row fetchable iff the perm is held somewhere."""
         from clients.models import ClientProfile
 
         editor = baker.make(User)
@@ -363,7 +363,7 @@ class GrantSelectorsTestCase(TestCase):
         self.assertFalse(writable(ClientProfile.objects.all(), stranger, ClientProfile.perms.CHANGE).exists())
 
     def test_can_obj_shared_tier_is_any_holder_anywhere(self) -> None:
-        """ClientProfile declares WRITE_SHARED (RFC 0002 #1): can_obj == can_anywhere."""
+        """ClientProfile declares AccessClass.SHARED (RFC 0002 #1): can_obj == can_anywhere."""
         from clients.models import ClientProfile
 
         client = baker.make(ClientProfile)

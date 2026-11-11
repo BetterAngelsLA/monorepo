@@ -51,8 +51,8 @@ class ClientProfile(OrgScoped, AbstractClientProfile):
   class the selectors enforce.
 - **The vocabulary is a closed enum**, `AccessClass`, not bare strings. Nothing
   type-checks a class attribute at runtime, so the enum is what makes
-  `Access(write="shared")`, `Access(write=WRITE_SHARED)` (the constant's name)
-  and a misspelling type errors rather than deploy-time surprises.
+  `Access(write="shared")`, a misspelling, and a value that is not a member at
+  all type errors rather than becoming a deploy-time surprise.
 - **`writable`/`can_obj` are the single enforcement surface.** Product code
   carries no tier predicate; it asks the selector.
 - **`permissions.E007` keeps the declaration honest** — it refuses a write class
@@ -77,7 +77,7 @@ bases makes it reachable from either side; a reachless model that declares
 `SHARED` is admitted by `can_anywhere`, and one that declares nothing still
 fails closed exactly as before.
 
-This is also why `WRITE_OBJECT` cannot be the answer for attachments today: an
+This is also why `AccessClass.OBJECT` cannot be the answer for attachments today: an
 object grant names a record, and the reachlessness that makes the slot necessary
 is the same thing that makes the derived default useless there. Whatever the
 client-document cutover picks, it has to pick a class explicitly.

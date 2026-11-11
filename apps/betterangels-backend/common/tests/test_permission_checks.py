@@ -10,7 +10,7 @@ from model_bakery import baker
 
 from accounts.models import Grant, Role, User
 from accounts.tests.baker_recipes import organization_recipe
-from common.models import WRITE_OBJECT, WRITE_SHARED, Access, AccessClass, Attachment, OrgScoped
+from common.models import Access, AccessClass, Attachment, OrgScoped
 from common.permissions.checks import (
     _org_via_errors_for_model,
     check_access_declarations,
@@ -181,7 +181,7 @@ class AccessDeclarationChecksTestCase(TestCase):
     def test_e007_is_quiet_for_clientprofile_shared_declaration(self) -> None:
         from clients.models import ClientProfile
 
-        self.assertEqual(ClientProfile.access.write, WRITE_SHARED)  # guard against a vacuous pass
+        self.assertEqual(ClientProfile.access.write, AccessClass.SHARED)  # guard against a vacuous pass
         self.assertEqual(_errors_with(check_access_declarations(None), "permissions.E007"), [])
 
     def test_e007_fires_when_an_org_anchored_model_declares_a_write_class(self) -> None:
@@ -189,7 +189,7 @@ class AccessDeclarationChecksTestCase(TestCase):
 
         from shelters.models import Shelter
 
-        with patch.object(Shelter, "access", Access(write=WRITE_SHARED)):
+        with patch.object(Shelter, "access", Access(write=AccessClass.SHARED)):
             errors = _errors_with(check_access_declarations(None), "permissions.E007")
 
         self.assertEqual(len(errors), 1)
@@ -200,7 +200,7 @@ class AccessDeclarationChecksTestCase(TestCase):
 
         from clients.models import ClientProfile
 
-        with patch.object(ClientProfile, "access", Access(write=WRITE_OBJECT)):
+        with patch.object(ClientProfile, "access", Access(write=AccessClass.OBJECT)):
             errors = _errors_with(check_access_declarations(None), "permissions.E007")
 
         self.assertEqual(len(errors), 1)
@@ -224,7 +224,7 @@ class AccessDeclarationChecksTestCase(TestCase):
         from clients.models import ClientProfile
 
         # The constant's *name* as a literal — the hand-edit E007 must catch.
-        with patch.object(ClientProfile, "access", Access(write=cast("AccessClass", "WRITE_SHARED"))):
+        with patch.object(ClientProfile, "access", Access(write=cast("AccessClass", "AccessClass.SHARED"))):
             errors = _errors_with(check_access_declarations(None), "permissions.E007")
 
         self.assertEqual(len(errors), 1)
@@ -241,7 +241,7 @@ class AccessDeclarationChecksTestCase(TestCase):
 
         from clients.models import ClientProfile
 
-        with patch.object(ClientProfile, "access", "WRITE_SHARED"):
+        with patch.object(ClientProfile, "access", "AccessClass.SHARED"):
             errors = _errors_with(check_access_declarations(None), "permissions.E007")
 
         self.assertEqual(len(errors), 1)

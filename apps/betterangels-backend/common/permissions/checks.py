@@ -263,7 +263,7 @@ def check_access_declarations(app_configs: Any, **kwargs: Any) -> list[Error]:
     """
     from django.apps import apps
 
-    from common.models import WRITE_OBJECT, Access, AccessClass, OrgScoped
+    from common.models import Access, AccessClass, OrgScoped
 
     errors: list[Error] = []
     for model in apps.get_models():
@@ -306,7 +306,7 @@ def check_access_declarations(app_configs: Any, **kwargs: Any) -> list[Error]:
                     id="permissions.E007",
                 )
             )
-        elif write is WRITE_OBJECT:
+        elif write is AccessClass.OBJECT:
             errors.append(
                 Error(
                     f"{model.__name__}.access.write = {write!r} is reserved.",

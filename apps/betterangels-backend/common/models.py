@@ -24,10 +24,8 @@ class AccessClass(StrEnum):
     """The closed vocabulary a model may name in :class:`Access` (ADR 0005).
 
     An enum rather than bare strings: the declaration is a class attribute, so
-    nothing else type-checks it.  ``Access(write="shared")`` would be caught by
-    ``permissions.E007`` at deploy time, but ``Access(write=WRITE_SHARED)`` where
-    ``WRITE_SHARED`` is some other string — or the constant's *name* rather than
-    its value — would not.  As an enum both are type errors.
+    nothing else type-checks it.  ``Access(write="shared")`` would only be caught
+    by ``permissions.E007`` at deploy time; as an enum it is a type error.
     """
 
     SHARED = "shared"
@@ -39,11 +37,6 @@ class AccessClass(StrEnum):
     Reserved — the object arm turns on with the clients cutover (ADR 0001 §2.5);
     ``permissions.E007`` refuses it until then.
     """
-
-
-# RFC 0002 names; new code should use ``AccessClass`` directly.
-WRITE_SHARED = AccessClass.SHARED
-WRITE_OBJECT = AccessClass.OBJECT
 
 
 @dataclass(frozen=True)

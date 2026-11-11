@@ -287,7 +287,7 @@ def _legacy_arm(
 
 
 def _write_access_note(obj: "Model") -> str:
-    from common.models import WRITE_OBJECT, WRITE_SHARED, OrgScoped
+    from common.models import AccessClass, OrgScoped
 
     model = type(obj)
     access = getattr(model, "access", None)
@@ -295,9 +295,9 @@ def _write_access_note(obj: "Model") -> str:
 
     if issubclass(model, OrgScoped) and model.org_via is not None:
         return "write scope ORG — the row must sit in an org the user holds this permission in (scopes())"
-    if write == WRITE_SHARED:
+    if write == AccessClass.SHARED:
         return "write scope SHARED — any holder of the permission may act (can_anywhere)"
-    if write == WRITE_OBJECT:
+    if write == AccessClass.OBJECT:
         return "write scope OBJECT — per-record object grants"
     if not issubclass(model, OrgScoped):
         return (
