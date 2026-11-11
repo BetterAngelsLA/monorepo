@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { recordPostHog, uuidv7, waitForEvent } from '../../../lib/analytics';
+import { shelterEntryUrl } from '../../../lib/framework';
 
 /**
  * The receiving half of the shelter handoff: the app opens this site with
@@ -15,11 +16,13 @@ import { recordPostHog, uuidv7, waitForEvent } from '../../../lib/analytics';
  * was rejected and replaced.
  */
 test('continues the session the app handed over', async ({ page }) => {
+  // Longer than the wait below, so a missing event reports what arrived.
+  test.setTimeout(60_000);
   const events = recordPostHog(page);
   const distinctId = 'e2e-handoff-distinct';
   const sessionId = uuidv7();
 
-  await page.goto(`/#ba_did=${distinctId}&ba_sid=${sessionId}`);
+  await page.goto(shelterEntryUrl(`ba_did=${distinctId}&ba_sid=${sessionId}`));
 
   const landed = await waitForEvent(events, 'shelter_search_landed');
 
@@ -43,11 +46,14 @@ test('continues the session the app handed over', async ({ page }) => {
  * quietly started a new session instead.
  */
 test('reports a handoff the receiver refused', async ({ page }) => {
+  test.setTimeout(60_000);
   const events = recordPostHog(page);
   // Valid UUID shape, wrong version: posthog-js mints its own session.
   const sessionId = '3f6c6c1e-9c0b-4c1a-9d2e-0a1b2c3d4e5f';
 
-  await page.goto(`/#ba_did=e2e-refused-distinct&ba_sid=${sessionId}`);
+  await page.goto(
+    shelterEntryUrl(`ba_did=e2e-refused-distinct&ba_sid=${sessionId}`),
+  );
 
   const landed = await waitForEvent(events, 'shelter_search_landed');
 

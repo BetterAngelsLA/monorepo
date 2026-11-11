@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { shelterEntryUrl } from '../../../lib/framework';
 
 /**
  * Session replay actually delivering, not just enabled.
@@ -28,7 +29,7 @@ test('records and delivers session snapshots', async ({ page }) => {
     }
   });
 
-  await page.goto('/');
+  await page.goto(shelterEntryUrl());
   await page.waitForTimeout(10_000);
 
   // Give the recorder something to record and a reason to flush.
