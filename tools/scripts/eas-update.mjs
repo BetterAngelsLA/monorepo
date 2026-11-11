@@ -77,13 +77,7 @@ try {
       '--non-interactive',
       '--json',
     ],
-    {
-      cwd: projectDir,
-      encoding: 'utf8',
-      stdio: ['ignore', 'pipe', 'pipe'],
-      // Generic "this is an update export" signal for app.config.js.
-      env: { ...process.env, EAS_UPDATE: 'true' },
-    },
+    { cwd: projectDir, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] },
   );
 } catch (error) {
   if (error.stdout) process.stdout.write(error.stdout);

@@ -13,24 +13,16 @@ dotenv.config({ path: '.env.local', override: true });
 
 const IS_PRODUCTION = process.env.APP_VARIANT === 'production';
 
-// Monitoring is configured per target. `EXPO_PUBLIC_APP_ENV` is used by both
-// agents; the license keys are the app's browser/native identities. Signals:
-// `EXPO_WEB_BASE_URL` (export-web), `EAS_BUILD_PLATFORM` (EAS Build), and
-// `EAS_UPDATE` (set by eas-update.mjs). expo-doctor/start are unaffected.
-const IS_MONITORED_BUILD =
-  Boolean(process.env.EXPO_WEB_BASE_URL) ||
-  Boolean(process.env.EAS_BUILD_PLATFORM) ||
-  process.env.EAS_UPDATE === 'true';
+// Web monitoring is built only by export-web (EXPO_WEB_BASE_URL). Native
+// monitoring is configured by useNewRelic, which warns if a mobile key is
+// missing; the web guard intentionally does not require native keys.
+// expo-doctor/start are unaffected.
+const IS_WEB_EXPORT = Boolean(process.env.EXPO_WEB_BASE_URL);
 
-if (IS_MONITORED_BUILD) {
+if (IS_WEB_EXPORT) {
   assertMonitoringEnv({
-    label: 'monitoring',
-    required: [
-      'EXPO_PUBLIC_APP_ENV',
-      'EXPO_PUBLIC_NEW_RELIC_WEB_LICENSE_KEY',
-      'EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS',
-      'EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID',
-    ],
+    label: 'web-monitoring',
+    required: ['EXPO_PUBLIC_APP_ENV', 'EXPO_PUBLIC_NEW_RELIC_WEB_LICENSE_KEY'],
     env: process.env,
     isCI: process.env.CI === 'true' || process.env.CI === '1',
   });
