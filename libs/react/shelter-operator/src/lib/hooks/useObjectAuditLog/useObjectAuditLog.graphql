@@ -28,8 +28,8 @@ query ObjectAuditLog(
         kind
         action
         summary
-        # A synthesized event's unchanged identity (e.g. a netted schedule
-        # slot's day/type); rendered by the readability follow-up.
+        # An event's unchanged identity (a schedule slot's day/type, or an
+        # exception's dates); rendered as the schedule line's label.
         context
         fieldChanges
       }

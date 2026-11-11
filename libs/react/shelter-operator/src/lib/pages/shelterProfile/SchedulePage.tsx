@@ -1,7 +1,7 @@
 import { useParams } from 'react-router';
 import { ShelterSchedules } from '../../components/ShelterProfile';
 
-export function ShelterOperatingHoursPage() {
+export function ShelterSchedulePage() {
   const { shelterId } = useParams<{ shelterId: string }>();
 
   if (!shelterId) {

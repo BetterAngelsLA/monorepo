@@ -12,7 +12,12 @@ import { Form } from '../../../../form/Form';
 import { scheduleFormSchema, type ScheduleFormData } from './formSchema';
 import { ScheduleExceptionsForm } from './ScheduleExceptionsForm';
 import type { DayErrors, WeeklyFormState } from './types';
-import { buildScheduleInputs, hydrateExceptions, hydrateWeekly } from './utils';
+import {
+  buildScheduleInputs,
+  hydrateExceptions,
+  hydrateWeekly,
+  unrepresentableInputs,
+} from './utils';
 import {
   WeeklyScheduleEditor,
   buildDefaultWeeklyState,
@@ -90,7 +95,12 @@ export function ScheduleForm(props: TProps) {
   }
 
   function onSubmit(data: ScheduleFormData) {
-    onSave(buildScheduleInputs(scheduleType, data.weekly, data.exceptions));
+    onSave([
+      ...buildScheduleInputs(scheduleType, data.weekly, data.exceptions),
+      // Whatever this form cannot render must still be sent, or the
+      // authoritative save deletes it.
+      ...unrepresentableInputs(initialSchedules ?? [], scheduleType),
+    ]);
   }
 
   function handleCancel() {

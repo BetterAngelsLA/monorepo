@@ -700,6 +700,7 @@ export type CreateNoteInput = {
   interactedAt?: InputMaybe<Scalars['DateTime']['input']>;
   isSubmitted?: InputMaybe<Scalars['Boolean']['input']>;
   location?: InputMaybe<LocationInput>;
+  organizationId?: InputMaybe<Scalars['ID']['input']>;
   privateDetails?: InputMaybe<Scalars['String']['input']>;
   providedServices?: InputMaybe<Array<CreateNoteServiceInput>>;
   publicDetails?: InputMaybe<Scalars['String']['input']>;
@@ -728,6 +729,7 @@ export type CreateNoteServiceRequestPayload = OperationInfo | ServiceRequestType
 export type CreateNoteTaskInput = {
   assigneeId?: InputMaybe<Scalars['ID']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<Scalars['ID']['input']>;
   status?: InputMaybe<Scalars['Int']['input']>;
   summary: Scalars['String']['input'];
   teamId?: InputMaybe<Scalars['ID']['input']>;
@@ -3450,8 +3452,9 @@ export type ScheduleInput = {
   days?: InputMaybe<Array<DayOfWeekChoices>>;
   endDate?: InputMaybe<Scalars['Date']['input']>;
   endTime?: InputMaybe<Scalars['Time']['input']>;
+  id?: InputMaybe<Scalars['ID']['input']>;
   isException?: Scalars['Boolean']['input'];
-  scheduleType?: ScheduleTypeChoices;
+  scheduleType: ScheduleTypeChoices;
   startDate?: InputMaybe<Scalars['Date']['input']>;
   startTime?: InputMaybe<Scalars['Time']['input']>;
 };
@@ -4233,6 +4236,7 @@ export type UpdateShelterInput = {
   referralRequirement?: InputMaybe<Array<ReferralRequirementChoices>>;
   roomStyles?: InputMaybe<Array<RoomStyleChoices>>;
   roomStylesOther?: InputMaybe<Scalars['String']['input']>;
+  scheduleType?: InputMaybe<ScheduleTypeChoices>;
   schedules?: InputMaybe<Array<ScheduleInput>>;
   services?: InputMaybe<Array<ServiceInput>>;
   shelterPrograms?: InputMaybe<Array<ShelterProgramChoices>>;

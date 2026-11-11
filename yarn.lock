@@ -6063,7 +6063,7 @@ __metadata:
     "@hookform/resolvers": "npm:^5.2.1"
     "@iarna/toml": "npm:^2.2.5"
     "@likashefqet/react-native-image-zoom": "npm:^4.2.1"
-    "@newrelic/browser-agent": "npm:^1.324.1"
+    "@newrelic/browser-agent": "patch:@newrelic/browser-agent@npm%3A1.324.1#~/.yarn/patches/@newrelic-browser-agent-npm-1.324.1-908419ffd9.patch"
     "@nx-tools/container-metadata": "npm:^7.3.0"
     "@nx-tools/nx-container": "npm:7.3.0"
     "@nx/devkit": "npm:23.3.0"
@@ -6154,6 +6154,7 @@ __metadata:
     dotenv: "npm:^17.4.2"
     dotenv-cli: "npm:^11.0.0"
     embla-carousel-react: "npm:^8.6.0"
+    esbuild: "npm:0.28.1"
     eslint: "npm:^10.7.0"
     eslint-config-prettier: "npm:^10.1.8"
     eslint-import-resolver-typescript: "npm:^4.4.5"
@@ -6500,7 +6501,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@newrelic/browser-agent@npm:^1.324.1":
+"@newrelic/browser-agent@npm:1.324.1":
   version: 1.324.1
   resolution: "@newrelic/browser-agent@npm:1.324.1"
   dependencies:
@@ -6508,6 +6509,17 @@ __metadata:
     fflate: "npm:0.8.3"
     web-vitals: "npm:6.2.1"
   checksum: 10/548b886d53635b699da14c084de1eac2b3999e050fece539ec4488f10688f444a82baf0061c8eb25f4b211ef8589ef07d441a8707b2a113f4ec1af3d26df7031
+  languageName: node
+  linkType: hard
+
+"@newrelic/browser-agent@patch:@newrelic/browser-agent@npm%3A1.324.1#~/.yarn/patches/@newrelic-browser-agent-npm-1.324.1-908419ffd9.patch":
+  version: 1.324.1
+  resolution: "@newrelic/browser-agent@patch:@newrelic/browser-agent@npm%3A1.324.1#~/.yarn/patches/@newrelic-browser-agent-npm-1.324.1-908419ffd9.patch::version=1.324.1&hash=2888d7"
+  dependencies:
+    "@newrelic/rrweb": "npm:^1.1.2"
+    fflate: "npm:0.8.3"
+    web-vitals: "npm:6.2.1"
+  checksum: 10/5be7d95b70a45408bd8fbb6d7bb4fe399a6affdfa36bebd99f16ce0a926ef1539df245feb517e9abdc083cdeec05fded6229f38ee1c68c861f2ec5f597c418fe
   languageName: node
   linkType: hard
 
@@ -17119,7 +17131,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"esbuild@npm:^0.18.0 || ^0.19.0 || ^0.20.0 || ^0.21.0 || ^0.22.0 || ^0.23.0 || ^0.24.0 || ^0.25.0 || ^0.26.0 || ^0.27.0 || ^0.28.0":
+"esbuild@npm:0.28.1, esbuild@npm:^0.18.0 || ^0.19.0 || ^0.20.0 || ^0.21.0 || ^0.22.0 || ^0.23.0 || ^0.24.0 || ^0.25.0 || ^0.26.0 || ^0.27.0 || ^0.28.0":
   version: 0.28.1
   resolution: "esbuild@npm:0.28.1"
   dependencies:

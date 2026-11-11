@@ -31,9 +31,6 @@ class ClientsGrantAuthorityTestCase(ClientProfileGraphQLBaseTestCase):
 
     def setUp(self) -> None:
         super().setUp()
-        # Provision the code-owned Role rows so OrgRoleManager mirrors Grants
-        # for role-backed memberships (and CASEWORKER_ROLE carries the client
-        # bundle added by the cutover).
         sync_roles()
 
     def _client_profile_query(self, profile_id: Any) -> dict[str, Any]:

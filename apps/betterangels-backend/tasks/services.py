@@ -1,7 +1,7 @@
 from typing import Any, Dict, List, Optional
 
 from django.core.exceptions import ValidationError
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from organizations.models import Organization
 
 from accounts.models import PermissionGroup, User
@@ -16,6 +16,36 @@ from tasks.models import Task
 # ---------------------------------------------------------------------------
 
 
+#: FKs that a task's payload never re-points: the parents are loaded and
+#: authorized before the service runs, and an update cannot change them.  Django
+#: validates every FK with its own query inside ``full_clean()``, so excluding
+#: these saves one query per field per task without skipping any rule — the
+#: per-item fields (team, assignee) stay validated and ``clean()``, which owns
+#: the assignee-in-org rule, always runs.
+_PARENT_FK_FIELDS = (
+    "note",
+    "hmis_note",
+    "client_profile",
+    "hmis_client_profile",
+    "organization",
+    "created_by",
+)
+
+
+def _validate(task: Task) -> None:
+    """``full_clean`` without the per-FK existence queries, constraints intact.
+
+    Django validates every foreign key with its own query and skips a constraint
+    when *any* field it references is excluded — and the constraints here
+    reference the parent FKs, so a plain ``exclude`` would silently downgrade
+    them to database errors.  Excluding the fields and re-running the constraint
+    check without an exclusion keeps both.
+    """
+    task.full_clean(exclude=_PARENT_FK_FIELDS, validate_constraints=False)
+    task.validate_constraints()
+
+
+@transaction.atomic
 def task_create(
     *,
     user: User,
@@ -48,7 +78,7 @@ def task_create(
             created_by=user,
             organization=organization,
         )
-        task.full_clean()
+        _validate(task)
 
         try:
             task.save()
@@ -62,6 +92,7 @@ def task_create(
     return created
 
 
+@transaction.atomic
 def task_create_legacy(
     *,
     user: User,
@@ -99,7 +130,7 @@ def task_create_legacy(
             created_by=user,
             organization=permission_group.organization,
         )
-        task.full_clean()
+        _validate(task)
 
         try:
             task.save()
@@ -126,12 +157,18 @@ def task_update(
     data: Dict[str, Any],
 ) -> Task:
     """Update a Task. Caller is responsible for permission checks."""
-    for field, value in data.items():
-        if field != "id":
-            setattr(task, field, value)
+    fields = [field for field in data if field != "id"]
+    if not fields:
+        return task
 
-    task.full_clean()
-    task.save()
+    for field in fields:
+        setattr(task, field, data[field])
+
+    _validate(task)
+    # Write the payload's columns, not the whole row: a concurrent edit to any
+    # other column must survive.  ``updated_at`` is ``auto_now``, so it only
+    # refreshes when it is named.
+    task.save(update_fields=[*fields, "updated_at"])
     return task
 
 

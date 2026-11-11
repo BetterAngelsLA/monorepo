@@ -62,8 +62,8 @@ todos:
   - id: audit-actors
     content: 'Phase 3: Add objectAuditActors (the object''s distinct actors plus a synthetic System entry)'
     status: done
-  - id: audit-schedule-netting
-    content: 'Phase 3: Net full-replacement schedule saves into per-slot updates with an event context'
+  - id: audit-schedule-events
+    content: 'Phase 3: Render one event per schedule row, carrying the slot identity in the event context'
     status: done
   - id: audit-event-model
     content: 'Phase 4: Add AuditReadEvent model (single-object read attribution)'
@@ -1259,30 +1259,21 @@ needed for them.
 **Summary-only events (§32).** `AuditEventData` carries an optional
 `summary: str | None`. It is populated only by the summarized-object path —
 related `Room`/`Bed` writes in a Shelter log — which renders one line
-(`"Created Bed A (7)"`) and an empty `field_changes`. Such events never carry a
+(`"Created Bed: Bed A (7)"`) and an empty `field_changes`. Such events never carry a
 snapshot, even when `include_snapshot=True`, because the object's own log is the
 detail surface.
 
-**Synthesized-event context (decided).** An event the server *synthesizes* —
-today only a netted schedule slot update (§13, below) — may carry unchanged
-identity fields in a separate `context: JSON` field on `AuditEventType` (§17)
-rather than in `field_changes`. The netted update therefore holds only the real
-`start time`/`end time` diffs in `field_changes`, while its slot identity travels
+**Unchanged-identity context (decided).** An event may carry unchanged identity
+fields in a separate `context: JSON` field on `AuditEventType` (§17) rather than
+in `field_changes`. Schedule `UPDATE` events use it: their diff holds only the
+real `start time`/`end time` pairs, while the slot's day and schedule type travel
 as `context: {"day": "Monday", "schedule type": "Operating Hours"}` (display keys,
-§13). `context` is **never** a change: every `field_changes` entry a client reads
-is a real before/after pair. A `null` `day` in context means "every day" (the
-copy belongs to the UI), and `context` is `null` for every non-synthesized event;
-the action-level rollup never contains `context` fields either, because they are
-not merged as changes.
-
-**Netted vs real schedule updates.** `shelter.schedule.update` is also a real
-pghistory label: an in-place admin save of an existing `Schedule` row emits it
-with `context: null`. A netted event shares `action` and `kind` with that real
-update and is distinguished only by its non-null `context`. The same logical
-edit can also render differently by write surface: changing a slot's `condition`
-in the admin is one `shelter.schedule.update`, while `shelterUpdate`'s
-delete-and-recreate changes the identity and renders `DELETE` + `INSERT`.
-Netting pairs only time-window edits by design.
+§13) — without it the log could not say *which* slot changed. `context` is
+**never** a change: every `field_changes` entry a client reads is a real
+before/after pair, and `context` is `null` for every event that has no identity to
+report. A `null` `day` in context means "every day" (the copy belongs to the UI).
+The action-level rollup never contains `context` fields, because they are not
+merged as changes.
 
 **Exclude the primary key:** the pk is present in `pgh_data` for INSERT/REMOVE
 but can never change (the UPDATE branch renders `pgh_diff`, which never contains
@@ -1386,46 +1377,40 @@ Load is bounded, not fetched: the page query still reads every row of the
 selected actions, so a pathological bulk action is bounded in rendering and in
 `field_changes` but not in rows fetched.
 
-**Full-replacement child models: schedule netting (decided).** `shelter_update`
-applies full-replacement semantics to schedules — it deletes every `Schedule`
-row and bulk-creates the new set
-([services/shelter.py](apps/betterangels-backend/shelters/services/shelter.py)) —
-so one logical slot edit emits a `.remove` and an `.add` under the same context.
-Rendered naively that is a deletion and a creation the user never made, and the
-action-level merge, keyed by `(owner, row id, field)`, then flattened changes
-across distinct `Schedule` rows, fabricating pairs such as `day friday -> sunday`
-from two unrelated rows. The selector nets the remove/add set per slot before the
-action-level rollup:
+**Schedule events are per row, not netted (decided).** Schedules are upserted by
+id (`_sync_schedules`), so `shelter_update` writes a real `ScheduleEvent` for each
+row the user touched: `.update` for an edited slot, `.add` for a new one,
+`.remove` for a deleted one. The selector renders those rows as they are — one
+event per change — instead of reconstructing intent.
 
-- **Pair by identity then time.** Identity is every field except the editable
-  time window — `schedule_type`, `day`, `start_date`, `end_date`, `is_exception`,
-  `condition`, `demographic` — while `start_time`/`end_time` are matched exactly.
-  A slot the save re-created with identical times is not a change and emits **no
-  event at all**.
-- **Time edits** become one `UPDATE` event per changed slot
-  (`action = shelter.schedule.update`), carrying only the real
-  `start time`/`end time` diffs in `field_changes` and the slot identity in
-  `context` (above). Keys are rendered to display names like every other path, so
-  a netted update and an add/remove for the same model share one key shape.
-  A paired update is emitted only when the residuals are exactly one remove and
-  one add for that identity: a replacement re-creates every row, so with more
-  residual slots there is no stable provenance and a positional pairing would
-  invent a before/after. Those rows render as genuine `DELETE` + `INSERT`.
-- **Redaction applies to the netted path too.** A field withheld for the caller
-  (§18) is filtered from the synthesized diff, its `context` and its snapshot —
-  and from the add/remove `field_changes` — exactly as `_scalar_changes`/
-  `_snapshot` do for every other row.
-- **Identity edits** (dates, condition, demographic, exception flag, schedule
-  type, day) still render as a `DELETE` plus an `INSERT`: pairing across
-  identities could merge two unrelated slots, so netting is deliberately scoped
-  to the time window. This is a documented limitation, not an oversight.
-- **Genuinely added/removed slots** keep their `INSERT`/`DELETE` events, rendered
-  exactly like any other row.
-- **The cap and snapshot rules still hold.** Netting shares the action's
-  remaining `MAX_EVENTS_PER_ACTION` budget and sets `truncated` when it runs out,
-  so a schedule-heavy save cannot render past the cap. `snapshot` (opt-in) is
-  populated for netted events too, from the add row — the post-change state,
-  since the replaced row is gone.
+An earlier pass netted full-replacement saves (delete every row, bulk-create the
+new set) back into per-slot updates, because that shape turned one time edit into
+a deletion plus a creation the user never made. The machinery was removed once the
+write path started upserting:
+
+- **It misfired on genuine edits.** A save that deletes one slot *and* adds
+  another produces one `.remove` and one `.add` of the same identity (schedule
+  type, day, dates, condition, demographic). Netting paired them into an
+  `UPDATE` nobody made, and the real changes vanished from the log.
+- **`field_changes` stays honest.** An `UPDATE` carries only the fields that
+  really changed; a `.remove`/`.add` carries the row's values with `None` on the
+  missing side.
+- **The slot identity travels in `context`.** A schedule row's diff cannot carry
+  the day or the schedule type — they never change — so the selector adds them to
+  `context` (`{"day": "Monday", "schedule type": "Operating Hours"}`) for every
+  `UPDATE`. They are not changes: `field_changes` never reports a no-op pair. A
+  null `day` ("every day") stays null and the UI owns that copy.
+- **Exception slots carry their dates as identity.** An exception has a null
+  `day` (it is scoped by its dates), so "every day" would be a false label; its
+  `context` therefore holds `schedule type`, `is exception` and the two dates
+  (ISO strings, since `context` is a JSON scalar), and the UI labels the line with
+  the date or date span instead of a day. Withheld fields (§18) are filtered from
+  `field_changes`, `context` and `snapshot`, exactly as
+  `_scalar_changes`/`_snapshot` do for every other row — including the dates, so a
+  redacted field cannot reappear through identity.
+- **A replace-shaped save reads as remove/add.** A client that omits the ids still
+  replaces the set; the log then shows the deletions and creations it really
+  performed rather than synthesising a story about them.
 
 ## 14. Resolve FK ids to labels
 
@@ -1503,7 +1488,7 @@ needed.
 - Add `AuditActionType` (an action grouped by `pgh_context_id`, exposing `timestamp`, `actor`, `summary`, and a nested `events: [AuditEventType!]!` list), `AuditEventType`, `AuditEventKind` enum (`INSERT`/`UPDATE`/`DELETE`; `READ` is added in §28), and `AuditTargetType` enum in the `audit` app's types (e.g. `audit/types.py`).
 - `AuditEventType` gains an optional `snapshot: JSON` field (opt-in, §13) rendered from the event's `pgh_data`.
 - `AuditEventType` gains an optional `summary: String` (§32) for events that are acknowledged with one line instead of field detail; it is `null` for every detailed event.
-- `AuditEventType` gains an optional `context: JSON` field (§13): unchanged identity fields that keep a synthesized event identifiable (a netted schedule slot's `day`/`schedule type`). It is never a change — `fieldChanges` holds only real before/after pairs — and it is `null` for every non-synthesized event.
+- `AuditEventType` gains an optional `context: JSON` field (§13): unchanged identity fields that keep an event identifiable (a schedule slot's `day`/`schedule type`). It is never a change — `fieldChanges` holds only real before/after pairs — and it is `null` for every event with no identity to report.
 - `AuditActorType` (`id: ID`, `label: String!`, `isSystem: Boolean!`) plus the `objectAuditActors(targetType, objectId, search, limit)` query expose one object's selectable actors (§21). Its `id` is `null` for the single synthetic `System` entry, which the log selects with `AuditEventFilter.systemOnly`.
 - `AuditActionType` gains `truncated: Boolean!` (§13) — the action carried more events than the server renders.
 - Add one query to a new `Query` class in `audit/schema.py`, `permission_classes=[IsAuthenticated]`. It returns an `AuditActionPage`, not a plain list and not an `OffsetPaginated` wrapper — the selector produces grouped Python actions (not a queryset), so `strawberry_django.offset_paginated` cannot wrap it. Pagination is applied in SQL by the selector (§10), not as an in-memory slice of a fully-grouped list: the resolver forwards the opaque `after` cursor and `limit`.
@@ -1648,9 +1633,9 @@ derivation regression, so it is the stronger guard.
 - **`references()` boundary pin:** the exact per-target _match_ set from §10 is asserted against a **hand-written literal** per target (`_EXPECTED_SHELTER_REFERENCES` and the Bed/Room equivalents), so any change to what `references()` reaches — a newly tracked model, a dropped branch — fails loudly. The literal, not a set derived from `event_models()` at assert time, is the stronger pin: a derived set would silently track a `references()` regression instead of catching it. Shelter excludes `ReferralEvent.shelter_id` and includes `MediaLinkEvent`/`VideoEvent`; Room includes `BedEvent.room_id` and `ReservationEvent.room_id`; Bed includes `ReservationEvent.bed_id`.
 - **Room/Bed reservation exclusion:** a reservation write appears in `objectAuditLog(RESERVATION)` (internal path) but **not** in `objectAuditLog(ROOM)`/`(BED)` or `(SHELTER)` (the target-scoped blocklist, §10); a room/bed configuration change still appears. A room log contains no `BedEvent` rows, and a bed log keeps the bed's full field detail.
 - **Multi-write action-level diff:** a status change + a separate notes update in one request (two saves, so two events) renders both the `status` and `notes` field changes (before/after diff), not just one winner row. A single save doing both is the one-row case above, and renders both changes from one event.
-- **Cross-model action:** one action writing a Shelter and a Bed renders the shelter's own before→after pair and a **summary** line for the bed (`Updated <name> (<id>)`) — no `Bed <id> name` pair, no shared-field collision (§13, §32).
+- **Cross-model action:** one action writing a Shelter and a Bed renders the shelter's own before→after pair and a **summary** line for the bed (`Updated Bed: <name> (<id>)`) — no `Bed <id> name` pair, no shared-field collision (§13, §32).
 - **Same-model multi-row action:** one action touching two rows of the _same_ model (two beds renamed in one context, standing in for a bulk `label="import"` write) renders two distinct summary lines, one per bed — not one collapsed line (§13, §32).
-- **Display scopes (§32):** a shelter action that creates a bed and renames a room renders `Created <name> (<id>)` / `Updated <name> (<id>)` with empty `field_changes` and no snapshot even under `include_snapshot=True`; repeated saves of one bed collapse to one line; a deleted bed keeps its last name; a nameless bed falls back to `Bed #<id>`; a Shelter log cannot reach `ReservationEvent`/`ReservationClientEvent` (`Reservation` has no shelter FK), while Room/Bed logs drop them via `_SCOPED_EXCLUSIONS`; and `targetType: RESERVATION` fails schema validation (the enum no longer publishes it, while the internal selector path still renders reservation-client writes).
+- **Display scopes (§32):** a shelter action that creates a bed and renames a room renders `Created Bed: <name> (<id>)` / `Updated Room: <name> (<id>)` with empty `field_changes` and no snapshot even under `include_snapshot=True`; repeated saves of one bed collapse to one line; a deleted bed keeps its last name; a nameless bed falls back to `#<id>`; a Shelter log cannot reach `ReservationEvent`/`ReservationClientEvent` (`Reservation` has no shelter FK), while Room/Bed logs drop them via `_SCOPED_EXCLUSIONS`; and `targetType: RESERVATION` fails schema validation (the enum no longer publishes it, while the internal selector path still renders reservation-client writes).
 - **Duplicate `verbose_name`:** a model with two fields sharing a `verbose_name` (the three `Shelter` "Additional Notes" fields) renders each edit under its own (raw) key in both `field_changes` and `snapshot`, so neither is silently dropped (§13).
 - **Cross-table context-less writes:** two context-less writes in different event tables render as two distinct singleton actions, with the `pgh_id` collision pinned explicitly so the test does not rely on sequence coincidence (§12).
 - **INSERT/REMOVE pk exclusion:** the model pk (`id`) is absent from an `.add` event's `field_changes` — it is in `pgh_data` but can never change — and (unit-tested) from the `.remove` branch too (§13).
@@ -1741,10 +1726,10 @@ what the log can actually render.
   name/email for that id; equally frequent names break by recency, then
   alphabetically, so the label never depends on the query plan. The list is
   ordered by event count, then label, then id, where **event count is raw written
-  rows, not rendered events**: a full-replacement schedule save writes two rows
-  per slot (§13) that netting collapses for display, so an actor who mostly edits
-  schedules ranks above the events the log shows. The ordering is a picker
-  convenience — the actor set and labels are exact. A frozen name without a user
+  rows, not rendered events**: a bed save collapses into one summary line (§32)
+  however many rows it wrote, so an actor who mostly edits beds ranks by the
+  writes, not by the lines the log shows. The ordering is a picker convenience —
+  the actor set and labels are exact. A frozen name without a user
   id cannot be expressed by `actorId`, so those rare pre-middleware rows are
   omitted from the selectable list (documented, not silently wrong).
 - **`System` is one synthetic entry** (`id: null`, `isSystem: true`) aggregating
@@ -2180,19 +2165,37 @@ graph LR
 ```
 
 **Shelter log — summaries for related Bed/Room.** Related `Bed` and `Room`
-writes appear as one line per object per kind: `Created <name> (<id>)`,
-`Updated <name> (<id>)`, `Deleted <name> (<id>)` (§13 `summary`). They carry an
+writes appear as one line per object per kind, naming the object type so the
+reader knows which kind of object the name belongs to:
+`Created Bed: <name> (<id>)`, `Updated Room: <name> (<id>) Name, Status notes`,
+`Deleted Bed: <name> (<id>)` (§13 `summary`). An update also names the fields it
+changed — display names only, never values, since the values belong to the
+object's own log; a create or delete lists nothing, because every field of the row
+is new or gone. The list is the union across the action's writes of that object,
+so a collapsed line does not under-report a second save in the same request.
+A field withheld from the caller (§18) is dropped from that list as well: naming
+it would leak a change `field_changes` deliberately hides.
+Mechanical columns are excluded, as in `field_changes`. They carry an
 empty `field_changes` and never a snapshot, even when `include_snapshot=True`.
 The line is omitted unless the caller holds `Bed.VIEW` / `Room.VIEW` in the
 shelter's organization, so a shelter-only reader cannot learn a bed or room name
 from the log when the corresponding query is empty. The hidden event model is
 pruned from the aggregate with `across()`, so an action containing only hidden
-rows disappears instead of surfacing as an empty action; the action verb is
+rows disappears instead of surfacing as an empty action. A write that changed only
+mechanical columns — edit → save with nothing edited still moves `updated_at` — is
+not an event at all, on the anchor and on a summarized object alike, so it cannot
+render as a card with no content. The test is the **unfiltered** diff: a write
+whose only changes were fields withheld from this caller (§18) is still an event,
+rendered with those fields filtered out, because dropping it would hide that the
+object was modified; an opt-in snapshot does not turn an empty diff into an event
+either. An action left with no events is dropped from
+the page; the cursor still advances past its key, so a dropped action cannot stall
+pagination. The action verb is
 derived from the anchored object's rows, so a related-only write reads as a
 modification of the anchor rather than creating or deleting it. Repeated saves of
 the same object under one context collapse to one line, keyed by
 `(model, obj id, kind)`. `Bed.name` is nullable, so a nameless bed falls back
-to `Bed #<id>`. The shelter's **own** fields, media, schedules, availability, and
+to `#<id>`. The shelter's **own** fields, media, schedules, availability, and
 M2M rows keep full detail; `ContactInfo` events are excluded entirely (§7b.6),
 and the BA-review fields are withheld from callers without the global grant
 (§18). `_SUMMARY_ONLY_MODELS`, `_SUMMARY_VERBS`, and the schema's field/summary

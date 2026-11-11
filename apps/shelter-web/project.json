@@ -12,7 +12,8 @@
           "ci": true,
           "coverage": true
         }
-      }
+      },
+      "dependsOn": ["privacy-test"]
     },
     "build": {
       "executor": "nx:run-commands",
@@ -20,6 +21,10 @@
         "production",
         "^production",
         "{workspaceRoot}/tools/shared/**/*",
+        {
+          "fileset": "{projectRoot}/.env*",
+          "includeIgnored": true
+        },
         {
           "env": "CI"
         },
@@ -40,6 +45,15 @@
         },
         {
           "env": "VITE_POSTHOG_E2E"
+        },
+        {
+          "env": "VITE_SHELTER_WEB_NEW_RELIC_LICENSE_KEY"
+        },
+        {
+          "env": "VITE_APP_ENV"
+        },
+        {
+          "env": "APP_VERSION"
         }
       ],
       "outputs": ["{workspaceRoot}/dist/apps/shelter-web"],
@@ -59,7 +73,7 @@
     "deploy": {
       "executor": "nx:run-commands",
       "cache": false,
-      "dependsOn": ["build"],
+      "dependsOn": ["build", "privacy-test"],
       "options": {
         "command": "node tools/deploy/cloudfront-deploy.mjs"
       },
@@ -73,6 +87,25 @@
       "options": {
         "command": "node tools/scripts/post-preview-comment.js --url=https://shelter.dev.betterangels.la"
       }
+    },
+    "privacy-test": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "command": "esbuild apps/shelter-web/src/monitoring/privacy.node-test.ts --bundle --platform=node --outfile=dist/privacy-tests/shelter-web/privacy.node-test.cjs && node --test dist/privacy-tests/shelter-web/privacy.node-test.cjs"
+      },
+      "outputs": [
+        "{workspaceRoot}/dist/privacy-tests/shelter-web/privacy.node-test.cjs"
+      ],
+      "inputs": [
+        "sharedGlobals",
+        "{projectRoot}/tsconfig.json",
+        "{projectRoot}/src/monitoring/**/*",
+        "{workspaceRoot}/libs/monitoring/**/*",
+        {
+          "externalDependencies": ["@newrelic/browser-agent", "esbuild"]
+        }
+      ]
     }
   }
 }

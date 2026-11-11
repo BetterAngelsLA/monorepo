@@ -40,6 +40,19 @@ export function ShelterProfileLinks(props: IProps) {
         <Sidebar.Link
           to={shelterProfileRoute(
             shelterId,
+            profileRouteConfig.children.schedule,
+          )}
+          isActive={isShelterProfileRoute(pathname, {
+            segment: profileRouteConfig.children.schedule,
+          })}
+          collapsed={!isOpen}
+          replace
+        >
+          Schedule
+        </Sidebar.Link>
+        <Sidebar.Link
+          to={shelterProfileRoute(
+            shelterId,
             profileRouteConfig.children.details,
           )}
           isActive={isShelterProfileRoute(pathname, {
@@ -75,19 +88,6 @@ export function ShelterProfileLinks(props: IProps) {
           replace
         >
           Entry Requirements
-        </Sidebar.Link>
-        <Sidebar.Link
-          to={shelterProfileRoute(
-            shelterId,
-            profileRouteConfig.children.operatingHours,
-          )}
-          isActive={isShelterProfileRoute(pathname, {
-            segment: profileRouteConfig.children.operatingHours,
-          })}
-          collapsed={!isOpen}
-          replace
-        >
-          Operating Hours
         </Sidebar.Link>
         <Sidebar.Link
           to={shelterProfileRoute(

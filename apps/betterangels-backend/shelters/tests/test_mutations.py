@@ -1,3 +1,4 @@
+from datetime import time
 from typing import Any
 
 from django.test import TestCase, ignore_warnings
@@ -6,8 +7,9 @@ from unittest_parametrize import ParametrizedTestCase
 
 from accounts.models import Role, User
 from accounts.services import role_assign
+from shelters.enums import DayOfWeekChoices, ScheduleTypeChoices
 from shelters.groups import GLOBAL_SHELTER_OPERATOR_ROLE
-from shelters.models import SPA, City, ContactInfo, Service, ServiceCategory, Shelter
+from shelters.models import SPA, City, ContactInfo, Schedule, Service, ServiceCategory, Shelter
 from shelters.tests.utils import ShelterTestCase
 
 
@@ -1323,3 +1325,147 @@ class UpdateShelterAdditionalContactsErrorShapeTestCase(ShelterTestCase, TestCas
         self.assertEqual(messages[1]["kind"], "VALIDATION")
         self.assertEqual(messages[1]["field"], "additionalContacts.1.contactEmail")
         self.assertIn("email", messages[1]["message"].lower())
+
+
+class UpdateShelterSchedulesTestCase(ShelterTestCase, TestCase):
+    """updateShelter reconciles schedules in place (upsert) instead of replacing them."""
+
+    UPDATE_MUTATION = """
+        mutation ($data: UpdateShelterInput!) {
+            updateShelter(data: $data) {
+                ... on ShelterType {
+                    id
+                }
+                ... on OperationInfo {
+                    messages {
+                        kind
+                        field
+                        message
+                    }
+                }
+            }
+        }
+    """
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.graphql_client.force_login(self.operator)
+        self.shelter = Shelter.objects.create(name="Scheduled Shelter", organization=self.org)
+        self.slot = Schedule.objects.create(
+            shelter=self.shelter,
+            schedule_type=ScheduleTypeChoices.OPERATING,
+            day=DayOfWeekChoices.MONDAY,
+            start_time=time(9, 0),
+            end_time=time(17, 0),
+        )
+
+    def _entry(self, **overrides: Any) -> dict[str, Any]:
+        entry: dict[str, Any] = {
+            "scheduleType": "OPERATING",
+            "days": ["MONDAY"],
+            "startTime": "09:00:00",
+            "endTime": "17:00:00",
+            "isException": False,
+        }
+        entry.update(overrides)
+        return entry
+
+    def _update(
+        self,
+        schedules: list[dict[str, Any]],
+        schedule_type: str | None = None,
+    ) -> dict:
+        data: dict[str, Any] = {
+            "id": str(self.shelter.pk),
+            "schedules": schedules,
+        }
+        if schedule_type is not None:
+            data["scheduleType"] = schedule_type
+
+        return self.execute_graphql(self.UPDATE_MUTATION, {"data": data})
+
+    def test_schedule_id_round_trips_and_updates_in_place(self) -> None:
+        response = self._update(
+            [self._entry(id=str(self.slot.pk), startTime="10:00:00")],
+            schedule_type="OPERATING",
+        )
+
+        self.assertIsNone(response.get("errors"))
+        self.assertIn("updateShelter", response["data"])
+        self.slot.refresh_from_db()
+        self.assertEqual(self.slot.start_time, time(10, 0))
+        self.assertEqual(Schedule.objects.filter(shelter=self.shelter).count(), 1)
+
+    def test_omitting_the_schedule_deletes_it(self) -> None:
+        response = self._update([], schedule_type="OPERATING")
+
+        self.assertIsNone(response.get("errors"))
+        self.assertFalse(Schedule.objects.filter(pk=self.slot.pk).exists())
+
+    def test_saving_one_type_leaves_the_others_alone(self) -> None:
+        """The payload names its scope, so a stale tab cannot revert another type."""
+        intake = Schedule.objects.create(
+            shelter=self.shelter,
+            schedule_type=ScheduleTypeChoices.INTAKE,
+            day=DayOfWeekChoices.MONDAY,
+            start_time=time(8, 0),
+            end_time=time(9, 0),
+        )
+
+        response = self._update(
+            [self._entry(id=str(self.slot.pk), startTime="10:00:00")],
+            schedule_type="OPERATING",
+        )
+
+        self.assertIsNone(response.get("errors"))
+        intake.refresh_from_db()
+        self.assertEqual(intake.start_time, time(8, 0))
+        self.slot.refresh_from_db()
+        self.assertEqual(self.slot.start_time, time(10, 0))
+
+    def test_duplicate_slot_returns_a_validation_message(self) -> None:
+        """Two entries for the same slot surface the reason, not a generic failure."""
+        response = self._update(
+            [
+                self._entry(id=str(self.slot.pk)),
+                self._entry(startTime="09:00:00", endTime="12:00:00"),
+            ],
+            schedule_type="OPERATING",
+        )
+
+        self.assertIsNone(response.get("errors"))
+        messages = response["data"]["updateShelter"]["messages"]
+        self.assertEqual(messages[0]["kind"], "VALIDATION")
+        self.assertIn("Monday", messages[0]["message"])
+        self.assertIn("09:00", messages[0]["message"])
+
+    def test_schedules_without_a_schedule_type_is_a_validation_error(self) -> None:
+        """An empty payload cannot say which type it clears without the field."""
+        response = self._update([self._entry(id=str(self.slot.pk))])
+
+        self.assertIsNone(response.get("errors"))
+        messages = response["data"]["updateShelter"]["messages"]
+        self.assertEqual(messages[0]["kind"], "VALIDATION")
+        self.assertEqual(messages[0]["field"], "scheduleType")
+        self.assertTrue(Schedule.objects.filter(pk=self.slot.pk).exists())
+
+    def test_schedule_type_without_schedules_is_a_validation_error(self) -> None:
+        """The pair travels together; naming a type alone would be a silent no-op."""
+        response = self.execute_graphql(
+            self.UPDATE_MUTATION,
+            {"data": {"id": str(self.shelter.pk), "scheduleType": "OPERATING"}},
+        )
+
+        self.assertIsNone(response.get("errors"))
+        messages = response["data"]["updateShelter"]["messages"]
+        self.assertEqual(messages[0]["kind"], "VALIDATION")
+        self.assertEqual(messages[0]["field"], "schedules")
+
+    def test_unknown_schedule_id_is_rejected(self) -> None:
+        response = self._update([self._entry(id="999999")], schedule_type="OPERATING")
+
+        self.assertIsNone(response.get("errors"))
+        # The whole update is rejected, so the existing slot is untouched.
+        self.assertTrue(Schedule.objects.filter(pk=self.slot.pk).exists())
+        messages = response["data"]["updateShelter"]["messages"]
+        self.assertEqual(messages[0]["kind"], "VALIDATION")

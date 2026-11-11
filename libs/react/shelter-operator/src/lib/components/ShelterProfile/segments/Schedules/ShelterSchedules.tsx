@@ -20,6 +20,34 @@ type TProps = {
   shelterId: string;
 };
 
+/** Carries the server's own wording so the toast can show it verbatim. */
+class ScheduleSaveError extends Error {}
+
+/**
+ * The server's rejection text, joined, or undefined when the response carries a
+ * payload instead of an `OperationInfo`.
+ */
+export function operationInfoMessage(
+  result:
+    | {
+        __typename?: string;
+        messages?: ({ message: string } | null)[] | null;
+      }
+    | null
+    | undefined,
+): string | undefined {
+  if (result?.__typename !== 'OperationInfo') {
+    return undefined;
+  }
+
+  const message = (result.messages ?? [])
+    .map((entry) => entry?.message)
+    .filter(Boolean)
+    .join(' ');
+
+  return message || undefined;
+}
+
 export function ShelterSchedules(props: TProps) {
   const { shelterId } = props;
 
@@ -41,25 +69,16 @@ export function ShelterSchedules(props: TProps) {
 
     const isDelete = scheduleInputs.length === 0;
 
-    const otherSchedules: ScheduleInput[] = shelter.schedules
-      .filter((s) => s.scheduleType !== scheduleType)
-      .map((s) => ({
-        scheduleType: s.scheduleType,
-        days: s.day ? [s.day] : undefined,
-        startTime: s.startTime ?? undefined,
-        endTime: s.endTime ?? undefined,
-        startDate: s.startDate ?? undefined,
-        endDate: s.endDate ?? undefined,
-        condition: s.condition ?? undefined,
-        isException: s.isException,
-      }));
-
     try {
       const response = await updateShelter({
         variables: {
           data: {
             id: shelterId,
-            schedules: [...otherSchedules, ...scheduleInputs],
+            // Only the tab being saved. The schedule upsert reconciles the type
+            // named in `scheduleType` and leaves the others untouched, so a save
+            // from a stale tab cannot revert another type's hours.
+            schedules: scheduleInputs,
+            scheduleType,
           },
         },
         awaitRefetchQueries: true, // after refetch setResetKey will retrigger render
@@ -77,14 +96,22 @@ export function ShelterSchedules(props: TProps) {
         return;
       }
 
-      throw new Error('unexpected query error');
+      // The API rejects a save with a reason (a duplicate slot, an unknown id, a
+      // type mismatch). Showing "an unexpected error occurred" instead throws
+      // away the only thing the operator can act on.
+      throw new ScheduleSaveError(
+        operationInfoMessage(result) ?? 'An unexpected error occurred.',
+      );
     } catch (e) {
       console.error(`[updateShelter error]: ${e}.`);
 
       showToast({
         status: 'error',
         title: isDelete ? 'Delete failed' : 'Update failed',
-        description: 'An unexpected error occurred.',
+        description:
+          e instanceof ScheduleSaveError
+            ? e.message
+            : 'An unexpected error occurred.',
       });
     }
   }
