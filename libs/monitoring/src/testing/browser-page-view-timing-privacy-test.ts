@@ -54,19 +54,17 @@ export function testPageViewTimingPrivacy(obfuscate: unknown[]) {
           ),
         );
         assert.ok(payload.includes('[route]') || payload.includes('/[id]'));
-        for (const value of [
-          'preview',
-          'abc123',
-          'IMG',
-          '176800',
-          '107.25',
-          session,
-        ]) {
+        for (const value of ['preview', 'abc123', 'IMG', '176800', '107.25']) {
           assert.ok(
             payload.includes(value),
             `${format} lost ${value}: ${payload}`,
           );
         }
+        assert.match(
+          payload,
+          new RegExp(`(?:^|;)5,'session,'${session}(?=;|$)`),
+          `${format} lost session attribute: ${payload}`,
+        );
         assert.equal(attrs.eid, 'PRIVATE_DOM_ID');
       }
 
