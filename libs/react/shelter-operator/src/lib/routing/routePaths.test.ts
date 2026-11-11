@@ -21,7 +21,18 @@ describe('shelterReportRoute', () => {
 });
 
 describe('legacyProfileRoutes', () => {
+  it('keeps the retired operating-hours segment mapped to its replacement', () => {
+    // Pinned by value: an empty list would satisfy any loop-based assertion, and
+    // dropping this entry is exactly the regression the rename risks.
+    expect(legacyProfileRoutes).toContainEqual({
+      from: 'operating-hours',
+      to: profileRouteConfig.children.schedule,
+    });
+  });
+
   it('declares a redirect target that is a live child, from a retired segment', () => {
+    expect(legacyProfileRoutes.length).toBeGreaterThan(0);
+
     const current: string[] = Object.values(profileRouteConfig.children);
 
     for (const { from, to } of legacyProfileRoutes) {
