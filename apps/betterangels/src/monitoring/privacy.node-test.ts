@@ -4,6 +4,7 @@ import './privacy-test-browser';
 import { Obfuscator } from '@newrelic/browser-agent/src/common/util/obfuscate.js';
 import { EventAggregator } from '@newrelic/browser-agent/src/common/aggregate/event-aggregator.js';
 import { Interaction } from '@newrelic/browser-agent/src/features/soft_navigations/aggregate/interaction.js';
+import { testLcpPrivacy } from '../../../../tools/shared/browser-lcp-privacy-test';
 import { browserPrivacyRules } from './privacy';
 
 const agent = {
@@ -215,5 +216,4 @@ test('JavaScriptError keeps the route for request_uri but redacts free text', ()
 });
 
 // Check the patched serializer in source, ESM and CommonJS package formats.
-import { testLcpPrivacy } from '../../../../tools/shared/browser-lcp-privacy-test';
 testLcpPrivacy(browserPrivacyRules('validation', '1.2.14'));
