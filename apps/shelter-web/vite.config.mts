@@ -29,23 +29,28 @@ const devServerProxy: Record<string, string | ProxyOptions> = {
   },
 };
 
+function monitoringEnvPlugin(env: Record<string, string>, isCI: boolean) {
+  return {
+    name: 'shelter-web-monitoring-env',
+    apply: 'build' as const,
+    buildStart() {
+      assertMonitoringEnv({
+        label: 'shelter-web-monitoring',
+        required: [
+          'VITE_SHELTER_WEB_NEW_RELIC_LICENSE_KEY',
+          'VITE_APP_ENV',
+          'VITE_APP_VERSION',
+        ],
+        env,
+        isCI,
+      });
+    },
+  };
+}
+
 export default defineConfig(({ command, mode }) => {
   const isDev = mode === 'development';
   const basePath = getBuildBasePath();
-
-  if (command === 'build') {
-    const env = loadEnv(mode, import.meta.dirname, 'VITE_');
-    assertMonitoringEnv({
-      label: 'shelter-web-monitoring',
-      required: [
-        'VITE_SHELTER_WEB_NEW_RELIC_LICENSE_KEY',
-        'VITE_APP_ENV',
-        'VITE_APP_VERSION',
-      ],
-      env,
-      isCI: process.env.CI === 'true' || process.env.CI === '1',
-    });
-  }
 
   return {
     base: basePath,
@@ -73,6 +78,14 @@ export default defineConfig(({ command, mode }) => {
     plugins: [
       react(),
       baseHrefPlugin(basePath),
+      ...(command === 'build'
+        ? [
+            monitoringEnvPlugin(
+              loadEnv(mode, import.meta.dirname, 'VITE_'),
+              process.env.CI === 'true' || process.env.CI === '1',
+            ),
+          ]
+        : []),
       // Vite handles ?raw SVG imports natively.
       // Only stub SVGs during Vitest runs (avoids cross-package Denied ID).
       ...(process.env.VITEST ? [svgTestResolver()] : []),
