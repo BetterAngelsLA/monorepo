@@ -20,7 +20,7 @@ agent only starts when `typeof window !== 'undefined'`.
 | Variable | Used by | Notes |
 | --- | --- | --- |
 | `EXPO_PUBLIC_NEW_RELIC_WEB_LICENSE_KEY` | web | Browser **license key**, not a user API key. Public: it is inlined into the bundle. |
-| `EXPO_PUBLIC_APP_ENV` | web | Becomes the `environment` attribute every dashboard widget filters on. |
+| `EXPO_PUBLIC_APP_ENV` | web, native | Becomes the `environment` attribute every dashboard widget filters on. |
 | `EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS` | native | |
 | `EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID` | native | |
 
@@ -30,11 +30,15 @@ Values come from `apps/betterangels/eas.json` (`build.<profile>.env`) via
 already depends on `write-eas-env`, which is hashed into the task inputs, so the
 profile is the single source of truth.
 
-`export-web` runs `tools/scripts/require-web-monitoring-env.mjs` first. In CI a
-missing key or `APP_ENV` **fails the build** rather than shipping a bundle with
-monitoring silently disabled. Locally it warns and continues, so a developer
-without a New Relic key can still run the app. Monitoring is expected in every
-deployed environment — preview and development included — not only production.
+`export-web` sets `EXPO_WEB_BASE_URL`; EAS Build sets `EAS_BUILD_PLATFORM`;
+`eas-update.mjs` sets `EAS_UPDATE`. `apps/betterangels/app.config.js` fails the
+build in CI when the key for the platform being built is missing: the web key
+for a web export, the iOS/Android key for that EAS build, or all three for an
+EAS update. It never requires another platform's key. Locally the guard warns
+and continues, so a developer without a New Relic key can still run the app.
+The `useNewRelic` hook also warns at runtime if a mobile key is missing.
+Monitoring is expected in every deployed environment — preview and development
+included — not only production.
 
 The agent's `applicationID`, `accountID`, `trustKey` and `sa` block is the
 account's browser app identity. Copy it verbatim from the snippet generated in

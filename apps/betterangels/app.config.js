@@ -6,10 +6,43 @@
 // developer override: it never travels, and dotenv applies it last so it still
 // wins locally.
 import dotenv from 'dotenv';
+import { assertMonitoringEnv } from '../../tools/shared/assert-monitoring-env.mjs';
+
 dotenv.config();
 dotenv.config({ path: '.env.local', override: true });
 
 const IS_PRODUCTION = process.env.APP_VARIANT === 'production';
+
+// Monitoring is checked for the platform being built. `export-web` sets
+// `EXPO_WEB_BASE_URL`, EAS Build sets `EAS_BUILD_PLATFORM`, and
+// `eas-update.mjs` sets `EAS_UPDATE` (an update covers all platforms).
+// expo-doctor/start set none of these and are unaffected.
+const APP_ENV = 'EXPO_PUBLIC_APP_ENV';
+const LICENSE_KEYS = {
+  web: 'EXPO_PUBLIC_NEW_RELIC_WEB_LICENSE_KEY',
+  ios: 'EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS',
+  android: 'EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID',
+};
+const monitoringPlatform =
+  process.env.EAS_UPDATE === 'true'
+    ? 'all'
+    : process.env.EAS_BUILD_PLATFORM ||
+      (process.env.EXPO_WEB_BASE_URL ? 'web' : null);
+const requiredMonitoringVars =
+  monitoringPlatform === 'all'
+    ? [APP_ENV, ...Object.values(LICENSE_KEYS)]
+    : monitoringPlatform && LICENSE_KEYS[monitoringPlatform]
+      ? [APP_ENV, LICENSE_KEYS[monitoringPlatform]]
+      : [];
+
+if (requiredMonitoringVars.length) {
+  assertMonitoringEnv({
+    label: 'monitoring',
+    required: requiredMonitoringVars,
+    env: process.env,
+    isCI: process.env.CI === 'true' || process.env.CI === '1',
+  });
+}
 
 // A production build must not silently bake the dev API. `.env.local` overrides
 // the process env above, so a stale dev pull (or a missing EAS value) would

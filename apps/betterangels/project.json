@@ -17,7 +17,7 @@
       ],
       "options": {
         "cwd": "apps/betterangels",
-        "command": "node ../../tools/scripts/require-web-monitoring-env.mjs && EXPO_WEB_BASE_URL=$(node ../../tools/shared/print-base-path.mjs) npx expo export --platform web --output-dir ../../dist/apps/betterangels --clear"
+        "command": "EXPO_WEB_BASE_URL=$(node ../../tools/shared/print-base-path.mjs) npx expo export --platform web --output-dir ../../dist/apps/betterangels --clear"
       },
       "outputs": [
         "{workspaceRoot}/dist/apps/betterangels"
@@ -27,7 +27,7 @@
         "^production",
         "{workspaceRoot}/tools/shared/**/*",
         {
-          "fileset": "{projectRoot}/.env",
+          "fileset": "{projectRoot}/.env*",
           "includeIgnored": true
         },
         {
@@ -64,9 +64,6 @@
           "env": "EXPO_PUBLIC_NEW_RELIC_WEB_LICENSE_KEY"
         },
         {
-          "fileset": "{workspaceRoot}/tools/scripts/require-web-monitoring-env.mjs"
-        },
-        {
           "env": "EXPO_PUBLIC_SHELTER_WEB_URL"
         },
         {
@@ -94,7 +91,8 @@
       "executor": "nx:run-commands",
       "cache": false,
       "dependsOn": [
-        "export-web"
+        "export-web",
+        "privacy-test"
       ],
       "options": {
         "command": "node tools/deploy/cloudfront-deploy.mjs"
@@ -248,17 +246,20 @@
       "executor": "nx:run-commands",
       "cache": true,
       "options": {
-        "command": "esbuild apps/betterangels/src/monitoring/privacy.node-test.ts --bundle --platform=node --outfile=dist/apps/betterangels/privacy.node-test.cjs && node --test dist/apps/betterangels/privacy.node-test.cjs"
+        "command": "esbuild apps/betterangels/src/monitoring/privacy.node-test.ts --bundle --platform=node --outfile=dist/privacy-tests/betterangels/privacy.node-test.cjs && node --test dist/privacy-tests/betterangels/privacy.node-test.cjs"
       },
       "outputs": [
-        "{workspaceRoot}/dist/apps/betterangels/privacy.node-test.cjs"
+        "{workspaceRoot}/dist/privacy-tests/betterangels/privacy.node-test.cjs"
       ],
       "inputs": [
-        "production",
-        "^production",
+        "sharedGlobals",
+        "{projectRoot}/tsconfig.json",
+        "{projectRoot}/src/monitoring/**/*",
+        "{workspaceRoot}/libs/monitoring/**/*",
         {
           "externalDependencies": [
-            "@newrelic/browser-agent"
+            "@newrelic/browser-agent",
+            "esbuild"
           ]
         }
       ]
