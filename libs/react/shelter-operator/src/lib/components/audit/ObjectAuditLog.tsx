@@ -164,11 +164,9 @@ export function ObjectAuditLog({
         )}
 
         {/* NOTE: withheld Bed/Room models are pruned in SQL, so they do not
-            create empty actions. The empty-action case is a write netted to
-            nothing: saving Operating Hours with no real schedule change still
-            deletes and re-creates the rows, netting correctly emits no events,
-            and the action comes back with an empty `events` list. The
-            activity-log hardening follow-up hides those contentless cards. */}
+            create empty actions. A write that changed nothing is suppressed
+            server-side, but an action whose every row was suppressed still
+            arrives with an empty `events` list and renders its header alone. */}
         {actions.map((action, index) => (
           <AuditActionRow
             key={`${action.timestamp}-${index}`}

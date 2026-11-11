@@ -58,7 +58,7 @@ export const profileRouteConfig = {
   root: '/operator/shelter/:shelterId/profile',
   children: {
     basic: 'basic-info',
-    operatingHours: 'operating-hours',
+    schedule: 'schedule',
     policies: 'policies',
     details: 'details',
     sleepingDetails: 'sleeping-details',
@@ -70,6 +70,16 @@ export const profileRouteConfig = {
     baPrivate: 'ba-private',
   },
 } as const satisfies StaticRouteConfig;
+
+/**
+ * Segments retired by a rename, each with the child that replaced it.
+ *
+ * The route table mounts a redirect for every entry, so a bookmarked URL keeps
+ * working instead of falling through to the no-match state.
+ */
+export const legacyProfileRoutes = [
+  { from: 'operating-hours', to: profileRouteConfig.children.schedule },
+] as const;
 
 export const mgmtRouteConfig = {
   root: '/operator/shelter/:shelterId/manage',

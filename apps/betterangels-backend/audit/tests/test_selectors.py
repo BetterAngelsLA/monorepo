@@ -154,7 +154,33 @@ class ObjectAuditLogSelectorTestCase(TestCase):
         changes = actions[0].field_changes
         self.assertEqual(changes["name"], ["Audit Shelter", "Renamed Shelter"])
         self.assertNotIn(f"Bed {self.bed.pk} name", changes)
-        self.assertEqual(_summaries(actions[0]), [f"Updated Renamed Bed ({self.bed.pk})"])
+        self.assertEqual(_summaries(actions[0]), [f"Updated Bed: Renamed Bed ({self.bed.pk}) Name"])
+
+    def test_a_withheld_field_is_not_named_in_a_summary(self) -> None:
+        """A summary names fields, so a withheld one must not appear there (§18).
+
+        ``_scalar_changes`` filters the field out of ``field_changes``; naming it
+        in the one-line summary would leak the same change through a side door.
+        """
+        with audit_context(label="seed"):
+            self.bed.notes = "private note"
+            self.bed.save()
+
+        with audit_context(user=self.user):
+            self.bed.name = "Renamed Bed"
+            self.bed.notes = "still private"
+            self.bed.save()
+
+        actions = audit_log(
+            obj=self.shelter,
+            target_type="SHELTER",
+            hidden_fields={"shelters.Bed": ("notes",)},
+        )
+
+        (summary,) = _summaries(actions[0])
+        self.assertIn("Name", summary)
+        self.assertNotIn("Notes", summary)
+        self.assertNotIn("notes", summary)
 
     def test_one_action_touching_two_rows_of_a_model_keeps_them_separate(self) -> None:
         """Two rows of the *same* model render as two summary lines (§13, §32).
@@ -177,7 +203,7 @@ class ObjectAuditLogSelectorTestCase(TestCase):
         self.assertEqual(len(actions), 1)
         self.assertEqual(
             _summaries(actions[0]),
-            [f"Updated Renamed Bed A ({self.bed.pk})", f"Updated Renamed Bed B ({other_bed.pk})"],
+            [f"Updated Bed: Renamed Bed A ({self.bed.pk}) Name", f"Updated Bed: Renamed Bed B ({other_bed.pk}) Name"],
         )
         # Neither bed's fields reach the shelter-level rollup.
         self.assertEqual(actions[0].field_changes, {})
@@ -1067,7 +1093,7 @@ class AuditDisplayScopeTestCase(TestCase):
         self.assertEqual(len(actions), 1)
         self.assertCountEqual(
             _summaries(actions[0]),
-            [f"Created Bed A ({bed.pk})", f"Updated Room B ({self.room.pk})"],
+            [f"Created Bed: Bed A ({bed.pk})", f"Updated Room: Room B ({self.room.pk}) Name"],
         )
         # Nothing else about either object reaches the shelter-level rollup.
         self.assertEqual(actions[0].field_changes, {})
@@ -1098,7 +1124,7 @@ class AuditDisplayScopeTestCase(TestCase):
 
         self.assertIsNotNone(action)
         assert action is not None
-        self.assertEqual(_summaries(action), [f"Updated Bed B ({bed.pk})"])
+        self.assertEqual(_summaries(action), [f"Updated Bed: Bed B ({bed.pk}) Name, Room"])
         self.assertEqual(action.field_changes, {})
         self.assertEqual(action.events[0].field_changes, {})
         self.assertIsNone(action.events[0].snapshot)
@@ -1116,7 +1142,101 @@ class AuditDisplayScopeTestCase(TestCase):
         actions = self._log()
 
         self.assertEqual(len(actions), 1)
-        self.assertEqual(_summaries(actions[0]), [f"Updated Bed B ({bed.pk})"])
+        # Two writes, one line: the field list covers both.
+        self.assertEqual(
+            _summaries(actions[0]),
+            [f"Updated Bed: Bed B ({bed.pk}) Name, Status notes"],
+        )
+
+    def test_update_summary_names_the_fields_that_changed(self) -> None:
+        """What moved, not what it moved to: the values stay in the bed's own log."""
+        with audit_context(label="seed"):
+            bed = Bed.objects.create(shelter=self.shelter, name="Bed A")
+
+        with audit_context(user=self.user):
+            bed.status_notes = "Moved to the quiet wing"
+            bed.maintenance_flag = True
+            bed.save()
+
+        (line,) = _summaries(self._log()[0])
+
+        self.assertTrue(line.startswith(f"Updated Bed: Bed A ({bed.pk}) "))
+        self.assertCountEqual(
+            line.split(f"({bed.pk}) ", 1)[1].split(", "),
+            ["Status notes", "Maintenance flag"],
+        )
+        self.assertNotIn("quiet wing", line)
+        self.assertNotIn("True", line)
+
+    def test_create_summary_lists_no_fields(self) -> None:
+        """A create is every field at once; listing them restates the operation."""
+        with audit_context(user=self.user):
+            bed = Bed.objects.create(shelter=self.shelter, name="Bed A")
+
+        (line,) = _summaries(self._log()[0])
+
+        self.assertEqual(line, f"Created Bed: Bed A ({bed.pk})")
+
+    def test_no_op_save_is_not_reported(self) -> None:
+        """Edit -> save with nothing changed must not add a card to the log."""
+        with audit_context(label="seed"):
+            bed = Bed.objects.create(shelter=self.shelter, name="Bed A")
+
+        with audit_context(user=self.user):
+            bed.save()
+
+        self.assertEqual(self._log(), [])
+
+    def test_a_write_that_only_touched_hidden_fields_is_still_an_event(self) -> None:
+        """Emptiness is measured before redaction: the edit happened (§18).
+
+        A caller who cannot see the field still learns that the object was
+        modified; what it was modified to stays hidden.
+        """
+        with audit_context(user=self.user):
+            self.shelter.overall_rating = 5
+            self.shelter.save()
+
+        actions = audit_log(
+            obj=self.shelter,
+            target_type="SHELTER",
+            hidden_fields={"shelters.Shelter": ("overall_rating",)},
+        )
+
+        self.assertEqual(len(actions), 1)
+        self.assertEqual(actions[0].events[0].field_changes, {})
+
+    def test_no_op_save_is_not_reported_even_with_snapshots(self) -> None:
+        """A snapshot is not content: a save that changed nothing stays invisible."""
+        with audit_context(user=self.user):
+            self.shelter.save()
+
+        actions = audit_log(obj=self.shelter, target_type="SHELTER", include_snapshot=True)
+        events = [event for action in actions for event in action.events]
+
+        self.assertEqual(events, [])
+
+    def test_no_op_shelter_save_is_not_reported(self) -> None:
+        """The anchored object gets the same treatment as a summarized one."""
+        with audit_context(user=self.user):
+            self.shelter.save()
+
+        self.assertEqual(self._log(), [])
+
+    def test_no_op_save_does_not_mask_a_real_change_in_the_same_action(self) -> None:
+        """The no-op write is dropped, not the object: the real change survives."""
+        with audit_context(label="seed"):
+            bed = Bed.objects.create(shelter=self.shelter, name="Bed A")
+
+        with audit_context(user=self.user):
+            bed.save()
+            bed.status_notes = "Second write"
+            bed.save()
+
+        self.assertEqual(
+            _summaries(self._log()[0]),
+            [f"Updated Bed: Bed A ({bed.pk}) Status notes"],
+        )
 
     def test_deleted_bed_is_summarized_with_its_last_name(self) -> None:
         with audit_context(label="seed"):
@@ -1129,7 +1249,7 @@ class AuditDisplayScopeTestCase(TestCase):
         actions = self._log()
 
         self.assertEqual(len(actions), 1)
-        self.assertEqual(_summaries(actions[0]), [f"Deleted Bed A ({bed_id})"])
+        self.assertEqual(_summaries(actions[0]), [f"Deleted Bed: Bed A ({bed_id})"])
 
     def test_summary_falls_back_when_a_bed_has_no_name(self) -> None:
         # ``Bed.name`` is nullable, so the line must not render "None".
@@ -1138,7 +1258,7 @@ class AuditDisplayScopeTestCase(TestCase):
 
         actions = self._log()
 
-        self.assertEqual(_summaries(actions[0]), [f"Created Bed #{bed.pk} ({bed.pk})"])
+        self.assertEqual(_summaries(actions[0]), [f"Created Bed: #{bed.pk} ({bed.pk})"])
 
     def test_shelter_log_cannot_reach_reservation_rows(self) -> None:
         """A Shelter log omits reservations structurally, not by an exclusion.
@@ -1593,6 +1713,7 @@ class ObjectAuditLogScheduleEventsTestCase(TestCase):
         self.assertEqual([e.action for e in actions[0].events], ["shelter.schedule.update"])
         self.assertEqual(event.kind, "UPDATE")
         self.assertEqual(event.context, {"day": "Monday", "schedule type": "Operating Hours"})
+
         self.assertEqual(
             event.field_changes,
             {"start time": ["09:00:00", "10:00:00"], "end time": ["17:00:00", "18:00:00"]},
@@ -1664,13 +1785,13 @@ class ObjectAuditLogScheduleEventsTestCase(TestCase):
         self.assertEqual(event.context, {"day": None, "schedule type": "Operating Hours"})
         self.assertEqual(event.field_changes, {"end time": ["17:00:00", "18:00:00"]})
 
-    def test_exception_slot_update_gets_no_day_identity(self) -> None:
-        """An exception is scoped by date, not day: "every day" would be a lie."""
+    def test_exception_slot_update_carries_its_dates_as_identity(self) -> None:
+        """An exception is scoped by date, so its dates travel instead of a day."""
         with audit_context(user=self.user):
             exception = Schedule.objects.create(
                 shelter=self.shelter,
                 start_date=date(2026, 12, 25),
-                end_date=date(2026, 12, 25),
+                end_date=date(2026, 12, 27),
                 start_time=time(10, 0),
                 end_time=time(12, 0),
                 is_exception=True,
@@ -1682,8 +1803,40 @@ class ObjectAuditLogScheduleEventsTestCase(TestCase):
         event = audit_log(obj=self.shelter, target_type="SHELTER")[0].events[0]
 
         self.assertEqual(event.kind, "UPDATE")
-        self.assertIsNone(event.context)
+        self.assertEqual(
+            event.context,
+            {
+                "schedule type": "Operating Hours",
+                "is exception": True,
+                "start date": "2026-12-25",
+                "end date": "2026-12-27",
+            },
+        )
         self.assertEqual(event.field_changes, {"end time": ["12:00:00", "14:00:00"]})
+
+    def test_a_moved_exception_does_not_report_its_old_date_as_identity(self) -> None:
+        """The date it moved to is a change; identity must not repeat it."""
+        with audit_context(user=self.user):
+            exception = Schedule.objects.create(
+                shelter=self.shelter,
+                start_date=date(2026, 12, 25),
+                end_date=date(2026, 12, 25),
+                start_time=time(10, 0),
+                end_time=time(12, 0),
+                is_exception=True,
+            )
+        with audit_context(user=self.user):
+            exception.start_date = date(2026, 12, 26)
+            exception.end_date = date(2026, 12, 26)
+            exception.save()
+
+        event = audit_log(obj=self.shelter, target_type="SHELTER")[0].events[0]
+
+        self.assertEqual(event.context, {"schedule type": "Operating Hours", "is exception": True})
+        self.assertEqual(
+            event.field_changes,
+            {"start date": ["2026-12-25", "2026-12-26"], "end date": ["2026-12-25", "2026-12-26"]},
+        )
 
     def test_a_changed_day_is_not_reported_as_identity(self) -> None:
         """An id-carrying entry can move a slot; the change wins over context."""

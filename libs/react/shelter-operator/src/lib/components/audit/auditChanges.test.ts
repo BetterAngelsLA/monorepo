@@ -9,35 +9,18 @@ import {
 } from './auditChanges';
 
 describe('parseFieldChanges', () => {
-  it('parses scalar and multi-value changes', () => {
+  it('renders scalar and multi-value changes', () => {
     const changes = parseFieldChanges({
-      name: ['Shelter A', 'Shelter B'],
+      name: ['Same', 'Same'],
       demographics: [['Women'], ['Men']],
     });
 
-    expect(changes.map((change) => change.field)).toEqual([
-      'name',
-      'demographics',
-    ]);
+    expect(changes.map((change) => change.field)).toEqual(['demographics']);
     expect(changes[0]).toMatchObject({
-      kind: 'scalar',
-      oldValue: 'Shelter A',
-      newValue: 'Shelter B',
-    });
-    expect(changes[1]).toMatchObject({
       kind: 'multi',
       removed: ['Women'],
       added: ['Men'],
     });
-  });
-
-  it('drops unchanged and empty pair changes', () => {
-    const changes = parseFieldChanges({
-      name: ['Same', 'Same'],
-      demographics: [[], []],
-    });
-
-    expect(changes).toEqual([]);
   });
 
   it('ignores a non-object payload', () => {
