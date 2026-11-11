@@ -269,11 +269,15 @@ def check_access_declarations(app_configs: Any, **kwargs: Any) -> list[Error]:
     for model in apps.get_models():
         # Resolve through the MRO so a declaration on an abstract base is
         # checked — the selectors honour it on every concrete subclass, so
-        # skipping it would enforce a rule the deploy check never sees.  The
-        # ``BaseModel``/``OrgScoped`` default is the derived rule, not a
-        # declaration, and compares equal to ``Access()``.
+        # skipping it would enforce a rule the deploy check never sees.
+        #
+        # The ``BaseModel``/``OrgScoped`` default is the derived rule, not a
+        # declaration; it names no write class, so it falls out at the
+        # ``write is None`` branch below.  The type check comes *first* on
+        # purpose: ordering a value comparison before it would let an object
+        # with a permissive ``__eq__`` skip the check entirely.
         access = getattr(model, "access", None)
-        if access is None or access == Access():
+        if access is None:
             continue
         if not isinstance(access, Access):
             errors.append(

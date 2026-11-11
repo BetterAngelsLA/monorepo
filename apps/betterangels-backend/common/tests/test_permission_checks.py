@@ -249,6 +249,32 @@ class AccessDeclarationChecksTestCase(TestCase):
         self.assertEqual(len(errors), 1)
         self.assertIn("is not an Access declaration", errors[0].msg)
 
+    def test_e007_fires_on_a_value_that_only_compares_equal_to_a_declaration(self) -> None:
+        """The type check must run before any value comparison.
+
+        A declaration is skipped when it names no write class, which protects the
+        ``BaseModel`` default.  If that comparison is what runs *first*, an object
+        that compares equal to ``Access()`` — a mock, a stub with a permissive
+        ``__eq__`` — is skipped instead of refused, reopening the silent no-op
+        hole E007 exists to close.
+        """
+        from unittest.mock import patch
+
+        class _Impostor:
+            write = None
+
+            def __eq__(self, other: object) -> bool:
+                return True
+
+        class _Concrete:
+            access = _Impostor()
+
+        with patch("django.apps.apps.get_models", return_value=[_Concrete]):
+            errors = _errors_with(check_access_declarations(None), "permissions.E007")
+
+        self.assertEqual(len(errors), 1)
+        self.assertIn("is not an Access declaration", errors[0].msg)
+
     def test_e007_validates_a_declaration_inherited_from_an_abstract_base(self) -> None:
         """FAILS until E007 resolves ``access`` through the MRO.
 
