@@ -7,6 +7,10 @@ import {
 import { ElementType, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { ShelterSearchSource } from '../../analytics';
+import {
+  SHELTER_OPEN_FAILED_MESSAGE,
+  SHELTER_UNAVAILABLE_MESSAGE,
+} from '../../shelter/messages';
 import { useOpenShelterSearch } from '../../shelter/useOpenShelterSearch';
 import {
   ClientCard,
@@ -57,13 +61,13 @@ export function FindShelterPicker({ Logo }: { Logo: ElementType }) {
               color={Colors.ERROR_DARK}
               mb="xs"
             >
-              Could not open the shelter search. Please try again.
+              {SHELTER_OPEN_FAILED_MESSAGE}
             </TextRegular>
           )}
 
           {!canOpen && (
             <TextRegular color={Colors.ERROR_DARK}>
-              Shelter search is not available in this build.
+              {SHELTER_UNAVAILABLE_MESSAGE}
             </TextRegular>
           )}
         </HorizontalContainer>

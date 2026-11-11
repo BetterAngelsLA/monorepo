@@ -17,7 +17,7 @@ import { formatScalarDate, toPhoneParts } from '@monorepo/shared/scalars';
 import { router } from 'expo-router';
 import { Linking, View } from 'react-native';
 import { TaskStatusEnum } from '../../apollo';
-import { ClientViewTabEnum } from '../../screens/Client/ClientTabs';
+import { ClientViewTabEnum } from '../../screens/Client/clientViewTab';
 import { enumLanguageCode } from '../../static';
 import { ClientProfilesQuery } from '../ClientProfileList/__generated__/ClientProfiles.generated';
 import { TasksDocument } from '../TaskList/__generated__/Tasks.generated';

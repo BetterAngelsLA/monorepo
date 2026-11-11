@@ -53,9 +53,12 @@ export function getAnalyticsClient(): PostHog | null {
            * app keeps minSdk 24, so older devices lose recordings, not the app.
            */
           /**
-           * Native only. The browser build renders client profiles as DOM, so
-           * recording it would capture that page text — a privacy decision
-           * rather than a config toggle, and not one this change makes.
+           * Native only, and not by preference: this SDK records by capturing
+           * native views, and has no DOM recorder. Measured on the web build
+           * with this set to `true`, it sent zero snapshots and logged nothing.
+           * Recording the browser build would mean running `posthog-js` there
+           * as a separate client — and would capture client profiles as DOM, so
+           * it is a privacy decision as well as a code one.
            */
           enableSessionReplay: Platform.OS !== 'web',
           sessionReplayConfig: {

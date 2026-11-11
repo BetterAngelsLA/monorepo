@@ -3,6 +3,7 @@ import { Colors } from '@monorepo/expo/shared/static';
 import { Button, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { StyleSheet, View } from 'react-native';
 import { ShelterSearchSource } from '../../../analytics';
+import { SHELTER_OPEN_FAILED_MESSAGE } from '../../../shelter/messages';
 import { useOpenShelterSearch } from '../../../shelter/useOpenShelterSearch';
 
 /**
@@ -34,6 +35,7 @@ export function FindShelterButton() {
         borderRadius={50}
         accessibilityLabel="Find shelter"
         accessibilityHint="opens the shelter search site in your browser"
+        loading={opening}
         disabled={opening}
         icon={<HouseLineIcon size="sm" color={Colors.PRIMARY} />}
         onPress={open}
@@ -46,7 +48,7 @@ export function FindShelterButton() {
             mt="xxs"
             textAlign="right"
           >
-            Could not open the shelter search. Please try again.
+            {SHELTER_OPEN_FAILED_MESSAGE}
           </TextRegular>
         </View>
       )}

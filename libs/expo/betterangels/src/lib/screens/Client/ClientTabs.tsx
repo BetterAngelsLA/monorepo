@@ -14,8 +14,6 @@ import { FeatureFlags } from '../../static';
 import { useActiveReferralGates } from '../../hooks/referral/useReferralGates';
 import { ClientViewTabEnum } from './clientViewTab';
 
-export { ClientViewTabEnum } from './clientViewTab';
-
 const orderedTabs: ClientViewTabEnum[] = [
   ClientViewTabEnum.Profile,
   ClientViewTabEnum.Interactions,
