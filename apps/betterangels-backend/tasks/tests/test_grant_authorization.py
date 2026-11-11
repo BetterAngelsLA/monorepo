@@ -197,6 +197,25 @@ class TaskGrantAuthorityDeniedTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixi
             created = self.create_task_fixture({"summary": "probe", "note": note_id})
             self.assertGraphQLOperationInfo(created, "createTask", PERMISSION_DENIED_MESSAGE, kind="PERMISSION")
 
+    def test_create_task_without_the_payload_organization_is_a_validation_error(self) -> None:
+        """The flip's whole contract: a pre-payload build is refused by GraphQL.
+
+        ``organizationId`` is ``ID!``, so the request never reaches the resolver —
+        no fallback, no resolver denial, no group-derived organization.  Nothing
+        else pins this: the fixture always injects the org, so every other create
+        test would keep passing if the field went back to ``ID``.
+        """
+        self._login(self.org_1_case_manager_1)
+
+        response = self.execute_graphql(
+            """mutation { createTask(data: {summary: "no org"}) { ... on TaskType { id } } }""",
+            {},
+        )
+
+        self.assertIn("errors", response)
+        self.assertIn("organizationId", str(response["errors"]))
+        self.assertFalse(Task.objects.filter(summary="no org").exists())
+
     def test_create_task_refuses_a_note_from_another_org(self) -> None:
         """The task's parents have to belong to the task's org.
 
