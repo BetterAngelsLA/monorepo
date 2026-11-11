@@ -9,9 +9,15 @@ import { test } from '@playwright/test';
  * deployment it was not meant to be testing.
  */
 export function shelterEntryUrl(hash?: string): string {
-  const url = new URL(
-    test.info().project.use.baseURL ?? 'http://localhost:8083/',
-  );
+  // The config always sets `baseURL`; a fallback here would quietly test a
+  // different server than the run claims to be testing.
+  const base = test.info().project.use.baseURL;
+
+  if (!base) {
+    throw new Error('shelter-e2e: the config must set `use.baseURL`.');
+  }
+
+  const url = new URL(base);
 
   if (hash) url.hash = hash;
 
