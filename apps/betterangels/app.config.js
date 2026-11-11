@@ -6,6 +6,8 @@
 // developer override: it never travels, and dotenv applies it last so it still
 // wins locally.
 import dotenv from 'dotenv';
+import { assertMonitoringEnv } from '../../tools/shared/assert-monitoring-env.mjs';
+
 dotenv.config();
 dotenv.config({ path: '.env.local', override: true });
 
@@ -13,8 +15,9 @@ const IS_PRODUCTION = process.env.APP_VARIANT === 'production';
 
 // Monitoring is configured per target. `EXPO_PUBLIC_APP_ENV` is used by both
 // agents; the web bundle uses the web license key; native builds use the
-// platform mobile key; an EAS update covers all platforms. These signals are
-// set by the build paths, so expo-doctor/start are unaffected.
+// platform mobile key; an EAS update covers all platforms. Signals:
+// `EXPO_WEB_BASE_URL` (export-web), `EAS_BUILD_PLATFORM` (EAS Build), and
+// `EXPO_UPDATE` (the eas-update Nx target). expo-doctor/start are unaffected.
 const EAS_PLATFORM = process.env.EAS_BUILD_PLATFORM;
 const IS_WEB_TARGET =
   Boolean(process.env.EXPO_WEB_BASE_URL) || EAS_PLATFORM === 'web';
@@ -37,16 +40,12 @@ if (IS_MONITORED_BUILD) {
     required.push('EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID');
   }
 
-  const missing = required.filter((name) => !process.env[name]);
-  if (missing.length) {
-    const message = `[monitoring] Missing ${missing.join(', ')}`;
-    if (process.env.CI === 'true' || process.env.CI === '1') {
-      throw new Error(`${message}. Refusing to build.`);
-    }
-    console.warn(
-      `${message}. Continuing locally; monitoring will stay disabled.`,
-    );
-  }
+  assertMonitoringEnv({
+    label: 'monitoring',
+    required,
+    env: process.env,
+    isCI: process.env.CI === 'true' || process.env.CI === '1',
+  });
 }
 
 // A production build must not silently bake the dev API. `.env.local` overrides

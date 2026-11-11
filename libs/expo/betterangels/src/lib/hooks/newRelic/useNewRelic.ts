@@ -47,6 +47,9 @@ export default function useNewRelic() {
         platform: Platform.OS,
         ...(otaUpdateId && { otaUpdateId }),
         ...(Updates.channel && { channel: Updates.channel }),
+        ...(process.env['EXPO_PUBLIC_COMMIT_SHA'] && {
+          commit: process.env['EXPO_PUBLIC_COMMIT_SHA'],
+        }),
       },
     });
   }, [version, runtimeVersion, otaUpdateId, otaUpdateIdShort]);

@@ -42,6 +42,13 @@ for (const [key, value] of Object.entries(
   env.set(key, String(value));
 }
 
+// Commit SHA for the `commit` telemetry attribute. This is intentionally not
+// the app version: the app version stays the semver in app.config.js.
+const commit = process.env.APP_VERSION || process.env.GITHUB_SHA;
+if (commit && !env.has('EXPO_PUBLIC_COMMIT_SHA')) {
+  env.set('EXPO_PUBLIC_COMMIT_SHA', commit);
+}
+
 // Every profile sets this, and a profile that loses it would otherwise export
 // with `undefined` inlined and nothing at runtime to notice.
 if (!env.get('EXPO_PUBLIC_API_URL')) {

@@ -1,11 +1,14 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import './privacy-test-browser';
+import '@monorepo/monitoring/testing';
 import { Obfuscator } from '@newrelic/browser-agent/src/common/util/obfuscate.js';
+import { generateRandomHexString } from '@newrelic/browser-agent/src/common/ids/unique-id.js';
 import { EventAggregator } from '@newrelic/browser-agent/src/common/aggregate/event-aggregator.js';
 import { Interaction } from '@newrelic/browser-agent/src/features/soft_navigations/aggregate/interaction.js';
-import { testLcpPrivacy } from '../../../../tools/shared/browser-lcp-privacy-test';
+import { testPageViewTimingPrivacy } from '@monorepo/monitoring/testing/helper';
 import { browserPrivacyRules } from './privacy';
+
+const SESSION = generateRandomHexString(16);
 
 const agent = {
   init: { obfuscate: browserPrivacyRules('validation', '1.2.14') },
@@ -163,12 +166,15 @@ for (const eventType of ['PageView', 'AjaxRequest', 'PageViewTiming']) {
       ],
       // Static segments survive so API endpoints stay distinguishable.
       ['/graphql', '/graphql'],
-      ['http://localhost:8081/__api/graphql', 'http://localhost:8081/__api/graphql'],
+      [
+        'http://localhost:8081/__api/graphql',
+        'http://localhost:8081/__api/graphql',
+      ],
     ] as Array<[string, string]>) {
       const event = {
         url,
         duration: 1.25,
-        session: '053135a581efa3c3',
+        session: SESSION,
         timingName: 'largestContentfulPaint',
         httpMethod: 'POST',
         environment: 'validation',
@@ -178,7 +184,7 @@ for (const eventType of ['PageView', 'AjaxRequest', 'PageViewTiming']) {
       assert.deepEqual(event, {
         url: expected,
         duration: 1.25,
-        session: '053135a581efa3c3',
+        session: SESSION,
         timingName: 'largestContentfulPaint',
         httpMethod: 'POST',
         environment: 'validation',
@@ -202,18 +208,25 @@ test('KNOWN LIMITATION: a non-id path segment is preserved verbatim', () => {
 test('JavaScriptError keeps the route for request_uri but redacts free text', () => {
   const obfuscator = new Obfuscator(agent, 'JavaScriptError');
   assert.equal(obfuscator.obfuscateString('/client/123'), '/client/[id]');
-  assert.equal(obfuscator.obfuscateString('https://test.invalid/client/123'), 'https://test.invalid/client/[id]');
+  assert.equal(
+    obfuscator.obfuscateString('https://test.invalid/client/123'),
+    'https://test.invalid/client/[id]',
+  );
   assert.equal(obfuscator.obfuscateString(secret), '[redacted]');
   // A URL that is the entire message keeps its route; query is dropped.
   assert.equal(
-    obfuscator.obfuscateString('https://test.invalid/client/123?token=FAKE_SECRET'),
+    obfuscator.obfuscateString(
+      'https://test.invalid/client/123?token=FAKE_SECRET',
+    ),
     'https://test.invalid/client/[id]',
   );
   assert.equal(
-    obfuscator.obfuscateString(`Error: ${secret}\n at f (https://test.invalid/client/123:2:3)`),
+    obfuscator.obfuscateString(
+      `Error: ${secret}\n at f (https://test.invalid/client/123:2:3)`,
+    ),
     '[redacted]',
   );
 });
 
 // Check the patched serializer in source, ESM and CommonJS package formats.
-testLcpPrivacy(browserPrivacyRules('validation', '1.2.14'));
+testPageViewTimingPrivacy(browserPrivacyRules('validation', '1.2.14'));

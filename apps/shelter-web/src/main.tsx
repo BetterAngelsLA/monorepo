@@ -1,4 +1,4 @@
-import './monitoring/newRelic';
+import './monitoring/bootstrap';
 import { HttpLink } from '@apollo/client';
 import { initApolloRuntimeConfig } from '@monorepo/apollo';
 import { createWebFetchClient } from '@monorepo/ba-platform/web';

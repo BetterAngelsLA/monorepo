@@ -21,6 +21,7 @@ agent only starts when `typeof window !== 'undefined'`.
 | --- | --- | --- |
 | `EXPO_PUBLIC_NEW_RELIC_WEB_LICENSE_KEY` | web | Browser **license key**, not a user API key. Public: it is inlined into the bundle. |
 | `EXPO_PUBLIC_APP_ENV` | web, native | Becomes the `environment` attribute every dashboard widget filters on. |
+| `EXPO_PUBLIC_COMMIT_SHA` | web, native | Commit SHA attached as the `commit` attribute; set by `write-eas-env`. |
 | `EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS` | native | |
 | `EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID` | native | |
 

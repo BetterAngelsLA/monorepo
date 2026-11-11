@@ -11,6 +11,7 @@ import {
   baseHrefPlugin,
   getBuildBasePath,
 } from '../../tools/shared/get-base-path.mjs';
+import { assertMonitoringEnv } from '../../tools/shared/assert-monitoring-env.mjs';
 
 const SERVER_PORT = 8083;
 const WORKSPACE_ROOT = path.resolve(import.meta.dirname, '../..');
@@ -33,25 +34,17 @@ export default defineConfig(({ command, mode }) => {
   const basePath = getBuildBasePath();
 
   if (command === 'build') {
-    const required = [
-      'VITE_SHELTER_WEB_NEW_RELIC_LICENSE_KEY',
-      'VITE_SHELTER_APP_ENV',
-      'VITE_SHELTER_APP_VERSION',
-    ];
-    const env = loadEnv(mode, import.meta.dirname, 'VITE_SHELTER_');
-    const missing = required.filter(
-      (key) => !(process.env[key] || env[key])?.trim(),
-    );
-
-    if (missing.length) {
-      const message = `[shelter-web-monitoring] Missing ${missing.join(', ')}`;
-      if (process.env.CI === 'true' || process.env.CI === '1') {
-        throw new Error(`${message}. Refusing to build.`);
-      }
-      console.warn(
-        `${message}. Continuing locally; monitoring will stay disabled.`,
-      );
-    }
+    const env = loadEnv(mode, import.meta.dirname, 'VITE_');
+    assertMonitoringEnv({
+      label: 'shelter-web-monitoring',
+      required: [
+        'VITE_SHELTER_WEB_NEW_RELIC_LICENSE_KEY',
+        'VITE_APP_ENV',
+        'VITE_APP_VERSION',
+      ],
+      env,
+      isCI: process.env.CI === 'true' || process.env.CI === '1',
+    });
   }
 
   return {

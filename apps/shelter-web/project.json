@@ -44,10 +44,10 @@
           "env": "VITE_SHELTER_WEB_NEW_RELIC_LICENSE_KEY"
         },
         {
-          "env": "VITE_SHELTER_APP_ENV"
+          "env": "VITE_APP_ENV"
         },
         {
-          "env": "VITE_SHELTER_APP_VERSION"
+          "env": "VITE_APP_VERSION"
         }
       ],
       "outputs": ["{workspaceRoot}/dist/apps/shelter-web"],
@@ -87,12 +87,13 @@
         "{workspaceRoot}/dist/privacy-tests/shelter-web/privacy.node-test.cjs"
       ],
       "inputs": [
-        "production",
-        "^production",
+        "sharedGlobals",
+        "{projectRoot}/tsconfig.json",
+        "{projectRoot}/src/monitoring/**/*",
+        "{workspaceRoot}/libs/monitoring/**/*",
         {
-          "externalDependencies": ["@newrelic/browser-agent"]
-        },
-        "{workspaceRoot}/tools/shared/browser-lcp-privacy-test.ts"
+          "externalDependencies": ["@newrelic/browser-agent", "esbuild"]
+        }
       ]
     }
   }

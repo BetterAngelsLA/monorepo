@@ -27,7 +27,7 @@
         "^production",
         "{workspaceRoot}/tools/shared/**/*",
         {
-          "fileset": "{projectRoot}/.env",
+          "fileset": "{projectRoot}/.env*",
           "includeIgnored": true
         },
         {
@@ -227,14 +227,14 @@
         "copy-lockfile"
       ],
       "options": {
-        "command": "node tools/scripts/eas-update.mjs --project betterangels --profile preview"
+        "command": "EXPO_UPDATE=true node tools/scripts/eas-update.mjs --project betterangels --profile preview"
       },
       "configurations": {
         "preview": {
-          "command": "node tools/scripts/eas-update.mjs --project betterangels --profile preview"
+          "command": "EXPO_UPDATE=true node tools/scripts/eas-update.mjs --project betterangels --profile preview"
         },
         "production": {
-          "command": "node tools/scripts/eas-update.mjs --project betterangels --profile production"
+          "command": "EXPO_UPDATE=true node tools/scripts/eas-update.mjs --project betterangels --profile production"
         }
       }
     },
@@ -252,14 +252,16 @@
         "{workspaceRoot}/dist/privacy-tests/betterangels/privacy.node-test.cjs"
       ],
       "inputs": [
-        "production",
-        "^production",
+        "sharedGlobals",
+        "{projectRoot}/tsconfig.json",
+        "{projectRoot}/src/monitoring/**/*",
+        "{workspaceRoot}/libs/monitoring/**/*",
         {
           "externalDependencies": [
-            "@newrelic/browser-agent"
+            "@newrelic/browser-agent",
+            "esbuild"
           ]
-        },
-        "{workspaceRoot}/tools/shared/browser-lcp-privacy-test.ts"
+        }
       ]
     }
   }

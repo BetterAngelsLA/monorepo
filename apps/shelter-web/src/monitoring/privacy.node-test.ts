@@ -1,9 +1,10 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import './privacy-test-browser';
+import '@monorepo/monitoring/testing';
 import { Obfuscator } from '@newrelic/browser-agent/src/common/util/obfuscate.js';
+import { generateRandomHexString } from '@newrelic/browser-agent/src/common/ids/unique-id.js';
 import { browserPrivacyRules } from './privacy';
-import { testLcpPrivacy } from '../../../../tools/shared/browser-lcp-privacy-test';
+import { testPageViewTimingPrivacy } from '@monorepo/monitoring/testing/helper';
 
 const agent = { init: { obfuscate: browserPrivacyRules('preview', 'abc123') } };
 for (const type of [
@@ -15,7 +16,7 @@ for (const type of [
 ]) {
   test(`${type}: distinct sessions and metrics survive URL redaction`, () => {
     const obfuscator = new Obfuscator(agent, type);
-    const sessions = ['053135a581efa3c3', '153135a581efa3c3'];
+    const sessions = [generateRandomHexString(16), generateRandomHexString(16)];
     for (const session of sessions) {
       for (const url of [
         'https://user:password@test.invalid/operator/shelter/123?token=SECRET#name',
@@ -55,4 +56,4 @@ test('errors and interactions redact free text without allowing metadata prefixe
 });
 
 // Check the patched serializer in source, ESM and CommonJS package formats.
-testLcpPrivacy(browserPrivacyRules('validation', '1.2.14'));
+testPageViewTimingPrivacy(browserPrivacyRules('validation', '1.2.14'));

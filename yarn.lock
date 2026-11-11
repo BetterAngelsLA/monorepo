@@ -6153,6 +6153,7 @@ __metadata:
     dotenv: "npm:^17.4.2"
     dotenv-cli: "npm:^11.0.0"
     embla-carousel-react: "npm:^8.6.0"
+    esbuild: "npm:0.28.1"
     eslint: "npm:^10.7.0"
     eslint-config-prettier: "npm:^10.1.8"
     eslint-import-resolver-typescript: "npm:^4.4.5"
@@ -6508,12 +6509,12 @@ __metadata:
 
 "@newrelic/browser-agent@patch:@newrelic/browser-agent@npm%3A1.324.1#~/.yarn/patches/@newrelic-browser-agent-npm-1.324.1-908419ffd9.patch":
   version: 1.324.1
-  resolution: "@newrelic/browser-agent@patch:@newrelic/browser-agent@npm%3A1.324.1#~/.yarn/patches/@newrelic-browser-agent-npm-1.324.1-908419ffd9.patch::version=1.324.1&hash=c0f8c3"
+  resolution: "@newrelic/browser-agent@patch:@newrelic/browser-agent@npm%3A1.324.1#~/.yarn/patches/@newrelic-browser-agent-npm-1.324.1-908419ffd9.patch::version=1.324.1&hash=2888d7"
   dependencies:
     "@newrelic/rrweb": "npm:^1.1.2"
     fflate: "npm:0.8.3"
     web-vitals: "npm:6.2.1"
-  checksum: 10/8c62775448167bf31036e3c74c283a1b9cf0cf193592237a2505a189a835a965826f21b2d165020101adc08754a5a3e41b6fc0a5ddd9fb7c2c1373b52ab13047
+  checksum: 10/5be7d95b70a45408bd8fbb6d7bb4fe399a6affdfa36bebd99f16ce0a926ef1539df245feb517e9abdc083cdeec05fded6229f38ee1c68c861f2ec5f597c418fe
   languageName: node
   linkType: hard
 
@@ -17080,7 +17081,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"esbuild@npm:^0.18.0 || ^0.19.0 || ^0.20.0 || ^0.21.0 || ^0.22.0 || ^0.23.0 || ^0.24.0 || ^0.25.0 || ^0.26.0 || ^0.27.0 || ^0.28.0":
+"esbuild@npm:0.28.1, esbuild@npm:^0.18.0 || ^0.19.0 || ^0.20.0 || ^0.21.0 || ^0.22.0 || ^0.23.0 || ^0.24.0 || ^0.25.0 || ^0.26.0 || ^0.27.0 || ^0.28.0":
   version: 0.28.1
   resolution: "esbuild@npm:0.28.1"
   dependencies:
