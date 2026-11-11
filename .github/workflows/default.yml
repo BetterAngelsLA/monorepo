@@ -88,7 +88,6 @@ jobs:
           echo "IMAGE_TAG_PREFIX=$IMAGE_TAG_PREFIX" >> $GITHUB_ENV
           echo "DOCKER_TAG=$DOCKER_TAG" >> $GITHUB_ENV
           echo "MONOREPO_IMAGE=${{ env.ECR_REGISTRY }}/monorepo" >> $GITHUB_ENV
-          echo "BRANCH_CACHE=${{ env.ECR_REGISTRY }}/monorepo:buildcache-${BRANCH_NAME}" >> $GITHUB_ENV
           echo "MAIN_CACHE=${{ env.ECR_REGISTRY }}/monorepo:buildcache-main" >> $GITHUB_ENV
 
       - name: 🐳 Configure AWS credentials
@@ -127,36 +126,18 @@ jobs:
           key: deps-v1-${{ runner.os }}-${{ hashFiles('tools/monorepo-image/Dockerfile', 'package.json', 'yarn.lock', 'uv.lock', 'apps/*/package.json', 'apps/betterangels-backend/pyproject.toml') }}
 
       - name: Ensure CI base image
-        id: ci-base
         run: |
           set -euo pipefail
-          DOCKERFILE_HASH="$(sha256sum tools/monorepo-image/Dockerfile | cut -c1-12)"
-          BRANCH_SLUG="$(printf '%s' "$BRANCH_NAME" | sha256sum | cut -c1-16)"
-          BRANCH_CI_BASE="$MONOREPO_IMAGE:ci-base-${BRANCH_SLUG}-${DOCKERFILE_HASH}"
-          built=false
-
-          if docker pull "$BRANCH_CI_BASE"; then
-            echo "Using ${BRANCH_CI_BASE}"
-            docker tag "$BRANCH_CI_BASE" "$MONOREPO_IMAGE:ci-base"
-          elif [[ -n "${NX_BASE:-}" ]] && git diff --quiet "$NX_BASE" HEAD -- tools/monorepo-image/Dockerfile && docker pull "$MONOREPO_IMAGE:ci-base"; then
-            echo "Using main ci-base"
-          else
-            echo "No matching ci-base image; building locally"
-            docker build --file tools/monorepo-image/Dockerfile --target ci-base -t "$MONOREPO_IMAGE:ci-base" .
-            built=true
-          fi
-
-          echo "built=$built" >> "$GITHUB_OUTPUT"
-          echo "branch_tag=$BRANCH_CI_BASE" >> "$GITHUB_OUTPUT"
-
-      - name: Push branch CI base
-        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false && steps.ci-base.outputs.built == 'true'
-        continue-on-error: true
-        run: |
-          # ECR's monorepo lifecycle policy expires non-main tags after 7 days,
-          # so these per-branch base tags are bounded.
-          docker tag "$MONOREPO_IMAGE:ci-base" "${{ steps.ci-base.outputs.branch_tag }}"
-          docker push "${{ steps.ci-base.outputs.branch_tag }}"
+          # Built from cache, never published: the base image is only used
+          # locally. `--builder default` keeps it in the daemon compose runs from
+          # (the container builder would export it back). A missing or
+          # unauthorised cache is a miss, not a failure, so fork PRs just build
+          # cold. The docker driver cannot *export* cache — hence import-only.
+          docker buildx build --builder default \
+            --file tools/monorepo-image/Dockerfile --target ci-base \
+            --cache-from "type=registry,ref=${MAIN_CACHE}" \
+            --provenance=false \
+            --tag "$MONOREPO_IMAGE:ci-base" --load .
 
       - name: Prepare dependency mounts
         run: |
@@ -404,15 +385,6 @@ jobs:
           schema: main:apps/betterangels-backend/schema.graphql
           fail-on-breaking: true
           approve-label: graphql-inspector:approved-breaking-change
-
-      - name: 🏗️ Build and push CI base image
-        # Nx owns the Dockerfile/target/cache configuration; the container has
-        # the copied Buildx state and ECR config.
-        if: matrix.environment == 'production' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
-        run: |
-          docker compose run better-angels bash <<'EOF'
-          yarn nx run monorepo-image:publish:ci-base --skip-nx-cache
-          EOF
 
       - name: Build production imgproxy image
         if: matrix.environment == 'production'

@@ -70,6 +70,39 @@ def unmirror_membership_grants(user: User, permission_groups: Iterable[Permissio
             Grant.objects.filter(principal_user=user, role=role, scope_org=group.organization).delete()
 
 
+def unmirror_group_members(permission_groups: Iterable[PermissionGroup]) -> int:
+    """Revoke the mirrored ``Grant`` of every current member of these groups.
+
+    Batched for config cleanup: one ``Role`` lookup for the whole batch, then
+    one ``DELETE`` per group, instead of two queries per member.  Used where a
+    whole group is going away (reconcile, and the admin save that removes an org
+    type) — not for a single membership edit, which uses
+    :func:`unmirror_membership_grants`.
+
+    Pass a queryset that has ``select_related("template", "organization")``:
+    the template and organization are read per group here, so without it the
+    batch costs two extra queries per group on top of its ``DELETE``.
+
+    Returns the number of ``Grant`` rows deleted.
+    """
+    groups = list(permission_groups)
+    roles = scoped_roles_for_groups(groups)
+    revoked = 0
+    for group in groups:
+        role = roles.get(group.pk)
+        if role is None:
+            continue
+        member_ids = [member.pk for member in group.user_set.all()]
+        if member_ids:
+            deleted, _ = Grant.objects.filter(
+                principal_user_id__in=member_ids,
+                role=role,
+                scope_org=group.organization,
+            ).delete()
+            revoked += deleted
+    return revoked
+
+
 class OrgRoleManager:
     """Manage org-scoped permission groups for a user.
 

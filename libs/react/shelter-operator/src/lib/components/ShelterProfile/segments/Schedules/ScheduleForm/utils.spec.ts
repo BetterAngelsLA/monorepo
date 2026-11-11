@@ -7,6 +7,7 @@ import {
 import type { ExceptionEntry } from './types';
 import {
   buildScheduleInputs,
+  unrepresentableInputs,
   hydrateExceptions,
   hydrateWeekly,
   toHHMM,
@@ -26,6 +27,7 @@ const schedule = (overrides: Partial<ScheduleType>): ScheduleType =>
 const exception = (overrides: Partial<ExceptionEntry>): ExceptionEntry => ({
   localId: 'e1',
   startDate: '2026-12-24',
+  isDateRange: true,
   endDate: '2026-12-26',
   closedAllDay: false,
   startTime: '10:00',
@@ -62,8 +64,24 @@ describe('hydrateWeekly', () => {
     ]);
 
     expect(weekly[DayOfWeekChoices.Monday].ranges).toStrictEqual([
-      { _id: 'a', startTime: '09:00', endTime: '17:00' },
-      { _id: 'b', startTime: '18:00', endTime: '20:00' },
+      {
+        _id: 'a',
+        serverId: 'a',
+        startTime: '09:00',
+        endTime: '17:00',
+        condition: undefined,
+        startDate: undefined,
+        endDate: undefined,
+      },
+      {
+        _id: 'b',
+        serverId: 'b',
+        startTime: '18:00',
+        endTime: '20:00',
+        condition: undefined,
+        startDate: undefined,
+        endDate: undefined,
+      },
     ]);
   });
 
@@ -77,7 +95,15 @@ describe('hydrateWeekly', () => {
     ]);
 
     expect(weekly[DayOfWeekChoices.Monday].ranges).toStrictEqual([
-      { _id: 's1', startTime: '09:00', endTime: '17:00' },
+      {
+        _id: 's1',
+        serverId: 's1',
+        startTime: '09:00',
+        endTime: '17:00',
+        condition: undefined,
+        startDate: undefined,
+        endDate: undefined,
+      },
     ]);
     expect(weekly[DayOfWeekChoices.Sunday].ranges).toStrictEqual([]);
     expect(weekly[DayOfWeekChoices.Tuesday].ranges).toStrictEqual([]);
@@ -116,7 +142,9 @@ describe('hydrateExceptions', () => {
     ).toStrictEqual([
       {
         localId: 'x',
+        serverId: 'x',
         startDate: '',
+        isDateRange: false,
         endDate: '',
         closedAllDay: true,
         startTime: '',
@@ -138,7 +166,81 @@ describe('hydrateExceptions', () => {
 
     expect(entry.closedAllDay).toBe(true);
     expect(entry.endDate).toBe('2026-12-25');
+    expect(entry.isDateRange).toBe(false);
     expect(entry.condition).toBe(ConditionChoices.Heat);
+  });
+
+  it('hydrates a multi-day exception as a date range', () => {
+    const [entry] = hydrateExceptions([
+      schedule({
+        isException: true,
+        id: 'x',
+        startDate: '2026-12-24',
+        endDate: '2026-12-26',
+      }),
+    ]);
+
+    expect(entry.startDate).toBe('2026-12-24');
+    expect(entry.endDate).toBe('2026-12-26');
+    expect(entry.isDateRange).toBe(true);
+  });
+});
+
+describe('hidden weekly fields', () => {
+  it('carries a condition the editor cannot show through to the payload', () => {
+    const weekly = hydrateWeekly([
+      schedule({
+        id: 'a',
+        day: DayOfWeekChoices.Monday,
+        startTime: '09:00:00',
+        endTime: '17:00:00',
+        condition: ConditionChoices.Heat,
+      }),
+    ]);
+
+    const [input] = buildScheduleInputs(OPERATING, weekly, []);
+
+    // The save writes the whole row, so dropping this here clears it.
+    expect(input.condition).toBe(ConditionChoices.Heat);
+  });
+});
+
+describe('unrepresentableInputs', () => {
+  it('sends a day-less slot back unchanged so the save does not delete it', () => {
+    const everyDay = schedule({
+      id: 'row-ever',
+      day: null,
+      startTime: '06:00:00',
+      endTime: '18:00:00',
+      condition: ConditionChoices.Heat,
+    });
+
+    expect(
+      unrepresentableInputs([everyDay], ScheduleTypeChoices.Operating),
+    ).toStrictEqual([
+      {
+        id: 'row-ever',
+        scheduleType: ScheduleTypeChoices.Operating,
+        startTime: '06:00:00',
+        endTime: '18:00:00',
+        startDate: undefined,
+        endDate: undefined,
+        condition: ConditionChoices.Heat,
+        isException: false,
+      },
+    ]);
+  });
+
+  it('ignores day-specific and exception rows', () => {
+    expect(
+      unrepresentableInputs(
+        [
+          schedule({ id: 'mon', day: DayOfWeekChoices.Monday }),
+          schedule({ id: 'ex', isException: true, startDate: '2026-12-25' }),
+        ],
+        ScheduleTypeChoices.Operating,
+      ),
+    ).toEqual([]);
   });
 });
 
@@ -147,8 +249,8 @@ describe('buildScheduleInputs', () => {
     const weekly = buildDefaultWeeklyState();
 
     weekly[DayOfWeekChoices.Monday].ranges = [
-      { _id: 'a', startTime: '09:00', endTime: '17:00' },
-      { _id: 'b', startTime: '18:00', endTime: '' },
+      { _id: 'a', serverId: 'row-a', startTime: '09:00', endTime: '17:00' },
+      { _id: 'b', serverId: 'row-b', startTime: '18:00', endTime: '' },
     ];
     weekly[DayOfWeekChoices.Sunday].ranges = [
       { _id: 'c', startTime: '22:00', endTime: '23:30' },
@@ -156,17 +258,25 @@ describe('buildScheduleInputs', () => {
 
     expect(buildScheduleInputs(OPERATING, weekly, [])).toStrictEqual([
       {
+        id: 'row-a',
         scheduleType: OPERATING,
         days: [DayOfWeekChoices.Monday],
         startTime: '09:00:00',
         endTime: '17:00:00',
+        startDate: undefined,
+        endDate: undefined,
+        condition: undefined,
         isException: false,
       },
       {
+        id: undefined,
         scheduleType: OPERATING,
         days: [DayOfWeekChoices.Sunday],
         startTime: '22:00:00',
         endTime: '23:30:00',
+        startDate: undefined,
+        endDate: undefined,
+        condition: undefined,
         isException: false,
       },
     ]);
@@ -190,6 +300,7 @@ describe('buildScheduleInputs', () => {
       ]),
     ).toStrictEqual([
       {
+        id: undefined,
         scheduleType: OPERATING,
         startDate: '2026-12-25',
         endDate: '2026-12-25',
@@ -199,6 +310,7 @@ describe('buildScheduleInputs', () => {
         isException: true,
       },
       {
+        id: undefined,
         scheduleType: OPERATING,
         startDate: '2026-12-31',
         endDate: '2027-01-01',

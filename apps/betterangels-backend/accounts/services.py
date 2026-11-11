@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import logging
 import uuid
+from collections.abc import Iterable
 from typing import TYPE_CHECKING, Any
 
 from django.contrib.auth.models import Group
@@ -23,7 +24,7 @@ from .emails import base_url_for
 from .groups import ORG_ADMIN
 from .models import Grant, OrganizationProfile, OrgTypeChoices, PermissionGroup, PermissionGroupTemplate, Role
 from .models import User as UserModel
-from .role_manager import OrgRoleManager
+from .role_manager import OrgRoleManager, unmirror_group_members
 from .seed import _resolve_permissions, sync_group_permissions
 
 if TYPE_CHECKING:
@@ -275,6 +276,40 @@ def create_organization_with_presets(
 # ── Group reconciliation ──────────────────────────────────────────────
 
 
+def derived_template_names() -> set[str]:
+    """Template names reconciliation considers (everything except hand-managed)."""
+    unscoped = {template_config.name for template_config in REGISTRY.unscoped}
+    return {name for name in REGISTRY.template_names() if name not in unscoped}
+
+
+def dual_write_template_names() -> set[str]:
+    """Template names whose Grants mirror a membership (excludes grant-only roles).
+
+    ``legacy_inert`` roles (ORG_ADMIN/ORG_SUPERUSER) are granted directly, not
+    derived from a group, so config cleanup must not treat their Grants as
+    stale mirrors.
+    """
+    return {
+        name
+        for name in derived_template_names()
+        if (template := REGISTRY.template(name)) is not None and not template.legacy_inert
+    }
+
+
+def expected_template_names(org_types: Iterable[Any]) -> set[str]:
+    """Template names the given org types grant, excluding grant-only roles."""
+    expected: set[str] = set()
+    for org_type_value in org_types:
+        org_config = REGISTRY.org_type(org_type_value.value)
+        if org_config is None:
+            continue
+        for template_config in org_config.templates:
+            if template_config.legacy_inert:
+                continue
+            expected.add(template_config.name)
+    return expected
+
+
 @transaction.atomic
 def reconcile_org_groups(org: Organization) -> None:
     """Create missing and delete stale ``PermissionGroup`` records for *org*.
@@ -293,9 +328,9 @@ def reconcile_org_groups(org: Organization) -> None:
     permissions are still applied, so this function always leaves *org*
     consistent with config and is the only pass any caller needs to make.
 
-    Group names are refreshed from the organization's current name, and each
-    removed row's ``auth.Group`` is torn down by
-    :func:`accounts.signals.delete_orphaned_group`, and the surviving groups have
+    Group names are refreshed from the organization's current name, each removed
+    row's ``auth.Group`` is torn down structurally (the MTI cascade on
+    ``PermissionGroup`` delete — migration 0007), and the surviving groups have
     their permissions applied by :func:`accounts.seed.sync_group_permissions` —
     without this a newly created group would grant nothing until the next
     ``migrate``.
@@ -312,15 +347,7 @@ def reconcile_org_groups(org: Organization) -> None:
     org_types = OrganizationProfile.objects.values_list("org_types", flat=True).filter(organization=org).first()
 
     if org_types is not None:
-        expected: set[str] = set()
-        for org_type_value in org_types:
-            org_config = REGISTRY.org_type(org_type_value.value)
-            if org_config is None:
-                continue
-            for template_config in org_config.templates:
-                if template_config.legacy_inert:
-                    continue
-                expected.add(template_config.name)
+        expected = expected_template_names(org_types)
 
         for template_name in expected:
             permission_group_template, _ = PermissionGroupTemplate.objects.get_or_create(
@@ -331,13 +358,43 @@ def reconcile_org_groups(org: Organization) -> None:
                 template=permission_group_template,
             )
 
-        unscoped = {template_config.name for template_config in REGISTRY.unscoped}
-        derived = {name for name in REGISTRY.template_names() if name not in unscoped}
-
-        PermissionGroup.objects.filter(
-            organization=org,
-            template__name__in=derived - expected,
-        ).delete()
+        # Config cleanup revokes the mirrored authority (finding F1): the org's
+        # current types no longer grant this role, so its Grant goes with the
+        # row.  Unlike a teardown delete — which deliberately leaves Grants
+        # standing — reconcile knows these are stale derived rows, so their
+        # members are unmirrored before the delete.
+        #
+        # The locked query joins the MTI parent (``auth_group``), so ``FOR
+        # UPDATE`` covers the row a membership insert's foreign key must
+        # key-share: an insert either commits before the prefetch (and is
+        # unmirrored) or blocks until the group is gone.  Locking the through
+        # rows instead would not help — row locks do not block new inserts.
+        #
+        # ``OF`` keeps the lock to those two tables: the template and
+        # organization joins are read-only here, and templates are shared by
+        # every org, so locking them would serialise reconciles across orgs.
+        # ``select_related`` covers what ``unmirror_group_members`` reads, so a
+        # stale set costs one query per group (the DELETE) rather than three.
+        stale = list(
+            PermissionGroup.objects.filter(
+                organization=org,
+                template__name__in=dual_write_template_names() - expected,
+            )
+            .select_for_update(of=("self", "group_ptr"))
+            .select_related("organization", "template")
+            .prefetch_related("user_set")
+        )
+        if stale:
+            labels = sorted(permission_group.label for permission_group in stale)
+            revoked = unmirror_group_members(stale)
+            logger.warning(
+                "reconcile_org_groups(%s): retiring %d stale role group(s) %s; revoked %d mirrored grant(s)",
+                org.pk,
+                len(stale),
+                labels,
+                revoked,
+            )
+        PermissionGroup.objects.filter(pk__in=[permission_group.pk for permission_group in stale]).delete()
 
     _refresh_group_names(org)
     sync_group_permissions(organization=org)
@@ -349,7 +406,7 @@ def _retire_legacy_inert_rows(org: Organization) -> None:
     The org-admin org-portal roles are grant-only (ADR 0001 teardown): their
     legacy rows are inert and redundant with the mirrored ``Grant`` rows, so
     they are retired idempotently wherever reconcile runs.  Deleting the row
-    tears down its ``auth.Group`` (``delete_orphaned_group``) and drops the
+    tears down its ``auth.Group`` (structural MTI cascade) and drops the
     group memberships — authority and member-role reporting now read the grant
     arm only.
     """

@@ -1,7 +1,8 @@
 from typing import Any, Dict, List, Optional
 
 from django.core.exceptions import ValidationError
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
+from organizations.models import Organization
 
 from accounts.models import PermissionGroup, User
 from clients.models import ClientProfile
@@ -15,17 +16,52 @@ from tasks.models import Task
 # ---------------------------------------------------------------------------
 
 
+#: FKs that a task's payload never re-points: the parents are loaded and
+#: authorized before the service runs, and an update cannot change them.  Django
+#: validates every FK with its own query inside ``full_clean()``, so excluding
+#: these saves one query per field per task without skipping any rule — the
+#: per-item fields (team, assignee) stay validated and ``clean()``, which owns
+#: the assignee-in-org rule, always runs.
+_PARENT_FK_FIELDS = (
+    "note",
+    "hmis_note",
+    "client_profile",
+    "hmis_client_profile",
+    "organization",
+    "created_by",
+)
+
+
+def _validate(task: Task) -> None:
+    """``full_clean`` without the per-FK existence queries, constraints intact.
+
+    Django validates every foreign key with its own query and skips a constraint
+    when *any* field it references is excluded — and the constraints here
+    reference the parent FKs, so a plain ``exclude`` would silently downgrade
+    them to database errors.  Excluding the fields and re-running the constraint
+    check without an exclusion keeps both.
+    """
+    task.full_clean(exclude=_PARENT_FK_FIELDS, validate_constraints=False)
+    task.validate_constraints()
+
+
+@transaction.atomic
 def task_create(
     *,
     user: User,
-    permission_group: PermissionGroup,
+    organization: Organization,
     data: List[Dict[str, Any]],
     note: Optional[Note] = None,
     hmis_note: Optional[HmisNote] = None,
     client_profile: Optional[ClientProfile] = None,
     hmis_client_profile: Optional[HmisClientProfile] = None,
 ) -> List[Task]:
-    """Create one or more Tasks and assign object-level permissions."""
+    """Create one or more Tasks.
+
+    Authority is the caller's to check (``require_can`` at *organization*,
+    RFC 0003); CHANGE/DELETE ride the org role's ``can_obj`` arm instead of
+    guardian rows — none are written here.
+    """
     created: List[Task] = []
 
     for item in data:
@@ -40,15 +76,65 @@ def task_create(
             client_profile=client_profile,
             hmis_client_profile=hmis_client_profile,
             created_by=user,
-            organization=permission_group.organization,
+            organization=organization,
         )
-        task.full_clean()
+        _validate(task)
 
         try:
             task.save()
         except IntegrityError as e:
             # full_clean checks the constraints first, so reaching this means
             # a concurrent write landed between the check and the insert.
+            raise ValidationError(str(e)) from e
+
+        created.append(task)
+
+    return created
+
+
+@transaction.atomic
+def task_create_legacy(
+    *,
+    user: User,
+    permission_group: PermissionGroup,
+    data: List[Dict[str, Any]],
+    note: Optional[Note] = None,
+    hmis_note: Optional[HmisNote] = None,
+    client_profile: Optional[ClientProfile] = None,
+    hmis_client_profile: Optional[HmisClientProfile] = None,
+) -> List[Task]:
+    """Pre-cutover creation path — compat window only.
+
+    A mobile build that predates the payload org (``organizationId``) still
+    creates through its legacy ``CASEWORKER`` ``PermissionGroup``: the org
+    comes from the group and CHANGE/DELETE guardian rows are assigned, exactly
+    as before the cutover.  The strict flip removes this function once the
+    build sending ``organizationId`` is deployed.
+    """
+    created: List[Task] = []
+
+    for item in data:
+        task = Task(
+            summary=item.get("summary", ""),
+            description=item.get("description") or "",
+            status=item.get("status") or Task.Status.TO_DO,
+            team_id=item.get("team_id"),
+            # ``assigneeId`` shipped before the payload org did (#2629/#2642), so a
+            # build in the window sends it with no ``organizationId`` — dropping it
+            # here would silently unassign every task those clients create.
+            assignee_id=item.get("assignee_id"),
+            note=note,
+            hmis_note=hmis_note,
+            client_profile=client_profile,
+            hmis_client_profile=hmis_client_profile,
+            created_by=user,
+            organization=permission_group.organization,
+        )
+        _validate(task)
+
+        try:
+            task.save()
+        except IntegrityError as e:
             raise ValidationError(str(e)) from e
 
         assign_object_permissions(
@@ -71,12 +157,18 @@ def task_update(
     data: Dict[str, Any],
 ) -> Task:
     """Update a Task. Caller is responsible for permission checks."""
-    for field, value in data.items():
-        if field != "id":
-            setattr(task, field, value)
+    fields = [field for field in data if field != "id"]
+    if not fields:
+        return task
 
-    task.full_clean()
-    task.save()
+    for field in fields:
+        setattr(task, field, data[field])
+
+    _validate(task)
+    # Write the payload's columns, not the whole row: a concurrent edit to any
+    # other column must survive.  ``updated_at`` is ``auto_now``, so it only
+    # refreshes when it is named.
+    task.save(update_fields=[*fields, "updated_at"])
     return task
 
 

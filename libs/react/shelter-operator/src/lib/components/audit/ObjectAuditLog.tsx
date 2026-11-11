@@ -1,10 +1,27 @@
 import type { AuditTargetType } from '@monorepo/ba-platform/types';
 import { LoadingView } from '@monorepo/react/components';
 import { mergeCss } from '@monorepo/react/shared';
-import { useObjectAuditLog } from '../../hooks';
+import { useCallback, useState } from 'react';
+import { useObjectAuditLog, type ObjectAuditLogFilters } from '../../hooks';
 import { Button } from '../base-ui/buttons';
 import { Text } from '../base-ui/text/text';
 import { AuditActionRow } from './AuditActionRow';
+import { AuditFilterBar } from './AuditFilterBar';
+import {
+  hasDateBounds,
+  initialAuditFilter,
+  type AuditActorSelection,
+} from './auditFilters';
+
+/**
+ * Filter state tagged with the target it was chosen on, so a different object
+ * starts from the seeded window with no actor instead of inheriting one.
+ */
+type SeededFilters = {
+  targetKey: string;
+  filters: ObjectAuditLogFilters;
+  actor: AuditActorSelection | null;
+};
 
 type ObjectAuditLogProps = {
   targetType: AuditTargetType;
@@ -37,6 +54,46 @@ export function ObjectAuditLog({
   objectId,
   className,
 }: ObjectAuditLogProps) {
+  // One clock read seeds both the query and the bar, so the window they show
+  // and the window they request cannot disagree.
+  const [initial] = useState(initialAuditFilter);
+  const targetKey = `${targetType}:${objectId}`;
+  const [seeded, setSeeded] = useState<SeededFilters>(() => ({
+    targetKey,
+    filters: initial.filters,
+    actor: null,
+  }));
+
+  const isOtherTarget = seeded.targetKey !== targetKey;
+  const current: SeededFilters = isOtherTarget
+    ? { targetKey, filters: initial.filters, actor: null }
+    : seeded;
+
+  if (isOtherTarget) {
+    setSeeded(current);
+  }
+
+  const seedFilter = useCallback(
+    (patch: Partial<Pick<SeededFilters, 'filters' | 'actor'>>) => {
+      setSeeded((previous) => ({ ...previous, ...patch }));
+    },
+    [],
+  );
+
+  const handleFilterChange = useCallback(
+    (next: ObjectAuditLogFilters) => {
+      seedFilter({ filters: next });
+    },
+    [seedFilter],
+  );
+
+  const handleActorSelectionChange = useCallback(
+    (next: AuditActorSelection | null) => {
+      seedFilter({ actor: next });
+    },
+    [seedFilter],
+  );
+
   const {
     actions,
     loading,
@@ -46,7 +103,7 @@ export function ObjectAuditLog({
     hasMore,
     loadMore,
     retry,
-  } = useObjectAuditLog({ targetType, objectId });
+  } = useObjectAuditLog({ targetType, objectId, ...current.filters });
 
   const hasActions = actions.length > 0;
   const hasRefreshError = Boolean(error || retryError);
@@ -107,11 +164,9 @@ export function ObjectAuditLog({
         )}
 
         {/* NOTE: withheld Bed/Room models are pruned in SQL, so they do not
-            create empty actions. The empty-action case is a write netted to
-            nothing: saving Operating Hours with no real schedule change still
-            deletes and re-creates the rows, netting correctly emits no events,
-            and the action comes back with an empty `events` list. The
-            activity-log hardening follow-up hides those contentless cards. */}
+            create empty actions. A write that changed nothing is suppressed
+            server-side, but an action whose every row was suppressed still
+            arrives with an empty `events` list and renders its header alone. */}
         {actions.map((action, index) => (
           <AuditActionRow
             key={`${action.timestamp}-${index}`}
@@ -122,7 +177,9 @@ export function ObjectAuditLog({
         {!hasActions && !hasMore && (
           <div className="py-16 text-center">
             <Text variant="body" textColor="text-neutral-50">
-              No activity yet.
+              {hasDateBounds(current.filters)
+                ? 'No activity in the selected date range.'
+                : 'No activity'}
             </Text>
           </div>
         )}
@@ -147,6 +204,16 @@ export function ObjectAuditLog({
 
   return (
     <div className={mergeCss(['flex flex-col gap-4', className])}>
+      <AuditFilterBar
+        key={targetKey}
+        targetType={targetType}
+        objectId={objectId}
+        initialPreset={initial.preset}
+        initialRange={initial.range}
+        actorSelection={current.actor}
+        onActorSelectionChange={handleActorSelectionChange}
+        onChange={handleFilterChange}
+      />
       {renderContent()}
     </div>
   );

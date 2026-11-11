@@ -1,14 +1,31 @@
 import { MockedProvider } from '@apollo/client/testing/react';
 import { AuditEventKind, AuditTargetType } from '@monorepo/ba-platform/types';
 import { render, screen } from '@testing-library/react';
+import { endOfDay, startOfDay, subDays } from 'date-fns';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { ObjectAuditLogDocument } from '../../hooks/useObjectAuditLog/__generated__/useObjectAuditLog.generated';
 import { ShelterActivityPage } from './ActivityPage';
+
+const PINNED_NOW = new Date(2026, 5, 15, 12, 0, 0);
+
+beforeEach(() => {
+  vi.setSystemTime(PINNED_NOW);
+});
+
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 const variables = {
   targetType: AuditTargetType.Shelter,
   objectId: 'shelter-1',
   limit: 25,
+  // The log opens on its default date window (the clock is pinned above), so
+  // the page's first query includes those bounds.
+  filters: {
+    dateFrom: startOfDay(subDays(PINNED_NOW, 29)).toISOString(),
+    dateTo: endOfDay(PINNED_NOW).toISOString(),
+  },
 };
 
 const page = {

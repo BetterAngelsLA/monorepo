@@ -217,7 +217,7 @@ function OperatingHoursDialog({
   );
 }
 
-export function OperatingHours({
+export function Schedule({
   schedules,
 }: {
   schedules?: ShelterType['schedules'];

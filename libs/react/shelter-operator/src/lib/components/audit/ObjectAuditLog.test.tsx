@@ -8,16 +8,51 @@ import { ApolloProvider, useApolloClient } from '@apollo/client/react';
 import { MockedProvider } from '@apollo/client/testing/react';
 import { AuditEventKind, AuditTargetType } from '@monorepo/ba-platform/types';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { endOfDay, format, startOfDay, subDays } from 'date-fns';
 import { useState } from 'react';
 import { ObjectAuditLog } from './ObjectAuditLog';
 import { useObjectAuditLog } from '../../hooks';
+import { AuditActorsDocument } from '../../hooks/useAuditActors/__generated__/useAuditActors.generated';
 import { ObjectAuditLogDocument } from '../../hooks/useObjectAuditLog/__generated__/useObjectAuditLog.generated';
 
+/** Variables for the hook in isolation: no filters unless a harness passes them. */
 const baseVariables = {
   targetType: AuditTargetType.Bed,
   objectId: '7',
   limit: 25,
 };
+
+/**
+ * The log opens on the default 30-day preset, so its first query carries those
+ * bounds. The clock is pinned (below) so the window is exact, and the expected
+ * bounds are computed here rather than by calling the component's own helper.
+ */
+const PINNED_NOW = new Date(2026, 5, 15, 12, 0, 0);
+
+const logVariables = {
+  ...baseVariables,
+  filters: {
+    dateFrom: startOfDay(subDays(PINNED_NOW, 29)).toISOString(),
+    dateTo: endOfDay(PINNED_NOW).toISOString(),
+  },
+};
+
+beforeEach(() => {
+  vi.setSystemTime(PINNED_NOW);
+});
+
+afterEach(() => {
+  vi.useRealTimers();
+});
+
+// jsdom has no ResizeObserver; the preset dropdown measures its anchor on open.
+class ResizeObserverStub {
+  observe = vi.fn();
+  unobserve = vi.fn();
+  disconnect = vi.fn();
+}
+(globalThis as unknown as { ResizeObserver: unknown }).ResizeObserver =
+  ResizeObserverStub;
 
 function makeEvent(overrides: Record<string, unknown> = {}) {
   return {
@@ -76,6 +111,82 @@ function errorPage(variables: Record<string, unknown>) {
     request: { query: ObjectAuditLogDocument, variables },
     error: new Error('network down'),
   };
+}
+
+function actorPage(search: string) {
+  return {
+    request: {
+      query: AuditActorsDocument,
+      variables: {
+        targetType: AuditTargetType.Bed,
+        objectId: '7',
+        search,
+        limit: 20,
+      },
+    },
+    result: {
+      data: {
+        objectAuditActors: [
+          {
+            __typename: 'AuditActorType',
+            id: 'user-1',
+            label: 'Ada Lovelace',
+            isSystem: false,
+          },
+        ],
+      },
+    },
+  };
+}
+
+function systemActorPage(search: string) {
+  return {
+    request: {
+      query: AuditActorsDocument,
+      variables: {
+        targetType: AuditTargetType.Bed,
+        objectId: '7',
+        search,
+        limit: 20,
+      },
+    },
+    result: {
+      data: {
+        objectAuditActors: [
+          {
+            __typename: 'AuditActorType',
+            id: null,
+            label: 'System',
+            isSystem: true,
+          },
+        ],
+      },
+    },
+  };
+}
+
+async function selectActor(term: string, label: string) {
+  const input = screen.getByPlaceholderText('Search actors');
+  fireEvent.focus(input);
+  fireEvent.change(input, { target: { value: term } });
+  fireEvent.click(await screen.findByRole('option', { name: label }));
+}
+
+/** The log as a caller actually mounts it: the object can change in place. */
+function SwitchingLog() {
+  const [objectId, setObjectId] = useState('7');
+
+  return (
+    <>
+      <button type="button" onClick={() => setObjectId('8')}>
+        switch-log
+      </button>
+      <button type="button" onClick={() => setObjectId('7')}>
+        switch-back
+      </button>
+      <ObjectAuditLog targetType={AuditTargetType.Bed} objectId={objectId} />
+    </>
+  );
 }
 
 function renderLog(mocks: ReadonlyArray<unknown>) {
@@ -272,7 +383,7 @@ describe('ObjectAuditLog', () => {
   });
 
   it('renders grouped actions with their field changes', async () => {
-    renderLog([page(baseVariables, [makeAction()], null, false)]);
+    renderLog([page(logVariables, [makeAction()], null, false)]);
 
     expect(await screen.findByText('Ada Lovelace')).not.toBeNull();
     expect(screen.getByText('Name:')).not.toBeNull();
@@ -280,17 +391,222 @@ describe('ObjectAuditLog', () => {
     expect(screen.queryByRole('button', { name: /load more/i })).toBeNull();
   });
 
-  it('shows the empty state when there are no actions', async () => {
-    renderLog([page(baseVariables, [], null, false)]);
+  it('shows the filtered empty state when the range has no activity', async () => {
+    renderLog([page(logVariables, [], null, false)]);
 
-    await screen.findByText('No activity yet.');
+    await screen.findByText('No activity in the selected date range.');
+  });
+
+  it('falls back to "No activity" once the range is cleared', async () => {
+    renderLog([
+      page(logVariables, [makeAction()], null, false),
+      page(baseVariables, [], null, false),
+    ]);
+
+    await screen.findByText('Ada Lovelace');
+
+    fireEvent.click(screen.getByRole('combobox', { name: 'Date range' }));
+    fireEvent.click(await screen.findByText('All Time'));
+
+    await screen.findByText('No activity');
+  });
+
+  it('requests the chosen actor together with the window', async () => {
+    // The mock is keyed on the window *and* the actor, so these rows can only
+    // render if the request carried both.
+    renderLog([
+      page(logVariables, [makeAction()], null, false),
+      page(
+        {
+          ...baseVariables,
+          filters: { ...logVariables.filters, actorId: 'user-1' },
+        },
+        [makeAction({ actor: 'ONLY THIS ACTOR' })],
+        null,
+        false,
+      ),
+      actorPage('ad'),
+    ]);
+
+    await screen.findByText('Ada Lovelace');
+
+    await selectActor('ad', 'Ada Lovelace');
+
+    expect(await screen.findByText('ONLY THIS ACTOR')).not.toBeNull();
+  });
+
+  it('requests systemOnly for the System entry', async () => {
+    renderLog([
+      page(logVariables, [makeAction()], null, false),
+      page(
+        {
+          ...baseVariables,
+          filters: { ...logVariables.filters, systemOnly: true },
+        },
+        [makeAction({ actor: 'SYSTEM ONLY ROW' })],
+        null,
+        false,
+      ),
+      systemActorPage('sys'),
+    ]);
+
+    await screen.findByText('Ada Lovelace');
+
+    await selectActor('sys', 'System');
+
+    expect(await screen.findByText('SYSTEM ONLY ROW')).not.toBeNull();
+  });
+
+  it('drops the actor filter when the object changes', async () => {
+    const sevenDays = {
+      dateFrom: startOfDay(subDays(PINNED_NOW, 6)).toISOString(),
+      dateTo: endOfDay(PINNED_NOW).toISOString(),
+    };
+    const presetTrigger = () =>
+      screen.getByRole('combobox', { name: 'Date range' });
+
+    render(
+      <MockedProvider
+        mocks={
+          [
+            page(
+              logVariables,
+              [makeAction({ actor: 'SEVEN DEFAULT' })],
+              null,
+              false,
+            ),
+            page(
+              {
+                ...baseVariables,
+                filters: { ...logVariables.filters, actorId: 'user-1' },
+              },
+              [makeAction({ actor: 'SEVEN ACTOR' })],
+              null,
+              false,
+            ),
+            page(
+              {
+                ...baseVariables,
+                filters: { ...sevenDays, actorId: 'user-1' },
+              },
+              [makeAction({ actor: 'SEVEN SEVEN DAYS' })],
+              null,
+              false,
+            ),
+            // If the actor survived the switch this request would be unmocked
+            // and the log would show its error state instead of these rows.
+            page(
+              {
+                ...baseVariables,
+                objectId: '8',
+                filters: logVariables.filters,
+              },
+              [makeAction({ actor: 'EIGHT DEFAULT' })],
+              null,
+              false,
+            ),
+            // Returning to the first object must query the seeded window with
+            // no actor; a revived filter would match the seven-day mock instead.
+            page(
+              { ...baseVariables, filters: logVariables.filters },
+              [makeAction({ actor: 'SEVEN RETURNED DEFAULT' })],
+              null,
+              false,
+            ),
+            actorPage('ad'),
+          ] as never
+        }
+        showWarnings={false}
+      >
+        <SwitchingLog />
+      </MockedProvider>,
+    );
+
+    await screen.findByText('SEVEN DEFAULT');
+
+    await selectActor('ad', 'Ada Lovelace');
+    await screen.findByText('SEVEN ACTOR');
+    expect(screen.getByLabelText('Clear actor filter')).not.toBeNull();
+
+    // Move off the seeded window, so a failure to reset is visible on screen
+    // and not only in the request.
+    fireEvent.click(presetTrigger());
+    fireEvent.click(await screen.findByText('Last 7 Days'));
+    await screen.findByText('SEVEN SEVEN DAYS');
+    expect(presetTrigger().textContent).toContain('Last 7 Days');
+
+    fireEvent.click(screen.getByRole('button', { name: 'switch-log' }));
+
+    expect(await screen.findByText('EIGHT DEFAULT')).not.toBeNull();
+    expect(screen.queryByLabelText('Clear actor filter')).toBeNull();
+    // The bar re-seeds to the window the new object's request carries.
+    expect(presetTrigger().textContent).toContain('Last 30 Days');
+
+    // Coming back must start fresh too: the filters chosen on this object
+    // earlier must not be revived, or the request would use them while the bar
+    // shows the seeded window.
+    fireEvent.click(screen.getByRole('button', { name: 'switch-back' }));
+
+    expect(await screen.findByText('SEVEN RETURNED DEFAULT')).not.toBeNull();
+    expect(screen.queryByText('SEVEN SEVEN DAYS')).toBeNull();
+    expect(screen.queryByLabelText('Clear actor filter')).toBeNull();
+    expect(presetTrigger().textContent).toContain('Last 30 Days');
+  });
+
+  it('shows the same window it queries', async () => {
+    renderLog([page(logVariables, [makeAction()], null, false)]);
+
+    await screen.findByText('Ada Lovelace');
+
+    const { dateFrom, dateTo } = logVariables.filters as {
+      dateFrom: string;
+      dateTo: string;
+    };
+    const value = (label: string) =>
+      (screen.getByLabelText(label) as HTMLInputElement).value;
+
+    // Both come from one clock read, so the fields and the request agree.
+    expect(value('Start date')).toBe(format(new Date(dateFrom), 'MM/dd/yyyy'));
+    expect(value('End date')).toBe(format(new Date(dateTo), 'MM/dd/yyyy'));
+  });
+
+  it('re-queries with the new bounds and replaces the rows on a preset change', async () => {
+    const sevenDays = {
+      dateFrom: startOfDay(subDays(PINNED_NOW, 6)).toISOString(),
+      dateTo: endOfDay(PINNED_NOW).toISOString(),
+    };
+
+    renderLog([
+      page(
+        logVariables,
+        [makeAction({ actor: 'DEFAULT WINDOW' })],
+        null,
+        false,
+      ),
+      page(
+        { ...baseVariables, filters: sevenDays },
+        [makeAction({ actor: 'LAST SEVEN' })],
+        null,
+        false,
+      ),
+    ]);
+
+    await screen.findByText('DEFAULT WINDOW');
+
+    fireEvent.click(screen.getByRole('combobox', { name: 'Date range' }));
+    fireEvent.click(await screen.findByText('Last 7 Days'));
+
+    // The mock only matches the seven-day bounds, so rendering these rows
+    // proves the request carried them; the old rows must be gone.
+    expect(await screen.findByText('LAST SEVEN')).not.toBeNull();
+    expect(screen.queryByText('DEFAULT WINDOW')).toBeNull();
   });
 
   it('appends the next page instead of replacing the first one', async () => {
     renderLog([
-      page(baseVariables, [makeAction()], 'c1', true),
+      page(logVariables, [makeAction()], 'c1', true),
       page(
-        { ...baseVariables, after: 'c1' },
+        { ...logVariables, after: 'c1' },
         [makeAction({ fieldChanges: { name: ['Bed A', 'PAGE2'] } })],
         null,
         false,
@@ -308,8 +624,8 @@ describe('ObjectAuditLog', () => {
 
   it('shows an error with a retry that reloads the log', async () => {
     renderLog([
-      errorPage(baseVariables),
-      page(baseVariables, [makeAction()], null, false),
+      errorPage(logVariables),
+      page(logVariables, [makeAction()], null, false),
     ]);
 
     expect(await screen.findByText('Unable to load activity.')).not.toBeNull();

@@ -1,4 +1,5 @@
 export * from './useBaPrivatePermissions';
+export * from './useAuditActors/useAuditActors';
 export * from './useBed';
 export * from './useBeds';
 export * from './useCloneBed';

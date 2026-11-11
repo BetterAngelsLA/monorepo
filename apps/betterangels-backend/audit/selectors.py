@@ -24,7 +24,7 @@ import base64
 import json
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import date, datetime
 from functools import lru_cache
 from typing import Any, Collection, Mapping, Sequence, cast
 from uuid import UUID
@@ -200,10 +200,10 @@ class AuditEventData:
     # (§32, e.g. "Created Bed A (7)"). When set, the UI shows this and no field
     # changes; ``field_changes`` is empty.
     summary: str | None = None
-    # Unchanged identity fields that keep a synthesized event identifiable -- a
-    # netted schedule slot's day and schedule type. It is *context*, never a
-    # change: ``field_changes`` holds only real before/after pairs, so a client
-    # can trust every entry there.
+    # Unchanged identity fields that keep an event identifiable -- a schedule
+    # slot's day and schedule type. It is *context*, never a change:
+    # ``field_changes`` holds only real before/after pairs, so a client can trust
+    # every entry there.
     context: dict[str, Any] | None = None
 
 
@@ -531,17 +531,92 @@ def _kind(label: str) -> str:
     return "UPDATE"
 
 
-def _summary_line(row: Any, kind: str) -> str:
+def _humanize_label(label: str) -> str:
+    """``status notes`` -> ``Status notes``; ``start_date`` -> ``Start Date``.
+
+    Mirrors the operator UI's field labels (§13) so the collapsed summary and the
+    expanded detail name a field the same way.
+    """
+    return " ".join(part[:1].upper() + part[1:] for part in label.split("_") if part)
+
+
+def _summary_fields(row: Any, hidden_fields: Collection[str] = ()) -> list[str]:
+    """Display names of the fields an ``UPDATE`` changed, in row order (§32).
+
+    What moved, not what it moved to: the values stay in the object's own log.
+    Mechanical columns are dropped for the same reason ``_scalar_changes`` drops
+    them — ``updated_at`` moves on every write and says nothing about the edit.
+    A field withheld for the caller (§18) is dropped too: naming it would leak a
+    change the caller cannot see, exactly as it would in ``field_changes``.
+    """
+    labels = _display_keys(row.pgh_obj_model)
+    pk_attname = _pk_attname(row.pgh_obj_model)
+    excluded = _MECHANICAL_FIELDS | _generated_fields(row.pgh_obj_model) | set(hidden_fields)
+
+    fields: list[str] = []
+    for attname in row.pgh_diff or {}:
+        if attname in excluded or attname == pk_attname or attname.startswith("pgh_"):
+            continue
+        label = _humanize_label(labels.get(attname, attname))
+        if label not in fields:
+            fields.append(label)
+
+    return fields
+
+
+def _summary_fields_by_line(
+    rows: list[Any],
+    *,
+    target_model_label: str | None,
+    hidden_summary_models: Collection[str],
+    hidden_fields: Mapping[str, Collection[str]] | None = None,
+) -> dict[tuple[str, Any, str], list[str]]:
+    """Per collapsed summary line, the union of the fields its rows changed (§32).
+
+    One action can write the same object twice; the lines collapse to one, so its
+    field list has to cover both writes instead of only the row that happened to
+    produce the line.
+    """
+    fields_by_key: dict[tuple[str, Any, str], list[str]] = defaultdict(list)
+
+    for row in rows:
+        if row.pgh_obj_model not in _SUMMARY_ONLY_MODELS or row.pgh_obj_model == target_model_label:
+            continue
+        if row.pgh_obj_model in hidden_summary_models or _kind(row.pgh_label) != "UPDATE":
+            continue
+
+        key = (row.pgh_obj_model, row.pgh_obj_id, "UPDATE")
+        for label in _summary_fields(row, (hidden_fields or {}).get(row.pgh_obj_model, ())):
+            if label not in fields_by_key[key]:
+                fields_by_key[key].append(label)
+
+    return fields_by_key
+
+
+def _summary_line(row: Any, kind: str, fields: Collection[str] = ()) -> str:
     """One-line acknowledgment for a summarized object (§32).
 
     ``pgh_data`` carries the row's state for INSERT/DELETE and the new state for
     UPDATE, so it is the source for the name in every case. ``Bed.name`` is
     nullable, so fall back to a model-and-id label instead of rendering "None".
+
+    The object's type names the subject — ``Updated Bed: North bunk (7)`` — because
+    a shelter log mixes beds and rooms and the name alone does not say which. The
+    nameless fallback keeps the type out of the name so the line reads once:
+    ``Created Bed: #7 (7)`` rather than ``Created Bed: Bed #7 (7)``.
+
+    An update also names the fields it changed (``Updated Bed: North bunk (7) Name,
+    Status notes``). A create or a delete lists nothing: every field of the row is
+    new or gone, so the list would restate the operation.
     """
-    name = (row.pgh_data or {}).get("name")
-    if not name:
-        name = f"{_model_verbose_name(row.pgh_obj_model)} #{row.pgh_obj_id}"
-    return f"{_SUMMARY_VERBS[kind]} {name} ({row.pgh_obj_id})"
+    object_type = _model_verbose_name(row.pgh_obj_model)
+    name = (row.pgh_data or {}).get("name") or f"#{row.pgh_obj_id}"
+    line = f"{_SUMMARY_VERBS[kind]} {object_type}: {name} ({row.pgh_obj_id})"
+
+    if kind != "UPDATE" or not fields:
+        return line
+
+    return f"{line} {', '.join(fields)}"
 
 
 def _actor(row: Any) -> str:
@@ -612,6 +687,42 @@ def _scalar_changes(
     return {f: [render(f, old), render(f, new)] for f, (old, new) in diff.items() if f not in hidden}
 
 
+def _schedule_context(row: Any, resolver: _LabelResolver, hidden_fields: Collection[str] = ()) -> dict[str, Any] | None:
+    """Return the unchanged identity a schedule event needs to be readable (§13).
+
+    ``pgh_diff`` only carries the fields that changed, so the day and the schedule
+    type — which cannot change without becoming a different slot — have to come
+    from the row. They let the log read ``Changed Operating Hours: Wednesday
+    06:00 - 18:00 -> 05:00 - 18:00`` instead of a bare ``start time`` diff.
+
+    A null ``day`` means "every day" (see ``Schedule.day``) and is rendered as
+    such by the UI. An *exception* row also has a null ``day`` — it is scoped by
+    its dates instead — so it sends ``is exception`` and its dates as identity and
+    never a day: "every day" would be a false statement. Dates are rendered as
+    ISO strings because ``context`` is a JSON scalar. Withheld fields never reach
+    the context (§18).
+    """
+    model_label = row.pgh_obj_model
+    fk_fields = _fk_fields(model_label)
+    fields = _field_meta(model_label)
+    data = row.pgh_data or {}
+
+    identity_fields = (
+        ("schedule_type", "is_exception", "start_date", "end_date")
+        if data.get("is_exception")
+        else ("day", "schedule_type")
+    )
+
+    context: dict[str, Any] = {}
+    for field_name in identity_fields:
+        if field_name in hidden_fields:
+            continue
+        value = _render_value(field_name, data.get(field_name), fk_fields, fields, resolver)
+        context[field_name] = value.isoformat() if isinstance(value, (date, datetime)) else value
+
+    return _render_keys(context, model_label) or None
+
+
 def _render_keys(changes: dict[str, Any], model_label: str) -> dict[str, Any]:
     """Re-key a raw-``attname`` change map to display names (§13)."""
     keys = _display_keys(model_label)
@@ -677,208 +788,6 @@ def _merge_scalar(
             target[key][1] = new
         else:
             target[key] = [old, new]
-
-
-# Schedule is the one full-replacement child model: ``shelter_update`` deletes
-# every row and bulk-creates the new set, so one logical edit emits a ``.remove``
-# and an ``.add`` of the same slot. These rows are netted back into a per-slot
-# change; select them by model, not by a duplicated label prefix, so a label
-# rename cannot silently disable netting. A future full-replacement child needs
-# the same treatment explicitly.
-
-
-def _schedule_events(
-    rows: list[Any],
-    *,
-    target_type: str,
-    target_id: str,
-    resolver: _LabelResolver,
-    max_events: int | None = None,
-    include_snapshot: bool = False,
-    hidden_fields: Mapping[str, Collection[str]] | None = None,
-) -> tuple[list[AuditEventData], dict[tuple[str, Any, str], list[Any]], bool]:
-    """Net a full-replacement schedule save into per-slot changes (§13).
-
-    ``shelter_update`` replaces the schedule set wholesale, so a single field edit
-    emits a ``.remove`` of the old slot and an ``.add`` of the new one. Match the
-    pair by identity — every field except the editable time window — and emit one
-    UPDATE event per slot whose times actually changed. Slots that were genuinely
-    added or removed keep their INSERT/DELETE events.
-
-    Netting is scoped to the *time window*: an edit that changes an identity field
-    (dates, condition, demographic, exception flag, schedule type, day) is still
-    rendered as a DELETE plus an INSERT, because pairing across identities could
-    merge two unrelated slots. A paired UPDATE is emitted only for the
-    unambiguous case -- exactly one residual remove and one residual add for the
-    identity -- because a replacement re-creates every row and more than one
-    residual has no stable provenance to pair on; those rows render as genuine
-    DELETE/INSERT events. *hidden_fields* filters the synthesized diff, its
-    context and the snapshot alike, so a withheld value cannot reach any output
-    shape (§18).
-
-    *max_events* is the remaining per-action event budget (the same
-    ``MAX_EVENTS_PER_ACTION`` counter the caller uses): netting shares it rather
-    than emitting past the cap. *include_snapshot*/*hidden_fields* mirror
-    ``object_audit_log``: a netted UPDATE snapshots the post-change state (the
-    old row is gone). A netted event's unchanged slot identity (day, schedule
-    type) is returned in the event's ``context``, never in ``field_changes``.
-    Returns ``(events, per_slot_changes, truncated)``.
-    """
-
-    def identity(data: dict[str, Any]) -> tuple[Any, ...]:
-        return (
-            data.get("schedule_type"),
-            data.get("day"),
-            str(data.get("start_date")),
-            str(data.get("end_date")),
-            data.get("is_exception"),
-            data.get("condition"),
-            str(data.get("demographic_id")),
-        )
-
-    adds_by_identity: dict[tuple[Any, ...], list[Any]] = defaultdict(list)
-    removes_by_identity: dict[tuple[Any, ...], list[Any]] = defaultdict(list)
-    for row in rows:
-        bucket = adds_by_identity if row.pgh_label.endswith(".add") else removes_by_identity
-        bucket[identity(row.pgh_data or {})].append(row)
-
-    events: list[AuditEventData] = []
-    action_changes: dict[tuple[str, Any, str], list[Any]] = {}
-
-    def remember(row: Any, changes: dict[str, list[Any]]) -> None:
-        """Record a netted row's display-name changes under the action's key."""
-        owner = str(row.pgh_obj_model or row.pgh_model)
-        for field_name, pair in changes.items():
-            action_changes[(owner, row.pgh_obj_id, field_name)] = pair
-
-    def emit(
-        row: Any,
-        changes: dict[str, list[Any]],
-        *,
-        kind: str | None = None,
-        action: str | None = None,
-        context: dict[str, Any] | None = None,
-    ) -> bool:
-        """Append one netted event, respecting the caller's remaining budget.
-
-        *context* is the event's unchanged identity (a netted slot's day/type),
-        kept out of ``changes`` so ``field_changes`` never reports a no-op.
-        Returns False when the budget is exhausted, so callers stop netting and
-        report ``truncated`` instead of emitting past the per-action cap.
-        """
-        if max_events is not None and len(events) >= max_events:
-            return False
-        hidden = (hidden_fields or {}).get(row.pgh_obj_model, ())
-        events.append(
-            AuditEventData(
-                timestamp=row.pgh_created_at,
-                actor=_actor(row),
-                kind=kind or _kind(row.pgh_label),
-                action=action or row.pgh_label,
-                target_type=target_type,
-                target_id=target_id,
-                field_changes={f: list(pair) for f, pair in changes.items()},
-                snapshot=_snapshot(row, resolver, hidden) if include_snapshot else None,
-                context=context,
-            )
-        )
-        remember(row, changes)
-        return True
-
-    for ident, adds in adds_by_identity.items():
-        removes = removes_by_identity.get(ident, [])
-
-        # First pair slots whose times are identical: the replacement re-created
-        # them unchanged, so they are not a change at all. The removes are bucketed
-        # by their time window, so this match is a dict lookup; rows in a bucket are
-        # interchangeable (they carry identical times).
-        unchanged: dict[tuple[Any, Any], list[Any]] = defaultdict(list)
-        for rem in removes:
-            rd = rem.pgh_data or {}
-            unchanged[(rd.get("start_time"), rd.get("end_time"))].append(rem)
-
-        changed_adds: list[Any] = []
-        for add in adds:
-            data = add.pgh_data or {}
-            matching = unchanged.get((data.get("start_time"), data.get("end_time")))
-            if matching:
-                matching.pop()
-            else:
-                changed_adds.append(add)
-
-        # Whatever is left are time edits (or genuine add/remove). A full
-        # replacement re-creates every row, so more than one residual add/remove
-        # for an identity has no stable provenance: pairing them positionally
-        # would invent a before/after (two shifted windows can zip into the wrong
-        # pairs). Net only the unambiguous 1:1 case and render the rest as real
-        # DELETE + INSERT events.
-        removes = [rem for bucket in unchanged.values() for rem in bucket]
-        paired = 1 if len(removes) == 1 and len(changed_adds) == 1 else 0
-
-        for add, rem in zip(changed_adds[:paired], removes[:paired]):
-            data = add.pgh_data or {}
-            old = rem.pgh_data or {}
-            model_label = add.pgh_obj_model
-            fk_fields = _fk_fields(model_label)
-            fields = _field_meta(model_label)
-
-            def render(
-                field: str, value: Any, _fk: dict[str, str] = fk_fields, _fields: dict[str, Any] = fields
-            ) -> Any:
-                return _render_value(field, value, _fk, _fields, resolver)
-
-            # A withheld field must not reach any output shape, exactly as in
-            # ``_scalar_changes``/``_snapshot`` (§18); the same set filters the
-            # synthesized diff and its context.
-            hidden = (hidden_fields or {}).get(model_label, ())
-            diffs = {
-                field: [render(field, old.get(field)), render(field, data.get(field))]
-                for field in ("start_time", "end_time")
-                if field not in hidden and old.get(field) != data.get(field)
-            }
-            if not diffs:
-                continue
-            # ``field_changes`` carries only the real time diffs (§13). The slot's
-            # unchanged identity travels separately in ``context`` so the UI can
-            # label the event without the API reporting a change that never
-            # happened. A null ``day`` means "every day" (Schedule.day help text)
-            # and stays null, so the UI owns that copy.
-            context = {
-                field: render(field, data.get(field)) for field in ("day", "schedule_type") if field not in hidden
-            }
-            # Render raw attnames to display names at the edge, like every other
-            # path (§13): a netted update and an add/remove for the same model must
-            # key ``field_changes`` identically.
-            if not emit(
-                add,
-                _render_keys(diffs, model_label),
-                kind="UPDATE",
-                action="shelter.schedule.update",
-                context=_render_keys(context, model_label) or None,
-            ):
-                return events, action_changes, True
-
-        for add in changed_adds[paired:]:  # genuinely new slots
-            hidden = (hidden_fields or {}).get(add.pgh_obj_model, ())
-            if not emit(add, _render_keys(_scalar_changes(add, resolver, hidden), add.pgh_obj_model)):
-                return events, action_changes, True
-
-        for rem in removes[paired:]:  # genuinely deleted slots
-            hidden = (hidden_fields or {}).get(rem.pgh_obj_model, ())
-            if not emit(rem, _render_keys(_scalar_changes(rem, resolver, hidden), rem.pgh_obj_model)):
-                return events, action_changes, True
-
-    # Identities with removes but no adds: every slot of that shape was deleted.
-    for ident, removes in removes_by_identity.items():
-        if ident in adds_by_identity:
-            continue
-        for rem in removes:
-            hidden = (hidden_fields or {}).get(rem.pgh_obj_model, ())
-            if not emit(rem, _render_keys(_scalar_changes(rem, resolver, hidden), rem.pgh_obj_model)):
-                return events, action_changes, True
-
-    events.sort(key=lambda event: event.timestamp)
-    return events, action_changes, False
 
 
 def _finalize(value: Any, resolver: _LabelResolver) -> Any:
@@ -1132,6 +1041,9 @@ def object_audit_log(
     # served from the cursor by the next request.
     remaining = MAX_EVENTS_PER_PAGE
     actions: list[AuditActionData] = []
+    # The cursor follows the rows that were read, not the actions that survived:
+    # a key whose action renders nothing must not stall the next page.
+    last_read: AuditActionData | None = None
     for key in page_keys:
         action_rows = grouped.get(key)
         if not action_rows:
@@ -1149,6 +1061,11 @@ def object_audit_log(
             hidden_fields=hidden_fields,
             hidden_summary_models=hidden_summary_models,
         )
+        last_read = action
+        if not action.events:
+            # Nothing survived rendering (a no-op save, or only withheld rows):
+            # the card would be empty, so the action is not returned at all.
+            continue
         actions.append(action)
         remaining -= len(action.events)
 
@@ -1168,7 +1085,7 @@ def object_audit_log(
     actions.sort(key=lambda a: (a.timestamp, a.order), reverse=True)
     return AuditActionPageData(
         results=actions,
-        end_cursor=_encode_cursor(actions[-1]) if actions else None,
+        end_cursor=_encode_cursor(last_read) if last_read else None,
         has_next_page=has_next_page,
     )
 
@@ -1202,10 +1119,10 @@ def object_audit_actors(
     An actor is shown under its most frequent frozen name/email; equally frequent
     names break by recency, then alphabetically, so the label never depends on
     the query plan. The list is ordered by event count -- **raw written rows**,
-    not rendered events: a full-replacement schedule save writes two rows per
-    slot (§13), which netting collapses for display, so a schedule-heavy actor
-    can rank above the events the log shows. The count is a picker convenience;
-    the actor set and labels are exact.
+    not rendered events: a bed save collapses into one summary line (§32) however
+    many rows it wrote, so an actor who mostly edits beds ranks by the writes,
+    not by the lines the log shows. The count is a picker convenience; the actor
+    set and labels are exact.
 
     *hidden_summary_models* mirrors ``object_audit_log``: actors whose only
     events are withheld Bed/Room summaries must not appear either. A frozen
@@ -1323,7 +1240,14 @@ def _build_action(
     events: list[AuditEventData] = []
     summarized: set[tuple[str, Any, str]] = set()
     truncated = False
-    schedule_rows: list[Any] = []
+    # A collapsed line covers every write of its object in this action, so its
+    # field list is resolved across all of them before the loop emits anything.
+    summary_fields = _summary_fields_by_line(
+        rows,
+        target_model_label=target_model_label,
+        hidden_summary_models=hidden_summary_models,
+        hidden_fields=hidden_by_model,
+    )
 
     for row in rows:
         # Stop before doing any per-row work (including the action-level rollup)
@@ -1346,6 +1270,13 @@ def _build_action(
             summary_key = (row.pgh_obj_model, row.pgh_obj_id, kind)
             if summary_key in summarized:
                 continue
+            line_fields = summary_fields.get(summary_key, ())
+            # A save that changed only unrendered columns acknowledges nothing, so
+            # it has no line: printing "Updated Bed: A (7)" with no fields would be
+            # a no-op card. A later row of the same object can still carry a real
+            # change, so the key is only claimed once a line is emitted.
+            if kind == "UPDATE" and not line_fields:
+                continue
             summarized.add(summary_key)
             events.append(
                 AuditEventData(
@@ -1356,15 +1287,13 @@ def _build_action(
                     target_type=target_type,
                     target_id=target_id,
                     field_changes={},
-                    summary=_summary_line(row, kind),
+                    summary=_summary_line(
+                        row,
+                        kind,
+                        summary_fields.get(summary_key, ()),
+                    ),
                 )
             )
-            continue
-
-        if row.pgh_obj_model == Schedule._meta.label and (
-            row.pgh_label.endswith(".add") or row.pgh_label.endswith(".remove")
-        ):
-            schedule_rows.append(row)
             continue
 
         meta = _m2m_meta(row.pgh_model)
@@ -1398,7 +1327,6 @@ def _build_action(
         # the raw field name for them (§13).
         hidden = hidden_by_model.get(owner, ())
         changes = _render_keys(_scalar_changes(row, resolver, hidden), owner)
-        _merge_scalar(scalar_changes, owner, row.pgh_obj_id, changes)
 
         # An UPDATE whose predecessor row was purged has no diff base:
         # pghistory's read-time ``pgh_diff`` is NULL, which is not the same as
@@ -1406,6 +1334,31 @@ def _build_action(
         # INSERT/DELETE render from ``pgh_data`` and the through-table path has
         # no ``pgh_obj`` to diff against at all.
         no_base = _kind(row.pgh_label) == "UPDATE" and row.pgh_diff is None
+        snapshot = _snapshot(row, resolver, hidden) if include_snapshot else None
+
+        # Saving without editing still writes a row: ``updated_at`` moves, the
+        # trigger fires, and every rendered change is empty. Emitting that event
+        # puts an empty "Changed" card in the log, so it is not an event at all.
+        # ``no_base`` stays (the diff is missing, not empty) and an INSERT/DELETE
+        # is a real creation or deletion even when no column is renderable.
+        #
+        # "Empty" is measured on the *unfiltered* diff: a write that only touched
+        # fields withheld from this caller (§18) is still a real change worth
+        # recording — its rendered output is filtered, but dropping the whole
+        # event would hide that the object was modified at all. A snapshot does
+        # not make a no-op into an event either, which is why it is not consulted.
+        if not changes and not no_base and _kind(row.pgh_label) == "UPDATE" and not _scalar_changes(row, resolver):
+            continue
+
+        # A schedule row's identity is the part of it the write did not change. An
+        # id-carrying entry may move a slot to another day, so ``day`` can be both
+        # a change and (stale) context; the change wins.
+        schedule_context = None
+        if row.pgh_obj_model == Schedule._meta.label and _kind(row.pgh_label) == "UPDATE":
+            context = _schedule_context(row, resolver, hidden) or {}
+            schedule_context = {field: value for field, value in context.items() if field not in changes} or None
+
+        _merge_scalar(scalar_changes, owner, row.pgh_obj_id, changes)
         events.append(
             AuditEventData(
                 timestamp=row.pgh_created_at,
@@ -1415,26 +1368,12 @@ def _build_action(
                 target_type=target_type,
                 target_id=target_id,
                 field_changes=None if no_base else {f: list(pair) for f, pair in changes.items()},
-                snapshot=_snapshot(row, resolver, hidden) if include_snapshot else None,
+                snapshot=snapshot,
+                context=schedule_context,
             )
         )
 
-    # Schedules arrive as a full-replacement remove/add set; net them per slot.
-    # They share the action's remaining event budget, so netting cannot emit past
-    # ``MAX_EVENTS_PER_ACTION`` (the cap the loop above enforces for other rows).
-    schedule_events, schedule_changes, schedule_truncated = _schedule_events(
-        schedule_rows,
-        target_type=target_type,
-        target_id=target_id,
-        resolver=resolver,
-        max_events=max(0, MAX_EVENTS_PER_ACTION - len(events)),
-        include_snapshot=include_snapshot,
-        hidden_fields=hidden_by_model,
-    )
-    truncated = truncated or schedule_truncated
-    events.extend(schedule_events)
     events.sort(key=lambda event: event.timestamp)
-    scalar_changes.update(schedule_changes)
 
     action_changes: dict[str, Any] = {}
     for (owner, obj_id, name), scalar_pair in scalar_changes.items():

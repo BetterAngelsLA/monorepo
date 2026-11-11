@@ -6,7 +6,8 @@
  *   - multi-value:    { "field": [[removed...], [added...]] }
  *
  * Keys are display names (`start time`, not `start_time`), and every entry is a
- * real change.
+ * real change: unchanged identity for synthesized events arrives separately as
+ * `AuditEvent.context`, never in `fieldChanges`.
  */
 
 import { sanitizeHtml } from '@monorepo/react/shared';
@@ -236,10 +237,12 @@ function isArrayPair(value: unknown): value is [unknown[], unknown[]] {
 }
 
 /**
- * NOTE: schedule-specific display curation (for example dropping the falsey
- * `is exception` default that a schedule create/delete carries) is part of the
- * activity-log readability/hardening follow-up; this branch renders every pair
- * the backend reports.
+ * Parse the untyped `field_changes` JSON into renderable changes.
+ *
+ * Keys arrive as display names (`start time`), qualified with the owner and id
+ * when the row belongs to another object (`Schedule 209 start time`). Schedule
+ * rows never reach here: they render as one line per slot (`formatScheduleEvent`),
+ * which also removes the column-per-field noise their one-sided pairs produce.
  */
 export function parseFieldChanges(value: unknown): AuditChange[] {
   const parsed: AuditChange[] = [];

@@ -12,7 +12,25 @@ export type AuditEvent = AuditAction['events'][number];
 
 const DEFAULT_PAGE_SIZE = 25;
 
-type UseObjectAuditLogArgs = {
+export type ObjectAuditLogFilters = {
+  /**
+   * Inclusive lower bound (ISO datetime). ``null`` and ``undefined`` both mean
+   * "unbounded"; the hook normalizes them so the two cannot produce different
+   * query identities.
+   */
+  dateFrom?: string | null;
+  /** Inclusive upper bound (ISO datetime); ``null`` means "unbounded". */
+  dateTo?: string | null;
+  /** Restrict to a single acting user. */
+  actorId?: string | null;
+  /**
+   * Restrict to events the log renders as system: no frozen name/email, or an
+   * import/clone reason label (§11). Such events can still carry an actor id.
+   */
+  systemOnly?: boolean | null;
+};
+
+type UseObjectAuditLogArgs = ObjectAuditLogFilters & {
   targetType: ObjectAuditLogQueryVariables['targetType'];
   objectId: string;
   pageSize?: number;
@@ -36,15 +54,41 @@ export function useObjectAuditLog({
   targetType,
   objectId,
   pageSize = DEFAULT_PAGE_SIZE,
+  // Defaulted rather than left optional: `undefined` and `null` mean the same
+  // thing here, and letting both reach the memo's dependency list would rebuild
+  // an identical `variables` object and reset the cursor chain for no reason.
+  dateFrom = null,
+  dateTo = null,
+  actorId = null,
+  systemOnly = null,
 }: UseObjectAuditLogArgs) {
-  const variables = useMemo<ObjectAuditLogQueryVariables>(
-    () => ({
+  const variables = useMemo<ObjectAuditLogQueryVariables>(() => {
+    const filters: NonNullable<ObjectAuditLogQueryVariables['filters']> = {};
+
+    if (dateFrom) {
+      filters.dateFrom = dateFrom;
+    }
+    if (dateTo) {
+      filters.dateTo = dateTo;
+    }
+    // These compose as AND, matching AuditEventFilter: with both set the server
+    // keeps only that actor's system-rendered events. Never drop one silently.
+    if (systemOnly) {
+      filters.systemOnly = true;
+    }
+    if (actorId) {
+      filters.actorId = actorId;
+    }
+
+    return {
       targetType,
       objectId,
       limit: pageSize,
-    }),
-    [targetType, objectId, pageSize],
-  );
+      // Omit the input entirely when nothing is set: the server defaults to
+      // "no filters", and the variable set stays identical to the initial one.
+      ...(Object.keys(filters).length > 0 ? { filters } : {}),
+    };
+  }, [targetType, objectId, dateFrom, dateTo, actorId, systemOnly, pageSize]);
 
   const { data, loading, error, fetchMore, refetch } = useQuery<
     ObjectAuditLogQuery,

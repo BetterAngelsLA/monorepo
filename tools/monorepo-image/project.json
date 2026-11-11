@@ -36,17 +36,10 @@
         "builder": "${BUILDX_BUILDER}",
         "push": true,
         "provenance": "false",
-        "cache-from": [
-          "type=registry,ref=${BRANCH_CACHE}",
-          "type=registry,ref=${MAIN_CACHE}"
-        ],
-        "cache-to": ["type=registry,ref=${BRANCH_CACHE},mode=max"]
+        "cache-from": ["type=registry,ref=${MAIN_CACHE}"],
+        "cache-to": ["type=registry,ref=${MAIN_CACHE},mode=max"]
       },
       "configurations": {
-        "ci-base": {
-          "target": "ci-base",
-          "tags": ["${MONOREPO_IMAGE}:ci-base"]
-        },
         "production": {
           "target": "production",
           "tags": ["${MONOREPO_IMAGE}:${DOCKER_TAG}"]

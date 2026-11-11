@@ -24,9 +24,21 @@ if (
   );
 }
 
-const HOSTNAME = IS_PRODUCTION
-  ? 'outreach.betterangels.la'
-  : 'outreach.dev.betterangels.la';
+// Link host for universal links / App Links; set per EAS profile.
+const HOSTNAME = process.env.EXPO_PUBLIC_OUTREACH_HOST?.trim();
+
+// A hosted build without a host is a misconfiguration, not a local run.
+if (process.env.EAS_BUILD && !HOSTNAME) {
+  throw new Error(
+    'EXPO_PUBLIC_OUTREACH_HOST is required for EAS builds (set it in eas.json)',
+  );
+}
+
+if (IS_PRODUCTION && (!HOSTNAME || /(^|\.)dev\./.test(HOSTNAME))) {
+  throw new Error(
+    `EXPO_PUBLIC_OUTREACH_HOST is ${HOSTNAME ?? 'unset'} for a production build`,
+  );
+}
 
 const BUNDLE_IDENTIFIER = IS_PRODUCTION
   ? 'la.betterangels.app'
@@ -51,7 +63,7 @@ export default {
       supportsTablet: true,
       bundleIdentifier: BUNDLE_IDENTIFIER,
       buildNumber: '1.2.17',
-      associatedDomains: [`applinks:${HOSTNAME}`],
+      associatedDomains: HOSTNAME ? [`applinks:${HOSTNAME}`] : [],
       config: {
         usesNonExemptEncryption: false,
       },
@@ -72,20 +84,22 @@ export default {
       ], // https://github.com/expo/expo/issues/25361#issuecomment-2363699975
       softwareKeyboardLayoutMode: 'pan',
       package: BUNDLE_IDENTIFIER,
-      intentFilters: [
-        {
-          action: 'VIEW',
-          autoVerify: true,
-          data: [
+      intentFilters: HOSTNAME
+        ? [
             {
-              scheme: 'https',
-              host: HOSTNAME,
-              pathPrefix: '/',
+              action: 'VIEW',
+              autoVerify: true,
+              data: [
+                {
+                  scheme: 'https',
+                  host: HOSTNAME,
+                  pathPrefix: '/',
+                },
+              ],
+              category: ['BROWSABLE', 'DEFAULT'],
             },
-          ],
-          category: ['BROWSABLE', 'DEFAULT'],
-        },
-      ],
+          ]
+        : [],
       config: {},
       versionCode: 89,
     },
