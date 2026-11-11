@@ -1,4 +1,8 @@
-import { buildInitConfig, handoffJoined } from './posthog';
+import {
+  allowsAutomatedTraffic,
+  buildInitConfig,
+  handoffJoined,
+} from './posthog';
 
 /**
  * This site is DOM-recorded, so the masking is per element. `maskAllInputs`
@@ -48,4 +52,22 @@ it('reports a join only when the receiver kept the handed session', () => {
   // posthog-js mints a new session when it rejects the bootstrapped id.
   expect(handoffJoined(handed, 'session-minted')).toBe(false);
   expect(handoffJoined({ distinctId: 'distinct-1' }, undefined)).toBe(false);
+});
+
+/**
+ * The filter is what keeps bot traffic out of production; the test suite is a
+ * bot, so it has to be off somewhere. A dev server and an e2e-built preview are
+ * the two places an automated browser is expected.
+ */
+it('accepts an automated browser only from a dev server or an e2e preview', () => {
+  expect(allowsAutomatedTraffic({ isDev: true, e2eFlag: undefined })).toBe(
+    true,
+  );
+  expect(allowsAutomatedTraffic({ isDev: false, e2eFlag: 'true' })).toBe(true);
+  expect(allowsAutomatedTraffic({ isDev: false, e2eFlag: undefined })).toBe(
+    false,
+  );
+  expect(allowsAutomatedTraffic({ isDev: false, e2eFlag: 'false' })).toBe(
+    false,
+  );
 });

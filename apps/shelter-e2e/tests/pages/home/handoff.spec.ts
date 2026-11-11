@@ -1,26 +1,14 @@
 import { expect, test } from '@playwright/test';
-import { e2eBaseUrl } from '../../../../../tools/shared/e2e-base-url.mjs';
 import { recordPostHog, uuidv7, waitForEvent } from '../../../lib/analytics';
-
-/**
- * These assert the capture payloads, so they need a server where the SDK is
- * allowed to send them: a dev build opts out of the bot filter (see
- * `buildInitConfig`), a deployed build does not. CI runs this suite against the
- * branch preview, where every automated request is dropped before it leaves the
- * browser — so skip there rather than time out, and keep the assertions for
- * `yarn shelter:e2e`, which starts a dev server.
- */
-const previewBaseUrl = e2eBaseUrl('shelter-web');
-
-test.skip(
-  Boolean(previewBaseUrl),
-  `capture payloads need a dev build; ${previewBaseUrl} is built for production`,
-);
 
 /**
  * The receiving half of the shelter handoff: the app opens this site with
  * `#ba_did=<distinct id>&ba_sid=<session id>`, and this site continues that
  * session.
+ *
+ * These read the capture payloads, which only exist on a build that accepts an
+ * automated browser: a dev server, or a preview built with `VITE_POSTHOG_E2E`
+ * (see `buildInitConfig`). Both are what CI runs, so there is nothing to skip.
  *
  * Asserted from the capture payloads rather than the UI, because "the address
  * bar looks right" cannot distinguish a session that was adopted from one that

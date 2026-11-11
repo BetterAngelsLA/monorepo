@@ -52,10 +52,7 @@ export function recordPostHog(page: Page): CapturedEvent[] {
       return route.continue();
     }
 
-    for (const item of decode(
-      request.postDataBuffer(),
-      request.postData() ?? '',
-    )) {
+    for (const item of decode(request.postDataBuffer())) {
       events.push({ event: item.event, properties: item.properties ?? {} });
     }
 
@@ -94,24 +91,21 @@ export async function waitForEvent(
 
 function decode(
   buffer: Buffer | null,
-  body: string,
 ): Array<{ event: string; properties?: Record<string, unknown> }> {
-  const candidates = buffer ? [buffer] : [Buffer.from(body, 'utf8')];
+  if (!buffer) return [];
 
-  for (const candidate of candidates) {
-    // The SDK posts raw gzip when the browser supports CompressionStream.
-    for (const decoded of [candidate, tryGunzip(candidate)]) {
-      if (!decoded) continue;
+  // The SDK posts raw gzip when the browser supports CompressionStream.
+  for (const decoded of [buffer, tryGunzip(buffer)]) {
+    if (!decoded) continue;
 
-      try {
-        const parsed = JSON.parse(decoded.toString('utf8'));
+    try {
+      const parsed = JSON.parse(decoded.toString('utf8'));
 
-        if (Array.isArray(parsed?.batch)) return parsed.batch;
-        if (parsed?.event) return [parsed];
-        return [];
-      } catch {
-        // Try the next reading.
-      }
+      if (Array.isArray(parsed?.batch)) return parsed.batch;
+      if (parsed?.event) return [parsed];
+      return [];
+    } catch {
+      // Try the next reading.
     }
   }
 

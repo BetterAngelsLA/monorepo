@@ -73,6 +73,25 @@ export function initAnalytics(): void {
 }
 
 /**
+ * Whether this build should accept traffic from an automated browser.
+ *
+ * posthog-js drops events whose user agent, `userAgentData.brands` or
+ * `navigator.webdriver` looks automated. Two builds are expected to be driven
+ * by one: a dev server, and a preview, which exists to be tested and is built
+ * with `VITE_POSTHOG_E2E`. Production keeps the filter — it is the only build
+ * with real traffic to protect.
+ */
+export function allowsAutomatedTraffic({
+  isDev,
+  e2eFlag,
+}: {
+  isDev: boolean;
+  e2eFlag: string | undefined;
+}): boolean {
+  return isDev || e2eFlag === 'true';
+}
+
+/**
  * Whether the handed-over session was actually adopted.
  *
  * posthog-js validates a bootstrapped session id (a UUIDv7 no older than 24
@@ -116,13 +135,12 @@ export function buildInitConfig({
       maskAllInputs: true,
       blockSelector: '.ph-no-capture',
     },
-    /**
-     * posthog-js drops traffic from user agents it reads as automated. A dev
-     * build is the only place one runs (the e2e suite), so it opts out; every
-     * deployed build keeps the filter, which is the only traffic worth
-     * protecting.
-     */
-    ...(import.meta.env.DEV ? { opt_out_useragent_filter: true } : {}),
+    ...(allowsAutomatedTraffic({
+      isDev: import.meta.env.DEV,
+      e2eFlag: import.meta.env.VITE_POSTHOG_E2E,
+    })
+      ? { opt_out_useragent_filter: true }
+      : {}),
     // Continue the app's session when it handed one over. `sessionID` is only
     // meaningful alongside `distinctID`.
     ...(handoff.distinctId
