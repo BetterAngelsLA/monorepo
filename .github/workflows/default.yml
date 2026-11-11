@@ -346,7 +346,6 @@ jobs:
           VITE_SHELTER_WEB_NEW_RELIC_LICENSE_KEY: ${{ secrets.VITE_SHELTER_WEB_NEW_RELIC_LICENSE_KEY }}
           APP_VERSION: ${{ github.event.pull_request.head.sha || github.sha }}
           VITE_APP_ENV: ${{ matrix.environment }}
-          VITE_APP_VERSION: ${{ github.event.pull_request.head.sha || github.sha }}
           VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_BETTERANGELS_ADMIN_GOOGLE_MAPS_API_KEY }}
           EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY: ${{ secrets.EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY }}
           EXPO_PUBLIC_NEW_RELIC_WEB_LICENSE_KEY: ${{ secrets.EXPO_PUBLIC_NEW_RELIC_WEB_LICENSE_KEY }}

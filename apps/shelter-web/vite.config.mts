@@ -36,11 +36,7 @@ function monitoringEnvPlugin(env: Record<string, string>, isCI: boolean) {
     buildStart() {
       assertMonitoringEnv({
         label: 'shelter-web-monitoring',
-        required: [
-          'VITE_SHELTER_WEB_NEW_RELIC_LICENSE_KEY',
-          'VITE_APP_ENV',
-          'VITE_APP_VERSION',
-        ],
+        required: ['VITE_SHELTER_WEB_NEW_RELIC_LICENSE_KEY', 'VITE_APP_ENV'],
         env,
         isCI,
       });
@@ -51,6 +47,8 @@ function monitoringEnvPlugin(env: Record<string, string>, isCI: boolean) {
 export default defineConfig(({ command, mode }) => {
   const isDev = mode === 'development';
   const basePath = getBuildBasePath();
+  // One deployment-level source; Vite exposes it to the client as VITE_APP_VERSION.
+  const appVersion = process.env.APP_VERSION || 'local';
 
   return {
     base: basePath,
@@ -59,6 +57,7 @@ export default defineConfig(({ command, mode }) => {
 
     define: {
       'import.meta.env.VITE_APP_BASE_PATH': JSON.stringify(basePath),
+      'import.meta.env.VITE_APP_VERSION': JSON.stringify(appVersion),
     },
 
     ...(isDev && {

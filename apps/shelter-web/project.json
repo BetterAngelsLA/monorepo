@@ -47,7 +47,7 @@
           "env": "VITE_APP_ENV"
         },
         {
-          "env": "VITE_APP_VERSION"
+          "env": "APP_VERSION"
         }
       ],
       "outputs": ["{workspaceRoot}/dist/apps/shelter-web"],
