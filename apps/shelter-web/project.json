@@ -40,6 +40,7 @@
     },
     "deploy": {
       "executor": "nx:run-commands",
+      "cache": false,
       "dependsOn": ["build"],
       "options": {
         "command": "node tools/deploy/cloudfront-deploy.mjs"

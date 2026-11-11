@@ -38,11 +38,6 @@ jobs:
           ) }}
     runs-on: ubuntu-latest
     environment: ${{ matrix.environment }}
-    env:
-      # A preview exists to be driven by the e2e suite, and posthog-js drops
-      # traffic from a browser it reads as automated unless the build opts out.
-      # Production keeps the filter.
-      VITE_POSTHOG_E2E: ${{ matrix.environment == 'preview' }}
     permissions:
       actions: read # Required to find the last successful workflow run
       contents: read # Required for actions/checkout
