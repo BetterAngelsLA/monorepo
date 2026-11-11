@@ -70,8 +70,10 @@ The **Shelter Web** dashboard was created manually in New Relic, in account
 JSON generator. To maintain it, edit the widgets in New Relic. To recreate a
 widget, choose **Add widget → NRQL query** and use the queries below.
 
-Dashboard URL: pending addition. Local development telemetry is reporting;
-preview/production validation and internal link sharing remain outstanding.
+Dashboard URL: https://one.newrelic.com/dashboards/detail/NDAxNzUxOHxWSVp8REFTSEJPQVJEfGRhOjEzNDQ0NDcz?account=4017518&state=d2eeb084-b1f3-126b-104d-2414358fe46a
+
+Local development telemetry is reporting; preview/production validation and
+internal link sharing remain outstanding.
 
 ### Environment variable
 
