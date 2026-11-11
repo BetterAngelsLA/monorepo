@@ -13,7 +13,6 @@
     "ios": "expo run:ios"
   },
   "dependencies": {
-    "@newrelic/browser-agent": "*",
     "dotenv": "*",
     "expo-constants": "*",
     "react-native": "*",
