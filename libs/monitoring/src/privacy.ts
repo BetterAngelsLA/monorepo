@@ -19,6 +19,9 @@ function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+const COLLAPSED_URL_REPLACEMENT = 'https://redacted.invalid/[route]';
+const COLLAPSED_ROUTE_REPLACEMENT = '/[route]';
+
 /**
  * Shared browser obfuscation policy.
  *
@@ -42,11 +45,11 @@ export function createPrivacyRules({
       ? [
           {
             regex: /^https?:\/\/[^\s]*$/i,
-            replacement: 'https://redacted.invalid/[route]',
+            replacement: COLLAPSED_URL_REPLACEMENT,
           },
           {
             regex: /^(?:\/|[^\s/?#]+\/)[\s\S]*$/,
-            replacement: '/[route]',
+            replacement: COLLAPSED_ROUTE_REPLACEMENT,
           },
         ]
       : [
@@ -83,7 +86,9 @@ export function createPrivacyRules({
 
   const safeSuffix =
     routeMode === 'collapse'
-      ? 'https://redacted\\.invalid/\\[route\\]|/\\[route\\]'
+      ? [COLLAPSED_URL_REPLACEMENT, COLLAPSED_ROUTE_REPLACEMENT]
+          .map(escapeRegExp)
+          .join('|')
       : 'https?:\\/\\/[^\\s]+|\\/[^\\s]*';
 
   return [

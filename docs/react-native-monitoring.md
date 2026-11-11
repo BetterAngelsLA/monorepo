@@ -30,13 +30,15 @@ Values come from `apps/betterangels/eas.json` (`build.<profile>.env`) via
 already depends on `write-eas-env`, which is hashed into the task inputs, so the
 profile is the single source of truth.
 
-`export-web` sets `EXPO_WEB_BASE_URL`; `apps/betterangels/app.config.js` fails
-the build in CI when the web monitoring variables are missing (`APP_ENV` and
-the web key), rather than shipping a web bundle with monitoring silently
-disabled. Native monitoring keys are checked by `useNewRelic` at runtime.
-Locally the guard warns and continues, so a developer without a New Relic key
-can still run the app. Monitoring is expected in every deployed environment —
-preview and development included — not only production.
+`export-web` sets `EXPO_WEB_BASE_URL`; EAS Build sets `EAS_BUILD_PLATFORM`;
+`eas-update.mjs` sets `EAS_UPDATE`. `apps/betterangels/app.config.js` fails the
+build in CI when the key for the platform being built is missing: the web key
+for a web export, the iOS/Android key for that EAS build, or all three for an
+EAS update. It never requires another platform's key. Locally the guard warns
+and continues, so a developer without a New Relic key can still run the app.
+The `useNewRelic` hook also warns at runtime if a mobile key is missing.
+Monitoring is expected in every deployed environment — preview and development
+included — not only production.
 
 The agent's `applicationID`, `accountID`, `trustKey` and `sa` block is the
 account's browser app identity. Copy it verbatim from the snippet generated in
