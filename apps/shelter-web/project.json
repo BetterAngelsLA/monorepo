@@ -48,7 +48,7 @@
       ],
       "outputs": ["{workspaceRoot}/dist/apps/shelter-web"],
       "options": {
-        "command": "vite build",
+        "command": "node validate-monitoring-env.mjs && vite build",
         "cwd": "apps/shelter-web"
       },
       "configurations": {

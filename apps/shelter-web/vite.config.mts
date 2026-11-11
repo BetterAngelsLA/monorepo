@@ -2,7 +2,7 @@
 import tailwindcss from '@tailwindcss/postcss';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import { ProxyOptions, defineConfig, loadEnv } from 'vite';
+import { ProxyOptions, defineConfig } from 'vite';
 import {
   monorepoTsconfigAliases,
   svgTestResolver,
@@ -28,19 +28,7 @@ const devServerProxy: Record<string, string | ProxyOptions> = {
   },
 };
 
-export default defineConfig(({ mode, command }) => {
-  const env = loadEnv(mode, import.meta.dirname, 'VITE_SHELTER_');
-  const required = [
-    'VITE_SHELTER_WEB_NEW_RELIC_LICENSE_KEY',
-    'VITE_SHELTER_APP_ENV',
-    'VITE_SHELTER_APP_VERSION',
-  ];
-  const missing = required.filter((key) => !env[key]?.trim());
-  if (command === 'build' && missing.length) {
-    const message = `[monitoring] Missing ${missing.join(', ')}`;
-    if (['true', '1'].includes(process.env.CI ?? '')) throw new Error(message);
-    console.warn(message);
-  }
+export default defineConfig(({ mode }) => {
   const isDev = mode === 'development';
   const basePath = getBuildBasePath();
   return {
