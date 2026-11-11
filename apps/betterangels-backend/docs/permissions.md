@@ -85,6 +85,28 @@ Declare it on the model's `perms` (`PermissionSet`) or a `*Permissions`
 while both exist (`CASEWORKER` and `CASEWORKER_ROLE` share their bundles for
 exactly this reason). `sync_roles()` reconciles the deployed Role on migrate.
 
+### Row-invariant reads
+
+`perm_checker=can_anywhere_checker` answers *"does this user hold the permission
+anywhere?"* without looking at a row. That is only sound where the rows are
+deliberately row-invariant, so every such site on an **org-anchored** model is
+listed here with its reason. A platform-shared model needs no entry — its own
+`access` declaration is the proof.
+
+| Site                                  | Why the read is agency-wide                                                                        |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `notes.schema` · `Query.note`         | SHARED read on notes (RFC 0003 slice 2) — a product decision                                       |
+| `notes.schema` · `Query.notes`        | the list is agency-wide by the same decision                                                       |
+| `notes.schema` · `Query.services`     | reference data gated by note ADD — global service data, not org authority                          |
+| `notes.schema` · `Query.service_categories` | reference data gated by note ADD                                                             |
+| `notes.schema` · `Query.interaction_authors` | reference data gated by note ADD                                                            |
+| `tasks.schema` · `Query.task`         | SHARED read on tasks (RFC 0003 slice 1) — a product decision                                       |
+| `tasks.schema` · `Query.tasks`        | the list is agency-wide by the same decision                                                       |
+| `tasks.schema` · `Query.task_assignees` | the assignee picker lists the caller's org members; gated on `tasks.add`/`change` rather than the roster permission |
+
+Adding a SHARED read to an org-anchored model means adding a row here, in the
+same review — the alternative is an over-permission nobody argued for.
+
 ### Debug a denial
 
 ```bash
