@@ -1,6 +1,12 @@
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { useRouter } from 'expo-router';
-import { ElementType, Fragment, ReactNode, isValidElement } from 'react';
+import {
+  ElementType,
+  Fragment,
+  ReactNode,
+  isValidElement,
+  useState,
+} from 'react';
 import { DimensionValue, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -52,12 +58,35 @@ export function MainModal({
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
+  /**
+   * Where an action is going, once the sheet has finished closing.
+   *
+   * Navigating *while* the sheet animates out crashes the native mounting layer
+   * when the destination has a header: iOS segfaults inside Fabric's
+   * `uiManagerDidFinishTransaction`. So the press closes and remembers; the
+   * close completion does the navigating.
+   */
+  const [pendingRoute, setPendingRoute] = useState<{
+    route: string;
+    params?: Record<string, string>;
+  } | null>(null);
+
   return (
     <BaseModal
       title={null}
       isOpen={isModalVisible}
       onClose={closeModal}
-      onCloseComplete={onCloseComplete}
+      onCloseComplete={() => {
+        onCloseComplete?.();
+
+        if (!pendingRoute) return;
+
+        router.navigate({
+          pathname: pendingRoute.route,
+          params: pendingRoute.params,
+        });
+        setPendingRoute(null);
+      }}
       variant="sheet"
       direction={vertical ? 'up' : 'right'}
       panelOffset={ml}
@@ -95,9 +124,9 @@ export function MainModal({
               Icon={Icon}
               onPress={() => {
                 if (onPress) return onPress();
-                // Original behavior: close then navigate immediately
+
+                if (route) setPendingRoute({ route, params });
                 closeModal();
-                if (route) router.navigate({ pathname: route, params });
               }}
             />
           );
