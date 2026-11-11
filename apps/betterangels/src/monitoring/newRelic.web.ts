@@ -16,7 +16,6 @@ export function initMonitoring(): void {
     licenseKey,
     environment,
     appVersion,
-    commit: process.env.EXPO_PUBLIC_COMMIT_SHA,
     privacyRules: browserPrivacyRules(environment, appVersion),
   });
 }

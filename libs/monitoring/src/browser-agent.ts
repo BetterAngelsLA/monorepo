@@ -8,7 +8,6 @@ export type BrowserMonitoringConfig = {
   licenseKey?: string;
   environment?: string;
   appVersion: string;
-  commit?: string;
   privacyRules: BrowserPrivacyRule[];
 };
 
@@ -48,7 +47,6 @@ export function initBrowserMonitoring(
           environment: config.environment,
           appVersion: config.appVersion,
           platform: 'web',
-          ...(config.commit ? { commit: config.commit } : {}),
         },
       },
       loader_config: {

@@ -14,7 +14,6 @@ if (licenseKey && environment) {
     licenseKey,
     environment,
     appVersion,
-    commit: appVersion,
     privacyRules: browserPrivacyRules(environment, appVersion),
   });
 }

@@ -14,35 +14,23 @@ dotenv.config({ path: '.env.local', override: true });
 const IS_PRODUCTION = process.env.APP_VARIANT === 'production';
 
 // Monitoring is configured per target. `EXPO_PUBLIC_APP_ENV` is used by both
-// agents; the web bundle uses the web license key; native builds use the
-// platform mobile key; an EAS update covers all platforms. Signals:
+// agents; the license keys are the app's browser/native identities. Signals:
 // `EXPO_WEB_BASE_URL` (export-web), `EAS_BUILD_PLATFORM` (EAS Build), and
 // `EAS_UPDATE` (set by eas-update.mjs). expo-doctor/start are unaffected.
-const EAS_PLATFORM = process.env.EAS_BUILD_PLATFORM;
-const IS_WEB_TARGET =
-  Boolean(process.env.EXPO_WEB_BASE_URL) || EAS_PLATFORM === 'web';
-const IS_EAS_UPDATE = process.env.EAS_UPDATE === 'true';
 const IS_MONITORED_BUILD =
-  IS_WEB_TARGET ||
-  IS_EAS_UPDATE ||
-  EAS_PLATFORM === 'ios' ||
-  EAS_PLATFORM === 'android';
+  Boolean(process.env.EXPO_WEB_BASE_URL) ||
+  Boolean(process.env.EAS_BUILD_PLATFORM) ||
+  process.env.EAS_UPDATE === 'true';
 
 if (IS_MONITORED_BUILD) {
-  const required = ['EXPO_PUBLIC_APP_ENV'];
-  if (IS_WEB_TARGET || IS_EAS_UPDATE) {
-    required.push('EXPO_PUBLIC_NEW_RELIC_WEB_LICENSE_KEY');
-  }
-  if (IS_EAS_UPDATE || EAS_PLATFORM === 'ios') {
-    required.push('EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS');
-  }
-  if (IS_EAS_UPDATE || EAS_PLATFORM === 'android') {
-    required.push('EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID');
-  }
-
   assertMonitoringEnv({
     label: 'monitoring',
-    required,
+    required: [
+      'EXPO_PUBLIC_APP_ENV',
+      'EXPO_PUBLIC_NEW_RELIC_WEB_LICENSE_KEY',
+      'EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS',
+      'EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID',
+    ],
     env: process.env,
     isCI: process.env.CI === 'true' || process.env.CI === '1',
   });
