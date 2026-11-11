@@ -22,9 +22,34 @@ vi.hoisted(() => {
 
 // The shared barrels pull in native-backed components (maps, PDF, pickers)
 // whose native halves do not exist under test. Stub the two the button renders.
+// Mirrors the props this component is responsible for passing: the testID the
+// e2e suite presses, the label a screen reader reads, and the in-flight state.
 vi.mock('@monorepo/expo/shared/ui-components', () => ({
-  Button: ({ title, onPress }: { title: string; onPress?: () => void }) => (
-    <Text onPress={onPress}>{title}</Text>
+  Button: ({
+    title,
+    onPress,
+    disabled,
+    loading,
+    testID,
+    accessibilityLabel,
+    accessibilityHint,
+  }: {
+    title: string;
+    onPress?: () => void;
+    disabled?: boolean;
+    loading?: boolean;
+    testID?: string;
+    accessibilityLabel?: string;
+    accessibilityHint?: string;
+  }) => (
+    <Text
+      testID={testID}
+      accessibilityLabel={accessibilityLabel}
+      accessibilityHint={accessibilityHint}
+      onPress={disabled ? undefined : onPress}
+    >
+      {loading ? 'opening' : title}
+    </Text>
   ),
   TextRegular: ({ children }: { children: ReactNode }) => (
     <Text>{children}</Text>
@@ -187,6 +212,8 @@ it('reports no handoff when the client has no identity yet', async () => {
 
 it('opens once when pressed twice before the browser takes over', async () => {
   // A second tab is both a duplicate event and the popup a browser refuses.
+  // Two things stop it: the control is disabled while in flight, and the opener
+  // refuses to re-enter; this asserts the observable outcome of both.
   let release: () => void = () => undefined;
 
   vi.mocked(WebBrowser.openBrowserAsync).mockReturnValue(
@@ -199,10 +226,12 @@ it('opens once when pressed twice before the browser takes over', async () => {
 
   // The browser stays open between the two presses, so the first press is still
   // in flight when the second arrives — that is the double tap to guard.
-  const firstPress = fireEvent.press(screen.getByText('Find shelter'));
+  const control = () => screen.getByTestId('find-shelter-profile-btn');
+
+  const firstPress = fireEvent.press(control());
   await new Promise((resolve) => setTimeout(resolve, 0));
 
-  await fireEvent.press(screen.getByText('Find shelter'));
+  await fireEvent.press(control());
 
   expect(WebBrowser.openBrowserAsync).toHaveBeenCalledTimes(1);
 
@@ -216,4 +245,36 @@ it('flushes before opening on native only', () => {
   expect(shouldFlushBeforeOpen('ios')).toBe(true);
   expect(shouldFlushBeforeOpen('android')).toBe(true);
   expect(shouldFlushBeforeOpen('web')).toBe(false);
+});
+
+it('renders the control the e2e suite and a screen reader address', async () => {
+  await render(<FindShelterButton />);
+
+  const control = screen.getByTestId('find-shelter-profile-btn');
+
+  expect(control).toBeOnTheScreen();
+  expect(control).toHaveAccessibleName('Find shelter');
+  expect(control).toHaveTextContent('Find shelter');
+});
+
+it('shows that it is opening instead of repeating the label', async () => {
+  let release: () => void = () => undefined;
+
+  vi.mocked(WebBrowser.openBrowserAsync).mockReturnValue(
+    new Promise<void>((resolve) => {
+      release = resolve;
+    }) as never,
+  );
+
+  await render(<FindShelterButton />);
+
+  const press = fireEvent.press(screen.getByText('Find shelter'));
+  await new Promise((resolve) => setTimeout(resolve, 0));
+
+  expect(screen.getByTestId('find-shelter-profile-btn')).toHaveTextContent(
+    'opening',
+  );
+
+  release();
+  await press;
 });
