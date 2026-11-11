@@ -227,14 +227,14 @@
         "copy-lockfile"
       ],
       "options": {
-        "command": "EXPO_UPDATE=true node tools/scripts/eas-update.mjs --project betterangels --profile preview"
+        "command": "node tools/scripts/eas-update.mjs --project betterangels --profile preview"
       },
       "configurations": {
         "preview": {
-          "command": "EXPO_UPDATE=true node tools/scripts/eas-update.mjs --project betterangels --profile preview"
+          "command": "node tools/scripts/eas-update.mjs --project betterangels --profile preview"
         },
         "production": {
-          "command": "EXPO_UPDATE=true node tools/scripts/eas-update.mjs --project betterangels --profile production"
+          "command": "node tools/scripts/eas-update.mjs --project betterangels --profile production"
         }
       }
     },

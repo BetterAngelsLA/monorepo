@@ -17,11 +17,11 @@ const IS_PRODUCTION = process.env.APP_VARIANT === 'production';
 // agents; the web bundle uses the web license key; native builds use the
 // platform mobile key; an EAS update covers all platforms. Signals:
 // `EXPO_WEB_BASE_URL` (export-web), `EAS_BUILD_PLATFORM` (EAS Build), and
-// `EXPO_UPDATE` (the eas-update Nx target). expo-doctor/start are unaffected.
+// `EAS_UPDATE` (set by eas-update.mjs). expo-doctor/start are unaffected.
 const EAS_PLATFORM = process.env.EAS_BUILD_PLATFORM;
 const IS_WEB_TARGET =
   Boolean(process.env.EXPO_WEB_BASE_URL) || EAS_PLATFORM === 'web';
-const IS_EAS_UPDATE = process.env.EXPO_UPDATE === 'true';
+const IS_EAS_UPDATE = process.env.EAS_UPDATE === 'true';
 const IS_MONITORED_BUILD =
   IS_WEB_TARGET ||
   IS_EAS_UPDATE ||
