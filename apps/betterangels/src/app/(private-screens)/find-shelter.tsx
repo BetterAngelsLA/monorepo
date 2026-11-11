@@ -1,6 +1,5 @@
 import { FindShelterPicker, useUser } from '@monorepo/expo/betterangels';
 import { Redirect } from 'expo-router';
-import Logo from '../assets/images/logo.svg';
 
 export default function FindShelterScreen() {
   const { user } = useUser();
@@ -12,5 +11,5 @@ export default function FindShelterScreen() {
     return <Redirect href="/" />;
   }
 
-  return <FindShelterPicker Logo={Logo} />;
+  return <FindShelterPicker />;
 }

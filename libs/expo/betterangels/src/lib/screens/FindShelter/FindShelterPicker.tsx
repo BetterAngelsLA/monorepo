@@ -4,7 +4,7 @@ import {
   TextBold,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { ElementType, useState } from 'react';
+import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { ShelterSearchSource } from '../../analytics';
 import {
@@ -15,7 +15,6 @@ import { useOpenShelterSearch } from '../../shelter/useOpenShelterSearch';
 import {
   ClientCard,
   ClientProfileList,
-  Header,
   HorizontalContainer,
 } from '../../ui-components';
 
@@ -27,7 +26,7 @@ import {
  * for that profile first. The choice is not sent anywhere — the shelter site is
  * public, and nothing about a client may leave this app.
  */
-export function FindShelterPicker({ Logo }: { Logo: ElementType }) {
+export function FindShelterPicker() {
   const [search, setSearch] = useState('');
   const { open, error, opening, canOpen } = useOpenShelterSearch(
     ShelterSearchSource.ClientPicker,
@@ -35,8 +34,6 @@ export function FindShelterPicker({ Logo }: { Logo: ElementType }) {
 
   return (
     <View style={styles.container} testID="find-shelter-screen">
-      <Header title="Find shelter" Logo={Logo} />
-
       <View style={styles.content}>
         <HorizontalContainer>
           <TextBold mb="sm" size="lg">

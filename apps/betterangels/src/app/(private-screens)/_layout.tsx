@@ -229,6 +229,12 @@ export default function PrivateLayout() {
           title: 'Task',
         })}
       />
+      <Stack.Screen
+        name="find-shelter"
+        options={getStackScreenOptions({
+          title: 'Find shelter',
+        })}
+      />
     </Stack>
   );
 }

@@ -89,7 +89,7 @@ vi.mock('../../analytics/client', () => ({
 }));
 
 function renderPicker() {
-  return render(<FindShelterPicker Logo={() => <View />} />);
+  return render(<FindShelterPicker />);
 }
 
 beforeEach(() => {
