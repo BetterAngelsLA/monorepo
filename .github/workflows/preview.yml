@@ -133,7 +133,7 @@ jobs:
 
           # Before the export, not alongside it: the update's runtime version has
           # to be the one the build carries, and `write-eas-env` is shared state.
-          node tools/scripts/eas-update.mjs --project betterangels --profile preview
+          EXPO_UPDATE=true node tools/scripts/eas-update.mjs --project betterangels --profile preview
 
           # Same reason as the main pipeline: Nx fills the task env before its
           # dependencies run and never overrides what is already set.
