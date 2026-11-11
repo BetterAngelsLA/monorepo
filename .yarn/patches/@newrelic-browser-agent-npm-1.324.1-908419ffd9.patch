@@ -1,0 +1,57 @@
+diff --git a/dist/cjs/features/page_view_timing/aggregate/index.js b/dist/cjs/features/page_view_timing/aggregate/index.js
+index e056ccd05d7fe3b7fe8f823a6802df8cba3bd46b..0da7e819e5fd52ba986bba7f8ab04b5763992119 100644
+--- a/dist/cjs/features/page_view_timing/aggregate/index.js
++++ b/dist/cjs/features/page_view_timing/aggregate/index.js
+@@ -174,6 +174,14 @@ class Aggregate extends _aggregateBase.AggregateBase {
+         pageUrl,
+         ...systemReservedAttrs
+       } = timing.attrs || {};
++      // LCP element attribution bypasses init.obfuscate in the upstream agent.
++      // Keep the measurement and numeric diagnostics, but omit resource URLs
++      // and DOM-derived identifiers/selectors before they enter the harvest.
++      if (timing.name === 'lcp') {
++        delete systemReservedAttrs.elUrl;
++        delete systemReservedAttrs.eid;
++        delete systemReservedAttrs.element;
++      }
+       var attrParts = (0, _belSerializer.addCustomAttributes)(systemReservedAttrs, keepOrigValue);
+       attrParts.push(...(0, _belSerializer.addCustomAttributes)(userAttrs, obfuscateValue));
+       if (pageUrl) attrParts.push(...(0, _belSerializer.addCustomAttributes)({
+diff --git a/dist/esm/features/page_view_timing/aggregate/index.js b/dist/esm/features/page_view_timing/aggregate/index.js
+index ca022dc65042beca305df3135ba77c0143f358bd..ffd0da877cebf745a7ee74ed071162126300eb1e 100644
+--- a/dist/esm/features/page_view_timing/aggregate/index.js
++++ b/dist/esm/features/page_view_timing/aggregate/index.js
+@@ -168,6 +168,14 @@ export class Aggregate extends AggregateBase {
+         pageUrl,
+         ...systemReservedAttrs
+       } = timing.attrs || {};
++      // LCP element attribution bypasses init.obfuscate in the upstream agent.
++      // Keep the measurement and numeric diagnostics, but omit resource URLs
++      // and DOM-derived identifiers/selectors before they enter the harvest.
++      if (timing.name === 'lcp') {
++        delete systemReservedAttrs.elUrl;
++        delete systemReservedAttrs.eid;
++        delete systemReservedAttrs.element;
++      }
+       var attrParts = addCustomAttributes(systemReservedAttrs, keepOrigValue);
+       attrParts.push(...addCustomAttributes(userAttrs, obfuscateValue));
+       if (pageUrl) attrParts.push(...addCustomAttributes({
+diff --git a/src/features/page_view_timing/aggregate/index.js b/src/features/page_view_timing/aggregate/index.js
+index 8b5a10e888a947121b631126a880d42553fde1bd..fc863ad9e423a699094edda01b3dfbb0b1aacab6 100644
+--- a/src/features/page_view_timing/aggregate/index.js
++++ b/src/features/page_view_timing/aggregate/index.js
+@@ -165,6 +165,14 @@ export class Aggregate extends AggregateBase {
+       const userAttrs = this.#getGlobalCustomAttributes()
+ 
+       const { pageUrl, ...systemReservedAttrs } = timing.attrs || {}
++      // LCP element attribution bypasses init.obfuscate in the upstream agent.
++      // Keep the measurement and numeric diagnostics, but omit resource URLs
++      // and DOM-derived identifiers/selectors before they enter the harvest.
++      if (timing.name === 'lcp') {
++        delete systemReservedAttrs.elUrl
++        delete systemReservedAttrs.eid
++        delete systemReservedAttrs.element
++      }
+       var attrParts = addCustomAttributes(systemReservedAttrs, keepOrigValue)
+       attrParts.push(...addCustomAttributes(userAttrs, obfuscateValue))
+       if (pageUrl) attrParts.push(...addCustomAttributes({ pageUrl }, obfuscateValue))

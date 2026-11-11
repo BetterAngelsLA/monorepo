@@ -213,3 +213,7 @@ test('JavaScriptError keeps the route for request_uri but redacts free text', ()
     '[redacted]',
   );
 });
+
+// Check the patched serializer in source, ESM and CommonJS package formats.
+import { testLcpPrivacy } from '../../../../tools/shared/browser-lcp-privacy-test';
+testLcpPrivacy(browserPrivacyRules('validation', '1.2.14'));

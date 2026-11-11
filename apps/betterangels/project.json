@@ -257,7 +257,8 @@
           "externalDependencies": [
             "@newrelic/browser-agent"
           ]
-        }
+        },
+        "{workspaceRoot}/tools/shared/browser-lcp-privacy-test.ts"
       ]
     }
   }

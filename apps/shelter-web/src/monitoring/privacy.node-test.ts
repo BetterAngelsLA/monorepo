@@ -52,3 +52,7 @@ test('errors and interactions redact free text without allowing metadata prefixe
     }
   }
 });
+
+// Check the patched serializer in source, ESM and CommonJS package formats.
+import { testLcpPrivacy } from '../../../../tools/shared/browser-lcp-privacy-test';
+testLcpPrivacy(browserPrivacyRules('validation', '1.2.14'));
