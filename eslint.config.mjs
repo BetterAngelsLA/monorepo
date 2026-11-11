@@ -111,6 +111,16 @@ export const depConstraints = [
   },
 ];
 
+const KEYBOARD_RESTRICTED_IMPORT = {
+  paths: [
+    {
+      name: 'react-native-keyboard-controller',
+      message:
+        "Import from '@monorepo/expo/shared/ui-components' (the Keyboard seam) instead. The package is native-only and is not bundled for web.",
+    },
+  ],
+};
+
 export default [
   // Global ignores — prevents ESLint from even traversing these directories.
   // Unlike `rules`, `ignores` in flat config are additive: project-level
@@ -214,13 +224,7 @@ export default [
       'no-restricted-imports': [
         'error',
         {
-          paths: [
-            {
-              name: 'react-native-keyboard-controller',
-              message:
-                "Import from '@monorepo/expo/shared/ui-components' (the Keyboard seam) instead. The package is native-only and is not bundled for web.",
-            },
-          ],
+          ...KEYBOARD_RESTRICTED_IMPORT,
           patterns: [
             {
               group: ['@newrelic/browser-agent-dist/*'],
@@ -237,7 +241,9 @@ export default [
   // the internal dist builds; production code must use the public entry points.
   {
     files: ['**/testing/**/*.ts'],
-    rules: { 'no-restricted-imports': 'off' },
+    rules: {
+      'no-restricted-imports': ['error', KEYBOARD_RESTRICTED_IMPORT],
+    },
   },
 
   // Extracts GraphQL operations from template literals i/n .ts/.tsx/.js/.jsx
