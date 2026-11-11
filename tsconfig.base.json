@@ -30,6 +30,9 @@
       "@monorepo/monitoring/testing/helper": [
         "./libs/monitoring/src/testing/helper.ts"
       ],
+      "@newrelic/browser-agent-dist/*": [
+        "./node_modules/@newrelic/browser-agent/dist/*"
+      ],
       "@monorepo/ba-platform": ["./libs/ba-platform/src/index.ts"],
       "@monorepo/ba-platform/permissions": [
         "./libs/ba-platform/permissions/src/index.ts"

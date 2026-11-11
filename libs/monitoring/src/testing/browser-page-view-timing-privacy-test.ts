@@ -2,13 +2,10 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { Aggregate as SourceAggregate } from '@newrelic/browser-agent/src/features/page_view_timing/aggregate/index.js';
 import { generateRandomHexString } from '@newrelic/browser-agent/src/common/ids/unique-id.js';
-/* eslint-disable @nx/enforce-module-boundaries -- the package does not export dist paths */
-// The package ships runnable dist files but no declaration files for these paths.
-// @ts-expect-error Runtime-only ESM build covered by this serializer regression test.
-import { Aggregate as EsmAggregate } from '../../../../node_modules/@newrelic/browser-agent/dist/esm/features/page_view_timing/aggregate/index.js';
-// @ts-expect-error Runtime-only CommonJS build covered by this serializer regression test.
-import { Aggregate as CjsAggregate } from '../../../../node_modules/@newrelic/browser-agent/dist/cjs/features/page_view_timing/aggregate/index.js';
-/* eslint-enable @nx/enforce-module-boundaries */
+// @ts-expect-error Internal dist build; no declarations are published.
+import { Aggregate as EsmAggregate } from '@newrelic/browser-agent-dist/esm/features/page_view_timing/aggregate/index.js';
+// @ts-expect-error Internal dist build; no declarations are published.
+import { Aggregate as CjsAggregate } from '@newrelic/browser-agent-dist/cjs/features/page_view_timing/aggregate/index.js';
 
 export function testPageViewTimingPrivacy(obfuscate: unknown[]) {
   for (const [format, Aggregate] of Object.entries({
