@@ -54,13 +54,18 @@ export function testPageViewTimingPrivacy(obfuscate: unknown[]) {
           ),
         );
         assert.ok(payload.includes('[route]') || payload.includes('/[id]'));
-        for (const value of ['preview', 'abc123', 'IMG', '176800', '107.25']) {
-          if (value === '[route]') assert.ok(payload.includes(value));
-          else
-            assert.ok(
-              payload.includes(value),
-              `${format} lost ${value}: ${payload}`,
-            );
+        for (const value of [
+          'preview',
+          'abc123',
+          'IMG',
+          '176800',
+          '107.25',
+          session,
+        ]) {
+          assert.ok(
+            payload.includes(value),
+            `${format} lost ${value}: ${payload}`,
+          );
         }
         assert.equal(attrs.eid, 'PRIVATE_DOM_ID');
       }

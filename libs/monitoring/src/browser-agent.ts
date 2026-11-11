@@ -79,7 +79,10 @@ export function initBrowserMonitoring(
     monitoringGlobal.__browserAgent = agent;
     return agent;
   } catch (error) {
-    console.warn('[monitoring] Browser agent initialization failed', error);
+    console.warn(
+      '[monitoring] Browser agent initialization failed',
+      error instanceof Error ? error.name : typeof error,
+    );
     return undefined;
   }
 }
