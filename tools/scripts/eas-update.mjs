@@ -77,7 +77,14 @@ try {
       '--non-interactive',
       '--json',
     ],
-    { cwd: projectDir, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] },
+    {
+      cwd: projectDir,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+      // `eas update` exports for every platform; let app.config.js include the
+      // web/native monitoring vars in its build-time guard.
+      env: { ...process.env, EXPO_UPDATE: 'true' },
+    },
   );
 } catch (error) {
   if (error.stdout) process.stdout.write(error.stdout);

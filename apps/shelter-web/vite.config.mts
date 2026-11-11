@@ -2,7 +2,7 @@
 import tailwindcss from '@tailwindcss/postcss';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import { ProxyOptions, defineConfig } from 'vite';
+import { ProxyOptions, defineConfig, loadEnv } from 'vite';
 import {
   monorepoTsconfigAliases,
   svgTestResolver,
@@ -28,9 +28,32 @@ const devServerProxy: Record<string, string | ProxyOptions> = {
   },
 };
 
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ command, mode }) => {
   const isDev = mode === 'development';
   const basePath = getBuildBasePath();
+
+  if (command === 'build') {
+    const required = [
+      'VITE_SHELTER_WEB_NEW_RELIC_LICENSE_KEY',
+      'VITE_SHELTER_APP_ENV',
+      'VITE_SHELTER_APP_VERSION',
+    ];
+    const env = loadEnv(mode, import.meta.dirname, 'VITE_SHELTER_');
+    const missing = required.filter(
+      (key) => !(process.env[key] || env[key])?.trim(),
+    );
+
+    if (missing.length) {
+      const message = `[shelter-web-monitoring] Missing ${missing.join(', ')}`;
+      if (process.env.CI === 'true' || process.env.CI === '1') {
+        throw new Error(`${message}. Refusing to build.`);
+      }
+      console.warn(
+        `${message}. Continuing locally; monitoring will stay disabled.`,
+      );
+    }
+  }
+
   return {
     base: basePath,
     root: import.meta.dirname,

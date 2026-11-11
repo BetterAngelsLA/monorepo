@@ -20,7 +20,7 @@ agent only starts when `typeof window !== 'undefined'`.
 | Variable | Used by | Notes |
 | --- | --- | --- |
 | `EXPO_PUBLIC_NEW_RELIC_WEB_LICENSE_KEY` | web | Browser **license key**, not a user API key. Public: it is inlined into the bundle. |
-| `EXPO_PUBLIC_APP_ENV` | web | Becomes the `environment` attribute every dashboard widget filters on. |
+| `EXPO_PUBLIC_APP_ENV` | web, native | Becomes the `environment` attribute every dashboard widget filters on. |
 | `EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS` | native | |
 | `EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID` | native | |
 
@@ -30,8 +30,9 @@ Values come from `apps/betterangels/eas.json` (`build.<profile>.env`) via
 already depends on `write-eas-env`, which is hashed into the task inputs, so the
 profile is the single source of truth.
 
-`export-web` runs `tools/scripts/require-web-monitoring-env.mjs` first. In CI a
-missing key or `APP_ENV` **fails the build** rather than shipping a bundle with
+`apps/betterangels/app.config.js` fails the build in CI when the monitoring
+variables for the target are missing (`APP_ENV`, plus the web key, the platform
+mobile key, or both for an EAS update), rather than shipping a bundle with
 monitoring silently disabled. Locally it warns and continues, so a developer
 without a New Relic key can still run the app. Monitoring is expected in every
 deployed environment — preview and development included — not only production.

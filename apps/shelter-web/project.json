@@ -22,6 +22,10 @@
         "^production",
         "{workspaceRoot}/tools/shared/**/*",
         {
+          "fileset": "{projectRoot}/.env*",
+          "includeIgnored": true
+        },
+        {
           "env": "CI"
         },
         {
@@ -48,7 +52,7 @@
       ],
       "outputs": ["{workspaceRoot}/dist/apps/shelter-web"],
       "options": {
-        "command": "node validate-monitoring-env.mjs && vite build",
+        "command": "vite build",
         "cwd": "apps/shelter-web"
       },
       "configurations": {
@@ -58,7 +62,7 @@
     },
     "deploy": {
       "executor": "nx:run-commands",
-      "dependsOn": ["build"],
+      "dependsOn": ["build", "privacy-test"],
       "options": {
         "command": "node tools/deploy/cloudfront-deploy.mjs"
       },
@@ -77,10 +81,10 @@
       "executor": "nx:run-commands",
       "cache": true,
       "options": {
-        "command": "esbuild apps/shelter-web/src/monitoring/privacy.node-test.ts --bundle --platform=node --outfile=dist/apps/shelter-web/privacy.node-test.cjs && node --test dist/apps/shelter-web/privacy.node-test.cjs"
+        "command": "esbuild apps/shelter-web/src/monitoring/privacy.node-test.ts --bundle --platform=node --outfile=dist/privacy-tests/shelter-web/privacy.node-test.cjs && node --test dist/privacy-tests/shelter-web/privacy.node-test.cjs"
       },
       "outputs": [
-        "{workspaceRoot}/dist/apps/shelter-web/privacy.node-test.cjs"
+        "{workspaceRoot}/dist/privacy-tests/shelter-web/privacy.node-test.cjs"
       ],
       "inputs": [
         "production",

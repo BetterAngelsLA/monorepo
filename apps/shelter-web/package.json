@@ -1,8 +1,5 @@
 {
   "name": "@monorepo/shelter-web",
   "type": "module",
-  "private": true,
-  "dependencies": {
-    "@newrelic/browser-agent": "*"
-  }
+  "private": true
 }
