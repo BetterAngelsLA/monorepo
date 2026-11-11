@@ -41,10 +41,7 @@ class AccessClass(StrEnum):
     """
 
 
-# The RFC 0002 / ADR 0001 prose names, kept as module-level aliases because the
-# older decisions and their tests use them.  New code should reach for
-# ``AccessClass`` directly; ``StrEnum`` members compare equal to their values, so
-# the two spellings cannot drift.
+# RFC 0002 names; new code should use ``AccessClass`` directly.
 WRITE_SHARED = AccessClass.SHARED
 WRITE_OBJECT = AccessClass.OBJECT
 
@@ -115,9 +112,8 @@ class OrgScoped(models.Model):
     org_via: ClassVar[tuple[str, ...] | None] = ()
     _org_paths: ClassVar[tuple[str, ...] | None] = None
 
-    # ``OrgScoped`` is a sibling of ``BaseModel``, not a subclass (models mix in
-    # whichever they need), so the slot is declared here as well as there.  Same
-    # default, so a model inheriting both resolves to the same value.
+    # ``OrgScoped`` is a sibling of ``BaseModel``, not a subclass, so the slot is
+    # declared here too.
     access: ClassVar[Access] = Access()
 
     class Meta:

@@ -370,16 +370,14 @@ def writable(qs: "QuerySet", user: "User", perm: str) -> "QuerySet":
     from common.models import WRITE_SHARED, OrgScoped
 
     model = qs.model
-    # Both bases declare the slot, so ``None`` here means a model from outside
-    # the app (Django, pghistory) — treat it as undeclared rather than crash.
+    # ``None`` means a model from outside the app (Django, pghistory).
     access = getattr(model, "access", None)
     write = access.write if access is not None else None
     if issubclass(model, OrgScoped) and model.org_via is not None:
         return visible(qs, user, perm)
     if write == WRITE_SHARED:
-        # A reachless model can name SHARED too — that is why the slot lives on
-        # ``BaseModel``.  ``Attachment`` is the case: it declares no org reach,
-        # so without a class it could only ever fail closed.
+        # Reachless models can name SHARED too — that is why the slot is on
+        # ``BaseModel``.
         return qs if can_anywhere(user, perm) else qs.none()
     if not issubclass(model, OrgScoped):
         return qs.none()

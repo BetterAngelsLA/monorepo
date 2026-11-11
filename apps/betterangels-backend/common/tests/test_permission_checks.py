@@ -212,8 +212,6 @@ class AccessDeclarationChecksTestCase(TestCase):
 
         from clients.models import ClientProfile
 
-        # ``cast`` because the type system already refuses this — the check is
-        # the runtime guard for a declaration the type checker never saw.
         with patch.object(ClientProfile, "access", Access(write=cast("AccessClass", "sharred"))):
             errors = _errors_with(check_access_declarations(None), "permissions.E007")
 
