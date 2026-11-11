@@ -5,7 +5,8 @@ import {
   Fragment,
   ReactNode,
   isValidElement,
-  useState,
+  useCallback,
+  useRef,
 } from 'react';
 import { DimensionValue, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -13,6 +14,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BaseModal } from '@monorepo/expo/shared/ui-components';
 import { MainModalActionBtn } from './MainModalActionBtn';
 import { MainModalCloseBtn } from './MainModalCloseBtn';
+
+/** A margin past `BaseModal`'s 200ms out-animation, used as a navigation net. */
+const NAVIGATION_FALLBACK_MS = 800;
 
 export type TMainModalAction = {
   title: string | ReactNode;
@@ -63,13 +67,37 @@ export function MainModal({
    *
    * Navigating *while* the sheet animates out crashes the native mounting layer
    * when the destination has a header: iOS segfaults inside Fabric's
-   * `uiManagerDidFinishTransaction`. So the press closes and remembers; the
-   * close completion does the navigating.
+   * `uiManagerDidFinishTransaction`. So the press closes and remembers, and the
+   * navigation happens afterwards.
    */
-  const [pendingRoute, setPendingRoute] = useState<{
+  const pendingRoute = useRef<{
     route: string;
     params?: Record<string, string>;
   } | null>(null);
+
+  /**
+   * Consumes the destination and navigates, so it can only happen once.
+   *
+   * `onCloseComplete` is not guaranteed: `BaseModal` calls its callback only
+   * when the out-animation *finishes*, so an interrupted close would drop the
+   * press silently. The press therefore also arms this as a fallback, a margin
+   * beyond the 200ms animation.
+   */
+  const navigateToPending = useCallback(() => {
+    const pending = pendingRoute.current;
+
+    if (!pending) return;
+
+    pendingRoute.current = null;
+    router.navigate({ pathname: pending.route, params: pending.params });
+  }, [router]);
+
+  function closeAndGo(route: string, params?: Record<string, string>) {
+    pendingRoute.current = { route, params };
+    closeModal();
+
+    setTimeout(navigateToPending, NAVIGATION_FALLBACK_MS);
+  }
 
   return (
     <BaseModal
@@ -78,14 +106,7 @@ export function MainModal({
       onClose={closeModal}
       onCloseComplete={() => {
         onCloseComplete?.();
-
-        if (!pendingRoute) return;
-
-        router.navigate({
-          pathname: pendingRoute.route,
-          params: pendingRoute.params,
-        });
-        setPendingRoute(null);
+        navigateToPending();
       }}
       variant="sheet"
       direction={vertical ? 'up' : 'right'}
@@ -125,7 +146,11 @@ export function MainModal({
               onPress={() => {
                 if (onPress) return onPress();
 
-                if (route) setPendingRoute({ route, params });
+                if (route) {
+                  closeAndGo(route, params);
+                  return;
+                }
+
                 closeModal();
               }}
             />
