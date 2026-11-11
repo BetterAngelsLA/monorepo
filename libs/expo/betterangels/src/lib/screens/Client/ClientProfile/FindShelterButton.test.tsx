@@ -6,7 +6,7 @@
  * A regression in any one of them is invisible in the app but breaks the
  * funnel, so all three are asserted here.
  */
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import * as WebBrowser from 'expo-web-browser';
 import { ReactNode } from 'react';
 import { Text, View } from 'react-native';
@@ -212,31 +212,20 @@ it('reports no handoff when the client has no identity yet', async () => {
 
 it('opens once when pressed twice before the browser takes over', async () => {
   // A second tab is both a duplicate event and the popup a browser refuses.
-  // Two things stop it: the control is disabled while in flight, and the opener
-  // refuses to re-enter; this asserts the observable outcome of both.
-  let release: () => void = () => undefined;
-
-  vi.mocked(WebBrowser.openBrowserAsync).mockReturnValue(
-    new Promise<void>((resolve) => {
-      release = resolve;
-    }) as never,
-  );
-
+  // Both presses are dispatched in the same tick, which is the case a guard
+  // reading React state cannot see: the second press still holds the first
+  // render's `false`. They run inside `act` so the async work the opener starts
+  // settles before the test ends — outside it, it leaks into the next test.
   await render(<FindShelterButton />);
 
-  // The browser stays open between the two presses, so the first press is still
-  // in flight when the second arrives — that is the double tap to guard.
   const control = () => screen.getByTestId('find-shelter-profile-btn');
 
-  const firstPress = fireEvent.press(control());
-  await new Promise((resolve) => setTimeout(resolve, 0));
-
-  await fireEvent.press(control());
+  await act(async () => {
+    fireEvent.press(control());
+    fireEvent.press(control());
+  });
 
   expect(WebBrowser.openBrowserAsync).toHaveBeenCalledTimes(1);
-
-  release();
-  await firstPress;
 });
 
 // The flush buys native nothing on web and costs the user activation that
@@ -275,6 +264,6 @@ it('shows that it is opening instead of repeating the label', async () => {
     'opening',
   );
 
-  release();
+  await act(async () => release());
   await press;
 });

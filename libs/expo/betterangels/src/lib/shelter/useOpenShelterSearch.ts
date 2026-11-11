@@ -1,7 +1,7 @@
 import { useApiConfig } from '@monorepo/ba-platform';
 import { withShelterHandoff } from '@monorepo/shared/shelter-handoff';
 import * as WebBrowser from 'expo-web-browser';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { Platform } from 'react-native';
 import {
   AnalyticsEvent,
@@ -50,12 +50,22 @@ export function useOpenShelterSearch(source: ShelterSearchSource) {
   const { capture, getIdentity } = useAnalytics();
   const [error, setError] = useState(false);
   const [opening, setOpening] = useState(false);
+  /**
+   * The guard `opening` state cannot be.
+   *
+   * Two presses in the same tick both read the state from the same render and
+   * both pass: the second opens a second tab and sends a second event. A ref is
+   * updated immediately, so only the first gets through; the state stays for
+   * rendering the control as busy.
+   */
+  const openingRef = useRef(false);
 
   const open = useCallback(async () => {
     // A second press while the first is still opening would add a second tab and
     // a second `opened` event, and the second popup is the one a browser blocks.
-    if (!url || opening) return;
+    if (!url || openingRef.current) return;
 
+    openingRef.current = true;
     setOpening(true);
     setError(false);
 
@@ -79,9 +89,10 @@ export function useOpenShelterSearch(source: ShelterSearchSource) {
       capture(AnalyticsEvent.ShelterSearchFailed, { source });
       setError(true);
     } finally {
+      openingRef.current = false;
       setOpening(false);
     }
-  }, [url, source, capture, getIdentity, opening]);
+  }, [url, source, capture, getIdentity]);
 
   return { open, error, opening, canOpen: Boolean(url) };
 }
