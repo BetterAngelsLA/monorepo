@@ -1,4 +1,20 @@
+import { e2eBaseUrl } from '../../../../../tools/shared/e2e-base-url.mjs';
 import { expect, test } from '@playwright/test';
+
+/**
+ * These assert the capture payloads, so they need a server where the SDK is
+ * allowed to send them: a dev build opts out of the bot filter (see
+ * `buildInitConfig`), a deployed build does not. CI runs this suite against the
+ * branch preview, where every automated request is dropped before it leaves the
+ * browser — so skip there rather than time out, and keep the assertions for
+ * `yarn shelter:e2e`, which starts a dev server.
+ */
+const previewBaseUrl = e2eBaseUrl('shelter-web');
+
+test.skip(
+  Boolean(previewBaseUrl),
+  `capture payloads need a dev build; ${previewBaseUrl} is built for production`,
+);
 
 /**
  * Session replay actually delivering, not just enabled.
