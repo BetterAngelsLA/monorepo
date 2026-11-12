@@ -121,8 +121,11 @@ class Mutation:
     def create_note(self, info: Info, data: CreateNoteInput) -> NoteType:
         """
         Create a note with optional nested relations (location, services, tasks).
-        All nested fields are optional, so this is fully backward-compatible with
-        callers that only send core note fields.
+
+        ``organizationId`` is required: ``require_can(ADD)`` runs at that org and
+        the row is stamped with it.  Only the nested relations are optional — a
+        caller that sends nothing but core fields is refused by GraphQL before
+        this runs.
         """
         user = cast(User, get_current_user(info))
 

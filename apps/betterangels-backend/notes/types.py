@@ -260,8 +260,11 @@ class RevertNoteInput:
 class CreateNoteInput:
     """
     Input for creating a note with all nested relations atomically.
-    All nested fields are optional, making this backward-compatible
-    with callers that only send core note fields.
+
+    ``organizationId`` is required (the acting org, ADR 0001 §5): authority is
+    ``require_can(ADD)`` at it and the row is stamped with it.  The nested
+    relations stay optional, so a caller may omit location/services/tasks — but
+    never the organization.
     """
 
     # Core note fields

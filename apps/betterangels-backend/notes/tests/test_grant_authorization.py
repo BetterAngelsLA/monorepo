@@ -121,6 +121,25 @@ class NoteGrantAuthorityTestCase(_NoteGrantHelpers, NoteGraphQLBaseTestCase):
         self.assertIsNone(updated.get("errors"))
         self.assertEqual(updated["data"]["updateNote"]["purpose"], "renamed by superuser")
 
+    def test_create_note_is_stamped_with_the_payload_org(self) -> None:
+        """The row lands in the org the payload named — not the caller's own org.
+
+        The holder can write at both orgs, so a resolver that stamped the caller's
+        own org instead of the payload's would land in ``org_1`` and fail here.
+        """
+        holder = baker.make(User)
+        self.org_1.add_user(holder)
+        self.org_2.add_user(holder)
+        self._grant(holder, self.org_1, "Org 1 Note Writer", (Note.perms.ADD,))
+        self._grant(holder, self.org_2, "Org 2 Note Writer", (Note.perms.ADD,))
+        self.graphql_client.force_login(holder)
+
+        created = self._create_note_fixture(self._create_payload(organizationId=self.org_2.pk))
+        self.assertIsNone(created.get("errors"))
+
+        note = Note.objects.get(pk=created["data"]["createNote"]["id"])
+        self.assertEqual(note.organization_id, self.org_2.pk)
+
 
 class NoteGrantAuthorityDeniedTestCase(_NoteGrantHelpers, NoteGraphQLBaseTestCase):
     """Authority absent: legacy-only holders, ADD-only holders, members, cross-org writes."""
@@ -283,6 +302,40 @@ class NoteGrantAuthorityDeniedTestCase(_NoteGrantHelpers, NoteGraphQLBaseTestCas
             with self.subTest(organizationId=bad_id):
                 created = self._create_note_fixture(self._create_payload(organizationId=bad_id))
                 self.assertGraphQLOperationInfo(created, "createNote", ORG_DENIED_MESSAGE, kind="PERMISSION")
+        self.assertEqual(Note.objects.count(), initial_count)
+
+    def test_create_note_without_the_payload_organization_is_a_validation_error(self) -> None:
+        """The flip's whole contract: a pre-payload build is refused by GraphQL.
+
+        ``organizationId`` is ``ID!``, so the request never reaches the resolver —
+        no fallback, no resolver denial, no group-derived organization.  Nothing
+        else pins this: the fixture always injects the org, so every other create
+        test would keep passing if the field went back to ``ID``.
+        """
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+        initial_count = Note.objects.count()
+
+        response = self.execute_graphql(
+            """mutation { createNote(data: {purpose: "no org"}) { ... on NoteType { id } } }"""
+        )
+
+        self.assertIn("errors", response)
+        self.assertIn("organizationId", str(response["errors"]))
+        self.assertEqual(Note.objects.count(), initial_count)
+
+    def test_create_note_at_an_organization_the_caller_cannot_write_is_denied(self) -> None:
+        """The payload org is authority, not a hint: a real org with no grant refuses.
+
+        ``org_or_deny`` is existence-only, so the second org resolves; the refusal
+        has to come from ``require_can(ADD)``.  Without this, a resolver that
+        authorized at the caller's own org instead of the payload's would pass
+        every other create test in this file.
+        """
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+        initial_count = Note.objects.count()
+
+        created = self._create_note_fixture(self._create_payload(organizationId=self.org_2.pk))
+        self.assertGraphQLOperationInfo(created, "createNote", PERMISSION_DENIED_MESSAGE, kind="PERMISSION")
         self.assertEqual(Note.objects.count(), initial_count)
 
     def test_service_request_delete_is_gated_by_the_owning_note(self) -> None:

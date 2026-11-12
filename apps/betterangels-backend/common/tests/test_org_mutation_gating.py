@@ -53,7 +53,6 @@ GATE_MARKERS = (
     "visible(",
     "writable(",
     "get_writable_or_deny(",
-    "resolve_create_org(",
     "permission=",
     "can_anywhere_checker",
 )
