@@ -82,6 +82,9 @@ const analytics = vi.hoisted(() => {
 
 vi.mock('../../analytics/client', () => ({
   getAnalyticsClient: () => analytics.state.client,
+}));
+
+vi.mock('../../analytics/handoffIdentity', () => ({
   getHandoffIdentity: () => ({
     distinctId: analytics.state.client?.getDistinctId() || undefined,
     sessionId: analytics.state.client?.getSessionId() || undefined,
@@ -143,7 +146,6 @@ it('records the tap against the picker, not the profile', async () => {
   expect(analytics.capture).toHaveBeenCalledWith('shelter_search_opened', {
     source: 'client_picker',
     handoff: true,
-    handoff_person: true,
   });
 });
 

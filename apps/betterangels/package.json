@@ -104,7 +104,8 @@
     "validator": "*",
     "rxjs": "*",
     "http-proxy-middleware": "*",
-    "react-router": "*"
+    "react-router": "*",
+    "posthog-js": "*"
   },
   "devDependencies": {}
 }

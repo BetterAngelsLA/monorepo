@@ -1,7 +1,8 @@
 import type { ShelterHandoff } from '@monorepo/shared/shelter-handoff';
 import { useCallback } from 'react';
-import { getAnalyticsClient, getHandoffIdentity } from './client';
+import { getAnalyticsClient } from './client';
 import type { AnalyticsEventName, AnalyticsEventProperties } from './events';
+import { getHandoffIdentity } from './handoffIdentity';
 
 type Capture = <E extends AnalyticsEventName>(
   event: E,

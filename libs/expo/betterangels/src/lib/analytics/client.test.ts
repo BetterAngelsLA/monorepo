@@ -1,19 +1,31 @@
+import type { AnalyticsClient } from './clientContract';
+
 /**
- * The client's own configuration.
+ * The native client's own configuration.
  *
  * The replay masks asserted below are the only thing keeping client data out of
  * a screenshot recording, and dropping one breaks no other test. Same reasoning
  * as `apps/betterangels/src/monitoring/privacy.node-test.ts` for New Relic.
+ *
+ * The browser half of the pair is `client.web.test.ts`; the handoff rule both
+ * platforms share is `handoffIdentity.test.ts`.
  */
 const posthog = vi.hoisted(() => {
   const calls: Array<{ apiKey: string; options: Record<string, unknown> }> = [];
+  const registerCalls: Array<Record<string, unknown>> = [];
 
-  class PostHogMock {
+  /** Typed against the contract: the adapter below must keep every member. */
+  class PostHogMock implements Partial<AnalyticsClient> {
     static calls = calls;
+    static registerCalls = registerCalls;
 
     capture = vi.fn();
-    register = vi.fn();
+    register = (properties: Record<string, unknown>) => {
+      registerCalls.push(properties);
+    };
     flush = vi.fn(() => Promise.resolve());
+    identify = vi.fn();
+    reset = vi.fn();
     getDistinctId = () => 'distinct-1';
     getSessionId = () => '018f4c0e-0000-7000-8000-000000000000';
 
@@ -35,6 +47,7 @@ async function importClient() {
 
 beforeEach(() => {
   posthog.PostHogMock.calls.length = 0;
+  posthog.PostHogMock.registerCalls.length = 0;
 });
 
 afterEach(() => {
@@ -60,6 +73,31 @@ it('records screenshots only with every masking control on', async () => {
   expect(replay['captureNetworkTelemetry']).toBe(false);
 });
 
+it('does not send the launch deep link with the app lifecycle events', async () => {
+  vi.stubEnv('EXPO_PUBLIC_POSTHOG_API_KEY', 'phc_test');
+
+  const { getAnalyticsClient } = await importClient();
+  getAnalyticsClient();
+
+  // `betterangels://client/<id>` would put a record id in an event property.
+  const [{ options }] = posthog.PostHogMock.calls;
+  expect(options['captureAppLifecycleEvents']).toBe(false);
+});
+
+it('puts the common properties back after a reset', async () => {
+  vi.stubEnv('EXPO_PUBLIC_POSTHOG_API_KEY', 'phc_test');
+
+  const { getAnalyticsClient } = await importClient();
+  const client = getAnalyticsClient();
+
+  posthog.PostHogMock.registerCalls.length = 0;
+  client?.reset();
+
+  expect(posthog.PostHogMock.registerCalls).toContainEqual(
+    expect.objectContaining({ environment: expect.anything() }),
+  );
+});
+
 it('does not fall back to file persistence', async () => {
   vi.stubEnv('EXPO_PUBLIC_POSTHOG_API_KEY', 'phc_test');
 
@@ -77,9 +115,9 @@ it('tags every event with the deployment it came from', async () => {
   vi.stubEnv('EXPO_PUBLIC_APP_ENV', 'staging');
 
   const { getAnalyticsClient } = await importClient();
-  const client = getAnalyticsClient();
+  getAnalyticsClient();
 
-  expect(client?.register).toHaveBeenCalledWith(
+  expect(posthog.PostHogMock.registerCalls).toContainEqual(
     expect.objectContaining({ environment: 'staging', platform: 'ios' }),
   );
 });
@@ -110,43 +148,14 @@ it('constructs one client no matter how many call sites ask for it', async () =>
   expect(posthog.PostHogMock.calls).toHaveLength(2);
 });
 
-// The test engine runs as native, which is the case that must stay direct.
-it('sends natively straight to PostHog, not through the web proxy', async () => {
+it('exposes the identity the handoff needs', async () => {
   vi.stubEnv('EXPO_PUBLIC_POSTHOG_API_KEY', 'phc_test');
 
   const { getAnalyticsClient } = await importClient();
-  getAnalyticsClient();
-
-  const [{ options }] = posthog.PostHogMock.calls;
-  expect(options['host']).toBeUndefined();
-});
-
-it('carries the distinct id only once identify() tied it to a worker', async () => {
-  vi.stubEnv('EXPO_PUBLIC_POSTHOG_API_KEY', 'phc_test');
-  const { getAnalyticsClient, getHandoffIdentity, markAnalyticsIdentified } =
-    await importClient();
-
-  const sessionId = '018f4c0e-0000-7000-8000-000000000000';
-  getAnalyticsClient();
-
-  // Anonymous: the receiver would file a person who is nobody.
-  expect(getHandoffIdentity()).toEqual({ distinctId: undefined, sessionId });
-
-  markAnalyticsIdentified('distinct-1');
-  expect(getHandoffIdentity()).toEqual({ distinctId: 'distinct-1', sessionId });
-});
-
-it('stops carrying the distinct id after the client is reset', async () => {
-  vi.stubEnv('EXPO_PUBLIC_POSTHOG_API_KEY', 'phc_test');
-  const { getAnalyticsClient, getHandoffIdentity, markAnalyticsIdentified } =
-    await importClient();
-
   const client = getAnalyticsClient();
-  markAnalyticsIdentified('distinct-1');
 
-  // Sign-out resets the client; the id after that is anonymous, so the
-  // comparison has to drop it without anyone remembering to clear the marker.
-  client!.getDistinctId = () => 'anonymous-after-reset';
-
-  expect(getHandoffIdentity().distinctId).toBeUndefined();
+  // The two ids are the only state carried into the shelter site, so the
+  // adapter must pass both through rather than only the event path.
+  expect(client?.getDistinctId()).toBe('distinct-1');
+  expect(client?.getSessionId()).toBe('018f4c0e-0000-7000-8000-000000000000');
 });

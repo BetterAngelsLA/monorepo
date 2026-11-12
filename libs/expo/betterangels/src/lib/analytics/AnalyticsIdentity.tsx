@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useUser } from '../providers/user/UserProvider';
-import { getAnalyticsClient, markAnalyticsIdentified } from './client';
+import { getAnalyticsClient } from './client';
+import { markAnalyticsIdentified } from './handoffIdentity';
 
 /**
  * Attaches the signed-in worker to the analytics session.

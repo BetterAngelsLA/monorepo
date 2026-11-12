@@ -94,8 +94,11 @@ const analytics = vi.hoisted(() => {
 
 vi.mock('../../../analytics/client', () => ({
   getAnalyticsClient: () => analytics.state.client,
-  // Mirrors the shipped rule: the distinct id only travels while the client is
-  // identified, the session id travels whenever there is one.
+}));
+
+// Mirrors the shipped rule: the distinct id only travels while the client is
+// identified, the session id travels whenever there is one.
+vi.mock('../../../analytics/handoffIdentity', () => ({
   getHandoffIdentity: () => ({
     distinctId: analytics.state.client?.getDistinctId() || undefined,
     sessionId: analytics.state.client?.getSessionId() || undefined,
@@ -133,7 +136,6 @@ it('records the tap with the source and whether the session travelled', async ()
   expect(analytics.capture).toHaveBeenCalledWith('shelter_search_opened', {
     source: 'client_profile',
     handoff: true,
-    handoff_person: true,
   });
 });
 
@@ -175,6 +177,28 @@ it('reports a failed open instead of leaving a start with no end', async () => {
   ).toBeOnTheScreen();
 });
 
+it('drains the queue before handing the screen to the browser', async () => {
+  // The departing event is what starts the funnel; a browser that takes the
+  // foreground first can suspend the app before it is sent.
+  const order: string[] = [];
+
+  analytics.state.client!.flush = () => {
+    order.push('flush');
+
+    return Promise.resolve();
+  };
+  vi.mocked(WebBrowser.openBrowserAsync).mockImplementationOnce(async () => {
+    order.push('open');
+
+    return undefined as never;
+  });
+
+  await render(<FindShelterButton />);
+  await fireEvent.press(screen.getByText('Find shelter'));
+
+  expect(order).toEqual(['flush', 'open']);
+});
+
 it('does not block the tap on a slow analytics flush', async () => {
   // The flush is bounded; a hung network must not hold the screen.
   analytics.state.client!.flush = () => new Promise<void>(() => undefined);
@@ -206,7 +230,6 @@ it('reports no handoff when the client has no identity yet', async () => {
   expect(analytics.capture).toHaveBeenCalledWith('shelter_search_opened', {
     source: 'client_profile',
     handoff: false,
-    handoff_person: false,
   });
 });
 

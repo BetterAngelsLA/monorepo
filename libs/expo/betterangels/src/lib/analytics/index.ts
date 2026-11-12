@@ -1,10 +1,5 @@
 export { analyticsConfig } from './config';
-export {
-  getAnalyticsClient,
-  getHandoffIdentity,
-  markAnalyticsIdentified,
-  resetAnalyticsClient,
-} from './client';
+export { getAnalyticsClient, resetAnalyticsClient } from './client';
 export {
   AnalyticsEvent,
   ShelterSearchSource,
@@ -12,5 +7,6 @@ export {
   type AnalyticsEventProperties,
 } from './events';
 export { ANALYTICS_FLUSH_TIMEOUT_MS, flushAnalytics } from './flush';
+export { getHandoffIdentity, markAnalyticsIdentified } from './handoffIdentity';
 export { useAnalytics } from './useAnalytics';
 export { useAnalyticsInit } from './useAnalyticsInit';

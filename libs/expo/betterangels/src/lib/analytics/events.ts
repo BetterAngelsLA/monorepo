@@ -23,19 +23,18 @@ export type ShelterSearchSource =
   (typeof ShelterSearchSource)[keyof typeof ShelterSearchSource];
 
 /**
- * Two flags because they decide different things downstream: `handoff` means the
- * session id travelled, so step 2 shares this session; `handoff_person` means
- * the distinct id did, so the visit is at least the same person.
+ * Whether a person and their session left with the link.
+ *
+ * One flag, not two: the app only hands over a session id together with a
+ * distinct id, because shelter-web drops a session-only handoff. The receiver
+ * still reports `handoff`/`handoff_person` separately, since a URL from any
+ * client can carry either.
  */
-export type ShelterSearchHandoffProperties = {
-  handoff: boolean;
-  handoff_person: boolean;
-};
-
 export type AnalyticsEventProperties = {
   [AnalyticsEvent.ShelterSearchOpened]: {
     source: ShelterSearchSource;
-  } & ShelterSearchHandoffProperties;
+    handoff: boolean;
+  };
   /** The browser refused to open, so no landing event should be expected. */
   [AnalyticsEvent.ShelterSearchFailed]: {
     source: ShelterSearchSource;
