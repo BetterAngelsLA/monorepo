@@ -1,6 +1,5 @@
 import { useApiConfig } from '@monorepo/ba-platform';
 import { withShelterHandoff } from '@monorepo/shared/shelter-handoff';
-import * as WebBrowser from 'expo-web-browser';
 import { useCallback, useRef, useState } from 'react';
 import { Platform } from 'react-native';
 import {
@@ -9,6 +8,7 @@ import {
   flushAnalytics,
   useAnalytics,
 } from '../analytics';
+import { openShelterSite } from './openShelterSite';
 import { shelterHomeUrl } from './shelterDirectory';
 
 /**
@@ -73,8 +73,8 @@ export function useOpenShelterSearch(source: ShelterSearchSource) {
 
     capture(AnalyticsEvent.ShelterSearchOpened, {
       source,
-      handoff: Boolean(identity.sessionId),
-      handoff_person: Boolean(identity.distinctId),
+      // Both ids or neither, so one flag says it.
+      handoff: Boolean(identity.distinctId),
     });
 
     try {
@@ -82,7 +82,7 @@ export function useOpenShelterSearch(source: ShelterSearchSource) {
         await flushAnalytics();
       }
 
-      await WebBrowser.openBrowserAsync(withShelterHandoff(url, identity));
+      await openShelterSite(withShelterHandoff(url, identity), Platform.OS);
     } catch {
       // No landing event will follow this press, so say so rather than leaving
       // a start with no end.

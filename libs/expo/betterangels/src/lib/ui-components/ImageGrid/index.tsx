@@ -65,5 +65,7 @@ const styles = StyleSheet.create({
   },
   image: {
     borderRadius: Radiuses.xs,
+    // A radius on the mask does not clip the image inside it.
+    overflow: 'hidden',
   },
 });

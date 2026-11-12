@@ -6,6 +6,7 @@ import {
   ReactNode,
   isValidElement,
   useCallback,
+  useEffect,
   useRef,
 } from 'react';
 import { DimensionValue, StyleSheet, View } from 'react-native';
@@ -75,6 +76,19 @@ export function MainModal({
     params?: Record<string, string>;
   } | null>(null);
 
+  /** The fallback below, kept so it can be cancelled rather than merely ignored. */
+  const fallbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearFallback = useCallback(() => {
+    if (fallbackTimer.current) {
+      clearTimeout(fallbackTimer.current);
+      fallbackTimer.current = null;
+    }
+  }, []);
+
+  // The sheet can be unmounted mid-animation; nothing should navigate then.
+  useEffect(() => clearFallback, [clearFallback]);
+
   /**
    * Consumes the destination and navigates, so it can only happen once.
    *
@@ -84,19 +98,25 @@ export function MainModal({
    * beyond the 200ms animation.
    */
   const navigateToPending = useCallback(() => {
+    clearFallback();
+
     const pending = pendingRoute.current;
 
     if (!pending) return;
 
     pendingRoute.current = null;
     router.navigate({ pathname: pending.route, params: pending.params });
-  }, [router]);
+  }, [router, clearFallback]);
 
   function closeAndGo(route: string, params?: Record<string, string>) {
     pendingRoute.current = { route, params };
+    clearFallback();
     closeModal();
 
-    setTimeout(navigateToPending, NAVIGATION_FALLBACK_MS);
+    fallbackTimer.current = setTimeout(
+      navigateToPending,
+      NAVIGATION_FALLBACK_MS,
+    );
   }
 
   return (
