@@ -14,15 +14,14 @@ from clients.models import ClientProfile
 from common.constants import HMIS_SESSION_KEY_NAME
 from common.graphql.permission_checkers import can_anywhere_checker
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
-from common.graphql.utils import resolve_create_org
+from common.graphql.utils import org_or_deny
 from common.permissions.selectors import can_obj
-from common.permissions.utils import PERMISSION_DENIED_MESSAGE, IsAuthenticated
+from common.permissions.utils import PERMISSION_DENIED_MESSAGE, IsAuthenticated, require_can
 from common.utils import get_or_none
 from hmis.models import HmisClientProfile, HmisNote
-from notes.groups import CASEWORKER
 from notes.models import Note
 from tasks.models import Task
-from tasks.services import task_create, task_create_legacy, task_delete, task_update
+from tasks.services import task_create, task_delete, task_update
 
 from .types import CreateTaskInput, TaskAssigneeType, TaskOrder, TaskType, UpdateTaskInput
 
@@ -74,9 +73,9 @@ class Mutation:
         task_data = asdict(data)
         organization_id = task_data.pop("organization_id", None)
 
-        organization, permission_group = resolve_create_org(
-            current_user, organization_id, template=CASEWORKER, perm=Task.perms.ADD
-        )
+        # Payload-scoped grant authority (ADR 0001 §5, RFC 0003 slice 1).
+        organization = org_or_deny(organization_id)
+        require_can(current_user, Task.perms.ADD, org=organization)
 
         # Resolve FK references only after authorizing: ``objects.get()`` raises
         # DoesNotExist for a bogus id and the gate denies for a real one, so
@@ -105,26 +104,15 @@ class Mutation:
         if note is not None and note.organization_id != organization.pk:
             raise PermissionDenied(PERMISSION_DENIED_MESSAGE)
 
-        if permission_group is None:
-            tasks = task_create(
-                user=current_user,
-                organization=organization,
-                data=[task_data],
-                note=note,
-                hmis_note=hmis_note,
-                client_profile=client_profile,
-                hmis_client_profile=hmis_client_profile,
-            )
-        else:
-            tasks = task_create_legacy(
-                user=current_user,
-                permission_group=permission_group,
-                data=[task_data],
-                note=note,
-                hmis_note=hmis_note,
-                client_profile=client_profile,
-                hmis_client_profile=hmis_client_profile,
-            )
+        tasks = task_create(
+            user=current_user,
+            organization=organization,
+            data=[task_data],
+            note=note,
+            hmis_note=hmis_note,
+            client_profile=client_profile,
+            hmis_client_profile=hmis_client_profile,
+        )
 
         return cast(TaskType, tasks[0])
 
