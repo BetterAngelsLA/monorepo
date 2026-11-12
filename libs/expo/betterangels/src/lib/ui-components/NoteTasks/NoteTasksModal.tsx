@@ -97,7 +97,16 @@ export default function NoteTasksModal(props: INoteTasksModalProps) {
           },
         });
       } else {
-        if (!activeOrgId) return;
+        if (!activeOrgId) {
+          // Required in the payload since the strict flip; with no active org
+          // there is nothing to anchor the task to. Say so — returning silently
+          // looks like the save worked.
+          showSnackbar({
+            message: 'Select an organization to create a task.',
+            type: 'error',
+          });
+          return;
+        }
 
         result = await createTask({
           variables: {
