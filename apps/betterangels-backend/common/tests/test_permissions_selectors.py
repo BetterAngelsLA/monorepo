@@ -1,6 +1,7 @@
 """Tests for the read-side authorization selectors (ADR 0001 §2.4, §2.10)."""
 
 from typing import Any
+from unittest.mock import patch
 
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
@@ -11,6 +12,7 @@ from model_bakery import baker
 from accounts.models import Role, User
 from accounts.services import grant_create, grant_delegate, role_assign, role_remove, sync_roles
 from accounts.tests.baker_recipes import organization_recipe
+from common.models import Access, AccessClass, Attachment
 from common.permissions.selectors import (
     ALL,
     can,
@@ -276,6 +278,54 @@ class GrantSelectorsTestCase(TestCase):
         with self.assertNumQueries(1):
             self.assertTrue(can_obj(bob, ContactInfo.perms.VIEW, contact))
 
+    def test_an_undeclared_permission_fails_loudly(self) -> None:
+        """A typo must not read as a denial.
+
+        ``can`` returning ``False`` for a codename nothing declares is
+        indistinguishable from a real refusal — the caller reports "permission
+        denied" for a permission that does not exist, and the bug survives
+        review.  The catalog answers the same question ``has_perm`` does.
+        """
+        alice = baker.make(User)
+
+        with self.assertRaisesMessage(ValueError, "is not a declared permission"):
+            can(alice, "notes.viewnote", org=self.org_a)
+        with self.assertRaisesMessage(ValueError, "is not a declared permission"):
+            scopes(alice, "notes.viewnote")
+
+    def test_a_declared_permission_still_answers(self) -> None:
+        """The guard is a name check, not an authority check."""
+        alice = baker.make(User)
+        grant_create(user=alice, role=self.shelter_role, scope_org=self.org_a)
+
+        self.assertTrue(can(alice, Shelter.perms.VIEW, org=self.org_a))
+
+    def test_a_reachless_model_can_declare_a_shared_write_class(self) -> None:
+        """The slot lives on ``BaseModel`` so a reachless model can use it.
+
+        ``Attachment`` declares no ``OrgScoped`` reach, so without a declared
+        class it fails closed for everyone — the write class is the only way to
+        say "any holder of the permission may act" about it, which is exactly
+        what the client-document cutover needs.
+        """
+        alice = baker.make(User)
+        grant_create(user=alice, role=self.shelter_role, scope_org=self.org_a)
+        attachment = baker.make(Attachment)
+
+        with patch.object(Attachment, "access", Access(write=AccessClass.SHARED)):
+            admitted = set(writable(Attachment.objects.all(), alice, Shelter.perms.VIEW).values_list("pk", flat=True))
+            self.assertTrue(can_obj(alice, Shelter.perms.VIEW, attachment))
+
+        self.assertEqual(admitted, {attachment.pk})
+
+    def test_a_reachless_model_without_a_class_still_fails_closed(self) -> None:
+        alice = baker.make(User)
+        grant_create(user=alice, role=self.shelter_role, scope_org=self.org_a)
+        attachment = baker.make(Attachment)
+
+        self.assertEqual(list(writable(Attachment.objects.all(), alice, Shelter.perms.VIEW)), [])
+        self.assertFalse(can_obj(alice, Shelter.perms.VIEW, attachment))
+
     def test_writable_is_can_obj_as_a_queryset(self) -> None:
         """writable() admits exactly the rows can_obj() admits (one predicate).
 
@@ -294,7 +344,7 @@ class GrantSelectorsTestCase(TestCase):
             self.assertEqual(can_obj(alice, Shelter.perms.VIEW, shelter), shelter.pk in admitted)
 
     def test_writable_shared_tier_is_all_or_none(self) -> None:
-        """WRITE_SHARED: every row fetchable iff the perm is held somewhere."""
+        """AccessClass.SHARED: every row fetchable iff the perm is held somewhere."""
         from clients.models import ClientProfile
 
         editor = baker.make(User)
@@ -313,7 +363,7 @@ class GrantSelectorsTestCase(TestCase):
         self.assertFalse(writable(ClientProfile.objects.all(), stranger, ClientProfile.perms.CHANGE).exists())
 
     def test_can_obj_shared_tier_is_any_holder_anywhere(self) -> None:
-        """ClientProfile declares WRITE_SHARED (RFC 0002 #1): can_obj == can_anywhere."""
+        """ClientProfile declares AccessClass.SHARED (RFC 0002 #1): can_obj == can_anywhere."""
         from clients.models import ClientProfile
 
         client = baker.make(ClientProfile)
@@ -332,7 +382,7 @@ class GrantSelectorsTestCase(TestCase):
         self.assertTrue(can_obj(admin, ClientProfile.perms.CHANGE, client))
 
     def test_writable_fails_closed_for_undeclared_platform_shared(self) -> None:
-        """A platform-shared OrgScoped model with no write_tier: only the global tier.
+        """A platform-shared OrgScoped model with no declared write class: only the global tier.
 
         RFC 0002 §Precondition — the read rule never feeds an undeclared write
         (finding C1): a finite org-scoped holder gets the empty queryset (no

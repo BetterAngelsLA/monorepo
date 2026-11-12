@@ -63,21 +63,28 @@ class Explanation:
 
 
 def _split_perm(perm: str) -> tuple[str, str]:
-    """Split and validate *perm* — format *and* existence in the modeled registry.
+    """Split and validate *perm* — format *and* existence.
 
     A typo (``shelters.view_shelterx``) would otherwise walk every arm, find
     nothing, and report a denial indistinguishable from a real one: a debugger
     answering "no authority" for a permission that does not exist.
+
+    The catalog is the same one the predicates use.  Checking the narrower
+    product catalog here made the debugger refuse permissions the enforcement
+    path accepts — ``notes.view_note_private_details`` is declared in
+    ``Note.Meta.permissions`` and carried by the scoped Caseworker role, but is
+    absent from the product registry — which is exactly the denial it exists to
+    explain.
     """
     app_label, _, codename = perm.partition(".")
     if not app_label or not codename:
         raise ValueError(f"permission must be 'app_label.codename', got {perm!r}")
 
-    from common.permissions.utils import modeled_permission_strings
+    from common.permissions.utils import known_permission_strings
 
-    modeled = modeled_permission_strings()
-    if perm not in modeled:
-        hint = get_close_matches(perm, sorted(modeled), n=3, cutoff=0.6)
+    known = known_permission_strings()
+    if str(perm) not in known:
+        hint = get_close_matches(str(perm), sorted(known), n=3, cutoff=0.6)
         suggestion = f"  Did you mean: {', '.join(hint)}?" if hint else ""
         raise ValueError(f"unknown permission {perm!r} — not a product-modeled permission.{suggestion}")
     return app_label, codename
@@ -279,20 +286,25 @@ def _legacy_arm(
     return Arm("legacy rows", holds, detail)
 
 
-def _write_tier_note(obj: "Model") -> str:
-    from common.models import WRITE_OBJECT, WRITE_SHARED, OrgScoped
+def _write_access_note(obj: "Model") -> str:
+    from common.models import AccessClass, OrgScoped
 
     model = type(obj)
-    if not issubclass(model, OrgScoped):
-        return "write scope: the model does not declare OrgScoped — can_obj() fails closed (no one may write)"
-    if model.org_via is not None:
+    access = getattr(model, "access", None)
+    write = access.write if access is not None else None
+
+    if issubclass(model, OrgScoped) and model.org_via is not None:
         return "write scope ORG — the row must sit in an org the user holds this permission in (scopes())"
-    tier = model.__dict__.get("write_tier")
-    if tier == WRITE_SHARED:
+    if write == AccessClass.SHARED:
         return "write scope SHARED — any holder of the permission may act (can_anywhere)"
-    if tier == WRITE_OBJECT:
+    if write == AccessClass.OBJECT:
         return "write scope OBJECT — per-record object grants"
-    return "write scope fail-closed — platform-shared model with no declared write tier: only the global tier may act"
+    if not issubclass(model, OrgScoped):
+        return (
+            "write scope fail-closed — the model declares no OrgScoped reach and no write class: "
+            "can_obj() admits no one"
+        )
+    return "write scope fail-closed — platform-shared model with no declared write class: only the global tier may act"
 
 
 def _notes(
@@ -347,7 +359,7 @@ def _notes(
             notes.append(f"also holds this permission at {len(other_ids)} other org(s): {_names(names)}")
 
     if obj is not None:
-        notes.append(_write_tier_note(obj))
+        notes.append(_write_access_note(obj))
     return notes
 
 

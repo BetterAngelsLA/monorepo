@@ -1,5 +1,7 @@
 """Tests for the grant system checks (ADR 0001 §2.7, ``permissions.E001``–E007)."""
 
+from typing import cast
+
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.db import models as django_models
@@ -8,16 +10,16 @@ from model_bakery import baker
 
 from accounts.models import Grant, Role, User
 from accounts.tests.baker_recipes import organization_recipe
-from common.models import WRITE_OBJECT, WRITE_SHARED, Attachment, OrgScoped
+from common.models import Access, AccessClass, Attachment, OrgScoped
 from common.permissions.checks import (
     _org_via_errors_for_model,
+    check_access_declarations,
     check_grant_never_references_global_role,
     check_object_grant_principal_is_a_user,
     check_object_grant_targets_whitelisted_model,
     check_org_via_hops_are_single_valued,
     check_role_permissions_models_declare_org_scoping,
     check_scoped_role_never_in_user_groups,
-    check_write_tier_declarations,
 )
 from shelters.models import Shelter
 
@@ -173,45 +175,123 @@ class GrantSystemChecksTestCase(TestCase):
         )
 
 
-class WriteTierChecksTestCase(TestCase):
-    """E007 — ``write_tier`` declarations must be legal (RFC 0002 §Precondition)."""
+class AccessDeclarationChecksTestCase(TestCase):
+    """E007 — ``access`` declarations must be legal (ADR 0005, RFC 0002 §Precondition)."""
 
     def test_e007_is_quiet_for_clientprofile_shared_declaration(self) -> None:
         from clients.models import ClientProfile
 
-        self.assertEqual(ClientProfile.write_tier, WRITE_SHARED)  # guard against a vacuous pass
-        self.assertEqual(_errors_with(check_write_tier_declarations(None), "permissions.E007"), [])
+        self.assertEqual(ClientProfile.access.write, AccessClass.SHARED)  # guard against a vacuous pass
+        self.assertEqual(_errors_with(check_access_declarations(None), "permissions.E007"), [])
 
-    def test_e007_fires_when_an_org_anchored_model_declares_a_tier(self) -> None:
+    def test_e007_fires_when_an_org_anchored_model_declares_a_write_class(self) -> None:
         from unittest.mock import patch
 
         from shelters.models import Shelter
 
-        with patch.object(Shelter, "write_tier", WRITE_SHARED):
-            errors = _errors_with(check_write_tier_declarations(None), "permissions.E007")
+        with patch.object(Shelter, "access", Access(write=AccessClass.SHARED)):
+            errors = _errors_with(check_access_declarations(None), "permissions.E007")
 
         self.assertEqual(len(errors), 1)
         self.assertIn("org-anchored", errors[0].msg)
 
-    def test_e007_fires_when_the_object_tier_is_declared_before_the_arm(self) -> None:
+    def test_e007_fires_when_the_object_class_is_declared_before_the_arm(self) -> None:
         from unittest.mock import patch
 
         from clients.models import ClientProfile
 
-        with patch.object(ClientProfile, "write_tier", WRITE_OBJECT):
-            errors = _errors_with(check_write_tier_declarations(None), "permissions.E007")
+        with patch.object(ClientProfile, "access", Access(write=AccessClass.OBJECT)):
+            errors = _errors_with(check_access_declarations(None), "permissions.E007")
 
         self.assertEqual(len(errors), 1)
         self.assertIn("reserved", errors[0].msg)
 
-    def test_e007_fires_when_the_tier_is_an_unrecognized_string(self) -> None:
+    def test_e007_fires_on_an_unknown_write_class(self) -> None:
+        """A typo must not silently fall back to the derived default (ADR 0005)."""
+        from unittest.mock import patch
+
+        from clients.models import ClientProfile
+
+        with patch.object(ClientProfile, "access", Access(write=cast("AccessClass", "sharred"))):
+            errors = _errors_with(check_access_declarations(None), "permissions.E007")
+
+        self.assertEqual(len(errors), 1)
+        self.assertIn("not an AccessClass", errors[0].msg)
+
+    def test_e007_fires_when_the_class_is_an_unrecognized_string(self) -> None:
         from unittest.mock import patch
 
         from clients.models import ClientProfile
 
         # The constant's *name* as a literal — the hand-edit E007 must catch.
-        with patch.object(ClientProfile, "write_tier", "WRITE_SHARED"):
-            errors = _errors_with(check_write_tier_declarations(None), "permissions.E007")
+        with patch.object(ClientProfile, "access", Access(write=cast("AccessClass", "AccessClass.SHARED"))):
+            errors = _errors_with(check_access_declarations(None), "permissions.E007")
 
         self.assertEqual(len(errors), 1)
-        self.assertIn("not a recognized tier", errors[0].msg)
+        self.assertIn("not an AccessClass", errors[0].msg)
+
+    def test_e007_fires_when_access_is_not_an_access_declaration(self) -> None:
+        """Pins the guard a hand-edited declaration hits.
+
+        The type system refuses this in normal code, so E007 is the only runtime
+        guard for a class body edited after the fact.  Deleting the ``isinstance``
+        branch (or its ``continue``) must fail here.
+        """
+        from unittest.mock import patch
+
+        from clients.models import ClientProfile
+
+        with patch.object(ClientProfile, "access", "AccessClass.SHARED"):
+            errors = _errors_with(check_access_declarations(None), "permissions.E007")
+
+        self.assertEqual(len(errors), 1)
+        self.assertIn("is not an Access declaration", errors[0].msg)
+
+    def test_e007_fires_on_a_value_that_only_compares_equal_to_a_declaration(self) -> None:
+        """The type check must run before any value comparison.
+
+        A declaration is skipped when it names no write class, which protects the
+        ``BaseModel`` default.  If that comparison is what runs *first*, an object
+        that compares equal to ``Access()`` — a mock, a stub with a permissive
+        ``__eq__`` — is skipped instead of refused, reopening the silent no-op
+        hole E007 exists to close.
+        """
+        from unittest.mock import patch
+
+        class _Impostor:
+            write = None
+
+            def __eq__(self, other: object) -> bool:
+                return True
+
+        class _Concrete:
+            access = _Impostor()
+
+        with patch("django.apps.apps.get_models", return_value=[_Concrete]):
+            errors = _errors_with(check_access_declarations(None), "permissions.E007")
+
+        self.assertEqual(len(errors), 1)
+        self.assertIn("is not an Access declaration", errors[0].msg)
+
+    def test_e007_validates_a_declaration_inherited_from_an_abstract_base(self) -> None:
+        """FAILS until E007 resolves ``access`` through the MRO.
+
+        ``check_access_declarations`` reads ``model.__dict__`` only, so a
+        declaration on an abstract (non-model) base — enforced on every concrete
+        subclass, never visited by ``apps.get_models()`` — escapes the deploy
+        check.  If the own-declaration-only policy is deliberate, delete this test
+        and document the policy on E007 instead.
+        """
+        from unittest.mock import patch
+
+        class _AbstractMixin:  # a mixin, not a model: absent from apps.get_models()
+            access = "SHARED"  # the hand-edit E007 exists to catch
+
+        class _Concrete(_AbstractMixin):
+            pass
+
+        with patch("django.apps.apps.get_models", return_value=[_Concrete]):
+            errors = _errors_with(check_access_declarations(None), "permissions.E007")
+
+        self.assertEqual(len(errors), 1)
+        self.assertIn("is not an Access declaration", errors[0].msg)

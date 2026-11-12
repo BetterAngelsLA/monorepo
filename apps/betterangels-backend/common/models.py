@@ -1,4 +1,6 @@
 import json
+from dataclasses import dataclass
+from enum import StrEnum
 from typing import Any, ClassVar, Dict, Iterator, Optional, cast
 
 from django.contrib.contenttypes.fields import GenericForeignKey
@@ -18,33 +20,71 @@ from common.files.utils import get_unique_file_path
 from common.permissions.utils import PermissionSet
 
 
+class AccessClass(StrEnum):
+    """The closed vocabulary a model may name in :class:`Access` (ADR 0005).
+
+    An enum rather than bare strings: the declaration is a class attribute, so
+    nothing else type-checks it.  ``Access(write="shared")`` would only be caught
+    by ``permissions.E007`` at deploy time; as an enum it is a type error.
+    """
+
+    SHARED = "shared"
+    """Any holder of the permission anywhere may act (``can_anywhere``)."""
+
+    OBJECT = "object"
+    """Only an object ``Grant`` on the row (or the global tier) may act.
+
+    Reserved — the object arm turns on with the clients cutover (ADR 0001 §2.5);
+    ``permissions.E007`` refuses it until then.
+    """
+
+
+@dataclass(frozen=True)
+class Access:
+    """Authority classes for a model's rows, per direction (ADR 0005).
+
+    One declaration slot, separate from reach (``org_via``): ``None`` leaves the
+    derived rules in charge, an explicit class names what the selectors enforce.
+    Declared on :class:`BaseModel`, so a model that is *not* ``OrgScoped`` can
+    still name its class.  ``Attachment`` is that case: it declares no reach, so
+    without a class it could only ever fail closed.
+
+    ``write`` values:
+
+    * ``None`` — derive: ORG for an org-anchored model (``org_via`` not
+      ``None``); fail closed otherwise (only the global tier may act) — the safe
+      default (finding C1).
+    * :data:`AccessClass.SHARED` — any holder of the permission anywhere.
+    * :data:`AccessClass.OBJECT` — reserved until the object arm has a consumer.
+
+    The read direction is not here yet: it lands with its first consumer (a
+    platform-only field) as ``read: AccessClass | None``.  Adding the field then
+    is backward compatible — every declaration constructs ``Access`` by keyword —
+    and keeping the container means the slot does not have to change shape when
+    it does.
+    """
+
+    write: AccessClass | None = None
+
+
 class BaseModel(models.Model):
     class perms(PermissionSet):
         pass
+
+    access: ClassVar[Access] = Access()
+    """Authority classes for this model's rows (ADR 0005).
+
+    ``access.write`` is consulted by :func:`~common.permissions.selectors.writable`
+    and :func:`~common.permissions.selectors.can_obj`.  An org-anchored model
+    derives ORG from ``org_via`` and must not declare one (``permissions.E007``);
+    a platform-shared or reachless model names its class here, or fails closed.
+    """
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         abstract = True
-
-
-# Write tiers (RFC 0002 §Precondition / ADR 0001 §2.5).  ``can_obj`` consults a
-# model's write scope independently of ``org_via`` (its read scope).  ORG is the
-# derived default for any org-anchored model (``org_via`` not ``None``) and
-# needs no declaration; these constants are the explicit declarations a model
-# makes when the derived default is not what its writes need.
-WRITE_SHARED = "shared"
-"""Platform-shared write tier: any holder of the permission anywhere may act.
-
-"""
-
-WRITE_OBJECT = "object"
-"""Object-grant write tier: only an object ``Grant`` (or the global tier) may act.
-
-Reserved — the object arm turns on with the clients cutover (ADR 0001 §2.5);
-``permissions.E007`` refuses it until then.
-"""
 
 
 class OrgScoped(models.Model):
@@ -65,16 +105,9 @@ class OrgScoped(models.Model):
     org_via: ClassVar[tuple[str, ...] | None] = ()
     _org_paths: ClassVar[tuple[str, ...] | None] = None
 
-    write_tier: ClassVar[str | None] = None
-    """Write scope for :func:`common.permissions.selectors.can_obj` (RFC 0002).
-
-    ``None`` derives the safe default: ORG for an org-anchored model (the org
-    filter, unchanged from the pre-tier contract) and fail-closed for a
-    platform-shared model (``org_via = None``) — only the global tier may act
-    until the model declares a tier.  Declare :data:`WRITE_SHARED` on a
-    platform-shared model whose writes are shared-by-role-anywhere
-    (``ClientProfile`` today).
-    """
+    # ``OrgScoped`` is a sibling of ``BaseModel``, not a subclass, so the slot is
+    # declared here too.
+    access: ClassVar[Access] = Access()
 
     class Meta:
         abstract = True

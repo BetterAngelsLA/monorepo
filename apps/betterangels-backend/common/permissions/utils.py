@@ -104,6 +104,44 @@ def register_model_permissions() -> None:
 
 
 @lru_cache(maxsize=1)
+def declared_permission_strings() -> frozenset[str]:
+    """Every permission Django knows about, as ``"app_label.codename"``.
+
+    Built from the app registry — each model's ``default_permissions`` plus its
+    ``Meta.permissions`` — so it answers the same question ``has_perm`` does:
+    *can this codename be granted at all?*  Not the same catalog as
+    :func:`modeled_permission_strings` (that one is the product/FE subset), and
+    deliberately wider: the predicates use it to refuse a **typo**, and a
+    permission a model declares but the FE does not gate on is still legitimate.
+    """
+    from django.apps import apps
+    from django.contrib.auth import get_permission_codename
+
+    declared: set[str] = set()
+    for model in apps.get_models():
+        meta = model._meta
+        for action in meta.default_permissions:
+            declared.add(f"{meta.app_label}.{get_permission_codename(action, meta)}")
+        for codename, _label in meta.permissions:
+            declared.add(f"{meta.app_label}.{codename}")
+    return frozenset(declared)
+
+
+@lru_cache(maxsize=1)
+def known_permission_strings() -> frozenset[str]:
+    """Everything a predicate may legitimately be handed: both catalogs, unioned.
+
+    The FE catalog (registered enums + modeled ``PermissionSet``s) and Django's
+    registry (each model's ``Meta.permissions`` and default CRUD) cover different
+    sets — a custom enum that never made it onto a model's ``Meta`` is real for
+    ``has_perm`` by name but absent from the registry, and an auto-discovered
+    ``PermissionSet`` entry can be in one and not the other.  A predicate only
+    needs to know "could this codename ever be granted?", so it takes the union.
+    """
+    return modeled_permission_strings() | declared_permission_strings()
+
+
+@lru_cache(maxsize=1)
 def modeled_permission_strings() -> frozenset[str]:
     """The product-modeled permission strings — the catalog the FE gates on.
 
