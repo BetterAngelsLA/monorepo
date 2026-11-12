@@ -275,12 +275,6 @@ class CreateNoteInput:
 
     # The acting org (ADR 0001 §5, RFC 0003 slice 2): authority is
     # ``require_can`` at this org and the created row's ``organization``.
-    # Optional during the compat window — a build that predates the payload
-    # org falls back to the legacy caseworker group; the strict flip makes it
-    # required again.
-    # The acting org (ADR 0001 §5, RFC 0003 slice 2): authority is ``require_can``
-    # at this org.  Required since the strict flip — a released build that omits
-    # it fails GraphQL input coercion before any resolver runs.
     organization_id: ID
 
     # Nested relations
