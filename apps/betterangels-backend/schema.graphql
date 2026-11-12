@@ -710,7 +710,7 @@ input CreateNoteInput {
   clientProfile: ID = null
   isSubmitted: Boolean = false
   interactedAt: DateTime = null
-  organizationId: ID = null
+  organizationId: ID!
   location: LocationInput = null
   providedServices: [CreateNoteServiceInput!] = null
   requestedServices: [CreateNoteServiceInput!] = null

@@ -80,6 +80,7 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         self.graphql_client.logout()
 
     def _create_note_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
+        variables.setdefault("organizationId", str(self.org_1.pk))
         return self._create_or_update_note_fixture("create", variables)
 
     def _update_note_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
