@@ -1373,9 +1373,9 @@ dev = [
     { name = "pytest-xdist", specifier = ">=3.8,<4" },
     { name = "ruff", specifier = ">=0.17.2,<1.0.0" },
     { name = "time-machine", specifier = ">=3.5.0,<4" },
-    { name = "types-gevent", specifier = ">=26.8.0.20260811,<27" },
+    { name = "types-gevent", specifier = ">=26.9.0.20261107,<27" },
     { name = "types-openpyxl", specifier = ">=3.1.5.20261017,<4" },
-    { name = "types-python-dateutil", specifier = ">=2.9.0.20261029,<3" },
+    { name = "types-python-dateutil", specifier = ">=2.9.0.20261104,<3" },
     { name = "types-requests", specifier = ">=2.33.0.20261030,<3" },
     { name = "unittest-parametrize", specifier = ">=1.9.0,<2" },
     { name = "vcrpy", specifier = ">=8.3.0,<9" },
@@ -2025,15 +2025,15 @@ wheels = [
 
 [[package]]
 name = "types-gevent"
-version = "26.9.0.20261006"
+version = "26.9.0.20261107"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "types-greenlet" },
     { name = "types-psutil" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/77/7e/25c1b33d5f41812f02ece5e2271129dea1c55cdb62fcba9838e618e8d3e6/types_gevent-26.9.0.20261006.tar.gz", hash = "sha256:82aad7baa8e2bb8a1a41a90321cd1761ccb4d9cb1f9f6c875d9daacba7f1578f", size = 39173, upload-time = "2026-10-06T08:16:04.336Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/35/c5/8555123686e80ca6db6f4cb5446d20e7aec7fa3d28c3129b5bc77f587ec9/types_gevent-26.9.0.20261107.tar.gz", hash = "sha256:24e09dfe9adcae0f841acd83e09a651e7bcc3c275c543826a5ad74c26e439c1e", size = 39240, upload-time = "2026-11-07T07:55:35.842Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e2/39/d3c2e562640eff826840bbbe524a62347c88addb47c0b59c99a95120b33b/types_gevent-26.9.0.20261006-py3-none-any.whl", hash = "sha256:3c63cd5f812651a0a4e7c021ca99150a55da3fc25e227119f3893dcc0ea98304", size = 55541, upload-time = "2026-10-06T08:16:03.178Z" },
+    { url = "https://files.pythonhosted.org/packages/0c/dc/c94a9dc18eedef5297adc825e0e912595004842bf79c278e986bd1c9f624/types_gevent-26.9.0.20261107-py3-none-any.whl", hash = "sha256:02caa4f9eab6fceb640471572c269e8d2103762aa6ba79eabcba08811bc78de2", size = 55542, upload-time = "2026-11-07T07:55:34.85Z" },
 ]
 
 [[package]]
@@ -2065,11 +2065,11 @@ wheels = [
 
 [[package]]
 name = "types-python-dateutil"
-version = "2.9.0.20261029"
+version = "2.9.0.20261104"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/3f/1c/1ffbe325ab57b36f134f6c9b1074bfa36ed2a169e530ff7a70fafd5c3bb4/types_python_dateutil-2.9.0.20261029.tar.gz", hash = "sha256:3258b491686c441d8074cfc8712308741900c9ff128a06421baec3767c503511", size = 17805, upload-time = "2026-10-29T07:44:22.644Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/8c/da/aaf5b20ea6c9e714fae9fdc611b68bde4edcba0aa4b1b853fc157d3d7b37/types_python_dateutil-2.9.0.20261104.tar.gz", hash = "sha256:5d0495702a5f7343741f5d842c531bcd1c941da8b4a85307d52ef43ba80252db", size = 17861, upload-time = "2026-11-04T08:14:27.977Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/7a/c3/7972ebf51261cbe2b69d2e50117a2c4b121c530b4869c60cc5dcd7d8a628/types_python_dateutil-2.9.0.20261029-py3-none-any.whl", hash = "sha256:8fd04c6e1722d2523a74d6670596fc0007077651465b686f144ae1d200dcacf5", size = 18507, upload-time = "2026-10-29T07:44:21.529Z" },
+    { url = "https://files.pythonhosted.org/packages/9f/4d/f9beea6da46a838025209b06d91374c8af9fbb82c599167ae99ee59cfb7a/types_python_dateutil-2.9.0.20261104-py3-none-any.whl", hash = "sha256:f6ee76c91c547716b4795373a53d4c07e8e06cf98384ecb89fcf134d212de2ad", size = 18509, upload-time = "2026-11-04T08:14:26.989Z" },
 ]
 
 [[package]]
