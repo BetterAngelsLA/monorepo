@@ -85,10 +85,7 @@
     "deploy": {
       "executor": "nx:run-commands",
       "cache": false,
-      "dependsOn": [
-        "export-web",
-        "privacy-test"
-      ],
+      "dependsOn": ["export-web", "privacy-test"],
       "options": {
         "command": "node tools/deploy/cloudfront-deploy.mjs"
       },
@@ -241,10 +238,7 @@
         "{projectRoot}/src/monitoring/**/*",
         "{workspaceRoot}/libs/monitoring/**/*",
         {
-          "externalDependencies": [
-            "@newrelic/browser-agent",
-            "esbuild"
-          ]
+          "externalDependencies": ["@newrelic/browser-agent", "esbuild"]
         }
       ]
     }
