@@ -76,7 +76,16 @@ export function ClientTasksViewHmis(props: TProps) {
   }
 
   const onSubmit = async (task: TaskFormData, closeForm: () => void) => {
-    if (!client?.id || !activeOrgId) return;
+    if (!client?.id) return;
+    if (!activeOrgId) {
+      // Required in the payload since the strict flip; with no active org there
+      // is nothing to anchor the task to.
+      showSnackbar({
+        message: 'Select an organization to create a task.',
+        type: 'error',
+      });
+      return;
+    }
     try {
       const result = await createTask({
         variables: {
@@ -94,7 +103,10 @@ export function ClientTasksViewHmis(props: TProps) {
       });
 
       if (result.data?.createTask.__typename === 'OperationInfo') {
-        console.log(result.data.createTask.messages);
+        // A rejection comes back as OperationInfo, not an error — logging it
+        // left the form closing as if the task had been created.
+        showSnackbar({ message: 'Error creating a task.', type: 'error' });
+        return;
       }
 
       closeForm();
