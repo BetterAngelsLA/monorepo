@@ -14,8 +14,13 @@ import { StrictMode } from 'react';
 import * as ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router';
 import { App } from './app';
+import { initAnalytics } from './analytics/posthog';
 
 const isDevEnv = import.meta.env.DEV;
+
+// Before the first render, so the session handed over by the outreach app is
+// bootstrapped before the first page view is captured.
+initAnalytics();
 
 initApolloRuntimeConfig({
   isDevEnv,

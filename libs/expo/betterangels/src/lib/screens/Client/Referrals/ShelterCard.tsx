@@ -6,8 +6,8 @@ import * as WebBrowser from 'expo-web-browser';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { partition } from 'remeda';
+import { shelterDirectoryUrl as directoryUrl } from '../../../shelter/shelterDirectory';
 import { matchTags, type TTag } from './shared/shelterAttributes';
-import { shelterDirectoryUrl as directoryUrl } from './shelterDirectory';
 
 // Reusable shelter sub-elements shared by the shelter picker and the
 // referral card (the wireframe draws them as separate screens, but the

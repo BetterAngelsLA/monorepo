@@ -1,5 +1,6 @@
 import {
   FilePlusIcon,
+  HouseLineIcon,
   PlusIcon,
   UserAddIcon,
 } from '@monorepo/expo/shared/icons';
@@ -7,6 +8,7 @@ import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { useUser } from '../hooks';
+import { useShelterHomeUrl } from '../shelter/useOpenShelterSearch';
 import { MainModal, TMainModalAction } from './MainModal';
 
 interface IMainPlusModalProps {
@@ -18,6 +20,11 @@ export default function MainPlusModal(props: IMainPlusModalProps) {
   const { isModalVisible, closeModal } = props;
 
   const { user } = useUser();
+  const shelterUrl = useShelterHomeUrl();
+
+  // HMIS sessions see HMIS clients, whose profile has no shelter button of its
+  // own, so this entry would lead to a list they are not shown anywhere else.
+  const showFindShelter = Boolean(shelterUrl) && user?.isHmisUser !== true;
 
   const ACTIONS: TMainModalAction[] = [
     {
@@ -35,6 +42,15 @@ export default function MainPlusModal(props: IMainPlusModalProps) {
       },
     },
   ];
+
+  if (showFindShelter) {
+    ACTIONS.push({
+      title: 'Find shelter',
+      testId: 'find-shelter-btn',
+      Icon: HouseLineIcon,
+      route: '/find-shelter',
+    });
+  }
 
   return (
     <MainModal

@@ -41,6 +41,12 @@
           "env": "VITE_SHELTER_GOOGLE_MAPS_API_KEY"
         },
         {
+          "env": "VITE_POSTHOG_API_KEY"
+        },
+        {
+          "env": "VITE_POSTHOG_E2E"
+        },
+        {
           "env": "VITE_SHELTER_WEB_NEW_RELIC_LICENSE_KEY"
         },
         {
@@ -56,12 +62,17 @@
         "cwd": "apps/shelter-web"
       },
       "configurations": {
-        "preview": {},
+        "preview": {
+          "env": {
+            "VITE_POSTHOG_E2E": "true"
+          }
+        },
         "production": {}
       }
     },
     "deploy": {
       "executor": "nx:run-commands",
+      "cache": false,
       "dependsOn": ["build", "privacy-test"],
       "options": {
         "command": "node tools/deploy/cloudfront-deploy.mjs"

@@ -28,7 +28,7 @@ import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { useModalScreen } from '../../../providers/index';
 import { pagePaddingHorizontal } from '../../../static/index';
 import { ClientProfileQuery } from '../__generated__/Client.generated';
-import { ClientViewTabEnum } from '../ClientTabs';
+import { ClientViewTabEnum } from '../clientViewTab';
 import { useSnackbar } from '../../../hooks/index';
 import { referralDraftSeed } from './referralDraftSeed';
 import { useReferralSubmission } from './useReferralSubmission';
