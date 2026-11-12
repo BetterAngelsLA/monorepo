@@ -1,6 +1,13 @@
 import { expect, test } from '@playwright/test';
-import { recordPostHog, uuidv7, waitForEvent } from '../../../lib/analytics';
+import {
+  analyticsConfigured,
+  recordPostHog,
+  uuidv7,
+  waitForEvent,
+} from '../../../lib/analytics';
 import { shelterEntryUrl } from '../../../lib/framework';
+
+const NO_KEY = 'shelter-web is running without VITE_POSTHOG_API_KEY';
 
 /**
  * The receiving half of the shelter handoff: the app opens this site with
@@ -16,6 +23,7 @@ import { shelterEntryUrl } from '../../../lib/framework';
  * was rejected and replaced.
  */
 test('continues the session the app handed over', async ({ page }) => {
+  test.skip(!analyticsConfigured(), NO_KEY);
   // Longer than the wait below, so a missing event reports what arrived.
   test.setTimeout(60_000);
   const events = recordPostHog(page);
@@ -46,6 +54,7 @@ test('continues the session the app handed over', async ({ page }) => {
  * quietly started a new session instead.
  */
 test('reports a handoff the receiver refused', async ({ page }) => {
+  test.skip(!analyticsConfigured(), NO_KEY);
   test.setTimeout(60_000);
   const events = recordPostHog(page);
   // Valid UUID shape, wrong version: posthog-js mints its own session.

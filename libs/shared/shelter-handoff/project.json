@@ -5,6 +5,14 @@
   "projectType": "library",
   "tags": ["type:util", "scope:shared"],
   "targets": {
+    "lint": {
+      "executor": "nx:run-commands",
+      "inputs": ["default", "{workspaceRoot}/eslint.config.mjs"],
+      "options": {
+        "cwd": "libs/shared/shelter-handoff",
+        "command": "eslint ."
+      }
+    },
     "test": {
       "options": {},
       "configurations": {

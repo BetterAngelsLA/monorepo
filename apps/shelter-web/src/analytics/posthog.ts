@@ -77,8 +77,10 @@ export function initAnalytics(): void {
  *
  * posthog-js drops events whose user agent, `userAgentData.brands` or
  * `navigator.webdriver` looks automated. Two builds are expected to be driven
- * by one: a dev server, and a preview, which exists to be tested and is built
- * with `VITE_POSTHOG_E2E`. Production keeps the filter — it is the only build
+ * by one: a dev server, and a preview. Every preview is built with
+ * `VITE_POSTHOG_E2E` — both the branch preview the pull-request workflow
+ * deploys and the public one `default.yml` deploys, since they share the
+ * `preview` configuration. Production keeps the filter: it is the only build
  * with real traffic to protect.
  */
 export function allowsAutomatedTraffic({

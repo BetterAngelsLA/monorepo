@@ -1,5 +1,6 @@
 import type { Page } from '@playwright/test';
 import { randomBytes } from 'node:crypto';
+import { existsSync, readFileSync } from 'node:fs';
 import { gunzipSync } from 'node:zlib';
 
 /**
@@ -18,7 +19,42 @@ export type CapturedEvent = {
   properties: Record<string, unknown>;
 };
 
-const CAPTURE_PATH = /\/(e|i\/v0\/e|batch|capture)\/?$/;
+/**
+ * Capture, batch and snapshot delivery. `/s/` is replay: left out, a test run
+ * writes its recordings into the project it is asserting on.
+ */
+const CAPTURE_PATH = /\/(s|e|i\/v0\/e|batch|capture)\/?$/;
+
+/**
+ * Whether the site under test can send events at all.
+ *
+ * A deployed preview always can — its build requires the key. A local dev server
+ * can only when `apps/shelter-web/.env` has one, which is what the sample ships
+ * empty; without this the specs spend 30s each failing on an event that could
+ * never arrive, and say nothing about the missing key.
+ */
+export function analyticsConfigured(env = process.env): boolean {
+  if (env.BASE_URL || env.PREVIEW_DEPLOYED_APPS) return true;
+  if (env.VITE_POSTHOG_API_KEY) return true;
+
+  return Boolean(localApiKey());
+}
+
+function localApiKey(): string | undefined {
+  // The Playwright config runs from the project dir; tolerating the workspace
+  // root as well keeps this honest when a target changes its cwd.
+  for (const file of ['../shelter-web/.env', 'apps/shelter-web/.env']) {
+    if (!existsSync(file)) continue;
+
+    const match = readFileSync(file, 'utf8').match(
+      /^VITE_POSTHOG_API_KEY=(.*)$/m,
+    );
+
+    return match?.[1].trim().replace(/^["']|["']$/g, '') || undefined;
+  }
+
+  return undefined;
+}
 
 /** A UUIDv7 — the only version the SDK accepts for a bootstrapped session. */
 export function uuidv7(): string {

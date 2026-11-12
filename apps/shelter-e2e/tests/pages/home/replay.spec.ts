@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { analyticsConfigured } from '../../../lib/analytics';
 import { shelterEntryUrl } from '../../../lib/framework';
 
 /**
@@ -17,6 +18,10 @@ import { shelterEntryUrl } from '../../../lib/framework';
  * (see `buildInitConfig`). Both are what CI runs, so there is nothing to skip.
  */
 test('records and delivers session snapshots', async ({ page }) => {
+  test.skip(
+    !analyticsConfigured(),
+    'shelter-web is running without VITE_POSTHOG_API_KEY',
+  );
   test.setTimeout(120_000);
 
   const snapshotSizes: number[] = [];
