@@ -13,14 +13,18 @@ env:
   AWS_REGION: us-west-2
   AWS_ACCOUNT_ID: 174477281453
   ASSUMED_ROLE: arn:aws:iam::174477281453:role/github-actions-oidc-role
+  # Untrusted = a preview cannot read repository secrets: a fork PR, or any run
+  # Dependabot triggered. Dependabot's branches live in this repo, so
+  # `head.repo.fork` alone misses it and `eas update` dies on an empty EXPO_TOKEN.
+  UNTRUSTED_PR: ${{ github.event.pull_request.head.repo.fork || github.actor == 'dependabot[bot]' }}
 
 jobs:
   # One job: the EAS update publishes while the web deploy runs, then E2E, then
   # the mobile build. The build must be last — `copy-lockfile` reshapes the
   # workspace for EAS Build, and a later `yarn install` prunes the other projects.
   #
-  # Not gated on forks, so the required `Preview` check always reports; the steps
-  # that need secrets carry the guard.
+  # Not gated on forks, so `Preview` always reports; the secret-dependent steps
+  # carry the `env.UNTRUSTED_PR` guard, which covers forks and Dependabot alike.
   Preview:
     runs-on: ubuntu-latest
     environment: preview
@@ -41,11 +45,11 @@ jobs:
       EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS: ${{ secrets.EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS }}
       EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID: ${{ secrets.EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID }}
     steps:
-      - name: ⏭️ Fork pull request
-        if: github.event.pull_request.head.repo.fork
+      - name: ⏭️ Fork or Dependabot PR
+        if: env.UNTRUSTED_PR == 'true'
         run: |
-          echo "::notice::Fork PR: previews need secrets, which forks do not receive."
-          echo "### Preview skipped — fork PR, no secrets" >> "$GITHUB_STEP_SUMMARY"
+          echo "::notice::Fork or Dependabot PR: previews need secrets, which neither receives."
+          echo '### Preview skipped — fork or Dependabot PR, no secrets' >> "$GITHUB_STEP_SUMMARY"
 
       - name: 🏗 Check out repo
         uses: actions/checkout@v7
@@ -64,7 +68,7 @@ jobs:
           echo "BRANCH_NAME=$BRANCH_NAME" >> "$GITHUB_ENV"
 
       - name: 🐳 Configure AWS credentials
-        if: github.event.pull_request.head.repo.fork == false
+        if: env.UNTRUSTED_PR != 'true'
         uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ env.ASSUMED_ROLE }}
@@ -106,11 +110,11 @@ jobs:
             nx-cache-v4-${{ runner.os }}-
 
       - name: 🥟 Install EAS CLI
-        if: github.event.pull_request.head.repo.fork == false
+        if: env.UNTRUSTED_PR != 'true'
         run: npm install -g eas-cli@24.8.0
 
       - name: 🚀 Preview deploy and EAS update
-        if: github.event.pull_request.head.repo.fork == false
+        if: env.UNTRUSTED_PR != 'true'
         env:
           CI: 'true'
           NX_DAEMON: 'false'
@@ -143,7 +147,7 @@ jobs:
           yarn nx affected -t export-web deploy post-pr-preview --configuration preview --parallel=6
 
       - name: 🧪 E2E (Playwright)
-        if: github.event.pull_request.head.repo.fork == false
+        if: env.UNTRUSTED_PR != 'true'
         env:
           CI: 'true'
           NX_DAEMON: 'false'
@@ -167,7 +171,7 @@ jobs:
 
       - name: 🔎 Is the mobile app affected?
         id: mobile-affected
-        if: github.event.pull_request.head.repo.fork == false
+        if: env.UNTRUSTED_PR != 'true'
         env:
           CI: 'true'
           NX_DAEMON: 'false'
@@ -192,7 +196,7 @@ jobs:
           fi
 
       - name: 📱 Mobile preview
-        if: github.event.pull_request.head.repo.fork == false && steps.mobile-affected.outputs.affected == 'true'
+        if: env.UNTRUSTED_PR != 'true' && steps.mobile-affected.outputs.affected == 'true'
         env:
           CI: 'true'
           NX_DAEMON: 'false'
