@@ -215,6 +215,7 @@ function MemberRow(props: TMemberRowProps) {
 
   return (
     <Pressable
+      testID="task-assignee-option"
       onPress={onPress}
       accessibilityRole="button"
       accessibilityState={{ selected: isSelected }}

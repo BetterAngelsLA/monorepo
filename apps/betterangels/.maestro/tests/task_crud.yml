@@ -1,0 +1,159 @@
+appId: ${MAESTRO_APP_ID}
+---
+- runFlow: ../lib/framework/start_test.yml
+- runFlow: ../lib/screens/clients/visit_fixture_client_profile.yml
+
+# Unique titles keep this flow isolated from other runs on the fixture client.
+- evalScript: ${output.taskTitle = "e2e-task-" + Date.now()}
+- evalScript: ${output.updatedTaskTitle = output.taskTitle + "-updated"}
+- tapOn:
+    id: client-tab-tasks
+- tapOn:
+    id: create-task-btn
+
+# Create a task, then open the persisted record from the client's task list.
+- tapOn:
+    id: summary
+- inputText: ${output.taskTitle}
+- tapOn:
+    id: keyboard.toolbar.done
+# This flow requires an organization with at least one team and assignee.
+- tapOn:
+    id: task-team-select
+- tapOn:
+    id: picker-option
+    index: 0
+- tapOn:
+    id: task-assignee-select
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: task-assignee-option
+    timeout: 15000
+# Skip unnamed roster rows and select the named fixture member.
+- scrollUntilVisible:
+    element:
+      text: 'Aaron Pollock'
+    direction: DOWN
+- tapOn:
+    text: 'Aaron Pollock'
+    id: task-assignee-option
+- extendedWaitUntil:
+    notVisible:
+      id: task-assignee-option
+    timeout: 5000
+# The clear control only appears once the field has a selected value.
+- assertVisible: 'clear Assigned To'
+- scrollUntilVisible:
+    element:
+      id: description
+    direction: DOWN
+- tapOn:
+    id: description
+- inputText: 'Created by the Maestro task CRUD flow'
+- tapOn:
+    id: keyboard.toolbar.done
+- scrollUntilVisible:
+    element:
+      id: task-status-select
+    direction: DOWN
+- tapOn:
+    id: task-status-select
+- tapOn: 'In Progress'
+- tapOn:
+    id: action-btn-primary
+# Wait for Save to finish; the form itself also contains the task title.
+- extendedWaitUntil:
+    notVisible:
+      id: summary
+    timeout: 15000
+- extendedWaitUntil:
+    visible:
+      id: client-view-tasks
+    timeout: 15000
+# iOS groups the card title and body into one accessibility label.
+# The comma boundary keeps this specific to the task created in this run.
+- scrollUntilVisible:
+    element:
+      text: ${output.taskTitle + ",.*"}
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    text: ${output.taskTitle + ",.*"}
+- extendedWaitUntil:
+    visible:
+      id: edit-task-btn
+    timeout: 15000
+- assertVisible: ${output.taskTitle}
+- assertVisible: 'Aaron Pollock'
+
+# Update the task and clear its assignee to cover a legitimately unassigned task.
+- tapOn:
+    id: edit-task-btn
+- tapOn:
+    id: summary
+- eraseText
+- inputText: ${output.updatedTaskTitle}
+- tapOn:
+    id: keyboard.toolbar.done
+- scrollUntilVisible:
+    element:
+      id: task-assignee-select
+    direction: DOWN
+- tapOn: 'clear Assigned To'
+- assertVisible: 'Assigned To: Select assignee'
+- scrollUntilVisible:
+    element:
+      id: description
+    direction: DOWN
+- tapOn:
+    id: description
+- eraseText
+- inputText: 'Updated by the Maestro task CRUD flow'
+- tapOn:
+    id: keyboard.toolbar.done
+- tapOn:
+    id: action-btn-primary
+# Confirm the edit sheet closes before checking the saved detail view.
+- extendedWaitUntil:
+    notVisible:
+      id: summary
+    timeout: 15000
+- extendedWaitUntil:
+    visible:
+      id: edit-task-btn
+    timeout: 15000
+- extendedWaitUntil:
+    visible:
+      text: ${output.updatedTaskTitle}
+    timeout: 15000
+- assertVisible: 'Updated by the Maestro task CRUD flow'
+- assertNotVisible: 'Aaron Pollock'
+
+# Reopen to verify that the unassigned state persisted before deleting.
+- tapOn:
+    id: edit-task-btn
+- assertVisible: 'Assigned To: Select assignee'
+- assertNotVisible: 'clear Assigned To'
+# Swipe once through the form, above the fixed Save footer, to reveal Delete.
+- swipe:
+    start: '90%, 80%'
+    end: '90%, 30%'
+    duration: 500
+- waitForAnimationToEnd
+- tapOn:
+    text: 'Delete this task'
+    id: delete-task-btn
+    retryTapIfNoChange: true
+- extendedWaitUntil:
+    visible:
+      id: delete-modal-confirm-btn
+    timeout: 10000
+- tapOn:
+    id: delete-modal-confirm-btn
+- extendedWaitUntil:
+    visible:
+      id: client-view-tasks
+    timeout: 15000
+- assertNotVisible: ${output.updatedTaskTitle + ",.*"}
+- assertNotVisible: ${output.taskTitle + ",.*"}

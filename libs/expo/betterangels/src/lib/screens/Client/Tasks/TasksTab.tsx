@@ -135,6 +135,7 @@ export function TasksTab(props: TProps) {
         <IconButton
           variant="secondary"
           borderColor={Colors.WHITE}
+          testID="create-task-btn"
           accessibilityLabel="open Task form"
           accessibilityHint="opens Task form"
           onPress={openTaskForm}
