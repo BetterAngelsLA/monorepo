@@ -160,6 +160,7 @@ export function TaskForm(props: TProps) {
                     // No "Select team" row in the list: a team is optional, and
                     // clearing it belongs on the field as the same ⊗ the
                     // assignee uses, not as a fake item among the teams.
+                    testId="task-team-select"
                     label="Team"
                     modalTitle="Team"
                     maxRadioItems={0}
@@ -187,6 +188,7 @@ export function TaskForm(props: TProps) {
                   loading={assigneesLoading || !rosterRequested}
                   loadError={!!assigneesError}
                   selectedFallback={selectedAssignee}
+                  testId="task-assignee-select"
                   label="Assigned To"
                   placeholder="Select assignee"
                   disabled={isSubmitting}
@@ -216,6 +218,7 @@ export function TaskForm(props: TProps) {
               control={control}
               render={({ field }) => (
                 <SingleSelect
+                  testId="task-status-select"
                   label="Status"
                   modalTitle="Status"
                   placeholder="Select status"
