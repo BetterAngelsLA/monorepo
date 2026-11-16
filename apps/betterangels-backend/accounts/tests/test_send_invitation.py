@@ -146,6 +146,11 @@ class SendInvitationTestCase(TestCase):
             self.assertIn("test organization", body)
             self.assertNotIn("betterangels.la", body)
 
+    @override_settings(SHELTER_WEB_BASE_URL="https://shelter.example.org/")
+    def test_a_trailing_slash_on_the_base_url_does_not_double_up(self) -> None:
+        """The templates append "/operator", so a trailing slash would render "//operator"."""
+        self.assertEqual(base_url_for(SHELTER_OPERATOR), "https://shelter.example.org")
+
     def _render_invite(self, **context: object) -> tuple[str, str]:
         """Render both bodies directly, bypassing ``send_invitation``'s context."""
         values = {
