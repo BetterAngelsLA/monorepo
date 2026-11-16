@@ -40,7 +40,17 @@ class CustomInvitations(InvitationBackend):
             raise ValueError("Cannot send invitation to a user without an email address")
 
         html_template, txt_template = self._resolve_invite_templates(kwargs)
-        context = {"invitee_email": user.email, **demo_email_context(user.email), **kwargs}
+        # Role invitations name the organization the person is joining.  Callers
+        # pass ``organization`` rather than a pre-formatted string, so derive the
+        # display name here — otherwise the template renders it blank and the
+        # sentence ends at "at .".
+        organization = kwargs.get("organization")
+        context = {
+            "invitee_email": user.email,
+            "organization_name": getattr(organization, "name", ""),
+            **demo_email_context(user.email),
+            **kwargs,
+        }
         msg = self.email_message(
             user, self.invitation_subject, txt_template, sender, message_class=EmailMultiAlternatives, **context
         )

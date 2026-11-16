@@ -139,9 +139,11 @@ class SendInvitationTestCase(TestCase):
             role_template=SHELTER_OPERATOR,
         )
 
-        body = Email.objects.get(to=self.email).html_message
-        self.assertIn("https://shelter.example.org", body)
-        self.assertNotIn("betterangels.la", body)
+        email = Email.objects.get(to=self.email)
+        for body in (email.html_message, email.message):
+            self.assertIn("https://shelter.example.org/operator", body)
+            self.assertIn("test organization", body)
+            self.assertNotIn("betterangels.la", body)
 
     # ── invite_by_email ────────────────────────────────────────────────
 
