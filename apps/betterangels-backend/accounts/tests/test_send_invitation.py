@@ -145,6 +145,45 @@ class SendInvitationTestCase(TestCase):
             self.assertIn("test organization", body)
             self.assertNotIn("betterangels.la", body)
 
+    @override_settings(SHELTER_WEB_BASE_URL="https://shelter.example.org")
+    def test_a_shelter_operator_invitation_without_an_organization_reads_cleanly(self) -> None:
+        """The generic invite path passes no organization; the sentence must still parse.
+
+        ``Organization.name`` is required but not non-blank, and ``invite_by_email``
+        can be called without one, so "reservations at ." has to be impossible.
+        """
+        user = baker.make(User, email=self.email)
+
+        self.invitation_backend.send_invitation(
+            user,
+            baker.make(User, email="admin@test.com"),
+            base_url=base_url_for(SHELTER_OPERATOR),
+            role_template=SHELTER_OPERATOR,
+        )
+
+        email = Email.objects.get(to=self.email)
+        for body in (email.html_message, email.message):
+            self.assertNotIn(" at .", body)
+            self.assertIn("manage beds, rooms, and reservations.", body)
+
+    @override_settings(SHELTER_WEB_BASE_URL="https://shelter.example.org")
+    def test_a_blank_organization_name_is_omitted(self) -> None:
+        """A whitespace-only name must not render "at  ." either."""
+        user = baker.make(User, email=self.email)
+
+        self.invitation_backend.send_invitation(
+            user,
+            baker.make(User, email="admin@test.com"),
+            organization=Organization.objects.create(name="   "),
+            base_url=base_url_for(SHELTER_OPERATOR),
+            role_template=SHELTER_OPERATOR,
+        )
+
+        email = Email.objects.get(to=self.email)
+        for body in (email.html_message, email.message):
+            self.assertNotIn(" at .", body)
+        self.assertIn("You've been added as a Shelter Operator.", email.message)
+
     # ── invite_by_email ────────────────────────────────────────────────
 
     @patch("accounts.backends.CustomInvitations.send_invitation")

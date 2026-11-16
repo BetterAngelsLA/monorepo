@@ -42,12 +42,13 @@ class CustomInvitations(InvitationBackend):
         html_template, txt_template = self._resolve_invite_templates(kwargs)
         # Role invitations name the organization the person is joining.  Callers
         # pass ``organization`` rather than a pre-formatted string, so derive the
-        # display name here — otherwise the template renders it blank and the
-        # sentence ends at "at .".
+        # display name here.  ``Organization.name`` is required but not non-blank,
+        # and the generic invite path sends no organization at all, so this stays
+        # a plain string; the templates drop the clause when it is empty.
         organization = kwargs.get("organization")
         context = {
             "invitee_email": user.email,
-            "organization_name": getattr(organization, "name", ""),
+            "organization_name": (getattr(organization, "name", "") or "").strip(),
             **demo_email_context(user.email),
             **kwargs,
         }
