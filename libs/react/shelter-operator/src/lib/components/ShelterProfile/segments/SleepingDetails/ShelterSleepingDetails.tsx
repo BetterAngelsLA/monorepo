@@ -13,6 +13,7 @@ import {
 import { useToast } from '../../../base-ui/toast';
 import { ShelterSleepingDetailsForm } from './ShelterSleepingDetailsForm';
 import {
+  AVAILABILITY_INPUT,
   type SleepingDetailsFormData,
   formFieldNames,
   toFormData,
@@ -70,7 +71,7 @@ export function ShelterSleepingDetails(props: TProps) {
         ...updateShelterProfileMeta,
         // Availability is a nested input, so its messages arrive under
         // `availability.<field>`; allow the parent path and re-point them below.
-        fields: [...formFieldNames, 'availability'],
+        fields: [...formFieldNames, AVAILABILITY_INPUT],
       });
 
       if (fieldErrors.length) {

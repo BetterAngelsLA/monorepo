@@ -45,7 +45,7 @@ export const formSchema = baseSchema.superRefine((data, ctx) => {
   if (data.totalBeds != null && availableBeds > data.totalBeds) {
     const message = `Unrestricted + restricted beds (${availableBeds}) cannot exceed the shelter's total beds (${data.totalBeds}).`;
 
-    for (const path of ['nonRestrictedBeds', 'restrictedBeds'] as const) {
+    for (const path of AVAILABILITY_COUNT_FIELDS) {
       ctx.addIssue({ code: 'custom', path: [path], message });
     }
   }
@@ -81,7 +81,12 @@ export function toFormData(
   };
 }
 
-const AVAILABILITY_FIELD_PREFIX = 'availability.';
+export const AVAILABILITY_INPUT = 'availability';
+export const AVAILABILITY_COUNT_FIELDS = [
+  'nonRestrictedBeds',
+  'restrictedBeds',
+] as const;
+const AVAILABILITY_FIELD_PREFIX = `${AVAILABILITY_INPUT}.`;
 
 /**
  * Re-points availability validation messages at the form fields they belong to.
@@ -95,11 +100,11 @@ export function toFormFieldErrors(
   errors: { field: string; message: string }[],
 ): { field: string; message: string }[] {
   return errors.flatMap(({ field, message }) => {
-    if (field === 'availability') {
-      return [
-        { field: 'nonRestrictedBeds', message },
-        { field: 'restrictedBeds', message },
-      ];
+    if (field === AVAILABILITY_INPUT) {
+      return AVAILABILITY_COUNT_FIELDS.map((name) => ({
+        field: name,
+        message,
+      }));
     }
 
     return [
