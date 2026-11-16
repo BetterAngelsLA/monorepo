@@ -8,10 +8,9 @@ import {
 import { RefObject } from 'react';
 import { ScrollView, View } from 'react-native';
 import { TaskStatusEnum, UpdateTaskInput } from '../../apollo';
-import { useActiveOrgGuard, useSnackbar } from '../../hooks';
+import { useCreateTask, useSnackbar } from '../../hooks';
 import { useModalScreen } from '../../providers';
 import { DraftTask as LocalDraftTask } from '../../screens/NotesHmis/NoteFormHmis/formSchema';
-import { CreateTaskDocument } from '../TaskForm/__generated__/createTask.generated';
 import { DeleteTaskDocument } from '../TaskForm/__generated__/deleteTask.generated';
 import { UpdateTaskDocument } from '../TaskForm/__generated__/updateTask.generated';
 import NoteTasksModal from './NoteTasksModal';
@@ -63,10 +62,9 @@ export default function NoteTasks(props: INoteTasksProps) {
 
   const { showModalScreen } = useModalScreen();
   const { showSnackbar } = useSnackbar();
-  const requireActiveOrg = useActiveOrgGuard();
 
   // --- MUTATIONS ---
-  const [createTask] = useMutation(CreateTaskDocument);
+  const createTask = useCreateTask();
   const [updateTask] = useMutation(UpdateTaskDocument);
   const [deleteTask] = useMutation(DeleteTaskDocument, {
     update(cache, { data }) {
@@ -140,26 +138,24 @@ export default function NoteTasks(props: INoteTasksProps) {
           },
         });
       } else {
-        const organizationId = requireActiveOrg();
-        if (!organizationId) return;
-
-        delete data.id;
-        await createTask({
-          variables: {
-            data: {
-              ...data,
-              summary: data.summary || '',
-              status: cleanStatus,
-              clientProfile: clientProfileId,
-              hmisClientProfile: hmisClientProfileId,
-              teamId: cleanTeamId ?? teamId ?? undefined,
-              // Handle linking to either Note type
-              note: noteId ?? undefined,
-              hmisNote: hmisNoteId ?? undefined,
-              organizationId,
-            },
-          },
+        // `id` belongs to an update payload; a create names no row.
+        const { id: _existingId, ...fields } = data;
+        const created = await createTask({
+          ...fields,
+          summary: data.summary || '',
+          status: cleanStatus,
+          clientProfile: clientProfileId,
+          hmisClientProfile: hmisClientProfileId,
+          teamId: cleanTeamId ?? teamId ?? undefined,
+          // Handle linking to either Note type
+          note: noteId ?? undefined,
+          hmisNote: hmisNoteId ?? undefined,
         });
+
+        if (!created.ok) {
+          showSnackbar({ message: created.message, type: 'error' });
+          return;
+        }
       }
       refetch?.();
     } catch (err) {

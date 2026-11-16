@@ -1,4 +1,3 @@
-import { useMutation } from '@apollo/client/react';
 import { PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
@@ -15,11 +14,7 @@ import {
   TaskType,
   toTaskFilter,
 } from '../../../../apollo';
-import {
-  useActiveOrgGuard,
-  useActiveOrgId,
-  useSnackbar,
-} from '../../../../hooks';
+import { useActiveOrgId, useCreateTask, useSnackbar } from '../../../../hooks';
 import { useModalScreen } from '../../../../providers';
 import {
   enumDisplayTaskStatus,
@@ -34,7 +29,6 @@ import {
   toModelFilterValues,
 } from '../../../../ui-components';
 import { TaskFormData } from '../../../../ui-components/NoteTasks';
-import { CreateTaskDocument } from '../../../../ui-components/TaskForm/__generated__/createTask.generated';
 import { TasksDocument } from '../../../../ui-components/TaskList/__generated__/Tasks.generated';
 
 function getInitialTaskFilters(): TModelFilters {
@@ -57,10 +51,9 @@ export function ClientTasksViewHmis(props: TProps) {
   const { client } = props;
 
   const [search, setSearch] = useState('');
-  const [createTask] = useMutation(CreateTaskDocument);
+  const createTask = useCreateTask();
   const { showSnackbar } = useSnackbar();
   const { showModalScreen } = useModalScreen();
-  const requireActiveOrg = useActiveOrgGuard();
   const activeOrgId = useActiveOrgId();
 
   const [filtersKey, setFiltersKey] = useState(0);
@@ -80,29 +73,31 @@ export function ClientTasksViewHmis(props: TProps) {
     setFiltersKey((k) => k + 1);
   }
 
-  const onSubmit = async (task: TaskFormData, closeForm: () => void) => {
-    if (!client?.id) return;
-
-    const organizationId = requireActiveOrg();
-    if (!organizationId) return;
-
+  const onSubmit = async (
+    task: TaskFormData,
+    closeForm: () => void,
+    clientId: string,
+  ) => {
     try {
-      const result = await createTask({
-        variables: {
-          data: {
-            summary: task.summary ?? '',
-            description: task.description,
-            status: task.status,
-            teamId: task.teamId ?? undefined,
-            hmisClientProfile: client.id,
-            organizationId,
-          },
+      const outcome = await createTask(
+        {
+          summary: task.summary ?? '',
+          description: task.description,
+          status: task.status,
+          teamId: task.teamId ?? undefined,
+          hmisClientProfile: clientId,
         },
-        refetchQueries: [TasksDocument],
-        awaitRefetchQueries: true,
-      });
+        { refetchQueries: [TasksDocument], awaitRefetchQueries: true },
+      );
 
-      if (result.data?.createTask.__typename === 'OperationInfo') {
+      if (!outcome.ok) {
+        showSnackbar({ message: outcome.message, type: 'error' });
+        return;
+      }
+
+      if (outcome.result.data?.createTask.__typename === 'OperationInfo') {
+        // A rejection arrives as OperationInfo, not an error — return rather
+        // than closing the form as if it had been saved.
         showSnackbar({ message: 'Error creating a task.', type: 'error' });
         return;
       }
@@ -156,11 +151,16 @@ export function ClientTasksViewHmis(props: TProps) {
     throw new Error('Something went wrong. Please try again.');
   }
 
+  const clientId = client.id;
+
   function openTaskForm() {
     showModalScreen({
       presentation: 'fullScreenModal',
       renderContent: ({ close }) => (
-        <TaskForm onCancel={close} onSubmit={(task) => onSubmit(task, close)} />
+        <TaskForm
+          onCancel={close}
+          onSubmit={(task) => onSubmit(task, close, clientId)}
+        />
       ),
       title: 'Follow-Up Task',
     });
