@@ -7,8 +7,8 @@ export const updateShelterProfileSuccessTypename: Extract<
   NonNullable<UpdateShelterProfileMutation['updateShelter']> extends readonly (infer _T)[]
     ? _T
     : NonNullable<UpdateShelterProfileMutation['updateShelter']>,
-  { __typename: 'ShelterType' }
->['__typename'] = 'ShelterType';
+  { __typename: 'OperatorShelterType' }
+>['__typename'] = 'OperatorShelterType';
 
 export const updateShelterProfileMeta = {
   operationKey: updateShelterProfileOperationKey,
