@@ -146,65 +146,57 @@ class SendInvitationTestCase(TestCase):
             self.assertIn("test organization", body)
             self.assertNotIn("betterangels.la", body)
 
-    @override_settings(SHELTER_WEB_BASE_URL="https://shelter.example.org")
-    def test_a_shelter_operator_invitation_without_an_organization_reads_cleanly(self) -> None:
-        """The generic invite path passes no organization; the sentence must still parse.
-
-        ``Organization.name`` is required but not non-blank, and ``invite_by_email``
-        can be called without one, so "reservations at ." has to be impossible.
-        """
-        user = baker.make(User, email=self.email)
-
-        self.invitation_backend.send_invitation(
-            user,
-            baker.make(User, email="admin@test.com"),
-            base_url=base_url_for(SHELTER_OPERATOR),
-            role_template=SHELTER_OPERATOR,
-        )
-
-        email = Email.objects.get(to=self.email)
-        for body in (email.html_message, email.message):
-            self.assertNotIn(" at .", body)
-            self.assertIn("manage beds, rooms, and reservations.", body)
-
-    @override_settings(SHELTER_WEB_BASE_URL="https://shelter.example.org")
-    def test_a_blank_organization_name_is_omitted(self) -> None:
-        """A whitespace-only name must not render "at  ." either."""
-        user = baker.make(User, email=self.email)
-
-        self.invitation_backend.send_invitation(
-            user,
-            baker.make(User, email="admin@test.com"),
-            organization=Organization.objects.create(name="   "),
-            base_url=base_url_for(SHELTER_OPERATOR),
-            role_template=SHELTER_OPERATOR,
-        )
-
-        email = Email.objects.get(to=self.email)
-        for body in (email.html_message, email.message):
-            self.assertNotIn(" at .", body)
-        self.assertIn("You've been added as a Shelter Operator.", email.message)
-
-    def test_the_invite_templates_drop_a_whitespace_only_organization_name(self) -> None:
-        """The guard belongs to the template, not only to the sender's strip().
-
-        Rendered directly, so a future caller that skips ``send_invitation`` cannot
-        reintroduce the dangling clause the review flagged.
-        """
-        context = {
-            "organization_name": "   ",
+    def _render_invite(self, **context: object) -> tuple[str, str]:
+        """Render both bodies directly, bypassing ``send_invitation``'s context."""
+        values = {
             "login_email": "someone@test.com",
             "base_url": "https://shelter.example.org",
             "is_demo": False,
+            **context,
         }
+        return (
+            render_to_string("account/email/shelter_operator_invite.html", values),
+            render_to_string("account/messages/shelter_operator_invite.txt", values),
+        )
 
-        for template_name in (
-            "account/email/shelter_operator_invite.html",
-            "account/messages/shelter_operator_invite.txt",
-        ):
-            body = render_to_string(template_name, context)
-            self.assertNotIn(" at .", body)
-            self.assertNotIn(" at  ", body)
+    @override_settings(SHELTER_WEB_BASE_URL="https://shelter.example.org")
+    def test_a_shelter_operator_invitation_without_an_organization_reads_cleanly(self) -> None:
+        """``invite_by_email`` can send with no organization; the sentence must parse."""
+        user = baker.make(User, email=self.email)
+
+        self.invitation_backend.send_invitation(
+            user,
+            baker.make(User, email="admin@test.com"),
+            base_url=base_url_for(SHELTER_OPERATOR),
+            role_template=SHELTER_OPERATOR,
+        )
+
+        email = Email.objects.get(to=self.email)
+        self.assertIn("reservations.", email.html_message)
+        self.assertIn("as a Shelter Operator.", email.message)
+
+    def test_the_invite_templates_only_name_a_usable_organization(self) -> None:
+        """The template itself decides whether to name the org, and trims it.
+
+        The sender strips too, but the guard has to survive a direct render: the
+        review flagged "reservations at ." as reachable whenever the name is blank.
+        """
+        cases: tuple[tuple[str, str | None, str, str], ...] = (
+            ("missing", None, "reservations.", "as a Shelter Operator."),
+            ("blank", "   ", "reservations.", "as a Shelter Operator."),
+            (
+                "padded",
+                "  Acme Housing  ",
+                "reservations at Acme Housing.",
+                "as a Shelter Operator at Acme Housing.",
+            ),
+        )
+
+        for label, name, html_sentence, txt_sentence in cases:
+            with self.subTest(label):
+                html, txt = self._render_invite(organization_name=name)
+                self.assertIn(html_sentence, html)
+                self.assertIn(txt_sentence, txt)
 
     # ── invite_by_email ────────────────────────────────────────────────
 
