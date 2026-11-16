@@ -1884,7 +1884,6 @@ input OperatorShelterFilter {
   openNow: OpenNowInput
   mapBounds: MapBoundsInput
   geolocation: GeolocationInput
-  hasAvailableBeds: Boolean
   spa: [ID!]
   onSiteSecurity: Boolean
   city: [ID!]
@@ -1892,6 +1891,7 @@ input OperatorShelterFilter {
   spasServed: [ID!]
   services: [ID!]
   organizations: [ID!]
+  hasAvailableBeds: Boolean
   search: String
   status: [StatusChoices!]
   cityCouncilDistrict: [Int!]
@@ -2223,7 +2223,6 @@ input PublicShelterFilter {
   openNow: OpenNowInput
   mapBounds: MapBoundsInput
   geolocation: GeolocationInput
-  hasAvailableBeds: Boolean
   spa: [ID!]
   onSiteSecurity: Boolean
   city: [ID!]

@@ -2661,7 +2661,6 @@ export type PublicShelterFilter = {
   citiesServed?: InputMaybe<Array<Scalars['ID']['input']>>;
   city?: InputMaybe<Array<Scalars['ID']['input']>>;
   geolocation?: InputMaybe<GeolocationInput>;
-  hasAvailableBeds?: InputMaybe<Scalars['Boolean']['input']>;
   isAccessCenter?: InputMaybe<Scalars['Boolean']['input']>;
   isPrivate?: InputMaybe<Scalars['Boolean']['input']>;
   mapBounds?: InputMaybe<MapBoundsInput>;

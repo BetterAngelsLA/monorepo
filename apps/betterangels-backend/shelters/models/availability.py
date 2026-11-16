@@ -62,6 +62,13 @@ def validate_availability_counts(
     },
 )
 class ShelterAvailability(OrgScoped, BaseModel):
+    """Bed availability for a shelter.
+
+    The model permissions guard the standalone availability admin only: the
+    shelter admin form and ``updateShelter`` write this row under
+    ``change_shelter``, like any other shelter field.
+    """
+
     org_via = ("shelter",)
 
     objects: models.Manager["ShelterAvailability"] = models.Manager()
