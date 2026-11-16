@@ -37,6 +37,7 @@ class Team(OrgScoped, BaseModel):
                 Lower("name"),
                 "organization",
                 name="unique_team_name_per_org",
+                violation_error_message="A team with this name already exists in this organization.",
             ),
         ]
 
