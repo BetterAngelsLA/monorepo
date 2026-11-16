@@ -1,9 +1,8 @@
 import { useMutation } from '@apollo/client/react';
 import { TaskStatusEnum, UpdateTaskInput } from '../../apollo';
-import { useActiveOrgGuard, useSnackbar } from '../../hooks';
+import { useCreateTask, useSnackbar } from '../../hooks';
 
 // 1. Import Mutations
-import { CreateTaskDocument } from '../TaskForm/__generated__/createTask.generated';
 import { DeleteTaskDocument } from '../TaskForm/__generated__/deleteTask.generated';
 import { UpdateTaskDocument } from '../TaskForm/__generated__/updateTask.generated';
 
@@ -38,9 +37,8 @@ export default function NoteTasksModal(props: INoteTasksModalProps) {
   } = props;
 
   const { showSnackbar } = useSnackbar();
-  const requireActiveOrg = useActiveOrgGuard();
 
-  const [createTask] = useMutation(CreateTaskDocument);
+  const createTask = useCreateTask();
   const [updateTask] = useMutation(UpdateTaskDocument);
   const [deleteTask] = useMutation(DeleteTaskDocument, {
     update(cache, { data }) {
@@ -97,29 +95,27 @@ export default function NoteTasksModal(props: INoteTasksModalProps) {
           },
         });
       } else {
-        const organizationId = requireActiveOrg();
-        if (!organizationId) return;
+        const created = await createTask({
+          summary: formData.summary || '',
+          description: formData.description,
+          status: cleanStatus,
+          teamId: cleanTeamId ?? teamId ?? undefined,
+          assigneeId: cleanAssigneeId,
 
-        result = await createTask({
-          variables: {
-            data: {
-              summary: formData.summary || '',
-              description: formData.description,
-              status: cleanStatus,
-              teamId: cleanTeamId ?? teamId ?? undefined,
-              assigneeId: cleanAssigneeId,
+          // FIX: Map IDs correctly based on which props are present
+          clientProfile: clientProfileId ?? undefined,
+          hmisClientProfile: hmisClientProfileId ?? undefined,
 
-              // FIX: Map IDs correctly based on which props are present
-              clientProfile: clientProfileId ?? undefined,
-              hmisClientProfile: hmisClientProfileId ?? undefined,
-
-              note: noteId ?? undefined,
-              hmisNote: hmisNoteId ?? undefined,
-
-              organizationId,
-            },
-          },
+          note: noteId ?? undefined,
+          hmisNote: hmisNoteId ?? undefined,
         });
+
+        if (!created.ok) {
+          showSnackbar({ message: created.message, type: 'error' });
+          return;
+        }
+
+        result = created.result;
       }
       // A rejected value (e.g. an assignee who is not in the task's org)
       // comes back as OperationInfo rather than an exception; without this the
