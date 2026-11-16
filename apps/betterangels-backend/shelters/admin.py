@@ -37,6 +37,7 @@ from betterangels_backend import settings
 from common.images import build_img_url
 from common.models import Location
 from shelters.managers import BedQuerySet, RoomQuerySet
+from shelters.services.availability import apply_availability
 
 from .enums import (
     AccessibilityChoices,
@@ -325,29 +326,16 @@ class ShelterForm(forms.ModelForm):
     def save_availability(self) -> None:
         """Persist the availability fields onto the ``Shelter.availability`` row.
 
-        Called from ``ShelterAdmin.save_related``.  Only genuinely changed values
-        are saved so an unrelated shelter edit does not add availability to the
-        audit log.
+        Called from ``ShelterAdmin.save_related`` and delegates to
+        :func:`shelters.services.availability.apply_availability`, the same writer
+        ``updateShelter`` uses, so the admin and the API apply one rule and both
+        skip unchanged values (no availability event for an unrelated edit).
         """
         if not self.instance.pk:
             return
 
         values = {name: self.cleaned_data[name] for name in AVAILABILITY_FIELDS if name in self.cleaned_data}
-        if not values:
-            return
-
-        try:
-            availability = self.instance.availability
-        except ObjectDoesNotExist:
-            availability = ShelterAvailability(shelter=self.instance)
-
-        changed = {name: value for name, value in values.items() if getattr(availability, name) != value}
-        if not changed:
-            return
-
-        for name, value in changed.items():
-            setattr(availability, name, value)
-        availability.save()
+        apply_availability(self.instance, values)
 
     def clean_services(self) -> Any:
         services = self.cleaned_data.get("services")

@@ -1316,6 +1316,18 @@ class UpdateShelterAvailabilityTestCase(ShelterTestCase, TestCase):
         self.assertEqual(self.availability.restricted_beds, 3)
         self.assertEqual(self.availability.restriction_notes, "Adults only")
 
+    def test_null_availability_is_a_no_op(self) -> None:
+        response = self.execute_graphql(
+            self.MUTATION,
+            {"data": {"id": str(self.shelter.pk), "availability": None}},
+        )
+
+        self.assertIsNone(response.get("errors"))
+        self.availability.refresh_from_db()
+        self.assertEqual(self.availability.non_restricted_beds, 0)
+        self.assertEqual(self.availability.restricted_beds, 0)
+        self.assertEqual(self.availability.restriction_notes, "")
+
     def test_omitted_fields_keep_their_value(self) -> None:
         """The availability payload is a partial update, not a replacement."""
         ShelterAvailability.objects.filter(pk=self.availability.pk).update(
