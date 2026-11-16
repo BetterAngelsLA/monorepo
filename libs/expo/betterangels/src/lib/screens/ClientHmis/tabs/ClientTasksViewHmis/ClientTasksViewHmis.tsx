@@ -96,9 +96,12 @@ export function ClientTasksViewHmis(props: TProps) {
       }
 
       if (outcome.result.data?.createTask.__typename === 'OperationInfo') {
-        // A rejection arrives as OperationInfo, not an error — return rather
-        // than closing the form as if it had been saved.
-        showSnackbar({ message: 'Error creating a task.', type: 'error' });
+        showSnackbar({
+          message:
+            outcome.result.data.createTask.messages[0]?.message ??
+            'Error creating a task.',
+          type: 'error',
+        });
         return;
       }
 
