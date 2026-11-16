@@ -969,6 +969,25 @@ class OperatorShelterAvailabilityTestCase(GraphQLBaseTestCase):
         self.assertEqual(availability["nonRestrictedBeds"], 4)
         self.assertEqual(availability["restrictedBeds"], 2)
 
+    def test_public_shelter_query_does_not_expose_availability(self) -> None:
+        """Availability is operator-only; the public shelter type must not carry it."""
+        response = self.execute_graphql(
+            """
+            query Shelter($pk: ID!) {
+                shelter(pk: $pk) {
+                    id
+                    availability {
+                        nonRestrictedBeds
+                    }
+                }
+            }
+            """,
+            {"pk": str(self.shelter.pk)},
+        )
+
+        self.assertIsNotNone(response.get("errors"))
+        self.assertIn("availability", response["errors"][0]["message"])
+
 
 class OperatorShelterBAReviewTestCase(GraphQLBaseTestCase, ParametrizedTestCase):
     """The BA review fields are a global-tier (GSO-only) domain (ADR 0001 §2.4).

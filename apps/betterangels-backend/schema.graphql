@@ -1955,12 +1955,12 @@ type OperatorShelterType {
   visitorsAllowed: Boolean
   website: String
   mediaLinks: [MediaLinkType!]!
-  availability: ShelterAvailabilityType
   HeroPhotos: [ShelterPhotoType!]
   heroImage(preset: ImagePresetEnum = null, processingOptions: String = null): ShelterHeroImageType
   distanceInMiles: Float
   bedCounts: BedCountType!
   roomCounts: RoomCountType!
+  availability: ShelterAvailabilityType
   overallRating: Int
   subjectiveReview: String
   declinedBaVisit: Boolean
@@ -2961,7 +2961,6 @@ type ShelterType {
   visitorsAllowed: Boolean
   website: String
   mediaLinks: [MediaLinkType!]!
-  availability: ShelterAvailabilityType
   HeroPhotos: [ShelterPhotoType!]
   heroImage(preset: ImagePresetEnum = null, processingOptions: String = null): ShelterHeroImageType
   distanceInMiles: Float

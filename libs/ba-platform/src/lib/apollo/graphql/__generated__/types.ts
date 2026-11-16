@@ -3702,7 +3702,6 @@ export type ShelterType = {
   accessibility: Array<AccessibilityType>;
   addNotesShelterDetails?: Maybe<Scalars['String']['output']>;
   addNotesSleepingDetails?: Maybe<Scalars['String']['output']>;
-  availability?: Maybe<ShelterAvailabilityType>;
   bedCounts: BedCountType;
   bedFees?: Maybe<Scalars['String']['output']>;
   citiesServed: Array<CityType>;

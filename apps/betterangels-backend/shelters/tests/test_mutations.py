@@ -1281,11 +1281,6 @@ class UpdateShelterAvailabilityTestCase(ShelterTestCase, TestCase):
             updateShelter(data: $data) {
                 ... on ShelterType {
                     id
-                    availability {
-                        nonRestrictedBeds
-                        restrictedBeds
-                        restrictionNotes
-                    }
                 }
                 ... on OperationInfo {
                     messages {
@@ -1324,12 +1319,6 @@ class UpdateShelterAvailabilityTestCase(ShelterTestCase, TestCase):
         self.assertEqual(self.availability.non_restricted_beds, 6)
         self.assertEqual(self.availability.restricted_beds, 3)
         self.assertEqual(self.availability.restriction_notes, "Adults only")
-        # ShelterType exposes availability through the shared mixin, so the
-        # mutation response can re-render the row without a follow-up query.
-        result = response["data"]["updateShelter"]["availability"]
-        self.assertEqual(result["nonRestrictedBeds"], 6)
-        self.assertEqual(result["restrictedBeds"], 3)
-        self.assertEqual(result["restrictionNotes"], "Adults only")
 
     def test_omitted_fields_keep_their_value(self) -> None:
         """The availability payload is a partial update, not a replacement."""
