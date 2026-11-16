@@ -1406,6 +1406,32 @@ class UpdateShelterAvailabilityTestCase(ShelterTestCase, TestCase):
         self.availability.refresh_from_db()
         self.assertEqual(self.availability.non_restricted_beds, 0)
 
+    def test_recreates_a_missing_row_in_a_single_write(self) -> None:
+        """A deleted availability row is re-created with one INSERT, not insert+update."""
+        ShelterAvailability.objects.filter(shelter=self.shelter).delete()
+        event_model = ShelterAvailability.pgh_event_model  # type: ignore[attr-defined]
+        watermark = event_model.objects.order_by("-pgh_id").values_list("pgh_id", flat=True).first() or 0
+
+        response = self.execute_graphql(
+            self.MUTATION,
+            {
+                "data": {
+                    "id": str(self.shelter.pk),
+                    "availability": {"nonRestrictedBeds": 3, "restrictedBeds": 1, "restrictionNotes": "New row"},
+                }
+            },
+        )
+
+        self.assertIsNone(response.get("errors"))
+        recreated = ShelterAvailability.objects.get(shelter=self.shelter)
+        self.assertEqual(recreated.non_restricted_beds, 3)
+        self.assertEqual(recreated.restricted_beds, 1)
+        self.assertEqual(recreated.restriction_notes, "New row")
+        self.assertEqual(
+            list(event_model.objects.filter(pgh_id__gt=watermark).values_list("pgh_label", flat=True)),
+            ["shelter.availability.add"],
+        )
+
     def test_counts_above_total_beds_returns_field_validation(self) -> None:
         """Availability never advertises more beds than the shelter has."""
         self.shelter.total_beds = 4

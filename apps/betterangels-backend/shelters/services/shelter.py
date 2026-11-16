@@ -78,10 +78,18 @@ def _apply_availability(shelter: Shelter, availability_data: Dict[str, Any]) -> 
     if "restriction_notes" in values and values["restriction_notes"] is None:
         values["restriction_notes"] = ""
 
-    availability, _ = ShelterAvailability.objects.get_or_create(shelter=shelter)
-    changed = {field: value for field, value in values.items() if getattr(availability, field) != value}
-    if not changed:
-        return
+    try:
+        availability = ShelterAvailability.objects.get(shelter=shelter)
+    except ShelterAvailability.DoesNotExist:
+        # Build the row and write it once: ``get_or_create`` would INSERT the
+        # defaults and then UPDATE them, leaving an ``add`` *and* an ``update``
+        # event in the audit log for one logical write.
+        availability = ShelterAvailability(shelter=shelter)
+        changed = values
+    else:
+        changed = {field: value for field, value in values.items() if getattr(availability, field) != value}
+        if not changed:
+            return
 
     for field, value in changed.items():
         setattr(availability, field, value)
