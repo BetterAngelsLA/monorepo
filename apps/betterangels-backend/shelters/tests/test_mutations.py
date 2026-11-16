@@ -24,7 +24,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         mutation = """
             mutation ($data: CreateShelterInput!) {
                 createShelter(data: $data) {
-                    ... on ShelterType {
+                    ... on OperatorShelterType {
                         id
                         name
                         description
@@ -65,7 +65,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         mutation = """
             mutation ($data: CreateShelterInput!) {
                 createShelter(data: $data) {
-                    ... on ShelterType {
+                    ... on OperatorShelterType {
                         id
                         name
                         description
@@ -125,7 +125,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         mutation = """
             mutation ($data: CreateShelterInput!) {
                 createShelter(data: $data) {
-                    ... on ShelterType {
+                    ... on OperatorShelterType {
                         id
                         name
                         pets {
@@ -183,7 +183,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         mutation = """
             mutation ($data: CreateShelterInput!) {
                 createShelter(data: $data) {
-                    ... on ShelterType {
+                    ... on OperatorShelterType {
                         id
                         name
                         location {
@@ -224,7 +224,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         mutation = """
             mutation ($data: CreateShelterInput!) {
                 createShelter(data: $data) {
-                    ... on ShelterType {
+                    ... on OperatorShelterType {
                         id
                         name
                         services {
@@ -305,7 +305,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         mutation = """
             mutation ($data: CreateShelterInput!) {
                 createShelter(data: $data) {
-                    ... on ShelterType {
+                    ... on OperatorShelterType {
                         id
                     }
                     ... on OperationInfo {
@@ -343,7 +343,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         mutation = """
             mutation ($data: CreateShelterInput!) {
                 createShelter(data: $data) {
-                    ... on ShelterType {
+                    ... on OperatorShelterType {
                         id
                         name
                     }
@@ -373,7 +373,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         mutation = """
             mutation ($data: CreateShelterInput!) {
                 createShelter(data: $data) {
-                    ... on ShelterType {
+                    ... on OperatorShelterType {
                         id
                     }
                     ... on OperationInfo {
@@ -411,7 +411,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         mutation = """
             mutation ($data: CreateShelterInput!) {
                 createShelter(data: $data) {
-                    ... on ShelterType {
+                    ... on OperatorShelterType {
                         id
                         name
                     }
@@ -446,7 +446,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         mutation = """
             mutation ($data: CreateShelterInput!) {
                 createShelter(data: $data) {
-                    ... on ShelterType {
+                    ... on OperatorShelterType {
                         id
                     }
                     ... on OperationInfo {
@@ -486,7 +486,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         mutation = """
             mutation ($data: CreateShelterInput!) {
                 createShelter(data: $data) {
-                    ... on ShelterType {
+                    ... on OperatorShelterType {
                         id
                     }
                     ... on OperationInfo {
@@ -525,7 +525,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         mutation = """
             mutation ($data: UpdateShelterInput!) {
                 updateShelter(data: $data) {
-                    ... on ShelterType {
+                    ... on OperatorShelterType {
                         id
                         name
                         status
@@ -589,7 +589,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         mutation = """
             mutation ($data: UpdateShelterInput!) {
                 updateShelter(data: $data) {
-                    ... on ShelterType {
+                    ... on OperatorShelterType {
                         id
                         description
                         isPrivate
@@ -622,7 +622,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         mutation = """
             mutation ($data: UpdateShelterInput!) {
                 updateShelter(data: $data) {
-                    ... on ShelterType {
+                    ... on OperatorShelterType {
                         id
                         accessibility { name }
                         demographics { name }
@@ -661,7 +661,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         mutation = """
             mutation ($data: UpdateShelterInput!) {
                 updateShelter(data: $data) {
-                    ... on ShelterType {
+                    ... on OperatorShelterType {
                         id
                     }
                     ... on OperationInfo {
@@ -709,7 +709,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         mutation = """
             mutation ($data: UpdateShelterInput!) {
                 updateShelter(data: $data) {
-                    ... on ShelterType {
+                    ... on OperatorShelterType {
                         id
                         services {
                             id
@@ -743,7 +743,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         mutation = """
             mutation ($data: UpdateShelterInput!) {
                 updateShelter(data: $data) {
-                    ... on ShelterType {
+                    ... on OperatorShelterType {
                         id
                     }
                     ... on OperationInfo {
@@ -777,7 +777,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         mutation = """
             mutation ($data: UpdateShelterInput!) {
                 updateShelter(data: $data) {
-                    ... on ShelterType {
+                    ... on OperatorShelterType {
                         id
                     }
                     ... on OperationInfo {
@@ -818,7 +818,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         mutation = """
             mutation ($data: UpdateShelterInput!) {
                 updateShelter(data: $data) {
-                    ... on ShelterType {
+                    ... on OperatorShelterType {
                         id
                         citiesServed {
                             id
@@ -877,7 +877,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         mutation = """
             mutation ($data: UpdateShelterInput!) {
                 updateShelter(data: $data) {
-                    ... on ShelterType {
+                    ... on OperatorShelterType {
                         id
                         spasServed {
                             id
@@ -936,7 +936,7 @@ class ShelterMutationPermissionTestCase(ShelterTestCase, TestCase):
     CREATE_MUTATION = """
         mutation CreateShelter($data: CreateShelterInput!) {
             createShelter(data: $data) {
-                ... on ShelterType {
+                ... on OperatorShelterType {
                     id
                     name
                 }
@@ -953,7 +953,7 @@ class ShelterMutationPermissionTestCase(ShelterTestCase, TestCase):
     UPDATE_MUTATION = """
         mutation UpdateShelter($data: UpdateShelterInput!) {
             updateShelter(data: $data) {
-                ... on ShelterType {
+                ... on OperatorShelterType {
                     id
                     name
                 }
@@ -1279,7 +1279,7 @@ class UpdateShelterAvailabilityTestCase(ShelterTestCase, TestCase):
     MUTATION = """
         mutation UpdateShelter($data: UpdateShelterInput!) {
             updateShelter(data: $data) {
-                ... on ShelterType {
+                ... on OperatorShelterType {
                     id
                 }
                 ... on OperationInfo {
@@ -1517,7 +1517,7 @@ class UpdateShelterAdditionalContactsErrorShapeTestCase(ShelterTestCase, TestCas
     MUTATION = """
         mutation UpdateShelter($data: UpdateShelterInput!) {
             updateShelter(data: $data) {
-                ... on ShelterType {
+                ... on OperatorShelterType {
                     id
                 }
                 ... on OperationInfo {
@@ -1575,7 +1575,7 @@ class UpdateShelterSchedulesTestCase(ShelterTestCase, TestCase):
     UPDATE_MUTATION = """
         mutation ($data: UpdateShelterInput!) {
             updateShelter(data: $data) {
-                ... on ShelterType {
+                ... on OperatorShelterType {
                     id
                 }
                 ... on OperationInfo {

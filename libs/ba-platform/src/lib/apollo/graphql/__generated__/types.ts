@@ -847,7 +847,7 @@ export type CreateShelterInput = {
   website?: InputMaybe<Scalars['String']['input']>;
 };
 
-export type CreateShelterPayload = OperationInfo | ShelterType;
+export type CreateShelterPayload = OperationInfo | OperatorShelterType;
 
 export type CreateSocialMediaProfilePayload = OperationInfo | SocialMediaProfileType;
 
@@ -4262,7 +4262,7 @@ export type UpdateShelterInput = {
   website?: InputMaybe<Scalars['String']['input']>;
 };
 
-export type UpdateShelterPayload = OperationInfo | ShelterType;
+export type UpdateShelterPayload = OperationInfo | OperatorShelterType;
 
 export type UpdateShelterPhotoInput = {
   id: Scalars['ID']['input'];

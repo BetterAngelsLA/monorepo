@@ -853,7 +853,7 @@ input CreateShelterInput {
   spaId: ID
 }
 
-union CreateShelterPayload = ShelterType | OperationInfo
+union CreateShelterPayload = OperatorShelterType | OperationInfo
 
 union CreateSocialMediaProfilePayload = SocialMediaProfileType | OperationInfo
 
@@ -3464,7 +3464,7 @@ input UpdateShelterInput {
   availability: ShelterAvailabilityInput
 }
 
-union UpdateShelterPayload = ShelterType | OperationInfo
+union UpdateShelterPayload = OperatorShelterType | OperationInfo
 
 input UpdateShelterPhotoInput {
   id: ID!

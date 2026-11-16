@@ -132,18 +132,18 @@ class Mutation:
     # ── Shelter ────────────────────────────────────────────────────────────
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
-    def create_shelter(self, info: Info, data: CreateShelterInput) -> ShelterType:
+    def create_shelter(self, info: Info, data: CreateShelterInput) -> OperatorShelterType:
         """Create a shelter — authorization lives in :func:`shelter_create` (ADR 0001 §2.6)."""
         user = cast(User, get_current_user(info))
         clean = strawberry.asdict(data)
-        return cast(ShelterType, shelter_create(user=user, data=clean))
+        return cast(OperatorShelterType, shelter_create(user=user, data=clean))
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
-    def update_shelter(self, info: Info, data: UpdateShelterInput) -> ShelterType:
+    def update_shelter(self, info: Info, data: UpdateShelterInput) -> OperatorShelterType:
         """Update a shelter — authorization lives in :func:`shelter_update` (ADR 0001 §2.6)."""
         user = cast(User, get_current_user(info))
         clean = strawberry.asdict(data)
-        return cast(ShelterType, shelter_update(user=user, data=clean))
+        return cast(OperatorShelterType, shelter_update(user=user, data=clean))
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def delete_shelter(self, info: Info, id: ID) -> DeletedObjectType:
