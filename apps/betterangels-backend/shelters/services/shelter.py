@@ -8,7 +8,15 @@ from strawberry import UNSET
 
 from common.permissions.selectors import can_globally
 from common.permissions.utils import require_can
-from shelters.models import ContactInfo, Service, ServiceCategory, Shelter, ShelterAvailability
+from shelters.models import (
+    AVAILABILITY_FIELDS,
+    ContactInfo,
+    Service,
+    ServiceCategory,
+    Shelter,
+    ShelterAvailability,
+    validate_availability_counts,
+)
 from shelters.permissions import BA_REVIEW_FIELDS, can_change_ba_review
 from shelters.selectors import shelter_get
 from shelters.services.utils import (
@@ -18,10 +26,6 @@ from shelters.services.utils import (
     _set_m2m_from_enums,
     _sync_schedules,
 )
-
-# The availability columns an ``availability`` payload may write.  The row also
-# carries FKs/timestamps that must never be payload-controlled.
-_SHELTER_AVAILABILITY_FIELDS = ("non_restricted_beds", "restricted_beds", "restriction_notes")
 
 
 def _require_permission_on_ba_review_change(user: "User", data: Dict[str, Any]) -> None:
@@ -41,6 +45,32 @@ def _require_permission_on_availability_change(user: "User", data: Dict[str, Any
         raise PermissionDenied("Editing availability is not allowed with this role.")
 
 
+def _require_availability_fits_total_beds(shelter: Shelter) -> None:
+    """Reject a ``total_beds`` change that would leave availability over capacity.
+
+    The availability payload validates its own counts; this covers the other
+    direction — lowering ``total_beds`` on its own — so the invariant holds no
+    matter which side of the relation the caller writes.
+    """
+    try:
+        availability = ShelterAvailability.objects.get(shelter=shelter)
+    except ShelterAvailability.DoesNotExist:
+        return
+
+    try:
+        validate_availability_counts(
+            non_restricted_beds=availability.non_restricted_beds,
+            restricted_beds=availability.restricted_beds,
+            total_beds=shelter.total_beds,
+        )
+    except ValidationError as exc:
+        raise ValidationError(
+            {
+                "total_beds": [str(error.message) for errors in exc.error_dict.values() for error in errors],
+            }
+        ) from exc
+
+
 def _apply_availability(shelter: Shelter, availability_data: Dict[str, Any]) -> None:
     """Apply the partial availability payload to the shelter's availability row.
 
@@ -50,7 +80,7 @@ def _apply_availability(shelter: Shelter, availability_data: Dict[str, Any]) -> 
     """
     values = {
         field: availability_data[field]
-        for field in _SHELTER_AVAILABILITY_FIELDS
+        for field in AVAILABILITY_FIELDS
         if field in availability_data and availability_data[field] is not UNSET
     }
     if not values:
@@ -75,7 +105,9 @@ def _apply_availability(shelter: Shelter, availability_data: Dict[str, Any]) -> 
         # ``availability.<field>`` rather than a bare model column name.
         raise ValidationError(
             {
-                f"availability.{field}": [str(error.message) for error in errors]
+                (f"availability.{field}" if field != NON_FIELD_ERRORS else "availability"): [
+                    str(error.message) for error in errors
+                ]
                 for field, errors in exc.error_dict.items()
             }
         ) from exc
@@ -416,6 +448,11 @@ def shelter_update(*, user: "User", data: Dict[str, Any]) -> Shelter:
 
     if has_availability:
         _apply_availability(shelter, availability or {})
+
+    # Checked even when an availability payload was submitted (it validates its
+    # own counts against the new total): an empty payload must not skip the guard.
+    if "total_beds" in scalar_data:
+        _require_availability_fits_total_beds(shelter)
 
     if has_schedules:
         if schedule_type is None:

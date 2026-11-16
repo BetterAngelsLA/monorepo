@@ -5,8 +5,8 @@ from django.test import RequestFactory, TestCase
 from django.urls import reverse
 
 from accounts.models import User
-from shelters.admin import AVAILABILITY_FIELDS, GroupedServiceWidget, ShelterAdmin, ShelterForm, ShelterResource
-from shelters.models import ContactInfo, Service, ServiceCategory, Shelter, ShelterAvailability
+from shelters.admin import GroupedServiceWidget, ShelterAdmin, ShelterForm, ShelterResource
+from shelters.models import AVAILABILITY_FIELDS, ContactInfo, Service, ServiceCategory, Shelter, ShelterAvailability
 
 
 class GroupedServiceWidgetTestCase(TestCase):
@@ -146,6 +146,34 @@ class ShelterFormAvailabilityTestCase(TestCase):
 
         created = ShelterAvailability.objects.get(shelter=self.shelter)
         self.assertEqual(created.non_restricted_beds, 3)
+
+    def test_form_rejects_counts_above_total_beds(self) -> None:
+        form = ShelterForm(instance=Shelter.objects.get(pk=self.shelter.pk))
+        form.cleaned_data = {
+            "non_restricted_beds": 3,
+            "restricted_beds": 2,
+            "restriction_notes": "",
+            "total_beds": 4,
+        }
+
+        form._validate_availability_counts(form.cleaned_data)
+
+        self.assertIn("non_restricted_beds", form.errors)
+        self.assertIn("cannot exceed the shelter's total beds", form.errors["non_restricted_beds"][0])
+
+    def test_form_allows_counts_at_the_total_and_an_unknown_total(self) -> None:
+        for total_beds in (5, None):
+            form = ShelterForm(instance=Shelter.objects.get(pk=self.shelter.pk))
+            form.cleaned_data = {
+                "non_restricted_beds": 3,
+                "restricted_beds": 2,
+                "restriction_notes": "",
+                "total_beds": total_beds,
+            }
+
+            form._validate_availability_counts(form.cleaned_data)
+
+            self.assertEqual(list(form.errors), [])
 
     def test_save_availability_skips_unchanged_values(self) -> None:
         form = ShelterForm(instance=self.shelter)

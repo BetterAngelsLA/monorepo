@@ -58,6 +58,7 @@ from .enums import (
     VaccinationRequirementChoices,
 )
 from .models import (
+    AVAILABILITY_FIELDS,
     SPA,
     Accessibility,
     Bed,
@@ -88,6 +89,7 @@ from .models import (
     VaccinationRequirement,
     Video,
     get_fields_with_other_option,
+    validate_availability_counts,
 )
 from .widgets import MultiDayCheckboxWidget
 
@@ -200,9 +202,7 @@ class GroupedServiceWidget(forms.Widget):
 
 # ``ShelterAvailability`` is a reverse OneToOne on ``Shelter``, so its columns are
 # not model fields of the form: they are declared below and persisted through
-# ``ShelterForm.save_availability()``.  One tuple so the fieldset, the write gate
-# and the save cannot drift apart.
-AVAILABILITY_FIELDS = ("non_restricted_beds", "restricted_beds", "restriction_notes")
+# ``ShelterForm.save_availability()``.
 
 
 class ShelterForm(forms.ModelForm):
@@ -414,8 +414,32 @@ class ShelterForm(forms.ModelForm):
 
         # Validate fields with "_other" using the centralized constant
         self._validate_other_fields(cleaned_data)
+        self._validate_availability_counts(cleaned_data)
 
         return cleaned_data
+
+    def _validate_availability_counts(self, cleaned_data: dict) -> None:
+        """Surface the model's capacity rule as a field error on the change form.
+
+        ``ShelterAvailability.clean()`` enforces it for every writer; validating
+        here as well keeps the admin from failing inside ``save_related`` after the
+        shelter has already been saved.
+        """
+        non_restricted_beds = cleaned_data.get("non_restricted_beds")
+        restricted_beds = cleaned_data.get("restricted_beds")
+        if non_restricted_beds is None or restricted_beds is None:
+            return
+
+        try:
+            validate_availability_counts(
+                non_restricted_beds=non_restricted_beds,
+                restricted_beds=restricted_beds,
+                total_beds=cleaned_data.get("total_beds"),
+            )
+        except ValidationError as exc:
+            for field, errors in (exc.error_dict or {}).items():
+                for error in errors:
+                    self.add_error(field, error)
 
     def _validate_other_fields(self, cleaned_data: dict) -> None:
         """Validate that _other fields are filled when 'Other' is selected."""

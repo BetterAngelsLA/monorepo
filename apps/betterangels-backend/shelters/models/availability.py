@@ -1,13 +1,48 @@
 """ShelterAvailability model — tracks bed availability for shelters."""
 
+from typing import Optional
+
 import pghistory
 import pgtrigger
+from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
 
 from common.models import BaseModel, OrgScoped
 
 from .shelter import Shelter
+
+# The availability columns a payload may write.  The row also carries FKs and
+# timestamps that must never be payload-controlled.  One tuple so the admin form,
+# the ORM write path and the GraphQL input cannot drift apart.
+AVAILABILITY_FIELDS = ("non_restricted_beds", "restricted_beds", "restriction_notes")
+
+
+def validate_availability_counts(
+    *,
+    non_restricted_beds: int,
+    restricted_beds: int,
+    total_beds: Optional[int],
+) -> None:
+    """Reject availability counts that do not fit the shelter's total bed count.
+
+    ``total_beds`` is nullable — an unknown capacity imposes no rule. Shared by
+    :meth:`ShelterAvailability.clean`, the shelter admin form and the
+    ``total_beds`` guard in :func:`~shelters.services.shelter.shelter_update`, so
+    every writer enforces exactly one rule.
+    """
+    if total_beds is None:
+        return
+
+    available_beds = non_restricted_beds + restricted_beds
+    if available_beds > total_beds:
+        raise ValidationError(
+            {
+                "non_restricted_beds": [
+                    f"Available beds ({available_beds}) cannot exceed the shelter's total beds ({total_beds})."
+                ]
+            }
+        )
 
 
 @pghistory.track(
@@ -53,6 +88,14 @@ class ShelterAvailability(OrgScoped, BaseModel):
         verbose_name = "Shelter Availability"
         verbose_name_plural = "Shelter Availabilities"
         ordering = ["-updated_at"]
+
+    def clean(self) -> None:
+        super().clean()
+        validate_availability_counts(
+            non_restricted_beds=self.non_restricted_beds,
+            restricted_beds=self.restricted_beds,
+            total_beds=self.shelter.total_beds,
+        )
 
     def __str__(self) -> str:
         return f"{self.shelter.name} — {self.non_restricted_beds} non-restricted / {self.restricted_beds} restricted"

@@ -3,7 +3,7 @@
 External code should continue importing from ``shelters.models``.
 """
 
-from .availability import ShelterAvailability  # noqa: F401
+from .availability import AVAILABILITY_FIELDS, ShelterAvailability, validate_availability_counts  # noqa: F401
 from .lookups import (
     SPA,
     Accessibility,

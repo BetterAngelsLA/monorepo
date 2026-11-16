@@ -1,6 +1,6 @@
 import datetime
 import random
-from typing import Any
+from typing import Any, Optional
 
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, connection, transaction
@@ -34,6 +34,7 @@ from shelters.models import (
     Service,
     ServiceCategory,
     Shelter,
+    ShelterAvailability,
     ShelterPhoto,
     ShelterType,
     Video,
@@ -981,3 +982,39 @@ class WriteEventCoverageTestCase(TestCase):
 
         room.pets.clear()
         self.assertEqual(Events.objects.filter(pgh_label="room.pet.remove").count(), 1)
+
+
+class ShelterAvailabilityValidationTestCase(TestCase):
+    """Availability counters must fit the shelter's total bed count."""
+
+    def _availability(
+        self,
+        *,
+        total_beds: Optional[int],
+        non_restricted_beds: int,
+        restricted_beds: int,
+    ) -> ShelterAvailability:
+        shelter = Shelter.objects.create(name="Capacity Shelter", total_beds=total_beds)
+        availability = ShelterAvailability.objects.get(shelter=shelter)
+        availability.non_restricted_beds = non_restricted_beds
+        availability.restricted_beds = restricted_beds
+        return availability
+
+    def test_counts_above_total_beds_are_rejected(self) -> None:
+        availability = self._availability(total_beds=4, non_restricted_beds=3, restricted_beds=2)
+
+        with self.assertRaises(ValidationError) as raised:
+            availability.full_clean()
+
+        self.assertIn("non_restricted_beds", raised.exception.error_dict)
+        self.assertIn("cannot exceed the shelter's total beds", str(raised.exception.error_dict))
+
+    def test_counts_equal_to_total_beds_are_allowed(self) -> None:
+        availability = self._availability(total_beds=4, non_restricted_beds=3, restricted_beds=1)
+
+        availability.full_clean()
+
+    def test_unknown_total_beds_imposes_no_rule(self) -> None:
+        availability = self._availability(total_beds=None, non_restricted_beds=30, restricted_beds=10)
+
+        availability.full_clean()
