@@ -1429,10 +1429,14 @@ class UpdateShelterAvailabilityTestCase(ShelterTestCase, TestCase):
 
         self.assertIsNone(response.get("errors"))
         messages = response["data"]["updateShelter"]["messages"]
-        self.assertEqual(len(messages), 1)
-        self.assertEqual(messages[0]["kind"], "VALIDATION")
-        self.assertEqual(messages[0]["field"], "availability.nonRestrictedBeds")
-        self.assertIn("cannot exceed the shelter's total beds", messages[0]["message"])
+        self.assertEqual(len(messages), 2)
+        self.assertSetEqual(
+            {message["field"] for message in messages},
+            {"availability.nonRestrictedBeds", "availability.restrictedBeds"},
+        )
+        for message in messages:
+            self.assertEqual(message["kind"], "VALIDATION")
+            self.assertIn("cannot exceed the shelter's total beds", message["message"])
 
         self.availability.refresh_from_db()
         self.assertEqual(self.availability.non_restricted_beds, 0)

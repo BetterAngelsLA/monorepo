@@ -153,7 +153,7 @@ class ShelterFormAvailabilityTestCase(TestCase):
         created = ShelterAvailability.objects.get(shelter=self.shelter)
         self.assertEqual(created.non_restricted_beds, 3)
 
-    def test_form_rejects_counts_above_total_beds(self) -> None:
+    def test_form_rejects_counts_above_total_beds_on_both_counters(self) -> None:
         form = ShelterForm(instance=Shelter.objects.get(pk=self.shelter.pk))
         form.cleaned_data = {
             "non_restricted_beds": 3,
@@ -164,8 +164,9 @@ class ShelterFormAvailabilityTestCase(TestCase):
 
         form._validate_availability_counts(form.cleaned_data)
 
-        self.assertIn("non_restricted_beds", form.errors)
-        self.assertIn("cannot exceed the shelter's total beds", form.errors["non_restricted_beds"][0])
+        message = "Available beds (5) cannot exceed the shelter's total beds (4)."
+        self.assertEqual(form.errors["non_restricted_beds"], [message])
+        self.assertEqual(form.errors["restricted_beds"], [message])
 
     def test_form_allows_counts_at_the_total_and_an_unknown_total(self) -> None:
         for total_beds in (5, None):

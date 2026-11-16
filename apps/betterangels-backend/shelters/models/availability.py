@@ -30,17 +30,20 @@ def validate_availability_counts(
     :meth:`ShelterAvailability.clean`, the shelter admin form and the
     ``total_beds`` guard in :func:`~shelters.services.shelter.shelter_update`, so
     every writer enforces exactly one rule.
+
+    The sum is what violates the rule, so both counters carry the error — neither
+    is wrong on its own.
     """
     if total_beds is None:
         return
 
     available_beds = non_restricted_beds + restricted_beds
     if available_beds > total_beds:
+        message = f"Available beds ({available_beds}) cannot exceed the shelter's total beds ({total_beds})."
         raise ValidationError(
             {
-                "non_restricted_beds": [
-                    f"Available beds ({available_beds}) cannot exceed the shelter's total beds ({total_beds})."
-                ]
+                "non_restricted_beds": [message],
+                "restricted_beds": [message],
             }
         )
 

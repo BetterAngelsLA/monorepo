@@ -52,11 +52,8 @@ def _require_availability_fits_total_beds(shelter: Shelter) -> None:
             total_beds=shelter.total_beds,
         )
     except ValidationError as exc:
-        raise ValidationError(
-            {
-                "total_beds": [str(error.message) for errors in exc.error_dict.values() for error in errors],
-            }
-        ) from exc
+        messages = list(dict.fromkeys(str(error.message) for errors in exc.error_dict.values() for error in errors))
+        raise ValidationError({"total_beds": messages}) from exc
 
 
 def _apply_availability(shelter: Shelter, availability_data: Dict[str, Any]) -> None:
