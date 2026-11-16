@@ -64,7 +64,7 @@ describe('SleepingDetails formSchema — Other field pairs', () => {
 });
 
 describe('SleepingDetails formSchema — availability counts', () => {
-  it('rejects counts above the total beds, attributed to the first counter', () => {
+  it('rejects counts above the total beds on both counters', () => {
     const result = formSchema.safeParse({
       ...baseValues,
       totalBeds: 4,
@@ -72,7 +72,7 @@ describe('SleepingDetails formSchema — availability counts', () => {
       restrictedBeds: 2,
     });
 
-    expect(issuePaths(result)).toEqual(['nonRestrictedBeds']);
+    expect(issuePaths(result)).toEqual(['nonRestrictedBeds', 'restrictedBeds']);
 
     if (result.success) {
       throw new Error('Expected the availability cap to reject the values.');
@@ -80,6 +80,21 @@ describe('SleepingDetails formSchema — availability counts', () => {
 
     expect(result.error.issues[0].message).toBe(
       "Available beds (5) cannot exceed the shelter's total beds (4).",
+    );
+  });
+
+  it('explains that a cleared counter needs a number', () => {
+    const result = formSchema.safeParse({
+      ...baseValues,
+      nonRestrictedBeds: null,
+    });
+
+    if (result.success) {
+      throw new Error('Expected a cleared counter to be rejected.');
+    }
+
+    expect(result.error.issues[0].message).toBe(
+      'Unrestricted beds must be a number',
     );
   });
 
@@ -151,13 +166,11 @@ describe('SleepingDetails toFormFieldErrors', () => {
       toFormFieldErrors([
         { field: 'availability.nonRestrictedBeds', message: 'first' },
         { field: 'availability.restrictedBeds', message: 'second' },
-        { field: 'availability', message: 'cap' },
         { field: 'name', message: 'untouched' },
       ]),
     ).toEqual([
       { field: 'nonRestrictedBeds', message: 'first' },
       { field: 'restrictedBeds', message: 'second' },
-      { field: 'nonRestrictedBeds', message: 'cap' },
       { field: 'name', message: 'untouched' },
     ]);
   });

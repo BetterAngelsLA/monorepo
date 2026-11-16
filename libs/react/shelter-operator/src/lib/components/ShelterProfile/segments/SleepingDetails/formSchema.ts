@@ -11,11 +11,11 @@ const baseSchema = z.object({
     .nullable()
     .optional(),
   nonRestrictedBeds: z
-    .number()
+    .number('Unrestricted beds must be a number')
     .int('Unrestricted beds must be a whole number')
     .min(0, 'Unrestricted beds must be zero or greater'),
   restrictedBeds: z
-    .number()
+    .number('Restricted beds must be a number')
     .int('Restricted beds must be a whole number')
     .min(0, 'Restricted beds must be zero or greater'),
   restrictionNotes: z.string().trim(),
@@ -39,15 +39,15 @@ export const formSchema = baseSchema.superRefine((data, ctx) => {
 
   // Mirrors ShelterAvailability.clean(): the counts can never exceed the
   // shelter's total beds. `totalBeds` is nullable, so an unknown capacity
-  // imposes no rule.
+  // imposes no rule. The sum is at fault, so both counters carry the message.
   const availableBeds = data.nonRestrictedBeds + data.restrictedBeds;
 
   if (data.totalBeds != null && availableBeds > data.totalBeds) {
-    ctx.addIssue({
-      code: 'custom',
-      path: ['nonRestrictedBeds'],
-      message: `Available beds (${availableBeds}) cannot exceed the shelter's total beds (${data.totalBeds}).`,
-    });
+    const message = `Available beds (${availableBeds}) cannot exceed the shelter's total beds (${data.totalBeds}).`;
+
+    for (const path of ['nonRestrictedBeds', 'restrictedBeds'] as const) {
+      ctx.addIssue({ code: 'custom', path: [path], message });
+    }
   }
 });
 
@@ -87,23 +87,15 @@ const AVAILABILITY_FIELD_PREFIX = 'availability.';
  * Re-points availability validation messages at the form fields they belong to.
  *
  * The availability counters are a nested input, so the API reports them under
- * `availability.<field>`; the form renders them as top-level fields. A
- * form-level `availability` message (the combined cap) has no input of its own,
- * so it lands on the first counter — matching the rule's own attribution.
+ * `availability.<field>`; the form renders them as top-level fields.
  */
 export function toFormFieldErrors(
   errors: { field: string; message: string }[],
 ): { field: string; message: string }[] {
-  return errors.map(({ field, message }) => {
-    if (field === 'availability') {
-      return { field: 'nonRestrictedBeds', message };
-    }
-
-    return {
-      field: field.startsWith(AVAILABILITY_FIELD_PREFIX)
-        ? field.slice(AVAILABILITY_FIELD_PREFIX.length)
-        : field,
-      message,
-    };
-  });
+  return errors.map(({ field, message }) => ({
+    field: field.startsWith(AVAILABILITY_FIELD_PREFIX)
+      ? field.slice(AVAILABILITY_FIELD_PREFIX.length)
+      : field,
+    message,
+  }));
 }

@@ -12,10 +12,10 @@ const totalBedsInput = () =>
   screen.getByLabelText('Total Beds') as HTMLInputElement;
 
 const unrestrictedBedsInput = () =>
-  screen.getByLabelText('Unrestricted Beds') as HTMLInputElement;
+  screen.getByLabelText('Available Unrestricted Beds') as HTMLInputElement;
 
 const restrictedBedsInput = () =>
-  screen.getByLabelText('Restricted Beds') as HTMLInputElement;
+  screen.getByLabelText('Available Restricted Beds') as HTMLInputElement;
 
 const restrictionNotesInput = () =>
   screen.getByLabelText('Restriction Notes') as HTMLTextAreaElement;
@@ -162,9 +162,9 @@ describe('ShelterSleepingDetailsForm availability', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
 
     expect(
-      await screen.findByText(
+      await screen.findAllByText(
         "Available beds (5) cannot exceed the shelter's total beds (4).",
       ),
-    ).toBeTruthy();
+    ).toHaveLength(2);
   });
 });
