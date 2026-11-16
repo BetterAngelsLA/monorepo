@@ -13,6 +13,11 @@ query GetShelterOperatorProfile($id: ID!) {
       contactTitle
       isClaimant
     }
+    availability {
+      nonRestrictedBeds
+      restrictedBeds
+      restrictionNotes
+    }
     bedFees
     citiesServed {
       id

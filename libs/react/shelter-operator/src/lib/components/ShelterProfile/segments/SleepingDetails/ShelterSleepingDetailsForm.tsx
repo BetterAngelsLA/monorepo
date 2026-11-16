@@ -71,7 +71,23 @@ export function ShelterSleepingDetailsForm(props: TProps) {
         />
 
         <Form.Content>
-          <Form.Block columns={2}>
+          <Form.Block columns={3}>
+            <ComboBox
+              control={control}
+              name="roomStyles"
+              inputName="roomStylesOther"
+              label="Room Styles"
+              inputLabel="Other Room Style"
+              options={ROOM_STYLE_OPTIONS}
+              isSearchable={ROOM_STYLE_OPTIONS.length > SEARCHABLE_DROPDOWN_MIN}
+              triggerValue={RoomStyleChoices.Other}
+              inputMaxLength={255}
+              inputError={errors.roomStylesOther?.message}
+              isViewMode={isViewMode}
+              disabled={disabled}
+            />
+          </Form.Block>
+          <Form.Block columns={3}>
             <Controller
               name="totalBeds"
               control={control}
@@ -93,22 +109,67 @@ export function ShelterSleepingDetailsForm(props: TProps) {
                 />
               )}
             />
-
-            <ComboBox
+            <Controller
+              name="nonRestrictedBeds"
               control={control}
-              name="roomStyles"
-              inputName="roomStylesOther"
-              label="Room Styles"
-              inputLabel="Other Room Style"
-              options={ROOM_STYLE_OPTIONS}
-              isSearchable={ROOM_STYLE_OPTIONS.length > SEARCHABLE_DROPDOWN_MIN}
-              triggerValue={RoomStyleChoices.Other}
-              inputMaxLength={255}
-              inputError={errors.roomStylesOther?.message}
-              isViewMode={isViewMode}
-              disabled={disabled}
+              render={({ field }) => (
+                <Input
+                  label="Available Unrestricted Beds"
+                  dataType="number"
+                  value={field.value ?? ''}
+                  min={0}
+                  onChange={(event) => {
+                    const value = event.target.valueAsNumber;
+
+                    field.onChange(Number.isNaN(value) ? null : value);
+                  }}
+                  onBlur={field.onBlur}
+                  disabled={disabled}
+                  isViewMode={isViewMode}
+                  error={errors.nonRestrictedBeds?.message}
+                />
+              )}
+            />
+
+            <Controller
+              name="restrictedBeds"
+              control={control}
+              render={({ field }) => (
+                <Input
+                  label="Available Restricted Beds"
+                  dataType="number"
+                  value={field.value ?? ''}
+                  min={0}
+                  onChange={(event) => {
+                    const value = event.target.valueAsNumber;
+
+                    field.onChange(Number.isNaN(value) ? null : value);
+                  }}
+                  onBlur={field.onBlur}
+                  disabled={disabled}
+                  isViewMode={isViewMode}
+                  error={errors.restrictedBeds?.message}
+                />
+              )}
             />
           </Form.Block>
+          <Controller
+            name="restrictionNotes"
+            control={control}
+            render={({ field }) => (
+              <Input
+                label="Restriction Notes"
+                variant="paragraph"
+                rows={3}
+                value={field.value ?? ''}
+                onChange={(event) => field.onChange(event.target.value)}
+                onBlur={field.onBlur}
+                disabled={disabled}
+                isViewMode={isViewMode}
+                error={errors.restrictionNotes?.message}
+              />
+            )}
+          />
 
           <Controller
             name="addNotesSleepingDetails"

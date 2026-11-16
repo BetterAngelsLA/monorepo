@@ -10,6 +10,15 @@ const baseSchema = z.object({
     .min(0, 'Total beds must be zero or greater')
     .nullable()
     .optional(),
+  nonRestrictedBeds: z
+    .number()
+    .int('Unrestricted beds must be a whole number')
+    .min(0, 'Unrestricted beds must be zero or greater'),
+  restrictedBeds: z
+    .number()
+    .int('Restricted beds must be a whole number')
+    .min(0, 'Restricted beds must be zero or greater'),
+  restrictionNotes: z.string().trim(),
   roomStyles: z.array(z.enum(RoomStyleChoices)),
   roomStylesOther: z.string().trim().nullable().optional(),
   addNotesSleepingDetails: z.string(), // RichTextEditor field
@@ -27,6 +36,19 @@ export const formSchema = baseSchema.superRefine((data, ctx) => {
       message: "This field is required when 'Other' is selected.",
     });
   }
+
+  // Mirrors ShelterAvailability.clean(): the counts can never exceed the
+  // shelter's total beds. `totalBeds` is nullable, so an unknown capacity
+  // imposes no rule.
+  const availableBeds = data.nonRestrictedBeds + data.restrictedBeds;
+
+  if (data.totalBeds != null && availableBeds > data.totalBeds) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['nonRestrictedBeds'],
+      message: `Available beds (${availableBeds}) cannot exceed the shelter's total beds (${data.totalBeds}).`,
+    });
+  }
 });
 
 export type SleepingDetailsFormData = z.infer<typeof formSchema>;
@@ -35,6 +57,9 @@ export const formFieldNames = Object.keys(baseSchema.shape);
 
 export const defaultFormValues: SleepingDetailsFormData = {
   totalBeds: undefined,
+  nonRestrictedBeds: 0,
+  restrictedBeds: 0,
+  restrictionNotes: '',
   roomStyles: [],
   roomStylesOther: undefined,
   addNotesSleepingDetails: '',
@@ -43,10 +68,42 @@ export const defaultFormValues: SleepingDetailsFormData = {
 export function toFormData(
   shelter: ShelterProfileType,
 ): SleepingDetailsFormData {
+  const availability = shelter.availability;
+
   return {
     totalBeds: shelter.totalBeds,
+    nonRestrictedBeds: availability?.nonRestrictedBeds ?? 0,
+    restrictedBeds: availability?.restrictedBeds ?? 0,
+    restrictionNotes: availability?.restrictionNotes ?? '',
     roomStyles: toDropdownValues(shelter.roomStyles),
     roomStylesOther: shelter.roomStylesOther,
     addNotesSleepingDetails: shelter.addNotesSleepingDetails ?? '',
   };
+}
+
+const AVAILABILITY_FIELD_PREFIX = 'availability.';
+
+/**
+ * Re-points availability validation messages at the form fields they belong to.
+ *
+ * The availability counters are a nested input, so the API reports them under
+ * `availability.<field>`; the form renders them as top-level fields. A
+ * form-level `availability` message (the combined cap) has no input of its own,
+ * so it lands on the first counter — matching the rule's own attribution.
+ */
+export function toFormFieldErrors(
+  errors: { field: string; message: string }[],
+): { field: string; message: string }[] {
+  return errors.map(({ field, message }) => {
+    if (field === 'availability') {
+      return { field: 'nonRestrictedBeds', message };
+    }
+
+    return {
+      field: field.startsWith(AVAILABILITY_FIELD_PREFIX)
+        ? field.slice(AVAILABILITY_FIELD_PREFIX.length)
+        : field,
+      message,
+    };
+  });
 }

@@ -16,6 +16,7 @@ import {
   type SleepingDetailsFormData,
   formFieldNames,
   toFormData,
+  toFormFieldErrors,
 } from './formSchema';
 
 function toUpdateInput(
@@ -25,6 +26,11 @@ function toUpdateInput(
   return {
     id: shelterId,
     totalBeds: data.totalBeds ?? null,
+    availability: {
+      nonRestrictedBeds: data.nonRestrictedBeds,
+      restrictedBeds: data.restrictedBeds,
+      restrictionNotes: data.restrictionNotes,
+    },
     roomStyles: data.roomStyles,
     roomStylesOther: data.roomStyles.includes(RoomStyleChoices.Other)
       ? (data.roomStylesOther ?? null)
@@ -62,11 +68,13 @@ export function ShelterSleepingDetails(props: TProps) {
       const fieldErrors = getFieldErrorsOrThrow({
         response,
         ...updateShelterProfileMeta,
-        fields: formFieldNames,
+        // Availability is a nested input, so its messages arrive under
+        // `availability.<field>`; allow the parent path and re-point them below.
+        fields: [...formFieldNames, 'availability'],
       });
 
       if (fieldErrors.length) {
-        applyFieldErrors(fieldErrors, setError);
+        applyFieldErrors(toFormFieldErrors(fieldErrors), setError);
 
         throw new BaError('Please see validation messages.');
       }
