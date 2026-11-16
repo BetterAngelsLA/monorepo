@@ -1270,10 +1270,6 @@ class UpdateShelterAvailabilityTestCase(ShelterTestCase, TestCase):
     Availability lives on its own row (``Shelter.availability``), so it is a nested
     input rather than flattened scalar fields; omitted fields keep their value and
     an unchanged payload writes nothing (no ``ShelterAvailabilityEvent`` noise).
-
-    The operator is the scoped ``SHELTER_OPERATOR`` role, without any
-    ``shelteravailability`` permission: the authority to change a shelter is the
-    authority to change its availability, exactly as with ``total_beds``.
     """
 
     MUTATION = """

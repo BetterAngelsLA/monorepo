@@ -379,9 +379,7 @@ def shelter_update(*, user: "User", data: Dict[str, Any]) -> Shelter:
     Schedules, services, and additional contacts use full-replacement semantics
     when provided.  ``additional_contacts`` is a BA-only field: gated on the
     global tier (``can_globally``) so a scoped Grant can never write it
-    (ADR 0001 §2.4).  ``availability`` is a partial update of the shelter's
-    availability row; the ``change_shelter`` permission that admits this payload
-    also admits it — the same authority that can write ``total_beds``.
+    (ADR 0001 §2.4).
 
     Raises:
         ``django.core.exceptions.ObjectDoesNotExist`` when no shelter matches the given ID

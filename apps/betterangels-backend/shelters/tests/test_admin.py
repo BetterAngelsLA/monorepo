@@ -197,8 +197,6 @@ class ShelterFormAvailabilityTestCase(TestCase):
 
 
 class ShelterAdminAvailabilityTestCase(TestCase):
-    """Availability is editable with the same authority as ``total_beds``."""
-
     NEW_VALUES = {"non_restricted_beds": 7, "restricted_beds": 2, "restriction_notes": "Men only"}
 
     def setUp(self) -> None:
