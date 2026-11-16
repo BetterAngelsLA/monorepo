@@ -1580,6 +1580,9 @@ class UpdateShelterAdditionalContactsErrorShapeTestCase(ShelterTestCase, TestCas
         self.assertEqual(messages[1]["field"], "additionalContacts.1.contactEmail")
         self.assertIn("email", messages[1]["message"].lower())
 
+        # The rejected payload is refused as a whole: nothing is persisted.
+        self.assertFalse(ContactInfo.objects.filter(shelter=self.shelter).exists())
+
 
 class UpdateShelterSchedulesTestCase(ShelterTestCase, TestCase):
     """updateShelter reconciles schedules in place (upsert) instead of replacing them."""

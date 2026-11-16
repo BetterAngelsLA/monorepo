@@ -152,19 +152,23 @@ describe('ShelterSleepingDetailsForm availability', () => {
   });
 
   it('blocks save when the counts exceed the total beds', async () => {
+    const onSubmit = vi.fn();
+
     render(
       <ShelterSleepingDetailsForm
         values={{ totalBeds: 4, nonRestrictedBeds: 3, restrictedBeds: 2 }}
-        onSubmit={onSubmitNoop}
+        onSubmit={onSubmit}
       />,
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
 
+    // The cap is rendered on both counters, so two nodes carry the message.
     expect(
       await screen.findAllByText(
         "Unrestricted + restricted beds (5) cannot exceed the shelter's total beds (4).",
       ),
     ).toHaveLength(2);
+    expect(onSubmit).not.toHaveBeenCalled();
   });
 });
