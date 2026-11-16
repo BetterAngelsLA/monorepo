@@ -1,6 +1,6 @@
 import { CloseIcon } from '@monorepo/react/icons';
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { LOGIN_BANNER_STORAGE_KEY, signInPath } from '../../constants';
 
 export function LoginBanner() {

@@ -83,6 +83,7 @@ export { default as PlusIcon } from './components/PlusIcon';
 export { default as RoundUpdateIcon } from './components/RoundUpdateIcon';
 export { default as SearchIcon } from './components/SearchIcon';
 export { default as SettingsOutlineIcon } from './components/SettingsOutlineIcon';
+export { default as ShareIcon } from './components/ShareIcon';
 export { default as ShirtIcon } from './components/ShirtIcon';
 export { default as ShowerIcon } from './components/ShowerIcon';
 export { default as SignOutIcon } from './components/SignOutIcon';

@@ -1,5 +1,5 @@
 import { ShelterPage } from '@monorepo/react/shelter';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router';
 
 export function ShelterRoute() {
   const { id } = useParams();

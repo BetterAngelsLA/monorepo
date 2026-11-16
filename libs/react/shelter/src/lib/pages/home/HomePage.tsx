@@ -2,7 +2,7 @@ import { useLocationPermission } from '@monorepo/react/components';
 import { mergeCss } from '@monorepo/react/shared';
 import { useAtom } from 'jotai';
 import { useCallback, useEffect, useState } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet } from 'react-router';
 import { ShelterChoices } from '../../apollo';
 import { sheltersAtom } from '../../atoms';
 import {

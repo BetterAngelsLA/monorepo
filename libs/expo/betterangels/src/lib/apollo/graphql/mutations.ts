@@ -20,6 +20,13 @@ export const DELETE_CURRENT_USER = gql`
 export const UPDATE_NOTE = gql`
   mutation UpdateNote($data: UpdateNoteInput!) {
     updateNote(data: $data) {
+      ... on OperationInfo {
+        messages {
+          kind
+          field
+          message
+        }
+      }
       ... on NoteType {
         id
         purpose

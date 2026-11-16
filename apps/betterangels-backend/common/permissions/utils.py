@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from functools import lru_cache
-from typing import Any, Sequence, Tuple, Type
+from typing import TYPE_CHECKING, Any, Sequence, Tuple, Type, TypeVar, cast
 
 import strawberry
 from django.contrib.auth.models import Group
@@ -12,6 +12,10 @@ from guardian.shortcuts import assign_perm
 from strawberry_django.auth.utils import get_current_user
 
 from common.errors import UnauthenticatedGQLError
+from common.utils import get_or_none
+
+if TYPE_CHECKING:
+    from django.db.models import QuerySet
 
 # ── Permission enum registry (frontend codegen) ───────────────────────────────
 
@@ -97,6 +101,44 @@ def register_model_permissions() -> None:
 
         enum_cls = TextChoices(name, members)  # type: ignore[call-overload]
         _permission_enum_registry.append(enum_cls)
+
+
+@lru_cache(maxsize=1)
+def declared_permission_strings() -> frozenset[str]:
+    """Every permission Django knows about, as ``"app_label.codename"``.
+
+    Built from the app registry — each model's ``default_permissions`` plus its
+    ``Meta.permissions`` — so it answers the same question ``has_perm`` does:
+    *can this codename be granted at all?*  Not the same catalog as
+    :func:`modeled_permission_strings` (that one is the product/FE subset), and
+    deliberately wider: the predicates use it to refuse a **typo**, and a
+    permission a model declares but the FE does not gate on is still legitimate.
+    """
+    from django.apps import apps
+    from django.contrib.auth import get_permission_codename
+
+    declared: set[str] = set()
+    for model in apps.get_models():
+        meta = model._meta
+        for action in meta.default_permissions:
+            declared.add(f"{meta.app_label}.{get_permission_codename(action, meta)}")
+        for codename, _label in meta.permissions:
+            declared.add(f"{meta.app_label}.{codename}")
+    return frozenset(declared)
+
+
+@lru_cache(maxsize=1)
+def known_permission_strings() -> frozenset[str]:
+    """Everything a predicate may legitimately be handed: both catalogs, unioned.
+
+    The FE catalog (registered enums + modeled ``PermissionSet``s) and Django's
+    registry (each model's ``Meta.permissions`` and default CRUD) cover different
+    sets — a custom enum that never made it onto a model's ``Meta`` is real for
+    ``has_perm`` by name but absent from the registry, and an auto-discovered
+    ``PermissionSet`` entry can be in one and not the other.  A predicate only
+    needs to know "could this codename ever be granted?", so it takes the union.
+    """
+    return modeled_permission_strings() | declared_permission_strings()
 
 
 @lru_cache(maxsize=1)
@@ -264,6 +306,34 @@ def require_can(user: Any, perm: str, *, org: Any) -> None:
 
     if not can(user, perm, org=org):
         raise PermissionDenied(PERMISSION_DENIED_MESSAGE)
+
+
+T = TypeVar("T", bound=Model)
+
+
+def get_writable_or_deny(
+    qs: "QuerySet[T]",
+    pk: Any,
+    user: Any,
+    perm: str,
+    *,
+    message: str = PERMISSION_DENIED_MESSAGE,
+) -> "T":
+    """Fetch a write target through the write-scoped filter, or deny.
+
+    The canonical mutation gate (RFC 0002 §Precondition): the fetch *is* the
+    authorization check — a forbidden row is unfetchable, and the missing-row
+    and forbidden-row refusals share one message (no existence oracle).
+    Fetch through this, never from the raw manager and never fetch-then-check
+    (which invites forgetting the check); ``writable``/``can_obj`` stay the
+    primitives for non-pk shapes (related-row exists, object-in-hand checks).
+    """
+    from common.permissions.selectors import writable
+
+    obj = get_or_none(writable(qs, user, perm), pk)
+    if obj is None:
+        raise PermissionDenied(message)
+    return cast("T", obj)
 
 
 def assign_object_permissions(

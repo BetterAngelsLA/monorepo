@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 
 import { mergeCss } from '@monorepo/react/shared';
 import LADR_LOGO from '../../../../../assets/images/la_disaster_relief_navigator_logo.png';

@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useEffect } from 'react';
-import { Route, Routes } from 'react-router-dom';
+import { Route, Routes } from 'react-router';
 import { MainLayout } from './layout/mainLayout';
 import { routeChildren } from './routes/appRoutes';
 import { useRouteTracker } from './shared/hooks/useRouteTracker';

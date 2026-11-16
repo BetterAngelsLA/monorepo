@@ -8,7 +8,7 @@ import {
   shelterVideoPath,
   signInPath,
 } from '@monorepo/react/shelter';
-import { Route } from 'react-router-dom';
+import { Route } from 'react-router';
 import { FiltersRoute } from '../routes/filters.route';
 import { GalleryRoute } from '../routes/gallery.route';
 import { HomeRoute } from '../routes/home.route';

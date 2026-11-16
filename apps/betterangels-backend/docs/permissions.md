@@ -6,12 +6,118 @@ BetterAngels uses a **two-layer permission model** — org-scoped authority gate
 
 | Layer            | Mechanism                                                        | Scope                                               | Used for                                            |
 | ---------------- | ---------------------------------------------------------------- | --------------------------------------------------- | --------------------------------------------------- |
-| **Org-scoped**   | Grants: `can()` / `require_can()` / `scopes()` / `visible()`     | "Can this user perform action X in organization Y?" | Teams, reports, member management, shelters, referrals, operator queries |
-| **Object-level** | django-guardian + `HasRetvalPerm` (grant object arm in progress) | "Can this user access this specific object?"        | Notes, tasks, client documents                      |
+| **Org-scoped**   | Grants: `can()` / `require_can()` / `scopes()` / `visible()`     | "Can this user perform action X in organization Y?" | Teams, reports, member management, shelters, referrals, operator queries, tasks |
+| **Object-level** | django-guardian + `HasRetvalPerm` (grant object arm in progress) | "Can this user access this specific object?"        | Notes, client documents                             |
+
+Tasks are **grant-only** as well, with an org-scoped write and a SHARED read: `createTask` carries `organizationId` and authorizes `require_can(tasks.add_task, org)`, `updateTask`/`deleteTask` authorize `can_obj` on the row's org, and both reads ride `can_anywhere_checker` — any `tasks.view_task` holder sees every task, from any org (RFC 0003).  The nested task list on a note asks for the same authority (`tasks.add` to create, `tasks.delete` to remove); the note's own gate is not a substitute.
 
 Referrals are **grant-only**: the scoped `Caseworker` `Role` carries add/change/view/delete, the legacy template carries none, and both reads and writes go through `visible()`/`require_can()`.  `CreateReferralInput.organizationId` names the target org explicitly; no request header is read.
 
 Both layers sit on Django's permission primitives, but they ask different questions and are checked independently.  **ADR 0001 is the source of truth** for the target model — this page describes the current backend wiring.
+
+## The golden path
+
+The common tasks, with the checks that fail when you get one wrong.
+
+### Gate a new mutation
+
+```python
+@strawberry_django.mutation(permission_classes=[IsAuthenticated])
+def rename_thing(self, info: Info, data: RenameThingInput) -> ThingType:
+    user = cast(User, get_current_user(info))
+    # The fetch *is* the check: an unfetchable row is simply not yours.
+    thing = get_writable_or_deny(Thing.objects.all(), data.id, user, Thing.perms.CHANGE)
+    return cast(ThingType, thing_update(thing=thing, data=asdict(data)))
+```
+
+Then run the two checks that will judge it:
+
+```bash
+python manage.py check                       # E005/E006/E007: declarations are legal
+pytest common/tests/test_org_mutation_gating.py   # every mutation carries a gate
+```
+
+If the tripwire fails it names the mutation and says what it wants:
+
+> `tasks.schema: mutation(s) without a grant gate: ['rename_thing']. Gate with
+> require_can()/can_obj() — or a scoped *_get/*_queryset load in the resolver or a
+> service it delegates to — or add a GATE_EXEMPT entry with the reason.`
+
+An exemption is a decision, not a shortcut: each one needs a written reason, and
+a stale entry (one that names a mutation that no longer exists) fails too.
+
+### Which predicate
+
+Pick by the question you are asking — the two axes are **scope** and
+**direction**:
+
+| Question | Call | Direction |
+|---|---|---|
+| "May they act in org O?" (a create — no row yet) | `require_can(user, perm, org=org)` | write |
+| "May they act on this row?" (already in hand) | `can_obj(user, perm, row)` | write |
+| "Which rows may they act on?" (and fetch them) | `writable(qs, user, perm)` | write |
+| "Fetch this one, or refuse" | `get_writable_or_deny(qs, pk, user, perm)` | write |
+| "Which rows may they see?" | `visible(qs, user, perm)` | read |
+| "Do they hold this anywhere?" | `can_anywhere(user, perm)` | read |
+| "Do they hold this at the global tier?" (platform-only) | `can_globally(user, perm)` | read |
+
+Declarative fields skip all of it: `HasPerm(perms, perm_checker=can_anywhere_checker,
+fail_silently=True)` answers both halves in one line, and a denial is an empty page.
+
+### Give a model a non-derived write rule
+
+Only do this when the derived rule is wrong. An org-anchored model derives ORG
+from `org_via`; a platform-shared or reachless model declares a class:
+
+```python
+class ClientProfile(OrgScoped, AbstractClientProfile):
+    org_via = None  # reach: platform-shared
+    access = Access(write=AccessClass.SHARED)  # authority: any holder, anywhere
+```
+
+`E007` refuses a write class on an org-anchored model, a non-`AccessClass` value,
+and the reserved `OBJECT` class — so a typo fails `manage.py check`, not a test.
+
+### Add a permission to a role
+
+Declare it on the model's `perms` (`PermissionSet`) or a `*Permissions`
+`TextChoices`, add it to the `RoleDef`, and make the legacy template a superset
+while both exist (`CASEWORKER` and `CASEWORKER_ROLE` share their bundles for
+exactly this reason). `sync_roles()` reconciles the deployed Role on migrate.
+
+### Row-invariant reads
+
+`perm_checker=can_anywhere_checker` answers *"does this user hold the permission
+anywhere?"* without looking at a row. That is only sound where the rows are
+deliberately row-invariant, so every such site on an **org-anchored** model is
+listed here with its reason. A platform-shared model needs no entry — its own
+`access` declaration is the proof.
+
+| Site                                  | Why the read is agency-wide                                                                        |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `notes.schema` · `Query.note`         | SHARED read on notes (RFC 0003 slice 2) — a product decision                                       |
+| `notes.schema` · `Query.notes`        | the list is agency-wide by the same decision                                                       |
+| `notes.schema` · `Query.services`     | reference data gated by note ADD — global service data, not org authority                          |
+| `notes.schema` · `Query.service_categories` | reference data gated by note ADD                                                             |
+| `notes.schema` · `Query.interaction_authors` | reference data gated by note ADD                                                            |
+| `tasks.schema` · `Query.task`         | SHARED read on tasks (RFC 0003 slice 1) — a product decision                                       |
+| `tasks.schema` · `Query.tasks`        | the list is agency-wide by the same decision                                                       |
+| `tasks.schema` · `Query.task_assignees` | the assignee picker lists the caller's org members; gated on `tasks.add`/`change` rather than the roster permission |
+
+Adding a SHARED read to an org-anchored model means adding a row here, in the
+same review — the alternative is an over-permission nobody argued for.
+
+### Debug a denial
+
+```bash
+python manage.py explain_permission --user jane@example.org --perm notes.view_note --org 7
+```
+
+It prints the canonical predicate's verdict plus the arms behind it (global tier,
+direct grant, delegated grant, the legacy arm), and exits 1 on a denial so it
+scripts. **Read the posture line**: a domain that has not cut over still enforces
+through the legacy arm, and the verdict shown is what the grant model *would*
+answer.
 
 ## How Org-Scoped Authority Works
 
@@ -29,19 +135,36 @@ The org always travels in the **payload**: query filters and mutation inputs car
 
 ### Checking authority
 
-`common/permissions/selectors.py`:
+One predicate per question — pick by the shape you have, not by the domain:
 
-- `can(user, perm, org=…)` — does the user hold the permission at the org?
-- `scopes(user, perm)` — the orgs where the user holds it (finite list).
-- `visible(qs, perm, …)` / `can_obj(user, perm, obj)` — the object arm: filter/check rows by grant (guardian fallback while domains migrate).
-- `switchable_orgs(user)` — the finite org set the frontend may switch into.
+| You have | Use | Answers |
+| --- | --- | --- |
+| a target org, creating | `require_can(user, perm, org=…)` | raises unless `can()` |
+| a row already loaded | `can_obj(user, perm, obj)` | bool; no query for an own-org row |
+| a pk, writing | `get_writable_or_deny(qs, pk, user, perm)` | the row, or raises — the fetch *is* the check |
+| a queryset, writing | `writable(qs, user, perm)` | the writable subset |
+| a queryset, reading (org tier) | `visible(qs, user, perm)` | the readable subset |
+| a queryset, reading (SHARED tier) | declarative `HasPerm(…, perm_checker=can_anywhere_checker, fail_silently=True)` | every row, or an empty page |
+| "holds it anywhere" | `can_anywhere(user, perm)` | bool across every org |
+| "holds it globally" (platform-only assets) | `can_globally(user, perm)` | bool, unscoped tier only |
 
-`common/permissions/utils.py`:
+`scopes(user, perm)` backs them all: the orgs where the user holds *perm* — a
+`frozenset` of org ids from the request-cached snapshot, or `ALL` for the global
+tier.  `switchable_orgs(user)` is the finite org set the frontend may switch into.
 
-- `require_can(user, perm, org=…)` — the write gate: raises `PermissionDenied(PERMISSION_DENIED_MESSAGE)` when `can()` is false.  Creates carry an explicit target org and are authorized by `can()`; `can()` never implies the org exists, so resolvers validate the org first (the `_org_or_deny` pattern).
-- `IsAuthenticated` — the custom strawberry permission class (raises `UnauthenticatedGQLError`).
+`common/permissions/utils.py` and `common/graphql/utils.py` hold the refusals —
+selectors answer, utils refuse:
 
-The old `HasOrgPerm` extension and the `permissioned_queryset()` / `perm_filter()` / `_perm_q()` helpers are **deleted** — org-scoped surfaces authorize through the selectors above.
+- `require_can(...)` / `get_writable_or_deny(...)` — raise `PermissionDenied(PERMISSION_DENIED_MESSAGE)`.
+- `org_or_deny(org_id)` — resolve a client-supplied org; missing, unknown and malformed deny alike.
+- `resolve_create_org(user, organization_id, template=…, perm=…)` — the payload org
+  (grant authority), or the legacy group during a compat window, which must still
+  carry the permission.
+- `IsAuthenticated` — the strawberry permission class (raises `UnauthenticatedGQLError`).
+
+`can_obj` deliberately keeps its own row implementation rather than delegating to
+`writable`: delegation would spend a query on a row the caller already holds.  An
+equivalence test pins the two to the same predicate, so they cannot drift silently.
 
 ### Debugging authority
 
@@ -54,7 +177,7 @@ python manage.py explain_permission --user 42 --perm shelters.view_shelter --obj
 
 ## Overview
 
-Permission group templates define a **set of Django permissions** that can be assigned to users within an organization. A user's effective authority is the **union of the roles/Grants** they hold at that org — the template defines the bundle (mirrored by `RoleDef.from_template()`), and cut-over domains read the `Grant` arm while legacy-only domains (notes/clients) still read the template-backed `PermissionGroup` rows.
+Permission group templates define a **set of Django permissions** that can be assigned to users within an organization. A user's effective authority is the **union of the roles/Grants** they hold at that org — the template defines the bundle (mirrored by `RoleDef.from_template()`), and cut-over domains read the `Grant` arm; after the notes cutover the only legacy consumers left are client documents and imports (`LEGACY_LIVE_PERMISSIONS`).
 
 This composable model means you never need a single monolithic role — you combine templates to build the desired access level.
 

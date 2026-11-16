@@ -45,7 +45,24 @@ class ShelterLocationInput:
 
 @strawberry.input
 class ScheduleInput:
-    schedule_type: ScheduleTypeChoices = ScheduleTypeChoices.OPERATING
+    """One schedule slot.
+
+    An entry is a **full row**: every field left out is written with its default,
+    so send the whole slot. ``demographic`` is not expressible here; a row updated
+    in place keeps the one it has, a row created here has none.
+    """
+
+    #: Existing row to update. Only valid on update — create rejects it. A row
+    #: whose id is absent from a submitted set is deleted (the payload is
+    #: authoritative for its schedule type).
+    id: Optional[ID] = None
+    #: The slot's type: required. On update it must match the `scheduleType` of the
+    #: payload; on create it is the only place the type is named, so it is never
+    #: defaulted.
+    schedule_type: ScheduleTypeChoices
+    #: Days the slot repeats on; one row is created per day. Omit it for a slot
+    #: that applies every day — an empty list is rejected rather than read as
+    #: "every day".
     days: Optional[List[DayOfWeekChoices]] = None
     start_time: Optional[time] = None
     end_time: Optional[time] = None
@@ -211,6 +228,11 @@ class UpdateShelterInput:
     # Nested input types
     location: Maybe[Optional[ShelterLocationInput]] = UNSET
     schedules: Maybe[Optional[List[ScheduleInput]]] = UNSET
+    #: The schedule type this payload is authoritative for. Rows of that type
+    #: that the payload omits are deleted; every other type is left alone, so
+    #: saving one tab cannot revert another. Required whenever ``schedules`` is
+    #: present — an empty ``schedules`` has to name the type it clears.
+    schedule_type: Maybe[Optional[ScheduleTypeChoices]] = UNSET
     services: Maybe[Optional[List[ServiceInput]]] = UNSET
     additional_contacts: Maybe[Optional[List[ShelterContactInfoInput]]] = UNSET
 

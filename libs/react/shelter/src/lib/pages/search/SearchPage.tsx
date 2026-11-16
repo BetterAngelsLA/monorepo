@@ -2,7 +2,7 @@ import { AddressAutocomplete, Button } from '@monorepo/react/components';
 import { CloseIcon, SearchIcon } from '@monorepo/react/icons';
 import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import {
   shelterLocationSearchInputAtom,
   shelterNameSearchInputAtom,

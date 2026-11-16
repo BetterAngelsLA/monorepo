@@ -22,7 +22,7 @@ import { useAtom, useAtomValue } from 'jotai';
 import { useResetAtom } from 'jotai/utils';
 import { Search } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router';
 import { operatorShelterFiltersAtom } from '../../atoms/shelterFiltersAtom';
 import {
   DEFAULT_SHELTER_SORT,

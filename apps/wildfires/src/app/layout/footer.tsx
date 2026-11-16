@@ -1,6 +1,6 @@
 import { mergeCss } from '@monorepo/react/shared';
 import { ReactElement } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import BA_LOGO from '../../assets/images/ba-logo-blue-white.png';
 import {
   aboutPagePath,

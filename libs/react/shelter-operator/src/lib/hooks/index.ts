@@ -1,4 +1,5 @@
 export * from './useBaPrivatePermissions';
+export * from './useAuditActors/useAuditActors';
 export * from './useBed';
 export * from './useBeds';
 export * from './useCloneBed';
@@ -13,6 +14,7 @@ export * from './useDeleteReservations';
 export * from './useDeleteRooms';
 export * from './useDeleteShelterPhotos';
 export * from './useFilteredPropertyOptions';
+export * from './useObjectAuditLog/useObjectAuditLog';
 export * from './useReservation';
 export * from './useReservations';
 export * from './useRoom';

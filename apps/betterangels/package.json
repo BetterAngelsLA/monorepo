@@ -13,6 +13,7 @@
     "ios": "expo run:ios"
   },
   "dependencies": {
+    "@newrelic/browser-agent": "*",
     "dotenv": "*",
     "expo-constants": "*",
     "react-native": "*",
@@ -31,7 +32,6 @@
     "vite-plugin-static-copy": "*",
     "@graphql-typed-document-node/core": "*",
     "@react-native-async-storage/async-storage": "*",
-    "react-router-dom": "*",
     "clsx": "*",
     "tailwind-merge": "*",
     "haversine-distance": "*",
@@ -99,7 +99,8 @@
     "libphonenumber-js": "*",
     "validator": "*",
     "rxjs": "*",
-    "http-proxy-middleware": "*"
+    "http-proxy-middleware": "*",
+    "react-router": "*"
   },
   "devDependencies": {}
 }

@@ -5,7 +5,7 @@ import {
   Routes,
   useLocation,
   useNavigate,
-} from 'react-router-dom';
+} from 'react-router';
 import { paths, profileRouteConfig, shelterProfileRoute } from '../../routing';
 import { BaPrivateGate } from './PermissionGate';
 

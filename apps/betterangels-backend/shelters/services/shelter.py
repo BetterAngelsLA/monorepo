@@ -11,7 +11,13 @@ from common.permissions.utils import require_can
 from shelters.models import ContactInfo, Service, ServiceCategory, Shelter
 from shelters.permissions import BA_REVIEW_FIELDS, can_change_ba_review
 from shelters.selectors import shelter_get
-from shelters.services.utils import _SHELTER_M2M_FIELDS, _create_schedules, _prepare_shelter_data, _set_m2m_from_enums
+from shelters.services.utils import (
+    _SHELTER_M2M_FIELDS,
+    _create_schedules,
+    _prepare_shelter_data,
+    _set_m2m_from_enums,
+    _sync_schedules,
+)
 
 
 def _require_permission_on_ba_review_change(user: "User", data: Dict[str, Any]) -> None:
@@ -324,6 +330,10 @@ def shelter_update(*, user: "User", data: Dict[str, Any]) -> Shelter:
     has_services = "services" in data
     has_contacts = "additional_contacts" in data
     additional_contacts = data.pop("additional_contacts", None)
+    # The single schedule type a ``schedules`` payload is authoritative for:
+    # one save edits one tab, and an empty payload still has to name the type it
+    # clears.
+    schedule_type = data.pop("schedule_type", None)
 
     scalar_data, m2m_data, schedules_data = _prepare_shelter_data(data, _SHELTER_M2M_FIELDS)
     raw_services: List[Any] = m2m_data.pop("services", []) or []
@@ -342,8 +352,11 @@ def shelter_update(*, user: "User", data: Dict[str, Any]) -> Shelter:
         _apply_additional_contacts(shelter, additional_contacts or [])
 
     if has_schedules:
-        shelter.schedules.all().delete()
-        _create_schedules(shelter, schedules_data)
+        if schedule_type is None:
+            raise ValidationError({"schedule_type": "A scheduleType is required when schedules are submitted."})
+        _sync_schedules(shelter, schedules_data, schedule_type=schedule_type)
+    elif schedule_type is not None:
+        raise ValidationError({"schedules": "schedules is required when scheduleType is submitted."})
 
     if cities_served_ids is not None:
         shelter.cities_served.set(cities_served_ids)

@@ -10,6 +10,13 @@ export type DateRangePreset =
   | 'YEAR_TO_DATE'
   | 'CUSTOM';
 
+/**
+ * A selectable preset value: the shared presets plus `ALL`, the explicit "no
+ * range" entry a filter can offer when it can be unfiltered (the reports
+ * toolbar does not; the activity log does).
+ */
+export type DateRangePresetValue = DateRangePreset | 'ALL';
+
 export type DateRangeFilterState = {
   preset: DateRangePreset;
   range: DateRange;

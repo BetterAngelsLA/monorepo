@@ -1,4 +1,4 @@
-import { AuthProvider as SharedAuthProvider } from '@monorepo/react/shared';
+import { AuthProvider as SharedAuthProvider } from '@monorepo/react/shared/auth';
 import { ReactNode } from 'react';
 import { useUser } from '../user';
 import { routeAccess } from './routeAccess';

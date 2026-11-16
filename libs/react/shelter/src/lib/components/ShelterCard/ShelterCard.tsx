@@ -2,7 +2,7 @@ import { mergeCss } from '@monorepo/react/shared';
 import { useMap } from '@vis.gl/react-google-maps';
 import { useSetAtom } from 'jotai';
 import { ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { savedMapViewportAtom } from '../../atoms';
 import { TLatLng, mapViewportFromMap } from '../Map';
 import { PrivateBadge } from '../PrivateBadge';

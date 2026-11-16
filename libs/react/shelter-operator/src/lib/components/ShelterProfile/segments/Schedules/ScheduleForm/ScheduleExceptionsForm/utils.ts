@@ -4,6 +4,7 @@ export function buildDefaultExceptionEntry(): ExceptionEntry {
   return {
     localId: crypto.randomUUID(),
     startDate: '',
+    isDateRange: false,
     endDate: '',
     closedAllDay: false,
     startTime: '',

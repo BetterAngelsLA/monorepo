@@ -3,7 +3,7 @@ import {
   TeamPermissions,
   UserOrganizationPermissions,
 } from '@monorepo/ba-platform/permissions';
-import { RouteObject } from 'react-router-dom';
+import { RouteObject } from 'react-router';
 import Home from '../pages/home';
 import { ReportsPage } from '../pages/reports';
 import { ServicesPage } from '../pages/services';

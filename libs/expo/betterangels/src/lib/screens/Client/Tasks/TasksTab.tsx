@@ -10,7 +10,7 @@ import { router } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { TaskStatusEnum, TaskType, toTaskFilter } from '../../../apollo';
-import { useSnackbar } from '../../../hooks';
+import { useActiveOrgId, useSnackbar } from '../../../hooks';
 import { useModalScreen } from '../../../providers';
 import { useUserTeamPreference } from '../../../state';
 import { enumDisplayTaskStatus, pagePaddingHorizontal } from '../../../static';
@@ -52,6 +52,7 @@ export function TasksTab(props: TProps) {
   const { showSnackbar } = useSnackbar();
   const { showModalScreen } = useModalScreen();
   const [teamPreference] = useUserTeamPreference();
+  const activeOrgId = useActiveOrgId();
 
   const [filtersKey, setFiltersKey] = useState(0); // used to trigger remount
   const [currentFilters, setCurrentFilters] = useState<TModelFilters>(
@@ -71,7 +72,7 @@ export function TasksTab(props: TProps) {
   }
 
   const onSubmit = async (task: TaskFormData, closeForm: () => void) => {
-    if (!client?.clientProfile.id) return;
+    if (!client?.clientProfile.id || !activeOrgId) return;
     try {
       const result = await createTask({
         variables: {
@@ -81,6 +82,7 @@ export function TasksTab(props: TProps) {
             status: task.status,
             teamId: task.teamId ?? undefined,
             clientProfile: client.clientProfile.id,
+            organizationId: activeOrgId,
           },
         },
         refetchQueries: [TasksDocument],

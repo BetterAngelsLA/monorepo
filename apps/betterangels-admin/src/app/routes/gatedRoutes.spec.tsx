@@ -9,7 +9,7 @@ import { UserProvider } from '@monorepo/ba-platform';
 import { TeamPermissions } from '@monorepo/ba-platform/permissions';
 import { AuthProvider } from '@monorepo/react/betterangels-admin';
 import { render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router';
 import { describe, expect, it } from 'vitest';
 
 import { AppLayout } from '../Layout/AppLayout';
@@ -69,7 +69,7 @@ function createDeferredClient() {
   };
 }
 
-function renderAtTeams() {
+function renderAtTeams(required: TeamPermissions = TeamPermissions.View) {
   const { client, resolve } = createDeferredClient();
 
   render(
@@ -83,7 +83,7 @@ function renderAtTeams() {
                 <Route
                   path="/teams"
                   element={
-                    <PermissionGuard permission={TeamPermissions.View}>
+                    <PermissionGuard permission={required}>
                       <div>teams stand-in</div>
                     </PermissionGuard>
                   }
@@ -113,5 +113,18 @@ describe('permission-gated routes', () => {
       expect(screen.getByText('teams stand-in')).toBeTruthy(),
     );
     expect(screen.queryByText('home stand-in')).toBeNull();
+  });
+
+  it('redirects to the home route when the permission is missing', async () => {
+    const { resolve } = renderAtTeams(TeamPermissions.Change);
+
+    resolve();
+
+    // Denied is a redirect, not a blank shell: the guard must not render
+    // nothing once the organization is known.
+    await waitFor(() =>
+      expect(screen.getByText('home stand-in')).toBeTruthy(),
+    );
+    expect(screen.queryByText('teams stand-in')).toBeNull();
   });
 });

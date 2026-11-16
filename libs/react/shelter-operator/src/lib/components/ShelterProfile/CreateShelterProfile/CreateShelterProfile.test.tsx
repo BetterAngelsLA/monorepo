@@ -1,7 +1,7 @@
 import { ShelterPermissions } from '@monorepo/ba-platform/permissions';
 import { StatusChoices } from '@monorepo/ba-platform/types';
 import { act, render } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter } from 'react-router';
 import type { BasicInfoFormData } from '../segments/BasicInfo';
 import { CreateShelterProfile } from './CreateShelterProfile';
 

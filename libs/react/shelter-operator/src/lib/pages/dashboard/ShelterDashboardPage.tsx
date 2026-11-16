@@ -1,6 +1,6 @@
 import { useQuery } from '@apollo/client/react';
 import { Settings } from 'lucide-react';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router';
 import { Button } from '../../components/base-ui/buttons/buttons';
 import { Text } from '../../components/base-ui/text/text';
 import { ReportsView } from '../../components/reports/ReportsView';

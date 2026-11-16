@@ -5,7 +5,7 @@ import {
   ShelterPermissions,
 } from '@monorepo/ba-platform/permissions';
 import { operatorPath } from '@monorepo/react/shelter';
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes } from 'react-router';
 import { CreateShelterProfile } from './components/ShelterProfile';
 import {
   BaPrivateGate,
@@ -32,19 +32,21 @@ import { Dashboard } from './pages/dashboard/Dashboard';
 import { ShelterReportPage } from './pages/report/ShelterReportPage';
 import {
   BaPrivatePage,
+  ShelterActivityPage,
   ShelterBasicInfoPage,
   ShelterDetailsPage,
   ShelterEcosystemPage,
   ShelterEntryRequirementsPage,
   ShelterMediaPage,
-  ShelterOperatingHoursPage,
   ShelterPoliciesPage,
+  ShelterSchedulePage,
   ShelterServicesPage,
   ShelterSleepingDetailsPage,
 } from './pages/shelterProfile';
 import { SignIn } from './pages/signIn';
 import { OperatorAuthProvider } from './providers';
 import {
+  legacyProfileRoutes,
   mgmtRouteConfig,
   paths,
   profileRouteConfig,
@@ -86,9 +88,17 @@ export function OperatorApp() {
               element={<ShelterBasicInfoPage />}
             />
             <Route
-              path={profileRouteConfig.children.operatingHours}
-              element={<ShelterOperatingHoursPage />}
+              path={profileRouteConfig.children.schedule}
+              element={<ShelterSchedulePage />}
             />
+            {/* Old links to the Operating Hours tab. */}
+            {legacyProfileRoutes.map(({ from, to }) => (
+              <Route
+                key={from}
+                path={from}
+                element={<Navigate to={to} replace />}
+              />
+            ))}
             <Route
               path={profileRouteConfig.children.policies}
               element={<ShelterPoliciesPage />}
@@ -116,6 +126,10 @@ export function OperatorApp() {
             <Route
               path={profileRouteConfig.children.media}
               element={<ShelterMediaPage />}
+            />
+            <Route
+              path={profileRouteConfig.children.activity}
+              element={<ShelterActivityPage />}
             />
             <Route
               path={profileRouteConfig.children.baPrivate}

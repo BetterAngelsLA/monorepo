@@ -2,10 +2,12 @@ from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
+from django.contrib.auth.models import Permission
 from django.core.management import CommandError, call_command
 
+from accounts.models import Role
+
 ADVISORY = "common.management.commands.migrate_locked.pglock.advisory"
-PENDING = "common.management.commands.migrate_locked.Command._pending"
 MIGRATE = "common.management.commands.migrate_locked.call_command"
 
 
@@ -15,44 +17,56 @@ def _lock(acquired: bool = True) -> MagicMock:
     return lock
 
 
-def test_no_pending_migrations_never_takes_the_lock(capsys: Any) -> None:
-    """The cheap path every schema-free deploy relies on."""
-    with patch(PENDING, return_value=False), patch(ADVISORY) as advisory:
+def test_runs_migrate_under_the_lock() -> None:
+    """Migration and the handlers it triggers are single-writer."""
+    order: list[str] = []
+
+    def acquire() -> bool:
+        order.append("acquire")
+        return True
+
+    def migrate(*args: Any, **kwargs: Any) -> None:
+        order.append("migrate")
+
+    lock = _lock()
+    lock.acquire.side_effect = acquire
+    lock.release.side_effect = lambda: order.append("release")
+    with patch(ADVISORY, return_value=lock), patch(MIGRATE) as migrate_mock:
+        migrate_mock.side_effect = migrate
         call_command("migrate_locked")
 
-    assert "no pending migrations" in capsys.readouterr().out
-    advisory.assert_not_called()
+    assert order == ["acquire", "migrate", "release"]
+    migrate_mock.assert_called_once_with("migrate", interactive=False, verbosity=1)
 
 
-def test_applies_non_interactively_then_reports_already_applied(capsys: Any) -> None:
-    """The holder migrates; a follower that wakes later must not migrate again."""
+def test_releases_the_lock_when_migrate_fails() -> None:
+    lock = _lock()
     with (
-        patch(PENDING, return_value=True),
-        patch(ADVISORY, return_value=_lock()),
-        patch(MIGRATE) as migrate,
+        patch(ADVISORY, return_value=lock),
+        patch(MIGRATE, side_effect=RuntimeError("migration failed")),
+        pytest.raises(RuntimeError, match="migration failed"),
     ):
         call_command("migrate_locked")
 
-    migrate.assert_called_once()
-    assert migrate.call_args.kwargs == {"interactive": False, "verbosity": 1}
-    assert "applying migrations" in capsys.readouterr().out
-
-    with (
-        patch(PENDING, side_effect=[True, False]),
-        patch(ADVISORY, return_value=_lock()),
-        patch(MIGRATE) as migrate,
-    ):
-        call_command("migrate_locked")
-
-    assert "migrations already applied by another process" in capsys.readouterr().out
-    migrate.assert_not_called()
+    lock.release.assert_called_once()
 
 
 def test_times_out_with_a_command_error() -> None:
     """The wait is bounded; a stuck holder fails the task instead of hanging it."""
     with (
-        patch(PENDING, return_value=True),
         patch(ADVISORY, return_value=_lock(acquired=False)),
         pytest.raises(CommandError, match="held the migration lock"),
     ):
         call_command("migrate_locked", timeout=5)
+
+
+@pytest.mark.django_db
+def test_empty_plan_repairs_a_stale_role() -> None:
+    """The handlers actually run: a dropped code-owned permission comes back."""
+    role = Role.objects.get(name="Caseworker")
+    permission = Permission.objects.get(content_type__app_label="tasks", codename="view_task")
+    role.permissions.remove(permission)
+
+    call_command("migrate_locked", timeout=30)
+
+    assert role.permissions.filter(pk=permission.pk).exists()

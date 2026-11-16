@@ -1,6 +1,6 @@
 import { useAtom } from 'jotai';
 import { ReactElement, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router';
 import { modalAtom } from '../atoms/modalAtom';
 import { Modal } from './modal';
 

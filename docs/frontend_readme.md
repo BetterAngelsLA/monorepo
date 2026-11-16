@@ -130,6 +130,10 @@ Run the following on the host machine—**not in the container**:
    nvm use 22.21.1
    ```
 
+   Telemetry for this app (New Relic on iOS, Android and web, including the
+   `EXPO_PUBLIC_NEW_RELIC_WEB_LICENSE_KEY` setup) is documented in
+   [react-native-monitoring.md](./react-native-monitoring.md).
+
 #### Accessing the Shelter Web App from Your Phone While Using WSL
 
 If you're running the Shelter web app (`yarn shelter`) in WSL and want to test it on your phone over your local network, you'll need to configure port forwarding since WSL2 uses a virtual network isolated from your physical network adapters.

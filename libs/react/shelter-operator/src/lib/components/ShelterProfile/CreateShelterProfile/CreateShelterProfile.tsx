@@ -15,7 +15,7 @@ import {
 } from '@monorepo/react/shelter';
 import { useMemo, useState } from 'react';
 import type { UseFormSetError } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useShelterOrganizations } from '../../../hooks';
 import {
   profileRouteConfig,

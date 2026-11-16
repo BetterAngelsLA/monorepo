@@ -31,7 +31,7 @@
     "react-mailchimp-subscribe": "*",
     "react-native": "0.86.0",
     "react-native-svg": "*",
-    "react-router-dom": "*",
+    "react-router": "*",
     "remeda": "*",
     "sanitize-html": "*",
     "tailwind-merge": "*",

@@ -6,10 +6,43 @@
 // developer override: it never travels, and dotenv applies it last so it still
 // wins locally.
 import dotenv from 'dotenv';
+import { assertMonitoringEnv } from '../../tools/shared/assert-monitoring-env.mjs';
+
 dotenv.config();
 dotenv.config({ path: '.env.local', override: true });
 
 const IS_PRODUCTION = process.env.APP_VARIANT === 'production';
+
+// Monitoring is checked for the platform being built. `export-web` sets
+// `EXPO_WEB_BASE_URL`, EAS Build sets `EAS_BUILD_PLATFORM`, and
+// `eas-update.mjs` sets `EAS_UPDATE` (an update covers all platforms).
+// expo-doctor/start set none of these and are unaffected.
+const APP_ENV = 'EXPO_PUBLIC_APP_ENV';
+const LICENSE_KEYS = {
+  web: 'EXPO_PUBLIC_NEW_RELIC_WEB_LICENSE_KEY',
+  ios: 'EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS',
+  android: 'EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID',
+};
+const monitoringPlatform =
+  process.env.EAS_UPDATE === 'true'
+    ? 'all'
+    : process.env.EAS_BUILD_PLATFORM ||
+      (process.env.EXPO_WEB_BASE_URL ? 'web' : null);
+const requiredMonitoringVars =
+  monitoringPlatform === 'all'
+    ? [APP_ENV, ...Object.values(LICENSE_KEYS)]
+    : monitoringPlatform && LICENSE_KEYS[monitoringPlatform]
+      ? [APP_ENV, LICENSE_KEYS[monitoringPlatform]]
+      : [];
+
+if (requiredMonitoringVars.length) {
+  assertMonitoringEnv({
+    label: 'monitoring',
+    required: requiredMonitoringVars,
+    env: process.env,
+    isCI: process.env.CI === 'true' || process.env.CI === '1',
+  });
+}
 
 // A production build must not silently bake the dev API. `.env.local` overrides
 // the process env above, so a stale dev pull (or a missing EAS value) would
@@ -24,9 +57,21 @@ if (
   );
 }
 
-const HOSTNAME = IS_PRODUCTION
-  ? 'api.prod.betterangels.la' // TODO: We should adjust this to be app.betterangels.la
-  : 'api.dev.betterangels.la'; // TODO: We should adjust this to be app.dev.betterangels.la
+// Link host for universal links / App Links; set per EAS profile.
+const HOSTNAME = process.env.EXPO_PUBLIC_OUTREACH_HOST?.trim();
+
+// A hosted build without a host is a misconfiguration, not a local run.
+if (process.env.EAS_BUILD && !HOSTNAME) {
+  throw new Error(
+    'EXPO_PUBLIC_OUTREACH_HOST is required for EAS builds (set it in eas.json)',
+  );
+}
+
+if (IS_PRODUCTION && (!HOSTNAME || /(^|\.)dev\./.test(HOSTNAME))) {
+  throw new Error(
+    `EXPO_PUBLIC_OUTREACH_HOST is ${HOSTNAME ?? 'unset'} for a production build`,
+  );
+}
 
 const BUNDLE_IDENTIFIER = IS_PRODUCTION
   ? 'la.betterangels.app'
@@ -37,7 +82,7 @@ export default {
     name: IS_PRODUCTION ? 'BetterAngels' : 'BetterAngels (Dev)',
     slug: 'betterangels',
     scheme: IS_PRODUCTION ? 'betterangels' : 'betterangels-dev',
-    version: '1.2.16',
+    version: '1.2.17',
     orientation: 'portrait',
     icon: IS_PRODUCTION
       ? './src/app/assets/images/icon.png'
@@ -50,8 +95,8 @@ export default {
     ios: {
       supportsTablet: true,
       bundleIdentifier: BUNDLE_IDENTIFIER,
-      buildNumber: '1.2.16',
-      associatedDomains: [`applinks:${HOSTNAME}`],
+      buildNumber: '1.2.17',
+      associatedDomains: HOSTNAME ? [`applinks:${HOSTNAME}`] : [],
       config: {
         usesNonExemptEncryption: false,
       },
@@ -72,21 +117,24 @@ export default {
       ], // https://github.com/expo/expo/issues/25361#issuecomment-2363699975
       softwareKeyboardLayoutMode: 'pan',
       package: BUNDLE_IDENTIFIER,
-      intentFilters: [
-        {
-          action: 'VIEW',
-          data: [
+      intentFilters: HOSTNAME
+        ? [
             {
-              scheme: 'https',
-              host: HOSTNAME,
-              pathPrefix: '/',
+              action: 'VIEW',
+              autoVerify: true,
+              data: [
+                {
+                  scheme: 'https',
+                  host: HOSTNAME,
+                  pathPrefix: '/',
+                },
+              ],
+              category: ['BROWSABLE', 'DEFAULT'],
             },
-          ],
-          category: ['BROWSABLE', 'DEFAULT'],
-        },
-      ],
+          ]
+        : [],
       config: {},
-      versionCode: 88,
+      versionCode: 89,
     },
     web: {
       favicon: './src/app/assets/images/favicon.png',

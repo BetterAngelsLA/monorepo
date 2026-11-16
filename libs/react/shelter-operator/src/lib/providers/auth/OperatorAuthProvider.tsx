@@ -1,4 +1,4 @@
-import { AuthProvider as SharedAuthProvider } from '@monorepo/react/shared';
+import { AuthProvider as SharedAuthProvider } from '@monorepo/react/shared/auth';
 import { operatorPath, useUser } from '@monorepo/react/shelter';
 import { ReactNode } from 'react';
 import { paths } from '../../routing';

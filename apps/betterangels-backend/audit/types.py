@@ -113,9 +113,9 @@ class AuditEventType:
     # One-line acknowledgment for summarized events (§32); the UI shows this
     # instead of ``field_changes`` when present.
     summary: Optional[str] = None
-    # Unchanged identity fields that keep a synthesized event identifiable (a
-    # netted schedule slot's ``day``/``schedule type``). Never a change:
-    # ``field_changes`` holds only real before/after pairs.
+    # Unchanged identity fields that keep an event identifiable (a schedule
+    # slot's ``day``/``schedule type``). Never a change: ``field_changes`` holds
+    # only real before/after pairs.
     context: Optional[JSON] = None
 
 

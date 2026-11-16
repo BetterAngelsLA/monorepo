@@ -14,8 +14,8 @@ import { ShelterCard, TShelter } from '@monorepo/react/shelter';
 import '@testing-library/jest-dom/vitest';
 import { render, screen } from '@testing-library/react';
 
-vi.mock('react-router-dom', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('react-router-dom')>()),
+vi.mock('react-router', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('react-router')>()),
   useNavigate: () => vi.fn(),
 }));
 vi.mock('@vis.gl/react-google-maps', () => ({ useMap: () => null }));

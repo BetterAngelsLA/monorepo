@@ -1,5 +1,5 @@
 import { useAtom } from 'jotai';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { surveyResultsPagePath } from '../../../routes/routePaths';
 import { surveyResultsAtom } from '../../../shared/atoms/surveyResultsAtom';
 import { Survey } from '../../../shared/components/survey/Survey';

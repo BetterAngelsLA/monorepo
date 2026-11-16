@@ -2,7 +2,7 @@
 import tailwindcss from '@tailwindcss/postcss';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import { ProxyOptions, defineConfig } from 'vite';
+import { ProxyOptions, defineConfig, loadEnv } from 'vite';
 import {
   monorepoTsconfigAliases,
   svgTestResolver,
@@ -11,6 +11,7 @@ import {
   baseHrefPlugin,
   getBuildBasePath,
 } from '../../tools/shared/get-base-path.mjs';
+import { assertMonitoringEnv } from '../../tools/shared/assert-monitoring-env.mjs';
 
 const SERVER_PORT = 8083;
 const WORKSPACE_ROOT = path.resolve(import.meta.dirname, '../..');
@@ -28,9 +29,27 @@ const devServerProxy: Record<string, string | ProxyOptions> = {
   },
 };
 
-export default defineConfig(({ mode }) => {
+function monitoringEnvPlugin(env: Record<string, string>, isCI: boolean) {
+  return {
+    name: 'shelter-web-monitoring-env',
+    apply: 'build' as const,
+    buildStart() {
+      assertMonitoringEnv({
+        label: 'shelter-web-monitoring',
+        required: ['VITE_SHELTER_WEB_NEW_RELIC_LICENSE_KEY', 'VITE_APP_ENV'],
+        env,
+        isCI,
+      });
+    },
+  };
+}
+
+export default defineConfig(({ command, mode }) => {
   const isDev = mode === 'development';
   const basePath = getBuildBasePath();
+  // One deployment-level source; Vite exposes it to the client as VITE_APP_VERSION.
+  const appVersion = process.env.APP_VERSION || 'local';
+
   return {
     base: basePath,
     root: import.meta.dirname,
@@ -38,6 +57,7 @@ export default defineConfig(({ mode }) => {
 
     define: {
       'import.meta.env.VITE_APP_BASE_PATH': JSON.stringify(basePath),
+      'import.meta.env.VITE_APP_VERSION': JSON.stringify(appVersion),
     },
 
     ...(isDev && {
@@ -57,6 +77,14 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       baseHrefPlugin(basePath),
+      ...(command === 'build'
+        ? [
+            monitoringEnvPlugin(
+              loadEnv(mode, import.meta.dirname, 'VITE_'),
+              process.env.CI === 'true' || process.env.CI === '1',
+            ),
+          ]
+        : []),
       // Vite handles ?raw SVG imports natively.
       // Only stub SVGs during Vitest runs (avoids cross-package Denied ID).
       ...(process.env.VITEST ? [svgTestResolver()] : []),

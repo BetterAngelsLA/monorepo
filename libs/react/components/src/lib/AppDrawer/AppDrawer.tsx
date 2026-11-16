@@ -22,7 +22,7 @@ import {
   useEffect,
   useState,
 } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router';
 import { AppDrawerFooter } from './AppDrawerFooter';
 import { AppDrawerHeader } from './AppDrawerHeader';
 import { AppDrawerMask } from './AppDrawerMask';

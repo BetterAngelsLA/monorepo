@@ -159,7 +159,14 @@ class ExplainPermissionTestCase(TestCase):
         self.assertIn("inert", legacy.detail)
         self.assertTrue(any("inert" in note for note in result.notes))
 
-    def test_legacy_domain_rows_are_reported_live(self) -> None:
+    def test_cut_over_domain_legacy_rows_are_reported_inert(self) -> None:
+        """A domain that has cut over reports its legacy rows as inert, not live.
+
+        ``notes`` joined ``LEGACY_INERT_APPS`` with its cutover (RFC 0003 slice
+        2): the legacy ``PermissionGroup`` row is no longer authority, so the
+        explanation must say so rather than advertise a control the grant
+        predicates would refuse.
+        """
         group = make_permission_group(organization=self.org_a, template_name="Caseworker")
         group.permissions.add(Permission.objects.get(content_type__app_label="notes", codename="view_note"))
         holder = baker.make(User)
@@ -168,13 +175,36 @@ class ExplainPermissionTestCase(TestCase):
 
         result = explain(holder, "notes.view_note", org=self.org_a)
 
-        self.assertFalse(result.cut_over)
-        self.assertFalse(result.verdict)  # the grant model is not wired for notes yet
+        self.assertTrue(result.cut_over)
+        self.assertFalse(result.verdict)
         self.assertEqual(result.verdict, can(holder, "notes.view_note", org=self.org_a))
         legacy = _arm(result, "legacy rows")
-        self.assertTrue(legacy.holds)
+        self.assertFalse(legacy.holds)
+        self.assertIn("inert", legacy.detail)
+
+    def test_carve_out_rows_are_reported_live(self) -> None:
+        """The ``LEGACY_LIVE_PERMISSIONS`` carve-out still reports live rows.
+
+        After the notes cutover every app is grant-only, but client-document and
+        import permissions keep a live legacy consumer, so ``is_cut_over`` is
+        False for them and the explanation must keep saying "live".
+        """
+        group = make_permission_group(organization=self.org_a, template_name="Caseworker")
+        group.permissions.add(
+            Permission.objects.get(content_type__app_label="clients", codename="change_clientprofile")
+        )
+        holder = baker.make(User)
+        self.org_a.add_user(holder)
+        add_legacy_membership(holder, group=group)
+
+        result = explain(holder, "clients.change_clientprofile", org=self.org_a)
+
+        self.assertFalse(result.cut_over)
+        self.assertEqual(result.verdict, can(holder, "clients.change_clientprofile", org=self.org_a))
+        legacy = _arm(result, "legacy rows")
+        # The carve-out is reported as live *for its own path*; the profile arm
+        # lists no rows because grants are the authority there.
         self.assertIn("live", legacy.detail)
-        self.assertTrue(any("has not cut over" in note for note in result.notes))
 
     #: The ``clients.*`` permissions with a live legacy consumer today, each with
     #: the surface that still consults the legacy row.  The test asserts this set
@@ -279,25 +309,30 @@ class ExplainPermissionTestCase(TestCase):
     def test_legacy_only_holder_denied_in_object_mode(self) -> None:
         """The divergence that makes the caveat load-bearing.
 
-        A notes holder carries real authority today, but the notes domain is not
-        cut over, so ``can_obj`` — the grant model — denies.  The tool reports
-        the grant model's answer and must say so, because here it is the
-        opposite of what enforcement would decide.
+        A client-document holder carries real authority through the legacy arm,
+        but that permission is a ``LEGACY_LIVE_PERMISSIONS`` carve-out, so
+        ``can_obj`` — the grant model — denies.  The tool reports the grant
+        model's answer and must say so, because here it is the opposite of what
+        enforcement would decide.
         """
         group = make_permission_group(organization=self.org_a, template_name="Caseworker")
-        group.permissions.add(Permission.objects.get(content_type__app_label="notes", codename="view_note"))
+        group.permissions.add(
+            Permission.objects.get(content_type__app_label="clients", codename="change_clientprofile")
+        )
         holder = baker.make(User)
         self.org_a.add_user(holder)
         add_legacy_membership(holder, group=group)
-        note: Any = baker.make("notes.Note", organization=self.org_a)
+        note: Any = baker.make(ClientProfile)
 
-        result = explain(holder, "notes.view_note", obj=note)
+        result = explain(holder, "clients.change_clientprofile", obj=note)
+
+        # The premise.  Without it this test is green even when the carve-out is
+        # inert, because both arms denying satisfies the assertions below.
+        self.assertTrue(_arm(result, "legacy rows").holds)
 
         self.assertFalse(result.cut_over)
         self.assertFalse(result.verdict)
-        self.assertEqual(result.verdict, can_obj(holder, "notes.view_note", note))
-        self.assertTrue(any("has not cut over" in note_ for note_ in result.notes))
-        self.assertTrue(_arm(result, "legacy rows").holds)
+        self.assertEqual(result.verdict, can_obj(holder, "clients.change_clientprofile", note))
 
     # ── notes ─────────────────────────────────────────────────────────────
 
@@ -334,6 +369,24 @@ class ExplainPermissionTestCase(TestCase):
 
         self.assertTrue(result.cut_over)
         self.assertFalse(any("has not cut over" in note for note in result.notes))
+
+    def test_explain_accepts_a_meta_only_permission(self) -> None:
+        """FAILS until ``_split_perm`` checks the same catalog as ``_perm_parts``.
+
+        ``notes.view_note_private_details`` is declared in ``Note.Meta.permissions``
+        and carried by the scoped Caseworker role, but it is absent from the
+        product-modeled catalog.  The enforcement path (``scopes``/``can``) accepts
+        it through the union catalog, so the debugger must too — otherwise it
+        refuses to explain exactly the kind of denial it exists for.
+        """
+        from notes.permissions import PrivateDetailsPermissions
+
+        holder = baker.make(User)
+
+        result = explain(holder, PrivateDetailsPermissions.VIEW, org=self.org_a)
+
+        self.assertFalse(result.verdict)
+        self.assertEqual(result.verdict, can(holder, PrivateDetailsPermissions.VIEW, org=self.org_a))
 
     # ── delegated arm ─────────────────────────────────────────────────────
 
@@ -399,6 +452,31 @@ class ExplainPermissionTestCase(TestCase):
         self.assertTrue(result.verdict)
         self.assertEqual(result.verdict, can_obj(alice, ClientProfile.perms.VIEW, client))
         self.assertTrue(any("SHARED" in note for note in result.notes))
+
+    def test_reachless_model_with_a_declared_class_explains_as_shared(self) -> None:
+        """Pins the explain fix: a reachless model that names SHARED says so.
+
+        ``_write_access_note`` used to report "fails closed" for any model without
+        ``OrgScoped`` before reading ``access.write``, contradicting ``can_obj`` in
+        the same call.  No model declares this combination yet, so the branch needs
+        a patched declaration; without this test the fix can be removed silently.
+        """
+        from unittest.mock import patch
+
+        from common.models import Access, AccessClass, Attachment
+
+        alice = baker.make(User)
+        grant_create(user=alice, role=self.shelter_role, scope_org=self.org_a)
+        attachment = baker.make(Attachment)
+
+        with patch.object(Attachment, "access", Access(write=AccessClass.SHARED)):
+            result = explain(alice, Shelter.perms.VIEW, obj=attachment)
+
+            # Inside the patch: after it exits, ``Attachment`` is reachless again
+            # and ``can_obj`` would fail closed.
+            self.assertTrue(result.verdict)
+            self.assertEqual(result.verdict, can_obj(alice, Shelter.perms.VIEW, attachment))
+            self.assertTrue(any("SHARED" in note for note in result.notes))
 
     # ── input validation ──────────────────────────────────────────────────
 
@@ -597,13 +675,13 @@ class ExplainPermissionCommandTestCase(TestCase):
 
         self.assertIn("unknown permission", str(ctx.exception))
 
-    def test_legacy_domain_run_carries_the_posture_banner(self) -> None:
+    def test_carve_out_run_carries_the_posture_banner(self) -> None:
         """The exit code follows the grant model, so the divergence has to be visible."""
-        output = self._run("--user", self.username, "--perm", "notes.view_note", "--org", str(self.org.pk))
+        output = self._run("--user", self.username, "--perm", "clients.change_clientprofile", "--org", str(self.org.pk))
 
         self.assertIn("legacy domain — NOT cut over yet", output)
         self.assertIn("^ grant-model answer", output)
-        self.assertIn("has not cut over", output)
+        self.assertIn("live enforcement may differ", output)
 
     def test_cut_over_run_has_no_posture_banner(self) -> None:
         output = self._run("--user", str(self.granted.pk), "--perm", Shelter.perms.VIEW, "--org", str(self.org.pk))

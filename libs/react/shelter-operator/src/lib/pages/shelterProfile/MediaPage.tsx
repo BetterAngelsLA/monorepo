@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router';
 import { ShelterMedia } from '../../components/ShelterProfile';
 
 export function ShelterMediaPage() {

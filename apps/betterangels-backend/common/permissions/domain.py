@@ -12,17 +12,19 @@ one of two states:
   reported and never consulted for authority.  ``LEGACY_INERT_APPS`` lists
   these — shelters, teams, reports, member management (``organizations.*`` on
   the org root), the client family's profile/family surfaces (clients, RFC
-  0002), and referrals.  Every permission of those apps is grant-backed by a
+  0002), referrals, tasks (RFC 0003 slice 1), and notes/service requests
+  (RFC 0003 slice 2).  Every permission of those apps is grant-backed by a
   scoped Role, so the legacy arm is fully redundant for them — **except client
   documents**: their ownership still rides guardian object rows and two
   mutations still load the parent through ``filter_for_user`` until the
   CREATOR/UPLOADER tier lands, so the document surface is the remaining legacy
   consumer in ``clients.schema`` (see the gating-test exemptions).
+
 * legacy-only — enforced via legacy ``PermissionGroup`` rows + guardian (the
-  notes / service-request domains; task and client-document writes ride their
-  own tiers next, RFC 0002/0003); grant rows are irrelevant and the global tier
-  is NOT enforceable per org.  Per-org entries carry these permissions only
-  from the user's org ``PermissionGroup`` rows (the legacy arm).
+  referral domain and the client-document writes riding their own tier next,
+  RFC 0002).  Grant rows are irrelevant and the global tier is NOT enforceable
+  per org.  Per-org entries carry these permissions only from the user's org
+  ``PermissionGroup`` rows (the legacy arm).
 
 The grant-only set is the single source of truth here — it is what the
 :func:`accounts.selectors.organization_effective_permissions` fold may include
@@ -33,10 +35,12 @@ over.
 
 #: Grant-only domains — legacy ``PermissionGroup`` rows are inert: not reported
 #: and never consulted for authority.  Shelters, teams, reports, member
-#: management (organizations.* — bound to the org-root Organization model), the
-#: client family (RFC 0002 — SHARED read / SHARED write), and referrals (the
-#: whole bundle rides the scoped ``Caseworker`` Role; the template carries no
-#: referral permission, so nothing legacy is left to consult).
+#: management (``organizations.*`` — bound to the org-root Organization model), the
+#: client family (RFC 0002 — SHARED read / SHARED write), referrals (the whole
+#: bundle rides the scoped ``Caseworker`` Role; the template carries no referral
+#: permission, so nothing legacy is left to consult), tasks (RFC 0003 slice 1 —
+#: writes ``can_obj`` over the org-scoped Role, reads SHARED), and notes/service
+#: requests (RFC 0003 slice 2 — same shape over the note's org).
 #:
 #: **Client documents and imports are the exception.**  They are still owned
 #: through guardian object rows / the legacy permission arm, and two upload
@@ -44,7 +48,9 @@ over.
 #: permissions keep a live legacy consumer until the CREATOR/UPLOADER tier lands.
 #: They are named in :data:`LEGACY_LIVE_PERMISSIONS`, which is what the reporting
 #: surfaces consult — don't rely on "inert" for docs or imports.
-LEGACY_INERT_APPS: frozenset[str] = frozenset({"shelters", "teams", "reports", "organizations", "clients", "referrals"})
+LEGACY_INERT_APPS: frozenset[str] = frozenset(
+    {"shelters", "teams", "reports", "organizations", "clients", "tasks", "notes", "referrals"}
+)
 
 #: Permissions inside an inert app that still have a live legacy consumer.
 #:

@@ -50,8 +50,8 @@ class TaskPermissionTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
                     response["data"]["createTask"]["messages"][0],
                     {
                         "kind": "PERMISSION",
-                        "field": "createTask",
-                        "message": "You don't have permission to access this app.",
+                        "field": None,
+                        "message": "You do not have permission to perform this action in this organization.",
                     },
                 )
 
@@ -230,23 +230,36 @@ class TaskAssigneeQueryPermissionTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsM
             self.assertEqual(response["data"]["taskAssignees"]["totalCount"], 0)
 
     def test_task_assignees_allows_a_change_only_role(self) -> None:
-        from django.contrib.auth.models import Group, Permission
-        from django.contrib.contenttypes.models import ContentType
+        """CHANGE alone is enough: the picker serves editing, not just creating.
 
+        Granted through the scoped Role, not a legacy ``auth.Group`` — after the
+        cutover a model-level ``has_perm`` alone confers no task authority.
+        """
         user = baker.make(User)
         self.org_1.add_user(user)
-
-        group = Group.objects.create(name="change-only")
-        group.permissions.add(
-            Permission.objects.get(
-                content_type=ContentType.objects.get_for_model(Task),
-                codename="change_task",
-            )
-        )
-        user.groups.add(group)
+        self._grant_permission(user, Task.perms.CHANGE, self.org_1, role_name="Task Changer")
 
         self.graphql_client.force_login(user)
 
         response = self.task_assignees_query()
 
         self.assertGreater(response["data"]["taskAssignees"]["totalCount"], 0)
+
+    def test_task_assignees_lists_the_roster_for_a_grant_only_holder(self) -> None:
+        """The picker is part of the task cutover: a scoped Grant must satisfy it.
+
+        At this head ``taskAssignees`` still asked Django/guardian ``has_perm``,
+        so a member provisioned only with a scoped Role got an empty page while
+        the rest of the task domain authorized them.  This pins the grant-model
+        predicate the field has to use.
+        """
+        user = baker.make(User)
+        self.org_1.add_user(user)
+        self._grant_permission(user, Task.perms.ADD, self.org_1, role_name="Task Assignee Adder")
+
+        self.graphql_client.force_login(user)
+        response = self.task_assignees_query()
+
+        ids = {row["id"] for row in response["data"]["taskAssignees"]["results"]}
+        self.assertIn(str(self.org_1_case_manager_2.pk), ids)
+        self.assertNotIn(str(self.org_2_case_manager_1.pk), ids)

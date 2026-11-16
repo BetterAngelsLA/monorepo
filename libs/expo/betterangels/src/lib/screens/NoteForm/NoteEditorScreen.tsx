@@ -10,7 +10,7 @@ import {
   UpdateNoteDocument,
   ViewNoteDocument,
 } from '../../apollo';
-import { useSnackbar } from '../../hooks';
+import { useActiveOrgId, useSnackbar } from '../../hooks';
 import { HeaderSlot } from '../../navigation';
 import { useUserTeamPreference } from '../../state';
 import { CreateNoteDocument } from '../../ui-components/CreateClientInteraction';
@@ -46,6 +46,7 @@ export default function NoteEditorScreen(props: NoteEditorScreenProps) {
   const navigation = useNavigation();
   const apolloClient = useApolloClient();
   const { showSnackbar } = useSnackbar();
+  const activeOrgId = useActiveOrgId();
 
   const isCreateMode = mode === 'create';
 
@@ -60,7 +61,7 @@ export default function NoteEditorScreen(props: NoteEditorScreenProps) {
     skip: isCreateMode,
   });
 
-  const [updateNote, { error: updateError }] = useMutation(UpdateNoteDocument);
+  const [updateNote] = useMutation(UpdateNoteDocument);
   const [createNote] = useMutation(CreateNoteDocument);
   const [deleteNote] = useMutation(DeleteNoteDocument);
 
@@ -140,10 +141,20 @@ export default function NoteEditorScreen(props: NoteEditorScreenProps) {
 
     try {
       if (isCreateMode) {
+        // No active org to anchor the create to (none remembered / none to
+        // join).  Throw rather than return: the catch below surfaces it, while
+        // returning would navigate away as if the note had been saved.
+        if (!activeOrgId) {
+          throw new Error(
+            'Cannot create an interaction without an active organization.',
+          );
+        }
+
         const result = await createNote({
           variables: {
             data: {
               clientProfile: clientProfileId,
+              organizationId: activeOrgId,
               ...payload,
             },
           },
@@ -161,8 +172,16 @@ export default function NoteEditorScreen(props: NoteEditorScreenProps) {
           variables: { data: { id: noteId as string, ...payload } },
         });
 
-        if (!result.data) {
-          throw new Error(`Failed to update interaction: ${updateError}`);
+        const updated = result.data?.updateNote;
+        if (!updated || !('id' in updated)) {
+          // A rejection comes back as `OperationInfo`, not an error, so
+          // `result.data` is truthy even when the save failed, and the mutation's
+          // `error` is undefined for exactly this case — the payload's messages
+          // are the only reason the server gave, so surface those.
+          const reason =
+            updated?.messages?.map((message) => message.message).join('; ') ||
+            'unknown';
+          throw new Error(`Failed to update interaction: ${reason}`);
         }
       }
 

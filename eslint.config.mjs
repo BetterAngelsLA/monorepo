@@ -111,6 +111,16 @@ export const depConstraints = [
   },
 ];
 
+const KEYBOARD_RESTRICTED_IMPORT = {
+  paths: [
+    {
+      name: 'react-native-keyboard-controller',
+      message:
+        "Import from '@monorepo/expo/shared/ui-components' (the Keyboard seam) instead. The package is native-only and is not bundled for web.",
+    },
+  ],
+};
+
 export default [
   // Global ignores — prevents ESLint from even traversing these directories.
   // Unlike `rules`, `ignores` in flat config are additive: project-level
@@ -209,19 +219,30 @@ export default [
   // half disables this rule inline.
   {
     files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],
+    ignores: ['**/*node-test.ts'],
     rules: {
       'no-restricted-imports': [
         'error',
         {
-          paths: [
+          ...KEYBOARD_RESTRICTED_IMPORT,
+          patterns: [
             {
-              name: 'react-native-keyboard-controller',
+              group: ['@newrelic/browser-agent-dist/*'],
               message:
-                "Import from '@monorepo/expo/shared/ui-components' (the Keyboard seam) instead. The package is native-only and is not bundled for web.",
+                'The browser-agent dist alias is test-only. Import from the public @newrelic/browser-agent entry points instead.',
             },
           ],
         },
       ],
+    },
+  },
+
+  // The shared serializer regression helper is the only place allowed to import
+  // the internal dist builds; production code must use the public entry points.
+  {
+    files: ['**/testing/**/*.ts'],
+    rules: {
+      'no-restricted-imports': ['error', KEYBOARD_RESTRICTED_IMPORT],
     },
   },
 

@@ -1,3 +1,4 @@
+import './monitoring/bootstrap';
 import { HttpLink } from '@apollo/client';
 import { initApolloRuntimeConfig } from '@monorepo/apollo';
 import { createWebFetchClient } from '@monorepo/ba-platform/web';
@@ -11,7 +12,7 @@ import {
 import { createOperatorTypePolicies } from '@monorepo/react/shelter-operator';
 import { StrictMode } from 'react';
 import * as ReactDOM from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom';
+import { BrowserRouter } from 'react-router';
 import { App } from './app';
 
 const isDevEnv = import.meta.env.DEV;

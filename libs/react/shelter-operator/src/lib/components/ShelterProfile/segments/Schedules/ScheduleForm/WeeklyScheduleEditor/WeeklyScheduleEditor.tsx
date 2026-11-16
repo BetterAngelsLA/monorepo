@@ -27,7 +27,10 @@ export function WeeklyScheduleEditor(props: TProps) {
 
     for (const d of Object.values(DayOfWeekChoices)) {
       if (d !== sourceDay) {
-        next[d] = { ranges: sourceRanges.map((r) => ({ ...r })) };
+        // A copied range is a new row: drop the saved row it came from.
+        next[d] = {
+          ranges: sourceRanges.map(({ serverId: _saved, ...r }) => ({ ...r })),
+        };
       }
     }
 

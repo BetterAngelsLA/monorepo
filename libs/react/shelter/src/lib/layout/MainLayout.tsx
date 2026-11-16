@@ -1,6 +1,6 @@
 import { mergeCss } from '@monorepo/react/shared';
 import { ReactElement } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet } from 'react-router';
 import { FlyoutContainer, ModalContainer } from '../components';
 import { Footer } from './Footer';
 import { Header } from './Header';

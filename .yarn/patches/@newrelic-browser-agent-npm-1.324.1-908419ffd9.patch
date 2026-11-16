@@ -1,0 +1,177 @@
+diff --git a/dist/cjs/features/page_view_timing/aggregate/index.js b/dist/cjs/features/page_view_timing/aggregate/index.js
+index e056ccd..f732cd2 100644
+--- a/dist/cjs/features/page_view_timing/aggregate/index.js
++++ b/dist/cjs/features/page_view_timing/aggregate/index.js
+@@ -30,6 +30,38 @@ var _payloads = require("../../../common/payloads/payloads");
+  * SPDX-License-Identifier: Apache-2.0
+  */
+ 
++const SAFE_PAGE_VIEW_TIMING_ATTRS = new Set([
++  'cls',
++  'elTag',
++  'elementRenderDelay',
++  'eventTime',
++  'fcp',
++  'fid',
++  'firstByteToFCP',
++  'inputDelay',
++  'interactionTime',
++  'interactionType',
++  'largestShiftTime',
++  'largestShiftValue',
++  'loadState',
++  'metricId',
++  'net-dlink',
++  'net-etype',
++  'net-rtt',
++  'net-type',
++  'nextPaintTime',
++  'presentationDelay',
++  'processingDuration',
++  'resourceLoadDelay',
++  'resourceLoadDuration',
++  'resourceLoadTime',
++  'size',
++  'timeToFirstByte',
++  'timestamp',
++  'type',
++  'webdriverDetected',
++])
++
+ class Aggregate extends _aggregateBase.AggregateBase {
+   static featureName = _constants.FEATURE_NAME;
+   #handleVitalMetric = ({
+@@ -174,6 +206,15 @@ class Aggregate extends _aggregateBase.AggregateBase {
+         pageUrl,
+         ...systemReservedAttrs
+       } = timing.attrs || {};
++      // PageViewTiming system attributes bypass init.obfuscate. Upstream
++      // intentionally preserves them (newrelic/newrelic-browser-agent#1817);
++      // remove this patch if an opt-in blur lands, or when the beforeHarvest
++      // hook (#1821) is available. Keep only numeric/enumerated diagnostics
++      // that have no DOM or URL provenance.
++      for (const key of Object.keys(systemReservedAttrs)) {
++        if (!SAFE_PAGE_VIEW_TIMING_ATTRS.has(key)) delete systemReservedAttrs[key]
++      }
++
+       var attrParts = (0, _belSerializer.addCustomAttributes)(systemReservedAttrs, keepOrigValue);
+       attrParts.push(...(0, _belSerializer.addCustomAttributes)(userAttrs, obfuscateValue));
+       if (pageUrl) attrParts.push(...(0, _belSerializer.addCustomAttributes)({
+diff --git a/dist/esm/features/page_view_timing/aggregate/index.js b/dist/esm/features/page_view_timing/aggregate/index.js
+index ca022dc..14378af 100644
+--- a/dist/esm/features/page_view_timing/aggregate/index.js
++++ b/dist/esm/features/page_view_timing/aggregate/index.js
+@@ -24,6 +24,38 @@ import { webdriverDetected } from '../../../common/util/webdriver-detection';
+ import { cleanURL } from '../../../common/url/clean-url';
+ import { EVENT_TYPES } from '../../../common/constants/events';
+ import { createStringAdders } from '../../../common/payloads/payloads';
++const SAFE_PAGE_VIEW_TIMING_ATTRS = new Set([
++  'cls',
++  'elTag',
++  'elementRenderDelay',
++  'eventTime',
++  'fcp',
++  'fid',
++  'firstByteToFCP',
++  'inputDelay',
++  'interactionTime',
++  'interactionType',
++  'largestShiftTime',
++  'largestShiftValue',
++  'loadState',
++  'metricId',
++  'net-dlink',
++  'net-etype',
++  'net-rtt',
++  'net-type',
++  'nextPaintTime',
++  'presentationDelay',
++  'processingDuration',
++  'resourceLoadDelay',
++  'resourceLoadDuration',
++  'resourceLoadTime',
++  'size',
++  'timeToFirstByte',
++  'timestamp',
++  'type',
++  'webdriverDetected',
++])
++
+ export class Aggregate extends AggregateBase {
+   static featureName = FEATURE_NAME;
+   #handleVitalMetric = ({
+@@ -168,6 +200,15 @@ export class Aggregate extends AggregateBase {
+         pageUrl,
+         ...systemReservedAttrs
+       } = timing.attrs || {};
++      // PageViewTiming system attributes bypass init.obfuscate. Upstream
++      // intentionally preserves them (newrelic/newrelic-browser-agent#1817);
++      // remove this patch if an opt-in blur lands, or when the beforeHarvest
++      // hook (#1821) is available. Keep only numeric/enumerated diagnostics
++      // that have no DOM or URL provenance.
++      for (const key of Object.keys(systemReservedAttrs)) {
++        if (!SAFE_PAGE_VIEW_TIMING_ATTRS.has(key)) delete systemReservedAttrs[key]
++      }
++
+       var attrParts = addCustomAttributes(systemReservedAttrs, keepOrigValue);
+       attrParts.push(...addCustomAttributes(userAttrs, obfuscateValue));
+       if (pageUrl) attrParts.push(...addCustomAttributes({
+diff --git a/src/features/page_view_timing/aggregate/index.js b/src/features/page_view_timing/aggregate/index.js
+index 8b5a10e..9215df5 100644
+--- a/src/features/page_view_timing/aggregate/index.js
++++ b/src/features/page_view_timing/aggregate/index.js
+@@ -25,6 +25,38 @@ import { cleanURL } from '../../../common/url/clean-url'
+ import { EVENT_TYPES } from '../../../common/constants/events'
+ import { createStringAdders } from '../../../common/payloads/payloads'
+ 
++const SAFE_PAGE_VIEW_TIMING_ATTRS = new Set([
++  'cls',
++  'elTag',
++  'elementRenderDelay',
++  'eventTime',
++  'fcp',
++  'fid',
++  'firstByteToFCP',
++  'inputDelay',
++  'interactionTime',
++  'interactionType',
++  'largestShiftTime',
++  'largestShiftValue',
++  'loadState',
++  'metricId',
++  'net-dlink',
++  'net-etype',
++  'net-rtt',
++  'net-type',
++  'nextPaintTime',
++  'presentationDelay',
++  'processingDuration',
++  'resourceLoadDelay',
++  'resourceLoadDuration',
++  'resourceLoadTime',
++  'size',
++  'timeToFirstByte',
++  'timestamp',
++  'type',
++  'webdriverDetected',
++])
++
+ export class Aggregate extends AggregateBase {
+   static featureName = FEATURE_NAME
+ 
+@@ -165,6 +197,15 @@ export class Aggregate extends AggregateBase {
+       const userAttrs = this.#getGlobalCustomAttributes()
+ 
+       const { pageUrl, ...systemReservedAttrs } = timing.attrs || {}
++      // PageViewTiming system attributes bypass init.obfuscate. Upstream
++      // intentionally preserves them (newrelic/newrelic-browser-agent#1817);
++      // remove this patch if an opt-in blur lands, or when the beforeHarvest
++      // hook (#1821) is available. Keep only numeric/enumerated diagnostics
++      // that have no DOM or URL provenance.
++      for (const key of Object.keys(systemReservedAttrs)) {
++        if (!SAFE_PAGE_VIEW_TIMING_ATTRS.has(key)) delete systemReservedAttrs[key]
++      }
++
+       var attrParts = addCustomAttributes(systemReservedAttrs, keepOrigValue)
+       attrParts.push(...addCustomAttributes(userAttrs, obfuscateValue))
+       if (pageUrl) attrParts.push(...addCustomAttributes({ pageUrl }, obfuscateValue))

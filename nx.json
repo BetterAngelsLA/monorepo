@@ -1,9 +1,6 @@
 {
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
   "cacheDirectory": ".nx/cache",
-  "tasksRunnerOptions": {
-    "default": {}
-  },
   "targetDefaults": {
     "build": {
       "dependsOn": [
@@ -15,14 +12,20 @@
       ],
       "cache": true
     },
-    "test": {
-      "inputs": [
-        "default",
-        "^production",
-        "{workspaceRoot}/jest.preset.js"
-      ],
-      "cache": false
-    },
+    "test": [
+      {
+        "cache": true
+      },
+      {
+        "filter": {
+          "plugin": "@nx/vitest"
+        },
+        "inputs": [
+          "...",
+          "{workspaceRoot}/tools/monorepo-image/Dockerfile"
+        ]
+      }
+    ],
     "lint": {
       "inputs": [
         "default",

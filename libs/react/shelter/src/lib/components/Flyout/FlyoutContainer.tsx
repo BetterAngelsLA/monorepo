@@ -1,6 +1,6 @@
 import { useAtom } from 'jotai';
 import { ReactElement, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router';
 import { Flyout } from './Flyout';
 import { flyoutAtom } from './flyoutAtom';
 

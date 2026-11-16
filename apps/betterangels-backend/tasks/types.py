@@ -135,6 +135,11 @@ class CreateTaskInput:
     team_id: Maybe[ID | None]
     assignee_id: Maybe[ID | None]
     status: Optional[TaskStatusEnum]
+    # The acting org (ADR 0001 §5, RFC 0003): authority is ``require_can`` at
+    # this org and the created row's ``organization``.  Required — a build that
+    # predates it gets a GraphQL validation error rather than a silent fallback
+    # into whichever group the caller happens to hold.
+    organization_id: ID
 
 
 @strawberry_django.input(models.Task, partial=True)

@@ -3,7 +3,7 @@ import { RoomStatusChoices } from '@monorepo/ba-platform/types';
 import { toError } from '@monorepo/react/shared';
 import { Plus } from 'lucide-react';
 import { useCallback, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import {
   useCloneRoom,
   useDeleteRooms,

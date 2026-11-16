@@ -245,57 +245,73 @@ def check_object_grant_principal_is_a_user(app_configs: Any, **kwargs: Any) -> l
 
 
 @register(Tags.models)
-def check_write_tier_declarations(app_configs: Any, **kwargs: Any) -> list[Error]:
-    """E007 — ``write_tier`` declarations must be legal (RFC 0002 §Precondition).
+def check_access_declarations(app_configs: Any, **kwargs: Any) -> list[Error]:
+    """E007 — ``access`` declarations must be legal (ADR 0005).
 
-    ``write_tier`` is consulted by ``can_obj`` independently of ``org_via``:
+    ``access.write`` is consulted by :func:`common.permissions.selectors.writable`
+    and :func:`~common.permissions.selectors.can_obj`, for every model:
 
-    * only a platform-shared model (``org_via = None``) may declare a tier —
-      org-anchored models derive the ORG write tier from their org anchor;
-    * ``WRITE_OBJECT`` stays reserved until the object arm turns on with the
-      clients cutover (ADR 0001 §2.5) — declaring it today would silently route
-      writes to an object-grant predicate nothing can satisfy;
-    * a declared value must be a tier constant — an unrecognized string would
-      otherwise fall through to ``can_obj``'s fail-closed default and silently
-      drop scoped-grant writes.
+    * an **org-anchored** model (``org_via`` not ``None``) derives ORG from its
+      org anchor and must not declare a write class;
+    * a **platform-shared or reachless** model may declare one, and either way
+      the value must be an :class:`~common.models.AccessClass` — a bare string
+      or the constant's name is refused, because nothing else type-checks a
+      class attribute and a typo must not enforce nothing like what it claims;
+    * ``AccessClass.OBJECT`` stays reserved until the object arm turns on with
+      the clients cutover (ADR 0001 §2.5) — declaring it today would route
+      writes to a predicate nothing can satisfy;
     """
     from django.apps import apps
 
-    from common.models import WRITE_OBJECT, WRITE_SHARED, OrgScoped
+    from common.models import Access, AccessClass, OrgScoped
 
     errors: list[Error] = []
     for model in apps.get_models():
-        if not issubclass(model, OrgScoped):
+        # Through the MRO: a declaration on an abstract base is enforced on every
+        # concrete subclass, so the deploy check has to see it too.
+        access = getattr(model, "access", None)
+        if access is None:
             continue
-        tier = model.__dict__.get("write_tier")
-        if tier is None:
-            continue
-        if model.org_via is not None:
+        if not isinstance(access, Access):
             errors.append(
                 Error(
-                    f"{model.__name__}.write_tier = {tier!r} on an org-anchored model.",
-                    hint="Org-anchored models derive the ORG write tier from org_via; "
-                    "only a platform-shared model (org_via = None) declares a tier.",
+                    f"{model.__name__}.access = {access!r} is not an Access declaration.",
+                    hint="Declare access = Access(...) — a bare value would silently enforce nothing.",
                     obj=model,
                     id="permissions.E007",
                 )
             )
-        elif tier == WRITE_OBJECT:
+            continue
+
+        write: object = access.write
+        if write is None:
+            continue
+        if not isinstance(write, AccessClass):
             errors.append(
                 Error(
-                    f"{model.__name__}.write_tier = {tier!r} is reserved.",
-                    hint="The object-grant arm (WRITE_OBJECT) turns on with the clients "
+                    f"{model.__name__}.access.write = {write!r} is not an AccessClass.",
+                    hint="Use the enum: AccessClass.SHARED (or .OBJECT once the arm lands).",
+                    obj=model,
+                    id="permissions.E007",
+                )
+            )
+            continue
+        if issubclass(model, OrgScoped) and model.org_via is not None:
+            errors.append(
+                Error(
+                    f"{model.__name__}.access.write = {write!r} on an org-anchored model.",
+                    hint="Org-anchored models derive the ORG write scope from org_via; only a "
+                    "platform-shared or reachless model declares a write class.",
+                    obj=model,
+                    id="permissions.E007",
+                )
+            )
+        elif write is AccessClass.OBJECT:
+            errors.append(
+                Error(
+                    f"{model.__name__}.access.write = {write!r} is reserved.",
+                    hint="The object-grant arm (AccessClass.OBJECT) turns on with the clients "
                     "cutover (ADR 0001 §2.5) — do not declare it before then.",
-                    obj=model,
-                    id="permissions.E007",
-                )
-            )
-        elif tier != WRITE_SHARED:
-            errors.append(
-                Error(
-                    f"{model.__name__}.write_tier = {tier!r} is not a recognized tier.",
-                    hint=f"Recognized tiers are WRITE_SHARED ({WRITE_SHARED!r}) and "
-                    f"WRITE_OBJECT ({WRITE_OBJECT!r}, reserved until the clients cutover).",
                     obj=model,
                     id="permissions.E007",
                 )

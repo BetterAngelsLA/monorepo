@@ -1,5 +1,5 @@
 import { ArrowLeftIcon, BedIcon, UsersIcon } from '@monorepo/react/icons';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { DemographicChoices } from '../../../../apollo';
 import { PrivateBadge } from '../../../../components';
 import {

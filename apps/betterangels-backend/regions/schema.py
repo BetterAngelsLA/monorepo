@@ -27,10 +27,10 @@ from graphql import GraphQLError
 from strawberry import ID
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
-from strawberry_django.utils.query import filter_for_user
 
 from accounts.models import User as AccountUser
 from common.graphql.utils import org_or_deny
+from common.permissions.selectors import can_anywhere
 from common.permissions.utils import IsAuthenticated, require_can
 from common.utils import aware_range
 from notes.permissions import NotePermissions
@@ -66,13 +66,18 @@ if TYPE_CHECKING:
 
 
 def _note_scoped_notes(org_notes: "QuerySet[Note]", user: AccountUser) -> "QuerySet[Note]":
-    """The per-row note authority: the same legacy scope the Notes pages apply.
+    """The note read scope, on the grant model (RFC 0003 slice 2).
 
-    A filter rather than a grant predicate, and deliberately so — `interaction_map` carries
-    the reasoning. Shared with `interaction_scope` so the two cannot answer differently.
+    SHARED read: a holder of ``notes.view_note`` anywhere sees every note in the
+    org-confined set, a non-holder sees none.  That is the shape
+    ``filter_for_user`` produced while notes were legacy-only — the difference is
+    that it is now the predicate that actually decides, so it cannot drift from
+    the Notes pages.  Shared with ``interaction_scope`` so the two cannot answer
+    differently.
     """
-    # `filter_for_user` is untyped upstream, so the shape is asserted rather than inferred.
-    return cast("QuerySet[Note]", filter_for_user(org_notes, user, [NotePermissions.VIEW]))
+    if can_anywhere(user, NotePermissions.VIEW):
+        return org_notes
+    return org_notes.none()
 
 
 def _is_withheld(*, org_notes: "QuerySet[Note]", scoped_notes: "QuerySet[Note]") -> bool:
@@ -227,27 +232,22 @@ class Query:
         differently. The fine gate is the note read scope, applied by
         ``filter_for_user(..., [NotePermissions.VIEW])``.
 
-        It is deliberately **not** ``require_can(..., NotePermissions.VIEW)``. Notes are a
-        legacy-only domain: ``LEGACY_INERT_APPS`` (``common/permissions/domain.py``) lists
-        the cut-over apps (shelters/teams/reports/organizations, the client family,
-        referrals), never notes, and the scoped ``CASEWORKER_ROLE`` carries
-        ``Team.perms.VIEW``, the client bundle and the referral bundle — but **no ``Role``
-        carries ``notes.view_note``**. A grant predicate on that codename therefore
-        resolves to an empty scope and denies every non-superuser, including the
-        caseworkers the map is for. That is the ADR §5.3 anti-pattern: gating on a permission before its cutover
-        deletes authority rather than moving it. The note scope is enforced below, through
-        the same legacy path the Notes pages use.
+        Both gates are grant predicates. The fine one is ``notes.view_note``, a
+        **SHARED** read (RFC 0003 slice 2): a holder sees every note in the
+        org-confined set, a non-holder sees none. Before the cutover this rode
+        ``filter_for_user`` because no ``Role`` carried the codename — gating on it
+        then would have denied every caseworker (ADR §5.3). The scoped
+        ``CASEWORKER_ROLE`` carries it now, so the map and the Notes pages answer
+        from the same predicate.
 
-        ``filter_for_user`` has **no organization awareness at all**, which is why the
-        queryset is org-confined *before* it is passed in (``org_notes_in_range``) and why
-        ``interaction_points`` also applies its own org predicate.
+        The note scope carries **no organization awareness** — it is a binary
+        "holds ``notes.view_note``" — which is why the queryset is org-confined
+        *before* it is scoped (``org_notes_in_range``) and why ``interaction_points``
+        also applies its own org predicate.
 
-        For this codename it behaves as all-or-nothing in this deployment — no ``Role``
-        carries ``notes.view_note`` and nothing writes an object grant for a note — but that
-        is a property of the data, not of the helper. It ORs the model-level permission with
-        an object-grant ``pk__in`` subquery, so a per-object grant would narrow the result.
-        ``withheld`` is a boolean and therefore reports only the all-or-nothing case: a
-        partially scoped map still reads as complete.
+        ``withheld`` reports the all-or-nothing case: a set that had pins and lost
+        all of them reads as withheld, while a partially scoped map still reads as
+        complete.
 
         ``dimension`` and ``regionCodes`` are read together, the same way the density tile
         reads them: a non-empty ``regionCodes`` needs a dimension (a code is not unique across

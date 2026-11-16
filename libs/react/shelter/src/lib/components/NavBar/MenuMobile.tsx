@@ -1,7 +1,7 @@
 import { CloseIcon } from '@monorepo/react/icons';
 import { mergeCss } from '@monorepo/react/shared';
 import { useAtom } from 'jotai';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import {
   aboutUsPath,
   operatorPath,

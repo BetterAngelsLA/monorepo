@@ -1,9 +1,30 @@
-"""Read-side authorization selectors (ADR 0001 §2.4, §2.10).
+"""Authorization selectors (ADR 0001 §2.4, §2.10, RFC 0002 §Precondition).
 
-Pull-only: given a user, a permission, and a queryset, return the rows the user
-may exercise that permission on.  Follows the repo's service/selector pattern
+Pull-only: given a user, a permission, and (usually) a queryset, answer what
+authority the user holds.  This module is the single place the org-scope and
+write-tier rules live; it follows the repo's service/selector pattern
 (docs/styleguides/python.md): no side effects; memoized per request on the user
 instance, mirroring ``ModelBackend._perm_cache``.
+
+Layers, scope math to mutation gate:
+
+* ``scopes`` / ``global_permissions`` — the raw material: the org set (or
+  ``ALL``) in which the user holds *perm*.
+* ``visible`` / ``writable`` — the **queryset** layer: scope a queryset to the
+  rows the user may exercise *perm* on, for reads / writes respectively.
+  Callers compose freely on the result (``get``, ``first``,
+  ``filter(…).exists()``) — or take the whole row set for a list.
+* ``can`` / ``can_obj`` / ``can_anywhere`` — verdicts: authority at an org
+  (creates), on one row (``can_obj`` is ``writable`` applied to a row), or
+  anywhere.
+* ``get_writable_or_deny`` (``common.permissions.utils``) — the mutation
+  leaf: fetch a write target through ``writable``, or deny.  Mutation gates
+  fetch through it (or through ``writable`` directly for non-pk shapes) —
+  never from a raw manager.
+
+Read scope and write scope are chosen independently (RFC 0002 §Precondition):
+``visible`` answers the read rule, ``writable`` the write rule — one is never
+reused for the other (a SHARED-read model still writes org-scoped).
 
 The global tier is read explicitly (superuser, global Role in ``user.groups``,
 ``user_permissions``) — NOT ``user.has_perm`` — until the legacy
@@ -30,7 +51,28 @@ ALL = object()
 
 
 def _perm_parts(perm: str) -> tuple[str, str]:
-    app_label, codename = perm.split(".", 1)
+    """Split ``app_label.codename``, refusing a codename nothing declares.
+
+    A typo used to be indistinguishable from a denial: ``can`` returned ``False``
+    and the caller reported "permission denied" for a permission that does not
+    exist.  The catalog checked here is the same one the frontend gates on, so a
+    name missing from it could never be granted anyway — failing loudly turns a
+    silent bug into a stack trace.
+    """
+    from common.permissions.utils import known_permission_strings
+
+    # ``TextChoices`` members are ``str`` subclasses that hash by identity, so a
+    # member never matches its own value in a set — normalise before looking up.
+    name = str(perm)
+    try:
+        app_label, codename = name.split(".", 1)
+    except ValueError as exc:
+        raise ValueError(f"{name!r} is not 'app_label.codename'.") from exc
+    if name not in known_permission_strings():
+        raise ValueError(
+            f"{name!r} is not a declared permission. Use the model's ``perms`` set or its "
+            "``*Permissions`` enum — an undeclared name can never be granted."
+        )
     return app_label, codename
 
 
@@ -252,13 +294,14 @@ def invalidate_scope_cache(user: "User") -> None:
     tier) call this after changing *user*'s authority so a request that
     grants/revokes and then re-reads authority on the same user instance never
     serves the stale decision (a cached ``ALL`` sentinel is the hard-stale
-    case).  The same request-scope staleness applies to the effective-report memos
-    (``global_permissions`` / ``organization_effective_permissions``), so they
-    are dropped here too.  Delegation writes (``grant_delegate`` / ``grant_delete``
-    on an org principal) have no single user principal to reach from here, so
-    invalidation is caller-supplied: pass the instance serving the request
-    (``acting_user``).  Fanning out to DB-loaded members would clear memos on
-    instances nobody reads and leave the caller's cache stale.
+    case).  The same request-scope staleness applies to the effective-report
+    memos (``global_permissions`` / ``organization_effective_permissions``),
+    so they are dropped here too.  Delegation
+    writes (``grant_delegate`` / ``grant_delete`` on an org principal) have no
+    single user principal to reach from here, so invalidation is
+    caller-supplied: pass the instance serving the request (``acting_user``).
+    Fanning out to DB-loaded members would clear memos on instances nobody
+    reads and leave the caller's cache stale.
     """
     user.__dict__.pop("_authority_cache", None)
     user.__dict__.pop("_can_anywhere_cache", None)
@@ -303,6 +346,44 @@ def visible(qs: "QuerySet", user: "User", perm: str, *, in_org: int | str | None
     return qs
 
 
+def writable(qs: "QuerySet", user: "User", perm: str) -> "QuerySet":
+    """The rows of *qs* on which *user* may exercise *perm* **for writes**.
+
+    ``can_obj`` as a queryset filter (RFC 0002 §Precondition — write scope is
+    chosen independently of read scope).  ``can_obj`` answers the same
+    question about a row already in hand without issuing the query.  Mutation gates fetch through this
+    instead of fetching unfiltered and checking ``can_obj`` afterwards: the
+    fetch itself is the gate (a forbidden row is simply unfetchable), and one
+    query does the work of two.  The org arm reuses :func:`visible` *with the
+    write perm* — literally the predicate ``can_obj`` resolves for a row.
+
+    Classes (kept in lockstep with :func:`can_obj` — the row check is the
+    cheaper of the two, so it keeps its own implementation and an equivalence
+    test pins them):
+
+    * **ORG** (org-anchored, ``org_via`` not ``None``) — ``visible(qs, …)``.
+    * **SHARED** (``access.write = AccessClass.SHARED``) — all rows iff the user
+      holds *perm* anywhere, none otherwise.
+    * **Fail-closed default** — all rows only for the global tier (``scopes``
+      is ALL); ``AccessClass.OBJECT`` sits here until the object arm wires grants.
+    """
+    from common.models import AccessClass, OrgScoped
+
+    model = qs.model
+    # ``None`` means a model from outside the app (Django, pghistory).
+    access = getattr(model, "access", None)
+    write = access.write if access is not None else None
+    if issubclass(model, OrgScoped) and model.org_via is not None:
+        return visible(qs, user, perm)
+    if write == AccessClass.SHARED:
+        # Reachless models can name SHARED too — that is why the slot is on
+        # ``BaseModel``.
+        return qs if can_anywhere(user, perm) else qs.none()
+    if not issubclass(model, OrgScoped):
+        return qs.none()
+    return qs if scopes(user, perm) is ALL else qs.none()
+
+
 def can(user: "User", perm: str, *, org: Any) -> bool:
     """Authority in an organization — the check for creates, which have no row yet."""
     s = scopes(user, perm)
@@ -319,25 +400,32 @@ def can(user: "User", perm: str, *, org: Any) -> bool:
 def can_obj(user: "User", perm: str, obj: "Model") -> bool:
     """The single-row write check — the row filter applied to one row.
 
-    Write scope is chosen independently of read scope (RFC 0002 §Precondition):
+    Write scope is chosen independently of read scope (RFC 0002 §Precondition),
+    and the class comes from the model's ``access.write`` declaration:
 
     * **ORG** (derived default for an org-anchored model, ``org_via`` not
       ``None``) — the row must sit in an org the user can exercise *perm* in.
       Unchanged from the pre-tier contract.
-    * **SHARED** (declared ``write_tier = WRITE_SHARED`` on a platform-shared
-      model) — any holder of *perm* anywhere may act (``can_anywhere``).
-      ``ClientProfile`` declares this to match ``main`` (RFC 0002 decision #1).
-    * **Fail-closed default** for a platform-shared model with no declared tier
-      (finding C1 / RFC 0002): the read rule never feeds an undeclared write —
-      only the global tier (``scopes`` is ALL) may act, until an object grant
-      covers the row once the object arm is wired at the clients cutover.
+    * **SHARED** (``access.write = AccessClass.SHARED``, platform-shared or
+      reachless) — any holder of *perm* anywhere may act (``can_anywhere``).
+      ``ClientProfile`` declares this to match ``main`` (RFC 0002 decision #1);
+      a reachless model may declare it too, which is why the slot lives on
+      ``BaseModel``.
+    * **Fail-closed default** — a platform-shared model with no declared class
+      acts only for the global tier (finding C1 / RFC 0002), and a reachless
+      model (no ``OrgScoped``) fails closed outright.
+
+    Kept for callers that already hold a row (services, ``explain``); mutation
+    gates should instead fetch *through* :func:`writable` so the fetch itself
+    is the gate.  The classes live in :func:`writable`'s docstring; an
+    equivalence test pins the two so they cannot drift.
     """
-    from common.models import WRITE_SHARED, OrgScoped
+    from common.models import AccessClass, OrgScoped
 
     model = obj.__class__
-    if not issubclass(model, OrgScoped):
-        return False
-    if model.org_via is not None:
+    access = getattr(model, "access", None)
+    write = access.write if access is not None else None
+    if issubclass(model, OrgScoped) and model.org_via is not None:
         # Own-org columns are read from the row; a hop reads just the org id
         # column from the database, because a cached parent can be stale after a
         # re-point and the object graph cannot prove it is current.
@@ -359,8 +447,10 @@ def can_obj(user: "User", perm: str, obj: "Model") -> bool:
         if row is None:
             return False
         return any(value in s for value in row if value is not None)
-    if model.write_tier == WRITE_SHARED:
+    if write == AccessClass.SHARED:
         return can_anywhere(user, perm)
+    if not issubclass(model, OrgScoped):
+        return False
     s = scopes(user, perm)
     return s is ALL
 
