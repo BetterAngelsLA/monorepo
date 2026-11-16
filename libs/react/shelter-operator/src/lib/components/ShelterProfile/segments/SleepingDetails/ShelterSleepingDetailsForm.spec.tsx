@@ -163,7 +163,7 @@ describe('ShelterSleepingDetailsForm availability', () => {
 
     expect(
       await screen.findAllByText(
-        "Available beds (5) cannot exceed the shelter's total beds (4).",
+        "Unrestricted + restricted beds (5) cannot exceed the shelter's total beds (4).",
       ),
     ).toHaveLength(2);
   });

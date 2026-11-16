@@ -39,7 +39,9 @@ def validate_availability_counts(
 
     available_beds = non_restricted_beds + restricted_beds
     if available_beds > total_beds:
-        message = f"Available beds ({available_beds}) cannot exceed the shelter's total beds ({total_beds})."
+        message = (
+            f"Unrestricted + restricted beds ({available_beds}) cannot exceed the shelter's total beds ({total_beds})."
+        )
         raise ValidationError(
             {
                 "non_restricted_beds": [message],

@@ -164,7 +164,7 @@ class ShelterFormAvailabilityTestCase(TestCase):
 
         form._validate_availability_counts(form.cleaned_data)
 
-        message = "Available beds (5) cannot exceed the shelter's total beds (4)."
+        message = "Unrestricted + restricted beds (5) cannot exceed the shelter's total beds (4)."
         self.assertEqual(form.errors["non_restricted_beds"], [message])
         self.assertEqual(form.errors["restricted_beds"], [message])
 

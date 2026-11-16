@@ -1008,7 +1008,7 @@ class ShelterAvailabilityValidationTestCase(TestCase):
 
         error_dict = raised.exception.error_dict
         self.assertSetEqual(set(error_dict), {"non_restricted_beds", "restricted_beds"})
-        self.assertIn("Available beds (5) cannot exceed the shelter's total beds (4).", str(error_dict))
+        self.assertIn("Unrestricted + restricted beds (5) cannot exceed the shelter's total beds (4).", str(error_dict))
 
     def test_counts_equal_to_total_beds_are_allowed(self) -> None:
         availability = self._availability(total_beds=4, non_restricted_beds=3, restricted_beds=1)

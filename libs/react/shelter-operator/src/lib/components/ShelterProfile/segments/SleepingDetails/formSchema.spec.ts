@@ -79,7 +79,7 @@ describe('SleepingDetails formSchema — availability counts', () => {
     }
 
     expect(result.error.issues[0].message).toBe(
-      "Available beds (5) cannot exceed the shelter's total beds (4).",
+      "Unrestricted + restricted beds (5) cannot exceed the shelter's total beds (4).",
     );
   });
 
@@ -172,6 +172,15 @@ describe('SleepingDetails toFormFieldErrors', () => {
       { field: 'nonRestrictedBeds', message: 'first' },
       { field: 'restrictedBeds', message: 'second' },
       { field: 'name', message: 'untouched' },
+    ]);
+  });
+
+  it('folds a parent-level availability message onto both counters', () => {
+    expect(
+      toFormFieldErrors([{ field: 'availability', message: 'cap' }]),
+    ).toEqual([
+      { field: 'nonRestrictedBeds', message: 'cap' },
+      { field: 'restrictedBeds', message: 'cap' },
     ]);
   });
 });
