@@ -2753,6 +2753,12 @@ type ServiceType {
   priority: Int!
 }
 
+input ShelterAvailabilityInput {
+  nonRestrictedBeds: Int
+  restrictedBeds: Int
+  restrictionNotes: String
+}
+
 type ShelterAvailabilityType {
   id: ID!
   nonRestrictedBeds: Int!
@@ -3456,6 +3462,7 @@ input UpdateShelterInput {
   scheduleType: ScheduleTypeChoices
   services: [ServiceInput!]
   additionalContacts: [ShelterContactInfoInput!]
+  availability: ShelterAvailabilityInput
 }
 
 union UpdateShelterPayload = ShelterType | OperationInfo

@@ -8,7 +8,7 @@ from strawberry import UNSET
 
 from common.permissions.selectors import can_globally
 from common.permissions.utils import require_can
-from shelters.models import ContactInfo, Service, ServiceCategory, Shelter
+from shelters.models import ContactInfo, Service, ServiceCategory, Shelter, ShelterAvailability
 from shelters.permissions import BA_REVIEW_FIELDS, can_change_ba_review
 from shelters.selectors import shelter_get
 from shelters.services.utils import (
@@ -19,10 +19,68 @@ from shelters.services.utils import (
     _sync_schedules,
 )
 
+# The availability columns an ``availability`` payload may write.  The row also
+# carries FKs/timestamps that must never be payload-controlled.
+_SHELTER_AVAILABILITY_FIELDS = ("non_restricted_beds", "restricted_beds", "restriction_notes")
+
 
 def _require_permission_on_ba_review_change(user: "User", data: Dict[str, Any]) -> None:
     if any(field in data for field in BA_REVIEW_FIELDS) and not can_change_ba_review(user):
         raise PermissionDenied("Editing BA review fields is not allowed with this role.")
+
+
+def _require_permission_on_availability_change(user: "User", data: Dict[str, Any]) -> None:
+    """Availability writes are global tier only (mirrors the admin and ADR 0001 §2.4).
+
+    ``ShelterAvailability``'s perms sit on the Global Shelter Operator role only —
+    the scoped ``SHELTER_OPERATOR`` template deliberately carries none — so the
+    ``change_shelter`` grant that admits the rest of this payload must not imply a
+    write to the availability row.
+    """
+    if data.get("availability") and not can_globally(user, ShelterAvailability.perms.CHANGE):
+        raise PermissionDenied("Editing availability is not allowed with this role.")
+
+
+def _apply_availability(shelter: Shelter, availability_data: Dict[str, Any]) -> None:
+    """Apply the partial availability payload to the shelter's availability row.
+
+    Only fields present in *availability_data* change, and an unchanged payload
+    writes nothing, so a profile save that does not touch availability leaves no
+    ``ShelterAvailabilityEvent`` in the audit log.
+    """
+    values = {
+        field: availability_data[field]
+        for field in _SHELTER_AVAILABILITY_FIELDS
+        if field in availability_data and availability_data[field] is not UNSET
+    }
+    if not values:
+        return
+
+    # ``restriction_notes`` is non-null with a blank default: a null note clears it.
+    if "restriction_notes" in values and values["restriction_notes"] is None:
+        values["restriction_notes"] = ""
+
+    availability, _ = ShelterAvailability.objects.get_or_create(shelter=shelter)
+    changed = {field: value for field, value in values.items() if getattr(availability, field) != value}
+    if not changed:
+        return
+
+    for field, value in changed.items():
+        setattr(availability, field, value)
+
+    try:
+        availability.full_clean()
+    except ValidationError as exc:
+        # Re-key under the input path so OperationInfo.messages[].field points at
+        # ``availability.<field>`` rather than a bare model column name.
+        raise ValidationError(
+            {
+                f"availability.{field}": [str(error.message) for error in errors]
+                for field, errors in exc.error_dict.items()
+            }
+        ) from exc
+
+    availability.save()
 
 
 if TYPE_CHECKING:
@@ -293,14 +351,15 @@ def shelter_update(*, user: "User", data: Dict[str, Any]) -> Shelter:
     Schedules, services, and additional contacts use full-replacement semantics
     when provided.  ``additional_contacts`` is a BA-only field: gated on the
     global tier (``can_globally``) so a scoped Grant can never write it
-    (ADR 0001 §2.4).
+    (ADR 0001 §2.4).  ``availability`` is a partial update of the shelter's
+    availability row and is gated the same way.
 
     Raises:
         ``django.core.exceptions.ObjectDoesNotExist`` when no shelter matches the given ID
         or the user lacks permission.
         ``django.core.exceptions.PermissionDenied`` when *data* carries
-        ``additional_contacts`` and the user lacks the global ContactInfo
-        ``change`` permission.
+        ``additional_contacts`` or ``availability`` and the user lacks the
+        corresponding global ``change`` permission.
         ``django.core.exceptions.ValidationError`` on invalid data.
     """
     data = {k: v for k, v in data.items() if v is not UNSET}
@@ -320,6 +379,8 @@ def shelter_update(*, user: "User", data: Dict[str, Any]) -> Shelter:
     if "additional_contacts" in data and not can_globally(user, ContactInfo.perms.CHANGE):
         raise PermissionDenied("Editing additional contacts is not allowed with this role.")
 
+    _require_permission_on_availability_change(user, data)
+
     shelter = shelter_get(
         user=user,
         shelter_id=shelter_id,
@@ -330,6 +391,8 @@ def shelter_update(*, user: "User", data: Dict[str, Any]) -> Shelter:
     has_services = "services" in data
     has_contacts = "additional_contacts" in data
     additional_contacts = data.pop("additional_contacts", None)
+    has_availability = "availability" in data
+    availability = data.pop("availability", None)
     # The single schedule type a ``schedules`` payload is authoritative for:
     # one save edits one tab, and an empty payload still has to name the type it
     # clears.
@@ -350,6 +413,9 @@ def shelter_update(*, user: "User", data: Dict[str, Any]) -> Shelter:
 
     if has_contacts:
         _apply_additional_contacts(shelter, additional_contacts or [])
+
+    if has_availability:
+        _apply_availability(shelter, availability or {})
 
     if has_schedules:
         if schedule_type is None:

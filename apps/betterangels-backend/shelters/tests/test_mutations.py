@@ -9,7 +9,7 @@ from accounts.models import Role, User
 from accounts.services import role_assign
 from shelters.enums import DayOfWeekChoices, ScheduleTypeChoices
 from shelters.groups import GLOBAL_SHELTER_OPERATOR_ROLE
-from shelters.models import SPA, City, ContactInfo, Schedule, Service, ServiceCategory, Shelter
+from shelters.models import SPA, City, ContactInfo, Schedule, Service, ServiceCategory, Shelter, ShelterAvailability
 from shelters.tests.utils import ShelterTestCase
 
 
@@ -1128,6 +1128,81 @@ class ShelterMutationPermissionTestCase(ShelterTestCase, TestCase):
         )
         self.assertEqual(self.shelter.additional_contacts.count(), 0)
 
+    def test_update_shelter_availability_allowed_for_global_shelter_operator(self) -> None:
+        """Availability writes are the same global-tier gate as the admin form."""
+        role_assign(
+            user=self.operator,
+            role=Role.objects.get(name=GLOBAL_SHELTER_OPERATOR_ROLE.name),
+        )
+        self.graphql_client.force_login(self.operator)
+
+        response = self.execute_graphql(
+            self.UPDATE_MUTATION,
+            {
+                "data": {
+                    "id": str(self.shelter.pk),
+                    "availability": {
+                        "nonRestrictedBeds": 4,
+                        "restrictedBeds": 1,
+                        "restrictionNotes": "Women only",
+                    },
+                }
+            },
+        )
+
+        self.assertIsNone(response.get("errors"))
+        availability = ShelterAvailability.objects.get(shelter=self.shelter)
+        self.assertEqual(availability.non_restricted_beds, 4)
+        self.assertEqual(availability.restricted_beds, 1)
+        self.assertEqual(availability.restriction_notes, "Women only")
+
+    def test_update_shelter_availability_denied_for_scoped_operator(self) -> None:
+        """A scoped shelter operator may change the shelter, but not its availability."""
+        self.graphql_client.force_login(self.operator)
+
+        response = self.execute_graphql(
+            self.UPDATE_MUTATION,
+            {"data": {"id": str(self.shelter.pk), "availability": {"nonRestrictedBeds": 4}}},
+        )
+
+        self.assertIsNone(response.get("errors"))
+        self.assertGraphQLOperationInfo(
+            response,
+            "updateShelter",
+            "Editing availability is not allowed with this role.",
+            kind="PERMISSION",
+        )
+        self.assertEqual(ShelterAvailability.objects.get(shelter=self.shelter).non_restricted_beds, 0)
+
+    def test_update_shelter_availability_denied_for_granted_scoped_availability_role(self) -> None:
+        """A scoped role carrying the availability perms plus a Grant still fails.
+
+        Adversarial on purpose: ``can_anywhere`` would admit this user, so only a
+        global-tier check keeps the gate closed — the same shape as the
+        additional-contacts gate (SDB-277).
+        """
+        self._grant_permission(
+            self.operator,
+            ShelterAvailability.perms.CHANGE,
+            self.org,
+            role_name="Scoped Availability Editor",
+        )
+        self.graphql_client.force_login(self.operator)
+
+        response = self.execute_graphql(
+            self.UPDATE_MUTATION,
+            {"data": {"id": str(self.shelter.pk), "availability": {"nonRestrictedBeds": 4}}},
+        )
+
+        self.assertIsNone(response.get("errors"))
+        self.assertGraphQLOperationInfo(
+            response,
+            "updateShelter",
+            "Editing availability is not allowed with this role.",
+            kind="PERMISSION",
+        )
+        self.assertEqual(ShelterAvailability.objects.get(shelter=self.shelter).non_restricted_beds, 0)
+
     def test_update_shelter_ba_review_allowed_for_global_shelter_operator(self) -> None:
         """The BA review fields are a global-tier gate: the GSO may write them."""
         role_assign(
@@ -1262,6 +1337,150 @@ class ShelterMutationPermissionTestCase(ShelterTestCase, TestCase):
         self.assertIsNone(response.get("errors"))
         self.assertGraphQLOperationInfo(response, "deleteShelter", "Shelter matching ID", kind="ERROR")
         self.assertTrue(Shelter.objects.filter(pk=self.shelter.pk).exists())
+
+
+class UpdateShelterAvailabilityTestCase(ShelterTestCase, TestCase):
+    """``updateShelter`` writes the nested availability payload as a partial update.
+
+    Availability lives on its own row (``Shelter.availability``), so it is a nested
+    input rather than flattened scalar fields; omitted fields keep their value and
+    an unchanged payload writes nothing (no ``ShelterAvailabilityEvent`` noise).
+    """
+
+    MUTATION = """
+        mutation UpdateShelter($data: UpdateShelterInput!) {
+            updateShelter(data: $data) {
+                ... on ShelterType {
+                    id
+                    availability {
+                        nonRestrictedBeds
+                        restrictedBeds
+                        restrictionNotes
+                    }
+                }
+                ... on OperationInfo {
+                    messages {
+                        kind
+                        field
+                        message
+                    }
+                }
+            }
+        }
+    """
+
+    def setUp(self) -> None:
+        super().setUp()
+        # Availability is a global-tier write (see ``shelters/groups.py``).
+        role_assign(
+            user=self.operator,
+            role=Role.objects.get(name=GLOBAL_SHELTER_OPERATOR_ROLE.name),
+        )
+        self.graphql_client.force_login(self.operator)
+        self.shelter = Shelter.objects.create(name="Availability Shelter", organization=self.org)
+        self.availability = ShelterAvailability.objects.get(shelter=self.shelter)
+
+    def test_writes_every_availability_field(self) -> None:
+        response = self.execute_graphql(
+            self.MUTATION,
+            {
+                "data": {
+                    "id": str(self.shelter.pk),
+                    "availability": {
+                        "nonRestrictedBeds": 6,
+                        "restrictedBeds": 3,
+                        "restrictionNotes": "Adults only",
+                    },
+                }
+            },
+        )
+
+        self.assertIsNone(response.get("errors"))
+        self.availability.refresh_from_db()
+        self.assertEqual(self.availability.non_restricted_beds, 6)
+        self.assertEqual(self.availability.restricted_beds, 3)
+        self.assertEqual(self.availability.restriction_notes, "Adults only")
+        # ShelterType exposes availability through the shared mixin, so the
+        # mutation response can re-render the row without a follow-up query.
+        result = response["data"]["updateShelter"]["availability"]
+        self.assertEqual(result["nonRestrictedBeds"], 6)
+        self.assertEqual(result["restrictedBeds"], 3)
+        self.assertEqual(result["restrictionNotes"], "Adults only")
+
+    def test_omitted_fields_keep_their_value(self) -> None:
+        """The availability payload is a partial update, not a replacement."""
+        ShelterAvailability.objects.filter(pk=self.availability.pk).update(
+            non_restricted_beds=3,
+            restricted_beds=2,
+            restriction_notes="Seeded note",
+        )
+
+        response = self.execute_graphql(
+            self.MUTATION,
+            {"data": {"id": str(self.shelter.pk), "availability": {"restrictedBeds": 5}}},
+        )
+
+        self.assertIsNone(response.get("errors"))
+        self.availability.refresh_from_db()
+        self.assertEqual(self.availability.non_restricted_beds, 3)
+        self.assertEqual(self.availability.restricted_beds, 5)
+        self.assertEqual(self.availability.restriction_notes, "Seeded note")
+
+    def test_null_restriction_notes_clears_them(self) -> None:
+        ShelterAvailability.objects.filter(pk=self.availability.pk).update(restriction_notes="Clear me")
+
+        response = self.execute_graphql(
+            self.MUTATION,
+            {"data": {"id": str(self.shelter.pk), "availability": {"restrictionNotes": None}}},
+        )
+
+        self.assertIsNone(response.get("errors"))
+        self.availability.refresh_from_db()
+        self.assertEqual(self.availability.restriction_notes, "")
+
+    def test_unchanged_payload_writes_nothing(self) -> None:
+        """A save that does not change availability adds no availability audit event."""
+        ShelterAvailability.objects.filter(pk=self.availability.pk).update(
+            non_restricted_beds=2,
+            restricted_beds=1,
+            restriction_notes="Stable",
+        )
+        self.availability.refresh_from_db()
+        event_model = ShelterAvailability.pgh_event_model  # type: ignore[attr-defined]
+        watermark = event_model.objects.order_by("-pgh_id").values_list("pgh_id", flat=True).first() or 0
+        updated_at = self.availability.updated_at
+
+        response = self.execute_graphql(
+            self.MUTATION,
+            {
+                "data": {
+                    "id": str(self.shelter.pk),
+                    # A shelter edit that leaves availability untouched.
+                    "name": "Renamed Without Availability",
+                    "availability": {"nonRestrictedBeds": 2},
+                }
+            },
+        )
+
+        self.assertIsNone(response.get("errors"))
+        self.availability.refresh_from_db()
+        self.assertEqual(self.availability.updated_at, updated_at)
+        self.assertFalse(event_model.objects.filter(pgh_id__gt=watermark).exists())
+
+    def test_negative_count_returns_field_validation(self) -> None:
+        response = self.execute_graphql(
+            self.MUTATION,
+            {"data": {"id": str(self.shelter.pk), "availability": {"nonRestrictedBeds": -1}}},
+        )
+
+        self.assertIsNone(response.get("errors"))
+        messages = response["data"]["updateShelter"]["messages"]
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(messages[0]["kind"], "VALIDATION")
+        self.assertEqual(messages[0]["field"], "availability.nonRestrictedBeds")
+
+        self.availability.refresh_from_db()
+        self.assertEqual(self.availability.non_restricted_beds, 0)
 
 
 class UpdateShelterAdditionalContactsErrorShapeTestCase(ShelterTestCase, TestCase):

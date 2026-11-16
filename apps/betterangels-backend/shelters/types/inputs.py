@@ -99,6 +99,20 @@ class ShelterContactInfoInput:
     is_claimant: Optional[bool] = None
 
 
+@strawberry.input
+class ShelterAvailabilityInput:
+    """Partial update of a shelter's availability counters.
+
+    The availability record is a separate row (``Shelter.availability``), so this
+    is nested rather than flattened onto ``UpdateShelterInput``. Omitted fields
+    keep their current value; ``restrictionNotes: null`` clears the notes.
+    """
+
+    non_restricted_beds: Maybe[int] = UNSET
+    restricted_beds: Maybe[int] = UNSET
+    restriction_notes: Maybe[Optional[str]] = UNSET
+
+
 @strawberry_django.input(models.Shelter)
 class CreateShelterInput:
     # Required scalars — derived from model via auto
@@ -235,6 +249,7 @@ class UpdateShelterInput:
     schedule_type: Maybe[Optional[ScheduleTypeChoices]] = UNSET
     services: Maybe[Optional[List[ServiceInput]]] = UNSET
     additional_contacts: Maybe[Optional[List[ShelterContactInfoInput]]] = UNSET
+    availability: Maybe[Optional[ShelterAvailabilityInput]] = UNSET
 
 
 @strawberry.input

@@ -3536,6 +3536,12 @@ export type ServiceType = {
   priority: Scalars['Int']['output'];
 };
 
+export type ShelterAvailabilityInput = {
+  nonRestrictedBeds?: InputMaybe<Scalars['Int']['input']>;
+  restrictedBeds?: InputMaybe<Scalars['Int']['input']>;
+  restrictionNotes?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type ShelterAvailabilityType = {
   __typename: 'ShelterAvailabilityType';
   id: Scalars['ID']['output'];
@@ -4202,6 +4208,7 @@ export type UpdateShelterInput = {
   addNotesShelterDetails?: InputMaybe<Scalars['String']['input']>;
   addNotesSleepingDetails?: InputMaybe<Scalars['String']['input']>;
   additionalContacts?: InputMaybe<Array<ShelterContactInfoInput>>;
+  availability?: InputMaybe<ShelterAvailabilityInput>;
   bedFees?: InputMaybe<Scalars['String']['input']>;
   citiesServedIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   cityCouncilDistrict?: InputMaybe<Scalars['Int']['input']>;

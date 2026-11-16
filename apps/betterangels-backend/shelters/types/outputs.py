@@ -282,6 +282,8 @@ class ShelterType(ShelterTypeMixin):
 # Operator list reads: the ``*_queryset`` wrappers below are the reach-scoped,
 # fail-closed gate; the query's own ``filters`` variable only narrows the view.
 class OperatorShelterType(ShelterTypeMixin):
+    availability: Optional[ShelterAvailabilityType]
+
     @strawberry_django.field(only=["overall_rating"])
     def overall_rating(self, root: models.Shelter, info: Info) -> Optional[int]:
         """BA-only review field — global-tier gate (ADR 0001 §2.4)."""
