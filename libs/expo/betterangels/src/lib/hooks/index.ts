@@ -17,7 +17,10 @@ export * from './useClientProgramsHmis';
 export { useUser } from '../providers/user/UserProvider';
 export { useInitialLocation } from './useInitialLocation';
 export { useActiveOrgId } from '@monorepo/ba-platform';
-export { useCreateTask } from './createTask/useCreateTask';
+export {
+  TASK_CREATE_FAILED_MESSAGE,
+  useCreateTask,
+} from './createTask/useCreateTask';
 export { useOrgTeams } from './useOrgTeams/useOrgTeams';
 export { useTaskAssignees } from './useTaskAssignees/useTaskAssignees';
 export { default as useClearLocalSession } from './user/useClearLocalSession';

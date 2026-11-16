@@ -14,7 +14,12 @@ import {
   TaskType,
   toTaskFilter,
 } from '../../../../apollo';
-import { useActiveOrgId, useCreateTask, useSnackbar } from '../../../../hooks';
+import {
+  TASK_CREATE_FAILED_MESSAGE,
+  useActiveOrgId,
+  useCreateTask,
+  useSnackbar,
+} from '../../../../hooks';
 import { useModalScreen } from '../../../../providers';
 import {
   enumDisplayTaskStatus,
@@ -99,7 +104,7 @@ export function ClientTasksViewHmis(props: TProps) {
         showSnackbar({
           message:
             outcome.result.data.createTask.messages[0]?.message ??
-            'Error creating a task.',
+            TASK_CREATE_FAILED_MESSAGE,
           type: 'error',
         });
         return;
@@ -108,7 +113,7 @@ export function ClientTasksViewHmis(props: TProps) {
       closeForm();
     } catch (e) {
       showSnackbar({
-        message: 'Error creating a task.',
+        message: TASK_CREATE_FAILED_MESSAGE,
         type: 'error',
       });
       console.error(e);

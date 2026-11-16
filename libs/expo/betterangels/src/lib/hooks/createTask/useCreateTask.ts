@@ -8,6 +8,8 @@ import { CreateTaskDocument } from '../../ui-components/TaskForm/__generated__/c
 
 export const NO_ACTIVE_ORG_MESSAGE = 'Select an organization to create a task.';
 
+export const TASK_CREATE_FAILED_MESSAGE = 'Error creating a task.';
+
 type TCreateTaskData = Omit<CreateTaskInput, 'organizationId'>;
 
 type TCreateTaskOptions = {
