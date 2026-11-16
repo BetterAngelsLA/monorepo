@@ -1,6 +1,6 @@
 Subject: Welcome to Better Angels!
 
-You've been added as a Shelter Operator{% if organization_name %} at {{ organization_name }}{% endif %}.
+You've been added as a Shelter Operator{% if organization_name.strip %} at {{ organization_name.strip }}{% endif %}.
 
 As a Shelter Operator, you can manage beds, rooms, and reservations.
 

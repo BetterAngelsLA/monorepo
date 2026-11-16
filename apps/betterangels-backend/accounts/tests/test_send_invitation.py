@@ -2,6 +2,7 @@
 
 from unittest.mock import Mock, patch
 
+from django.template.loader import render_to_string
 from django.test import TestCase, override_settings
 from model_bakery import baker
 from organizations.models import Organization, OrganizationInvitation
@@ -183,6 +184,27 @@ class SendInvitationTestCase(TestCase):
         for body in (email.html_message, email.message):
             self.assertNotIn(" at .", body)
         self.assertIn("You've been added as a Shelter Operator.", email.message)
+
+    def test_the_invite_templates_drop_a_whitespace_only_organization_name(self) -> None:
+        """The guard belongs to the template, not only to the sender's strip().
+
+        Rendered directly, so a future caller that skips ``send_invitation`` cannot
+        reintroduce the dangling clause the review flagged.
+        """
+        context = {
+            "organization_name": "   ",
+            "login_email": "someone@test.com",
+            "base_url": "https://shelter.example.org",
+            "is_demo": False,
+        }
+
+        for template_name in (
+            "account/email/shelter_operator_invite.html",
+            "account/messages/shelter_operator_invite.txt",
+        ):
+            body = render_to_string(template_name, context)
+            self.assertNotIn(" at .", body)
+            self.assertNotIn(" at  ", body)
 
     # ── invite_by_email ────────────────────────────────────────────────
 
