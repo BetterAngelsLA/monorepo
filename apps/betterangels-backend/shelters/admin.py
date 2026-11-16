@@ -200,11 +200,6 @@ class GroupedServiceWidget(forms.Widget):
         return [value for value in values if value and not str(value).startswith("__new__:")]
 
 
-# ``ShelterAvailability`` is a reverse OneToOne on ``Shelter``, so its columns are
-# not model fields of the form: they are declared below and persisted through
-# ``ShelterForm.save_availability()``.
-
-
 class ShelterForm(forms.ModelForm):
     template_name = "admin/shelters/shelter/change_form.html"
 
@@ -330,9 +325,9 @@ class ShelterForm(forms.ModelForm):
     def save_availability(self) -> None:
         """Persist the availability fields onto the ``Shelter.availability`` row.
 
-        Called from ``ShelterAdmin.save_related``, which gates the write on
-        ``change_shelteravailability``.  Only genuinely changed values are saved
-        so an unrelated shelter edit does not add availability to the audit log.
+        Called from ``ShelterAdmin.save_related``.  Only genuinely changed values
+        are saved so an unrelated shelter edit does not add availability to the
+        audit log.
         """
         if not self.instance.pk:
             return
@@ -1434,8 +1429,7 @@ class ShelterAdmin(ImportExportModelAdmin):
 
     # Read-only availability display.  Django resolves a read-only declared field
     # against the model, which has no such column, so these admin methods are what
-    # the readonly branch of the fieldset renders (and labels) for callers without
-    # ``change_shelteravailability``.
+    # the readonly branch of the fieldset renders (and labels) for view-only users.
     def _availability_value(self, obj: Shelter, name: str) -> Any:
         try:
             availability = obj.availability

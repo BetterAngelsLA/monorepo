@@ -340,9 +340,9 @@ class ShelterAvailabilityAdminTestCase(TestCase):
 
         self.assertEqual(response.status_code, 200)
         content = response.content.decode()
-        self.assertIn("Total beds", content)
-        self.assertIn("Availability Admin Shelter", content)
-        self.assertIn("12", content)
+        self.assertIn('class="form-row field-shelter"', content)
+        self.assertIn(">Availability Admin Shelter</a>", content)
+        self.assertIn('<div class="readonly">12</div>', content)
 
 
 class ShelterResourceContactImportTestCase(TestCase):
