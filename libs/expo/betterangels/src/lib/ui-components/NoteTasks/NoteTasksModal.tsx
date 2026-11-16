@@ -1,6 +1,6 @@
 import { useMutation } from '@apollo/client/react';
 import { TaskStatusEnum, UpdateTaskInput } from '../../apollo';
-import { useActiveOrgId, useSnackbar } from '../../hooks';
+import { useActiveOrgGuard, useSnackbar } from '../../hooks';
 
 // 1. Import Mutations
 import { CreateTaskDocument } from '../TaskForm/__generated__/createTask.generated';
@@ -38,7 +38,7 @@ export default function NoteTasksModal(props: INoteTasksModalProps) {
   } = props;
 
   const { showSnackbar } = useSnackbar();
-  const activeOrgId = useActiveOrgId();
+  const requireActiveOrg = useActiveOrgGuard();
 
   const [createTask] = useMutation(CreateTaskDocument);
   const [updateTask] = useMutation(UpdateTaskDocument);
@@ -97,16 +97,8 @@ export default function NoteTasksModal(props: INoteTasksModalProps) {
           },
         });
       } else {
-        if (!activeOrgId) {
-          // Required in the payload since the strict flip; with no active org
-          // there is nothing to anchor the task to. Say so — returning silently
-          // looks like the save worked.
-          showSnackbar({
-            message: 'Select an organization to create a task.',
-            type: 'error',
-          });
-          return;
-        }
+        const organizationId = requireActiveOrg();
+        if (!organizationId) return;
 
         result = await createTask({
           variables: {
@@ -124,7 +116,7 @@ export default function NoteTasksModal(props: INoteTasksModalProps) {
               note: noteId ?? undefined,
               hmisNote: hmisNoteId ?? undefined,
 
-              organizationId: activeOrgId,
+              organizationId,
             },
           },
         });

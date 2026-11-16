@@ -15,7 +15,11 @@ import {
   TaskType,
   toTaskFilter,
 } from '../../../../apollo';
-import { useActiveOrgId, useSnackbar } from '../../../../hooks';
+import {
+  useActiveOrgGuard,
+  useActiveOrgId,
+  useSnackbar,
+} from '../../../../hooks';
 import { useModalScreen } from '../../../../providers';
 import {
   enumDisplayTaskStatus,
@@ -56,6 +60,7 @@ export function ClientTasksViewHmis(props: TProps) {
   const [createTask] = useMutation(CreateTaskDocument);
   const { showSnackbar } = useSnackbar();
   const { showModalScreen } = useModalScreen();
+  const requireActiveOrg = useActiveOrgGuard();
   const activeOrgId = useActiveOrgId();
 
   const [filtersKey, setFiltersKey] = useState(0);
@@ -77,15 +82,10 @@ export function ClientTasksViewHmis(props: TProps) {
 
   const onSubmit = async (task: TaskFormData, closeForm: () => void) => {
     if (!client?.id) return;
-    if (!activeOrgId) {
-      // Required in the payload since the strict flip; with no active org there
-      // is nothing to anchor the task to.
-      showSnackbar({
-        message: 'Select an organization to create a task.',
-        type: 'error',
-      });
-      return;
-    }
+
+    const organizationId = requireActiveOrg();
+    if (!organizationId) return;
+
     try {
       const result = await createTask({
         variables: {
@@ -95,7 +95,7 @@ export function ClientTasksViewHmis(props: TProps) {
             status: task.status,
             teamId: task.teamId ?? undefined,
             hmisClientProfile: client.id,
-            organizationId: activeOrgId,
+            organizationId,
           },
         },
         refetchQueries: [TasksDocument],
@@ -103,8 +103,6 @@ export function ClientTasksViewHmis(props: TProps) {
       });
 
       if (result.data?.createTask.__typename === 'OperationInfo') {
-        // A rejection comes back as OperationInfo, not an error — logging it
-        // left the form closing as if the task had been created.
         showSnackbar({ message: 'Error creating a task.', type: 'error' });
         return;
       }
@@ -139,15 +137,17 @@ export function ClientTasksViewHmis(props: TProps) {
           Displaying {visible} of {total} tasks
         </TextRegular>
 
-        <IconButton
-          variant="secondary"
-          borderColor={Colors.WHITE}
-          accessibilityLabel="open Task form"
-          accessibilityHint="opens Task form"
-          onPress={openTaskForm}
-        >
-          <PlusIcon />
-        </IconButton>
+        {activeOrgId ? (
+          <IconButton
+            variant="secondary"
+            borderColor={Colors.WHITE}
+            accessibilityLabel="open Task form"
+            accessibilityHint="opens Task form"
+            onPress={openTaskForm}
+          >
+            <PlusIcon />
+          </IconButton>
+        ) : null}
       </View>
     );
   }

@@ -10,7 +10,7 @@ import { router } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { TaskStatusEnum, TaskType, toTaskFilter } from '../../../apollo';
-import { useActiveOrgId, useSnackbar } from '../../../hooks';
+import { useActiveOrgGuard, useActiveOrgId, useSnackbar } from '../../../hooks';
 import { useModalScreen } from '../../../providers';
 import { useUserTeamPreference } from '../../../state';
 import { enumDisplayTaskStatus, pagePaddingHorizontal } from '../../../static';
@@ -52,6 +52,7 @@ export function TasksTab(props: TProps) {
   const { showSnackbar } = useSnackbar();
   const { showModalScreen } = useModalScreen();
   const [teamPreference] = useUserTeamPreference();
+  const requireActiveOrg = useActiveOrgGuard();
   const activeOrgId = useActiveOrgId();
 
   const [filtersKey, setFiltersKey] = useState(0); // used to trigger remount
@@ -72,7 +73,11 @@ export function TasksTab(props: TProps) {
   }
 
   const onSubmit = async (task: TaskFormData, closeForm: () => void) => {
-    if (!client?.clientProfile.id || !activeOrgId) return;
+    if (!client?.clientProfile.id) return;
+
+    const organizationId = requireActiveOrg();
+    if (!organizationId) return;
+
     try {
       const result = await createTask({
         variables: {
@@ -82,7 +87,7 @@ export function TasksTab(props: TProps) {
             status: task.status,
             teamId: task.teamId ?? undefined,
             clientProfile: client.clientProfile.id,
-            organizationId: activeOrgId,
+            organizationId,
           },
         },
         refetchQueries: [TasksDocument],
@@ -90,7 +95,8 @@ export function TasksTab(props: TProps) {
       });
 
       if (result.data?.createTask.__typename === 'OperationInfo') {
-        console.log(result.data.createTask.messages);
+        showSnackbar({ message: 'Error creating a task.', type: 'error' });
+        return;
       }
 
       closeForm();
@@ -131,15 +137,17 @@ export function TasksTab(props: TProps) {
           Displaying {visible} of {total} tasks
         </TextRegular>
 
-        <IconButton
-          variant="secondary"
-          borderColor={Colors.WHITE}
-          accessibilityLabel="open Task form"
-          accessibilityHint="opens Task form"
-          onPress={openTaskForm}
-        >
-          <PlusIcon />
-        </IconButton>
+        {activeOrgId ? (
+          <IconButton
+            variant="secondary"
+            borderColor={Colors.WHITE}
+            accessibilityLabel="open Task form"
+            accessibilityHint="opens Task form"
+            onPress={openTaskForm}
+          >
+            <PlusIcon />
+          </IconButton>
+        ) : null}
       </View>
     );
   }

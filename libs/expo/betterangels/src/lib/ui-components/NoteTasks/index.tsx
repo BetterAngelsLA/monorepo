@@ -8,7 +8,7 @@ import {
 import { RefObject } from 'react';
 import { ScrollView, View } from 'react-native';
 import { TaskStatusEnum, UpdateTaskInput } from '../../apollo';
-import { useActiveOrgId, useSnackbar } from '../../hooks';
+import { useActiveOrgGuard, useSnackbar } from '../../hooks';
 import { useModalScreen } from '../../providers';
 import { DraftTask as LocalDraftTask } from '../../screens/NotesHmis/NoteFormHmis/formSchema';
 import { CreateTaskDocument } from '../TaskForm/__generated__/createTask.generated';
@@ -63,7 +63,7 @@ export default function NoteTasks(props: INoteTasksProps) {
 
   const { showModalScreen } = useModalScreen();
   const { showSnackbar } = useSnackbar();
-  const activeOrgId = useActiveOrgId();
+  const requireActiveOrg = useActiveOrgGuard();
 
   // --- MUTATIONS ---
   const [createTask] = useMutation(CreateTaskDocument);
@@ -140,16 +140,8 @@ export default function NoteTasks(props: INoteTasksProps) {
           },
         });
       } else {
-        if (!activeOrgId) {
-          // Required in the payload since the strict flip; with no active org
-          // there is nothing to anchor the task to. Say so — returning silently
-          // looks like the save worked.
-          showSnackbar({
-            message: 'Select an organization to create a task.',
-            type: 'error',
-          });
-          return;
-        }
+        const organizationId = requireActiveOrg();
+        if (!organizationId) return;
 
         delete data.id;
         await createTask({
@@ -164,7 +156,7 @@ export default function NoteTasks(props: INoteTasksProps) {
               // Handle linking to either Note type
               note: noteId ?? undefined,
               hmisNote: hmisNoteId ?? undefined,
-              organizationId: activeOrgId,
+              organizationId,
             },
           },
         });
