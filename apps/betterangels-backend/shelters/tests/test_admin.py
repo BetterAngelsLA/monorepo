@@ -5,7 +5,13 @@ from django.test import RequestFactory, TestCase
 from django.urls import reverse
 
 from accounts.models import User
-from shelters.admin import GroupedServiceWidget, ShelterAdmin, ShelterForm, ShelterResource
+from shelters.admin import (
+    GroupedServiceWidget,
+    ShelterAdmin,
+    ShelterAvailabilityAdmin,
+    ShelterForm,
+    ShelterResource,
+)
 from shelters.models import AVAILABILITY_FIELDS, ContactInfo, Service, ServiceCategory, Shelter, ShelterAvailability
 
 
@@ -309,6 +315,35 @@ class ShelterAdminAvailabilityTestCase(TestCase):
         self.assertEqual(created.non_restricted_beds, 7)
         self.assertEqual(created.restricted_beds, 2)
         self.assertEqual(created.restriction_notes, "Men only")
+
+
+class ShelterAvailabilityAdminTestCase(TestCase):
+    """The availability admin shows the capacity its counts are validated against."""
+
+    def setUp(self) -> None:
+        self.shelter = Shelter.objects.create(name="Availability Admin Shelter", total_beds=12)
+        self.availability = ShelterAvailability.objects.get(shelter=self.shelter)
+        self.model_admin = ShelterAvailabilityAdmin(ShelterAvailability, admin.site)
+
+    def test_total_beds_reads_through_to_the_shelter(self) -> None:
+        self.assertEqual(self.model_admin.total_beds(self.availability), 12)
+
+    def test_total_beds_is_blank_for_an_unsaved_row(self) -> None:
+        self.assertIsNone(self.model_admin.total_beds(ShelterAvailability()))
+
+    def test_change_form_lists_the_shelter_and_total_beds(self) -> None:
+        superuser = User.objects.create_superuser(
+            username="availability_admin_form", email="availability_admin_form@example.com", password="password"
+        )
+        self.client.force_login(superuser)
+
+        response = self.client.get(reverse("admin:shelters_shelteravailability_change", args=[self.availability.pk]))
+
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertIn("Total beds", content)
+        self.assertIn("Availability Admin Shelter", content)
+        self.assertIn("12", content)
 
 
 class ShelterResourceContactImportTestCase(TestCase):

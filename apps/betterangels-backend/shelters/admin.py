@@ -1736,12 +1736,16 @@ class ShelterAvailabilityAdmin(admin.ModelAdmin):
     list_filter = ("updated_at",)
     search_fields = ("shelter__name",)
     autocomplete_fields = ["shelter"]
-    readonly_fields = ("shelter", "created_at", "updated_at", "updated_by")
+    readonly_fields = ("shelter", "total_beds", "created_at", "updated_at", "updated_by")
     fieldsets = (
         (
             None,
             {
                 "fields": (
+                    "shelter",
+                    # Read through to shelter.total_beds: the counts below are
+                    # validated against it, so it has to be visible alongside them.
+                    "total_beds",
                     "non_restricted_beds",
                     "restricted_beds",
                     "restriction_notes",
@@ -1781,6 +1785,13 @@ class ShelterAvailabilityAdmin(admin.ModelAdmin):
                 scoped_events.filter(pgh_obj_id=Cast(OuterRef("pk"), output_field=models.TextField())).values("obj")[:1]
             ),
         )
+
+    @admin.display(description="Total beds")
+    def total_beds(self, obj: ShelterAvailability) -> Optional[int]:
+        """The shelter's capacity — read-only context for the counts below."""
+        if not obj.shelter_id:
+            return None
+        return obj.shelter.total_beds
 
     def updated_by(self, obj: ShelterAvailability) -> str:
         data = getattr(obj, "last_event", None) or {}
