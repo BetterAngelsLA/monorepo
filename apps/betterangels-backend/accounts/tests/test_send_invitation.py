@@ -176,11 +176,7 @@ class SendInvitationTestCase(TestCase):
         self.assertIn("as a Shelter Operator.", email.message)
 
     def test_the_invite_templates_only_name_a_usable_organization(self) -> None:
-        """The template itself decides whether to name the org, and trims it.
-
-        The sender strips too, but the guard has to survive a direct render: the
-        review flagged "reservations at ." as reachable whenever the name is blank.
-        """
+        """The template, not just the sender, decides whether to name the org."""
         cases: tuple[tuple[str, str | None, str, str], ...] = (
             ("missing", None, "reservations.", "as a Shelter Operator."),
             ("blank", "   ", "reservations.", "as a Shelter Operator."),
