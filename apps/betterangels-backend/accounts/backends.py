@@ -40,7 +40,12 @@ class CustomInvitations(InvitationBackend):
             raise ValueError("Cannot send invitation to a user without an email address")
 
         html_template, txt_template = self._resolve_invite_templates(kwargs)
-        context = {"invitee_email": user.email, **demo_email_context(user.email), **kwargs}
+        context = {
+            "invitee_email": user.email,
+            "organization_name": (getattr(kwargs.get("organization"), "name", "") or "").strip(),
+            **demo_email_context(user.email),
+            **kwargs,
+        }
         msg = self.email_message(
             user, self.invitation_subject, txt_template, sender, message_class=EmailMultiAlternatives, **context
         )
