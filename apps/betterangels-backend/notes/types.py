@@ -260,8 +260,11 @@ class RevertNoteInput:
 class CreateNoteInput:
     """
     Input for creating a note with all nested relations atomically.
-    All nested fields are optional, making this backward-compatible
-    with callers that only send core note fields.
+
+    ``organizationId`` is required (the acting org, ADR 0001 §5): authority is
+    ``require_can(ADD)`` at it and the row is stamped with it.  The nested
+    relations stay optional, so a caller may omit location/services/tasks — but
+    never the organization.
     """
 
     # Core note fields
@@ -275,10 +278,7 @@ class CreateNoteInput:
 
     # The acting org (ADR 0001 §5, RFC 0003 slice 2): authority is
     # ``require_can`` at this org and the created row's ``organization``.
-    # Optional during the compat window — a build that predates the payload
-    # org falls back to the legacy caseworker group; the strict flip makes it
-    # required again.
-    organization_id: Optional[ID] = None
+    organization_id: ID
 
     # Nested relations
     location: Optional[LocationInput] = None

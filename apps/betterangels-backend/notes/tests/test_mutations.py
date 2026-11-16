@@ -19,7 +19,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
 
     @time_machine.travel("03-12-2024 10:11:12+00:00", tick=False)
     def test_create_note_mutation(self) -> None:
-        expected_query_count = 33
+        expected_query_count = 15
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._create_note_fixture(
                 {
