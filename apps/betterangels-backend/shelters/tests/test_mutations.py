@@ -1128,81 +1128,6 @@ class ShelterMutationPermissionTestCase(ShelterTestCase, TestCase):
         )
         self.assertEqual(self.shelter.additional_contacts.count(), 0)
 
-    def test_update_shelter_availability_allowed_for_global_shelter_operator(self) -> None:
-        """Availability writes are the same global-tier gate as the admin form."""
-        role_assign(
-            user=self.operator,
-            role=Role.objects.get(name=GLOBAL_SHELTER_OPERATOR_ROLE.name),
-        )
-        self.graphql_client.force_login(self.operator)
-
-        response = self.execute_graphql(
-            self.UPDATE_MUTATION,
-            {
-                "data": {
-                    "id": str(self.shelter.pk),
-                    "availability": {
-                        "nonRestrictedBeds": 4,
-                        "restrictedBeds": 1,
-                        "restrictionNotes": "Women only",
-                    },
-                }
-            },
-        )
-
-        self.assertIsNone(response.get("errors"))
-        availability = ShelterAvailability.objects.get(shelter=self.shelter)
-        self.assertEqual(availability.non_restricted_beds, 4)
-        self.assertEqual(availability.restricted_beds, 1)
-        self.assertEqual(availability.restriction_notes, "Women only")
-
-    def test_update_shelter_availability_denied_for_scoped_operator(self) -> None:
-        """A scoped shelter operator may change the shelter, but not its availability."""
-        self.graphql_client.force_login(self.operator)
-
-        response = self.execute_graphql(
-            self.UPDATE_MUTATION,
-            {"data": {"id": str(self.shelter.pk), "availability": {"nonRestrictedBeds": 4}}},
-        )
-
-        self.assertIsNone(response.get("errors"))
-        self.assertGraphQLOperationInfo(
-            response,
-            "updateShelter",
-            "Editing availability is not allowed with this role.",
-            kind="PERMISSION",
-        )
-        self.assertEqual(ShelterAvailability.objects.get(shelter=self.shelter).non_restricted_beds, 0)
-
-    def test_update_shelter_availability_denied_for_granted_scoped_availability_role(self) -> None:
-        """A scoped role carrying the availability perms plus a Grant still fails.
-
-        Adversarial on purpose: ``can_anywhere`` would admit this user, so only a
-        global-tier check keeps the gate closed — the same shape as the
-        additional-contacts gate (SDB-277).
-        """
-        self._grant_permission(
-            self.operator,
-            ShelterAvailability.perms.CHANGE,
-            self.org,
-            role_name="Scoped Availability Editor",
-        )
-        self.graphql_client.force_login(self.operator)
-
-        response = self.execute_graphql(
-            self.UPDATE_MUTATION,
-            {"data": {"id": str(self.shelter.pk), "availability": {"nonRestrictedBeds": 4}}},
-        )
-
-        self.assertIsNone(response.get("errors"))
-        self.assertGraphQLOperationInfo(
-            response,
-            "updateShelter",
-            "Editing availability is not allowed with this role.",
-            kind="PERMISSION",
-        )
-        self.assertEqual(ShelterAvailability.objects.get(shelter=self.shelter).non_restricted_beds, 0)
-
     def test_update_shelter_ba_review_allowed_for_global_shelter_operator(self) -> None:
         """The BA review fields are a global-tier gate: the GSO may write them."""
         role_assign(
@@ -1345,6 +1270,10 @@ class UpdateShelterAvailabilityTestCase(ShelterTestCase, TestCase):
     Availability lives on its own row (``Shelter.availability``), so it is a nested
     input rather than flattened scalar fields; omitted fields keep their value and
     an unchanged payload writes nothing (no ``ShelterAvailabilityEvent`` noise).
+
+    The operator is the scoped ``SHELTER_OPERATOR`` role, without any
+    ``shelteravailability`` permission: the authority to change a shelter is the
+    authority to change its availability, exactly as with ``total_beds``.
     """
 
     MUTATION = """
@@ -1371,11 +1300,6 @@ class UpdateShelterAvailabilityTestCase(ShelterTestCase, TestCase):
 
     def setUp(self) -> None:
         super().setUp()
-        # Availability is a global-tier write (see ``shelters/groups.py``).
-        role_assign(
-            user=self.operator,
-            role=Role.objects.get(name=GLOBAL_SHELTER_OPERATOR_ROLE.name),
-        )
         self.graphql_client.force_login(self.operator)
         self.shelter = Shelter.objects.create(name="Availability Shelter", organization=self.org)
         self.availability = ShelterAvailability.objects.get(shelter=self.shelter)

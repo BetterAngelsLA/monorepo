@@ -191,7 +191,7 @@ class ShelterFormAvailabilityTestCase(TestCase):
 
 
 class ShelterAdminAvailabilityTestCase(TestCase):
-    """Availability is a global-tier gate (ADR 0001 §2.4)."""
+    """Availability is editable with the same authority as ``total_beds``."""
 
     NEW_VALUES = {"non_restricted_beds": 7, "restricted_beds": 2, "restriction_notes": "Men only"}
 
@@ -213,32 +213,16 @@ class ShelterAdminAvailabilityTestCase(TestCase):
         form.save_m2m = lambda: None  # type: ignore[method-assign]
         return form
 
-    def test_fields_are_readonly_without_the_global_grant(self) -> None:
-        user = User.objects.create_user(username="scoped_operator", email="scoped@example.com", password="password")
-
-        readonly = self.model_admin.get_readonly_fields(self._request_for(user), self.shelter)
-
-        self.assertTrue(set(AVAILABILITY_FIELDS).issubset(readonly))
-
-    def test_fields_are_editable_with_the_global_grant(self) -> None:
-        superuser = User.objects.create_superuser(
-            username="availability_admin", email="availability_admin@example.com", password="password"
+    def _scoped_change_user(self) -> User:
+        """A staff user who may change the shelter but holds no availability perm."""
+        staff = User.objects.create_user(
+            username="scoped_render", email="scoped_render@example.com", password="password", is_staff=True
         )
-
-        readonly = self.model_admin.get_readonly_fields(self._request_for(superuser), self.shelter)
-
-        self.assertFalse(set(AVAILABILITY_FIELDS) & set(readonly))
-
-    def test_save_related_skips_the_write_without_the_global_grant(self) -> None:
-        user = User.objects.create_user(
-            username="scoped_writer", email="scoped_writer@example.com", password="password"
+        staff.user_permissions.add(
+            Permission.objects.get(content_type__app_label="shelters", codename="change_shelter"),
+            Permission.objects.get(content_type__app_label="shelters", codename="view_shelter"),
         )
-
-        self.model_admin.save_related(self._request_for(user), self._form_with_new_values(), [], change=True)
-
-        self.availability.refresh_from_db()
-        self.assertEqual(self.availability.non_restricted_beds, 0)
-        self.assertEqual(self.availability.restriction_notes, "")
+        return staff
 
     def test_change_page_renders_the_availability_fields(self) -> None:
         superuser = User.objects.create_superuser(
@@ -253,12 +237,23 @@ class ShelterAdminAvailabilityTestCase(TestCase):
         for name in AVAILABILITY_FIELDS:
             self.assertIn(f'name="{name}"', content)
 
-    def test_change_page_renders_availability_readonly_without_the_global_grant(self) -> None:
+    def test_change_page_renders_the_availability_fields_for_a_scoped_operator(self) -> None:
+        """Changing the shelter is enough authority to change its availability."""
+        self.client.force_login(self._scoped_change_user())
+
+        response = self.client.get(reverse("admin:shelters_shelter_change", args=[self.shelter.pk]))
+
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        for name in AVAILABILITY_FIELDS:
+            self.assertIn(f'name="{name}"', content)
+
+    def test_change_page_renders_availability_readonly_for_a_view_only_user(self) -> None:
+        """Without change permission the declared fields must still render read-only."""
         staff = User.objects.create_user(
-            username="scoped_render", email="scoped_render@example.com", password="password", is_staff=True
+            username="view_only_render", email="view_only@example.com", password="password", is_staff=True
         )
         staff.user_permissions.add(
-            Permission.objects.get(content_type__app_label="shelters", codename="change_shelter"),
             Permission.objects.get(content_type__app_label="shelters", codename="view_shelter"),
         )
         self.client.force_login(staff)
@@ -286,17 +281,34 @@ class ShelterAdminAvailabilityTestCase(TestCase):
         for name in AVAILABILITY_FIELDS:
             self.assertIn(f'name="{name}"', content)
 
-    def test_save_related_writes_availability_with_the_global_grant(self) -> None:
-        superuser = User.objects.create_superuser(
-            username="availability_writer", email="availability_writer@example.com", password="password"
+    def test_save_related_writes_availability(self) -> None:
+        self.model_admin.save_related(
+            self._request_for(self._scoped_change_user()), self._form_with_new_values(), [], change=True
         )
-
-        self.model_admin.save_related(self._request_for(superuser), self._form_with_new_values(), [], change=True)
 
         self.availability.refresh_from_db()
         self.assertEqual(self.availability.non_restricted_beds, 7)
         self.assertEqual(self.availability.restricted_beds, 2)
         self.assertEqual(self.availability.restriction_notes, "Men only")
+
+    def test_add_flow_updates_the_signal_created_row(self) -> None:
+        """On the add page the signal creates the row during ``form.save()``.
+
+        ``save_related`` then has to update that row rather than insert a second
+        one for the same shelter.
+        """
+        added = Shelter.objects.create(name="Added By Admin")
+        form = ShelterForm(instance=added)
+        form.cleaned_data = dict(self.NEW_VALUES)
+        form.save_m2m = lambda: None  # type: ignore[method-assign]
+
+        self.model_admin.save_related(self._request_for(self._scoped_change_user()), form, [], change=False)
+
+        self.assertEqual(ShelterAvailability.objects.filter(shelter=added).count(), 1)
+        created = ShelterAvailability.objects.get(shelter=added)
+        self.assertEqual(created.non_restricted_beds, 7)
+        self.assertEqual(created.restricted_beds, 2)
+        self.assertEqual(created.restriction_notes, "Men only")
 
 
 class ShelterResourceContactImportTestCase(TestCase):

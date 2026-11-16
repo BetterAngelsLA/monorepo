@@ -33,18 +33,6 @@ def _require_permission_on_ba_review_change(user: "User", data: Dict[str, Any]) 
         raise PermissionDenied("Editing BA review fields is not allowed with this role.")
 
 
-def _require_permission_on_availability_change(user: "User", data: Dict[str, Any]) -> None:
-    """Availability writes are global tier only (mirrors the admin and ADR 0001 §2.4).
-
-    ``ShelterAvailability``'s perms sit on the Global Shelter Operator role only —
-    the scoped ``SHELTER_OPERATOR`` template deliberately carries none — so the
-    ``change_shelter`` grant that admits the rest of this payload must not imply a
-    write to the availability row.
-    """
-    if data.get("availability") and not can_globally(user, ShelterAvailability.perms.CHANGE):
-        raise PermissionDenied("Editing availability is not allowed with this role.")
-
-
 def _require_availability_fits_total_beds(shelter: Shelter) -> None:
     """Reject a ``total_beds`` change that would leave availability over capacity.
 
@@ -384,14 +372,15 @@ def shelter_update(*, user: "User", data: Dict[str, Any]) -> Shelter:
     when provided.  ``additional_contacts`` is a BA-only field: gated on the
     global tier (``can_globally``) so a scoped Grant can never write it
     (ADR 0001 §2.4).  ``availability`` is a partial update of the shelter's
-    availability row and is gated the same way.
+    availability row; the ``change_shelter`` permission that admits this payload
+    also admits it — the same authority that can write ``total_beds``.
 
     Raises:
         ``django.core.exceptions.ObjectDoesNotExist`` when no shelter matches the given ID
         or the user lacks permission.
         ``django.core.exceptions.PermissionDenied`` when *data* carries
-        ``additional_contacts`` or ``availability`` and the user lacks the
-        corresponding global ``change`` permission.
+        ``additional_contacts`` and the user lacks the global ContactInfo
+        ``change`` permission.
         ``django.core.exceptions.ValidationError`` on invalid data.
     """
     data = {k: v for k, v in data.items() if v is not UNSET}
@@ -410,8 +399,6 @@ def shelter_update(*, user: "User", data: Dict[str, Any]) -> Shelter:
     # not the shelter exists or is visible.
     if "additional_contacts" in data and not can_globally(user, ContactInfo.perms.CHANGE):
         raise PermissionDenied("Editing additional contacts is not allowed with this role.")
-
-    _require_permission_on_availability_change(user, data)
 
     shelter = shelter_get(
         user=user,

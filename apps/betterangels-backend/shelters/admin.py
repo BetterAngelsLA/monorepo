@@ -1287,11 +1287,6 @@ class ShelterAdmin(ImportExportModelAdmin):
         if not request.user.has_perm(Shelter.perms.CHANGE_IS_REVIEWED):
             readonly_fields = (*readonly_fields, "is_reviewed")
 
-        # Availability is a global-tier gate (ADR 0001 §2.4): the scoped shelter
-        # operator role carries no ``change_shelteravailability``.
-        if not request.user.has_perm(ShelterAvailability.perms.CHANGE):
-            readonly_fields = (*readonly_fields, *AVAILABILITY_FIELDS)
-
         all_permissions = request.user.get_all_permissions()
 
         if no_permission_fields := [
@@ -1407,8 +1402,7 @@ class ShelterAdmin(ImportExportModelAdmin):
     ) -> None:
         super().save_related(request, form, formsets, change)
         form.save_pending_service_entries()
-        if request.user.has_perm(ShelterAvailability.perms.CHANGE):
-            form.save_availability()
+        form.save_availability()
 
         if form.cleaned_data.get("clear_hero_image"):
             form.instance.hero_image = None
