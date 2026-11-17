@@ -1019,3 +1019,16 @@ class ShelterAvailabilityValidationTestCase(TestCase):
         availability = self._availability(total_beds=None, non_restricted_beds=30, restricted_beds=10)
 
         availability.full_clean()
+
+    def test_clean_without_a_shelter_reports_the_missing_fk(self) -> None:
+        """``clean()`` must not dereference an FK that was never set.
+
+        ``full_clean()`` runs ``clean()`` even for excluded fields, so a shelfless
+        instance (the availability admin's add form builds one) must surface the
+        missing FK as a ``ValidationError`` rather than a related-object lookup
+        error the form layer cannot catch.
+        """
+        with self.assertRaises(ValidationError) as raised:
+            ShelterAvailability().full_clean()
+
+        self.assertIn("shelter", raised.exception.error_dict)

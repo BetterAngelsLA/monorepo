@@ -349,6 +349,9 @@ def shelter_update(*, user: "User", data: Dict[str, Any]) -> Shelter:
         shelter_id=shelter_id,
         permission=Shelter.perms.CHANGE,
     )
+    # Captured before the scalar write: the capacity rule only has something to
+    # say when this request actually changes the total — see the guard below.
+    original_total_beds = shelter.total_beds
 
     has_schedules = "schedules" in data
     has_services = "services" in data
@@ -379,10 +382,13 @@ def shelter_update(*, user: "User", data: Dict[str, Any]) -> Shelter:
 
     availability_row = apply_availability(shelter, availability or {}) if has_availability else None
 
+    # Only a *changed* total can strand availability, so the guard runs on the
+    # transition rather than on the field's presence. Keying off presence froze
+    # every save for a shelter whose counts already exceeded a total it did not
+    # touch — including saves that only renamed a room style.
     # Checked even when an availability payload was submitted (it validates its
     # own counts against the new total): an empty payload must not skip the guard.
-    # Reuses the row the write already fetched.
-    if "total_beds" in scalar_data:
+    if "total_beds" in scalar_data and shelter.total_beds != original_total_beds:
         _require_availability_fits_total_beds(shelter, availability_row)
 
     if has_schedules:

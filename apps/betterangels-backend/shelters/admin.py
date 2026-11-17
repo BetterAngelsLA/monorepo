@@ -1718,7 +1718,19 @@ class ShelterAvailabilityAdmin(admin.ModelAdmin):
     list_filter = ("updated_at",)
     search_fields = ("shelter__name",)
     autocomplete_fields = ["shelter"]
-    readonly_fields = ("shelter", "total_beds", "created_at", "updated_at", "updated_by")
+    readonly_fields = ("total_beds", "created_at", "updated_at", "updated_by")
+
+    def get_readonly_fields(self, request: HttpRequest, obj: Optional[ShelterAvailability] = None) -> tuple[str, ...]:
+        """``shelter`` is picked on the add form and fixed afterwards.
+
+        It is the FK every availability rule validates against, so it has to be
+        editable once — and read-only once a row exists, so the counts cannot be
+        moved to a different shelter behind the rule's back.
+        """
+        if obj is None:
+            return self.readonly_fields
+        return (*self.readonly_fields, "shelter")
+
     fieldsets = (
         (
             None,

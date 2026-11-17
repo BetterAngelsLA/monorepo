@@ -103,6 +103,12 @@ class ShelterAvailability(OrgScoped, BaseModel):
 
     def clean(self) -> None:
         super().clean()
+        # ``clean_fields()`` has already reported the missing FK; dereferencing
+        # ``self.shelter`` here would raise ``RelatedObjectDoesNotExist`` (an
+        # ``AttributeError``, not a ``ValidationError``) and turn the admin's
+        # add form into a 500.
+        if not self.shelter_id:
+            return
         validate_availability_counts(
             non_restricted_beds=self.non_restricted_beds,
             restricted_beds=self.restricted_beds,

@@ -344,6 +344,64 @@ class ShelterAvailabilityAdminTestCase(TestCase):
         self.assertIn(">Availability Admin Shelter</a>", content)
         self.assertIn('<div class="readonly">12</div>', content)
 
+    def _shelter_without_availability(self) -> Shelter:
+        shelter = Shelter.objects.create(name="Add Page Shelter", total_beds=6)
+        ShelterAvailability.objects.filter(shelter=shelter).delete()
+        return shelter
+
+    def test_add_page_offers_the_shelter_field(self) -> None:
+        """The FK is what the counts are validated against; it must be settable once."""
+        self._shelter_without_availability()
+        superuser = User.objects.create_superuser(
+            username="availability_add_page", email="availability_add_page@example.com", password="password"
+        )
+        self.client.force_login(superuser)
+
+        response = self.client.get(reverse("admin:shelters_shelteravailability_add"))
+
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertIn('name="shelter"', content)
+        self.assertNotIn('class="readonly">---</div>', content)
+
+    def test_add_page_creates_a_row_for_the_chosen_shelter(self) -> None:
+        shelter = self._shelter_without_availability()
+        superuser = User.objects.create_superuser(
+            username="availability_add_save", email="availability_add_save@example.com", password="password"
+        )
+        self.client.force_login(superuser)
+
+        response = self.client.post(
+            reverse("admin:shelters_shelteravailability_add"),
+            {
+                "shelter": str(shelter.pk),
+                "non_restricted_beds": 2,
+                "restricted_beds": 1,
+                "restriction_notes": "Evening intake",
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        created = ShelterAvailability.objects.get(shelter=shelter)
+        self.assertEqual(created.non_restricted_beds, 2)
+        self.assertEqual(created.restricted_beds, 1)
+        self.assertEqual(created.restriction_notes, "Evening intake")
+
+    def test_add_page_rejects_counts_above_the_chosen_shelters_capacity(self) -> None:
+        shelter = self._shelter_without_availability()
+        superuser = User.objects.create_superuser(
+            username="availability_add_cap", email="availability_add_cap@example.com", password="password"
+        )
+        self.client.force_login(superuser)
+
+        response = self.client.post(
+            reverse("admin:shelters_shelteravailability_add"),
+            {"shelter": str(shelter.pk), "non_restricted_beds": 9, "restricted_beds": 0, "restriction_notes": ""},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(ShelterAvailability.objects.filter(shelter=shelter).exists())
+
 
 class ShelterResourceContactImportTestCase(TestCase):
     """``ShelterResource.after_save_instance`` persists ``additional_contacts`` rows."""

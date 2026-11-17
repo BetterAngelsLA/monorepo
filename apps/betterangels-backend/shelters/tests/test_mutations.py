@@ -1504,6 +1504,30 @@ class UpdateShelterAvailabilityTestCase(ShelterTestCase, TestCase):
         self.assertEqual(len(messages), 1)
         self.assertEqual(messages[0]["field"], "totalBeds")
 
+    def test_an_unchanged_total_beds_does_not_revalidate_a_stranded_row(self) -> None:
+        """The rule is about lowering capacity, not about re-checking every save.
+
+        A shelter whose counts already exceed its total (data that predates the
+        rule, or a write that bypassed the API) must still accept edits that do
+        not touch the total — otherwise the profile tab is frozen.
+        """
+        ShelterAvailability.objects.filter(pk=self.availability.pk).update(non_restricted_beds=8)
+        self.shelter.total_beds = 10
+        self.shelter.save()
+        ShelterAvailability.objects.filter(pk=self.availability.pk).update(non_restricted_beds=12)
+
+        response = self.execute_graphql(
+            self.MUTATION,
+            {"data": {"id": str(self.shelter.pk), "totalBeds": 10, "roomStyles": ["SINGLE_ROOM"]}},
+        )
+
+        self.assertIsNone(response.get("errors"))
+        payload = response["data"]["updateShelter"]
+        self.assertNotIn("messages", payload)
+        self.assertEqual(payload["id"], str(self.shelter.pk))
+        self.shelter.refresh_from_db()
+        self.assertEqual(self.shelter.total_beds, 10)
+
     def test_unknown_total_beds_imposes_no_rule(self) -> None:
         """``total_beds`` is nullable; an unknown capacity must not block a write."""
         self.assertIsNone(self.shelter.total_beds)

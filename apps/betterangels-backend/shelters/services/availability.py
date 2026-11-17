@@ -30,6 +30,11 @@ def apply_availability(shelter: Shelter, values: Mapping[str, Any]) -> Optional[
     if "restriction_notes" in payload and payload["restriction_notes"] is None:
         payload["restriction_notes"] = ""
 
+    # Get-then-insert is safe only because every caller writes the shelter row
+    # first (``shelter_update`` saves it, the admin form saves it), and that
+    # UPDATE holds a row lock on the shelter until the transaction commits — so
+    # two first writes cannot both miss this row and collide on the OneToOne.
+    # A caller that skips the shelter write would need a lock or a retry here.
     try:
         availability = ShelterAvailability.objects.get(shelter=shelter)
     except ShelterAvailability.DoesNotExist:
