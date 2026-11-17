@@ -119,7 +119,7 @@ export interface OperatingStatus {
 
 export interface AggregateStatus {
   tone: 'open' | 'closed' | 'partial';
-  statusText: 'Open Now' | 'Closed' | 'Partially Open';
+  statusText: 'Open Now' | 'Closing Soon' | 'Closed' | 'Partially Open';
 }
 
 export function getAggregateStatus(
@@ -143,7 +143,17 @@ export function getAggregateStatus(
     return { tone: 'open', statusText: 'Open Now' };
   }
   if (anyClosed && !anyOpen) {
-    return { tone: 'closed', statusText: 'Closed' };
+    // "Closing soon" carries a closed tone, but the shelter is still open. When
+    // that is the only reason nothing reads as open, the header has to say so
+    // instead of contradicting the hours dialog.
+    const closingSoon = statuses.every(
+      (status) => status.statusText === 'Closing soon',
+    );
+
+    return {
+      tone: 'closed',
+      statusText: closingSoon ? 'Closing Soon' : 'Closed',
+    };
   }
   return { tone: 'partial', statusText: 'Partially Open' };
 }

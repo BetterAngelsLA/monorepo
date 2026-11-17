@@ -305,3 +305,73 @@ describe('getOperatingStatus across midnight', () => {
     });
   });
 });
+
+describe('getAggregateStatus', () => {
+  const now = new Date(2026, 2, 3, 15, 30); // Tuesday, 14 minutes before close
+
+  const lateShift = row({
+    day: DayOfWeekChoices.Monday,
+    startTime: '23:55:00',
+    endTime: '15:44:00',
+  });
+
+  const intakeClosing = row({
+    id: 'intake-closing',
+    scheduleType: ScheduleTypeChoices.Intake,
+    day: DayOfWeekChoices.Monday,
+    startTime: '23:55:00',
+    endTime: '15:40:00',
+  });
+
+  const intakeClosed = row({
+    id: 'intake-closed',
+    scheduleType: ScheduleTypeChoices.Intake,
+    day: DayOfWeekChoices.Monday,
+    startTime: '09:00:00',
+    endTime: '10:00:00',
+  });
+
+  it('reports closing soon while the hours dialog does', () => {
+    expect(getOperatingStatus([lateShift], now).statusText).toBe(
+      'Closing soon',
+    );
+    expect(
+      getAggregateStatus([lateShift], [ScheduleTypeChoices.Operating], now),
+    ).toStrictEqual({ tone: 'closed', statusText: 'Closing Soon' });
+  });
+
+  it('reports closed once the shift has ended', () => {
+    const afterClose = new Date(2026, 2, 3, 16, 0);
+
+    expect(getOperatingStatus([lateShift], afterClose).statusText).toBe(
+      'Closed',
+    );
+    expect(
+      getAggregateStatus(
+        [lateShift],
+        [ScheduleTypeChoices.Operating],
+        afterClose,
+      ),
+    ).toStrictEqual({ tone: 'closed', statusText: 'Closed' });
+  });
+
+  it('reports closing soon when every open type is closing soon', () => {
+    expect(
+      getAggregateStatus(
+        [lateShift, intakeClosing],
+        [ScheduleTypeChoices.Operating, ScheduleTypeChoices.Intake],
+        now,
+      ),
+    ).toStrictEqual({ tone: 'closed', statusText: 'Closing Soon' });
+  });
+
+  it('stays closed when another schedule type is closed', () => {
+    expect(
+      getAggregateStatus(
+        [lateShift, intakeClosed],
+        [ScheduleTypeChoices.Operating, ScheduleTypeChoices.Intake],
+        now,
+      ),
+    ).toStrictEqual({ tone: 'closed', statusText: 'Closed' });
+  });
+});
