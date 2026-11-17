@@ -47,7 +47,7 @@ query ShelterServiceCategories {
 
 mutation CreateShelter($data: CreateShelterInput!) {
   createShelter(data: $data) {
-    ... on ShelterType {
+    ... on OperatorShelterType {
       id
       name
       status

@@ -35,8 +35,8 @@ export const createShelterSuccessTypename: Extract<
   NonNullable<CreateShelterMutation['createShelter']> extends readonly (infer _T)[]
     ? _T
     : NonNullable<CreateShelterMutation['createShelter']>,
-  { __typename: 'ShelterType' }
->['__typename'] = 'ShelterType';
+  { __typename: 'OperatorShelterType' }
+>['__typename'] = 'OperatorShelterType';
 
 export const createShelterMeta = {
   operationKey: createShelterOperationKey,

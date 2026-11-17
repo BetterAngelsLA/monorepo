@@ -1,6 +1,6 @@
-from typing import TYPE_CHECKING, Any, Dict, List
+from typing import TYPE_CHECKING, Any, Optional
 
-from django.core.exceptions import NON_FIELD_ERRORS, PermissionDenied, ValidationError
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.utils.text import slugify
 from organizations.models import Organization
@@ -8,28 +8,62 @@ from strawberry import UNSET
 
 from common.permissions.selectors import can_globally
 from common.permissions.utils import require_can
-from shelters.models import ContactInfo, Service, ServiceCategory, Shelter
+from shelters.models import (
+    ContactInfo,
+    Service,
+    ServiceCategory,
+    Shelter,
+    ShelterAvailability,
+)
 from shelters.permissions import BA_REVIEW_FIELDS, can_change_ba_review
 from shelters.selectors import shelter_get
+from shelters.services.availability import apply_availability
 from shelters.services.utils import (
     _SHELTER_M2M_FIELDS,
     _create_schedules,
     _prepare_shelter_data,
     _set_m2m_from_enums,
     _sync_schedules,
+    rekey_validation_errors,
 )
+from shelters.validators import validate_availability_counts
 
 
-def _require_permission_on_ba_review_change(user: "User", data: Dict[str, Any]) -> None:
+def _require_permission_on_ba_review_change(user: "User", data: dict[str, Any]) -> None:
     if any(field in data for field in BA_REVIEW_FIELDS) and not can_change_ba_review(user):
         raise PermissionDenied("Editing BA review fields is not allowed with this role.")
+
+
+def _require_availability_fits_total_beds(shelter: Shelter, availability: Optional[ShelterAvailability] = None) -> None:
+    """Reject a ``total_beds`` change that would leave availability over capacity.
+
+    The availability payload validates its own counts; this covers the other
+    direction — lowering ``total_beds`` on its own — so the invariant holds no
+    matter which side of the relation the caller writes. Pass the row the caller
+    already fetched to avoid a second lookup.
+    """
+    if availability is None:
+        try:
+            availability = ShelterAvailability.objects.get(shelter=shelter)
+        except ShelterAvailability.DoesNotExist:
+            return
+
+    try:
+        validate_availability_counts(
+            non_restricted_beds=availability.non_restricted_beds,
+            restricted_beds=availability.restricted_beds,
+            total_beds=shelter.total_beds,
+        )
+    except ValidationError as exc:
+        messages = list(dict.fromkeys(str(error.message) for errors in exc.error_dict.values() for error in errors))
+        raise ValidationError({"total_beds": messages}) from exc
 
 
 if TYPE_CHECKING:
     from accounts.models import User
 
 
-def _apply_services(shelter: Shelter, raw_services: List[Any]) -> None:
+def _apply_services(shelter: Shelter, raw_services: list[Any]) -> None:
     service_pks: list[Any] = []
     pending_entries: list[tuple[int, str]] = []
     seen_pending: set[tuple[int, str]] = set()
@@ -137,26 +171,7 @@ def resolve_pending_service_entries(entries: list[tuple[int, str]]) -> list[Serv
     return resolved
 
 
-def _contact_error_dict(exc: ValidationError, index: int) -> dict[str, list[str]]:
-    """Re-key a single contact's ``full_clean()`` errors under an indexed path.
-
-    ``full_clean()`` raises a ``ValidationError`` whose ``error_dict`` is keyed by
-    field name. We re-key each entry as ``additional_contacts.<index>.<field>`` so
-    the GraphQL layer can report which contact in the list failed.
-    """
-    prefix = f"additional_contacts.{index}"
-
-    if not hasattr(exc, "error_dict"):
-        return {prefix: [str(e.message) for e in exc.error_list]}
-
-    result: dict[str, list[str]] = {}
-    for field, err_list in exc.error_dict.items():
-        key = prefix if field == NON_FIELD_ERRORS else f"{prefix}.{field}"
-        result[key] = [str(e.message) for e in err_list]
-    return result
-
-
-def _apply_additional_contacts(shelter: Shelter, contacts: List[Any]) -> None:
+def _apply_additional_contacts(shelter: Shelter, contacts: list[Any]) -> None:
     """Apply list-level full-replacement semantics to a shelter's additional contacts.
 
     The submitted list is authoritative: entries absent from the payload are
@@ -211,7 +226,7 @@ def _apply_additional_contacts(shelter: Shelter, contacts: List[Any]) -> None:
             try:
                 obj.full_clean()
             except ValidationError as exc:
-                errors.update(_contact_error_dict(exc, index))
+                errors.update(rekey_validation_errors(exc, f"additional_contacts.{index}"))
                 continue
             to_save.append(obj)
             keep_ids.add(obj.pk)
@@ -221,7 +236,7 @@ def _apply_additional_contacts(shelter: Shelter, contacts: List[Any]) -> None:
         try:
             contact.full_clean()
         except ValidationError as exc:
-            errors.update(_contact_error_dict(exc, index))
+            errors.update(rekey_validation_errors(exc, f"additional_contacts.{index}"))
             continue
         new_objs.append(contact)
 
@@ -238,7 +253,7 @@ def _apply_additional_contacts(shelter: Shelter, contacts: List[Any]) -> None:
 
 
 @transaction.atomic
-def shelter_create(*, user: "User", data: Dict[str, Any]) -> Shelter:
+def shelter_create(*, user: "User", data: dict[str, Any]) -> Shelter:
     """Create a new Shelter with all M2M relationships and schedules.
 
     The target organization is the create anchor and travels in the payload
@@ -266,7 +281,7 @@ def shelter_create(*, user: "User", data: Dict[str, Any]) -> Shelter:
     require_can(user, Shelter.perms.ADD, org=organization_id)
 
     scalar_data, m2m_data, schedules_data = _prepare_shelter_data(data, _SHELTER_M2M_FIELDS)
-    raw_services: List[Any] = m2m_data.pop("services", []) or []
+    raw_services: list[Any] = m2m_data.pop("services", []) or []
 
     shelter = Shelter(**scalar_data)
     shelter.full_clean()
@@ -282,7 +297,7 @@ def shelter_create(*, user: "User", data: Dict[str, Any]) -> Shelter:
 
 
 @transaction.atomic
-def shelter_update(*, user: "User", data: Dict[str, Any]) -> Shelter:
+def shelter_update(*, user: "User", data: dict[str, Any]) -> Shelter:
     """Update an existing Shelter with partial data.
 
     Resolves *shelter* via :func:`~shelters.selectors.shelter_get` with
@@ -325,18 +340,23 @@ def shelter_update(*, user: "User", data: Dict[str, Any]) -> Shelter:
         shelter_id=shelter_id,
         permission=Shelter.perms.CHANGE,
     )
+    # Captured before the scalar write: the capacity rule only has something to
+    # say when this request actually changes the total — see the guard below.
+    original_total_beds = shelter.total_beds
 
     has_schedules = "schedules" in data
     has_services = "services" in data
     has_contacts = "additional_contacts" in data
     additional_contacts = data.pop("additional_contacts", None)
+    has_availability = "availability" in data
+    availability = data.pop("availability", None)
     # The single schedule type a ``schedules`` payload is authoritative for:
     # one save edits one tab, and an empty payload still has to name the type it
     # clears.
     schedule_type = data.pop("schedule_type", None)
 
     scalar_data, m2m_data, schedules_data = _prepare_shelter_data(data, _SHELTER_M2M_FIELDS)
-    raw_services: List[Any] = m2m_data.pop("services", []) or []
+    raw_services: list[Any] = m2m_data.pop("services", []) or []
 
     for k, v in scalar_data.items():
         setattr(shelter, k, v)
@@ -350,6 +370,14 @@ def shelter_update(*, user: "User", data: Dict[str, Any]) -> Shelter:
 
     if has_contacts:
         _apply_additional_contacts(shelter, additional_contacts or [])
+
+    availability_row = apply_availability(shelter, availability or {}) if has_availability else None
+
+    # Only a changed total can strand availability. Keying off the field's presence
+    # instead would re-check every save, because clients always send `totalBeds`.
+    # An empty availability payload must not skip it either.
+    if "total_beds" in scalar_data and shelter.total_beds != original_total_beds:
+        _require_availability_fits_total_beds(shelter, availability_row)
 
     if has_schedules:
         if schedule_type is None:

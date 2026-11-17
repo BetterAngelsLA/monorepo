@@ -1,6 +1,6 @@
 from typing import Any, Dict, List, overload
 
-from django.core.exceptions import ValidationError
+from django.core.exceptions import NON_FIELD_ERRORS, ValidationError
 from django.db import models
 from places import Places
 
@@ -18,6 +18,23 @@ _SHELTER_M2M_FIELDS = _get_m2m_field_names(Shelter)
 _BED_M2M_FIELDS = _get_m2m_field_names(Bed)
 _ROOM_M2M_FIELDS = _get_m2m_field_names(Room)
 _COMMON_M2M_FIELDS = (_SHELTER_M2M_FIELDS & _BED_M2M_FIELDS) | (_SHELTER_M2M_FIELDS & _ROOM_M2M_FIELDS)
+
+
+def rekey_validation_errors(exc: ValidationError, prefix: str) -> dict[str, list[str]]:
+    """Re-key a ``full_clean()`` ``ValidationError`` under *prefix*.
+
+    ``full_clean()`` raises a ``ValidationError`` whose ``error_dict`` is keyed by
+    model field name. The GraphQL layer reports those paths verbatim, so related
+    objects re-key them under the input path they came from: ``<prefix>.<field>``
+    for field errors and *prefix* itself for non-field errors.
+    """
+    if not hasattr(exc, "error_dict"):
+        return {prefix: [str(e.message) for e in exc.error_list]}
+
+    return {
+        (prefix if field == NON_FIELD_ERRORS else f"{prefix}.{field}"): [str(error.message) for error in errors]
+        for field, errors in exc.error_dict.items()
+    }
 
 
 @overload

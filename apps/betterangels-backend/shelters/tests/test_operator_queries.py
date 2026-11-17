@@ -25,6 +25,7 @@ from shelters.models import (
     Pet,
     Reservation,
     Shelter,
+    ShelterAvailability,
     ShelterType,
     SpecialSituationRestriction,
 )
@@ -894,6 +895,166 @@ class OperatorShelterAdditionalContactsTestCase(GraphQLBaseTestCase):
         self.assertEqual(contacts[0]["contactEmail"], "ada@example.org")
         self.assertEqual(contacts[0]["contactTitle"], "Director")
         self.assertTrue(contacts[0]["isClaimant"])
+
+
+class OperatorShelterAvailabilityTestCase(GraphQLBaseTestCase):
+    """``availability`` is exposed on the operator shelter output types.
+
+    The counters live on the shelter's availability row and are readable with the
+    shelter itself (``view_shelter``).
+    """
+
+    SINGLE_QUERY = """
+        query OperatorShelter($pk: ID!) {
+            operatorShelter(pk: $pk) {
+                id
+                availability {
+                    nonRestrictedBeds
+                    restrictedBeds
+                    restrictionNotes
+                }
+            }
+        }
+    """
+
+    LIST_QUERY = """
+        query OperatorShelters($orgIds: [ID!]) {
+            operatorShelters(filters: { organizations: $orgIds }) {
+                results {
+                    id
+                    availability {
+                        nonRestrictedBeds
+                        restrictedBeds
+                    }
+                }
+            }
+        }
+    """
+
+    def setUp(self) -> None:
+        super().setUp()
+        self._grant_permission(self.org_1_case_manager_1, Shelter.perms.VIEW, self.org_1)
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+        self.shelter = shelter_recipe.make(organization=self.org_1)
+        ShelterAvailability.objects.filter(shelter=self.shelter).update(
+            non_restricted_beds=4,
+            restricted_beds=2,
+            restriction_notes="Women only",
+        )
+
+    def test_single_query_returns_availability(self) -> None:
+        response = self.execute_graphql(self.SINGLE_QUERY, {"pk": str(self.shelter.pk)})
+
+        self.assertIsNone(response.get("errors"))
+        availability = response["data"]["operatorShelter"]["availability"]
+        self.assertEqual(availability["nonRestrictedBeds"], 4)
+        self.assertEqual(availability["restrictedBeds"], 2)
+        self.assertEqual(availability["restrictionNotes"], "Women only")
+
+    def test_single_query_returns_null_without_a_row(self) -> None:
+        ShelterAvailability.objects.filter(shelter=self.shelter).delete()
+
+        response = self.execute_graphql(self.SINGLE_QUERY, {"pk": str(self.shelter.pk)})
+
+        self.assertIsNone(response.get("errors"))
+        self.assertIsNone(response["data"]["operatorShelter"]["availability"])
+
+    def test_list_query_returns_availability(self) -> None:
+        response = self.execute_graphql(self.LIST_QUERY, {"orgIds": [str(self.org_1.pk)]})
+
+        self.assertIsNone(response.get("errors"))
+        results = response["data"]["operatorShelters"]["results"]
+        self.assertEqual(len(results), 1)
+        availability = results[0]["availability"]
+        self.assertEqual(availability["nonRestrictedBeds"], 4)
+        self.assertEqual(availability["restrictedBeds"], 2)
+
+    def test_public_shelter_query_does_not_expose_availability(self) -> None:
+        """Availability is operator-only; the public shelter type must not carry it."""
+        response = self.execute_graphql(
+            """
+            query Shelter($pk: ID!) {
+                shelter(pk: $pk) {
+                    id
+                    availability {
+                        nonRestrictedBeds
+                    }
+                }
+            }
+            """,
+            {"pk": str(self.shelter.pk)},
+        )
+
+        self.assertIsNotNone(response.get("errors"))
+        self.assertIn("availability", response["errors"][0]["message"])
+
+
+class OperatorShelterAvailabilityFilterTestCase(GraphQLBaseTestCase):
+    """``hasAvailableBeds`` narrows the operator shelter list.
+
+    The filter moved off ``PublicShelterFilter`` so availability is not probeable
+    from the public directory.
+    """
+
+    QUERY = """
+        query OperatorShelters($orgIds: [ID!], $hasAvailableBeds: Boolean) {
+            operatorShelters(
+                filters: { organizations: $orgIds, hasAvailableBeds: $hasAvailableBeds }
+            ) {
+                totalCount
+                results { id }
+            }
+        }
+    """
+
+    def setUp(self) -> None:
+        super().setUp()
+        self._grant_permission(self.org_1_case_manager_1, Shelter.perms.VIEW, self.org_1)
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+        self.shelter_with_non_restricted = shelter_recipe.make(organization=self.org_1)
+        self.shelter_with_restricted = shelter_recipe.make(organization=self.org_1)
+        self.shelter_no_available = shelter_recipe.make(organization=self.org_1)
+        ShelterAvailability.objects.filter(shelter=self.shelter_with_non_restricted).update(
+            non_restricted_beds=5, restricted_beds=0
+        )
+        ShelterAvailability.objects.filter(shelter=self.shelter_with_restricted).update(
+            non_restricted_beds=0, restricted_beds=3
+        )
+        ShelterAvailability.objects.filter(shelter=self.shelter_no_available).update(
+            non_restricted_beds=0, restricted_beds=0
+        )
+
+    def _result_ids(self, has_available_beds: Optional[bool]) -> set[str]:
+        response = self.execute_graphql(
+            self.QUERY,
+            variables={
+                "orgIds": [str(self.org_1.pk)],
+                "hasAvailableBeds": has_available_beds,
+            },
+        )
+
+        self.assertIsNone(response.get("errors"))
+        return {result["id"] for result in response["data"]["operatorShelters"]["results"]}
+
+    def test_true_returns_shelters_with_any_available_beds(self) -> None:
+        self.assertSetEqual(
+            self._result_ids(True),
+            {str(self.shelter_with_non_restricted.pk), str(self.shelter_with_restricted.pk)},
+        )
+
+    def test_false_returns_shelters_without_available_beds(self) -> None:
+        self.assertSetEqual(self._result_ids(False), {str(self.shelter_no_available.pk)})
+
+    def test_null_returns_every_shelter(self) -> None:
+        self.assertSetEqual(
+            self._result_ids(None),
+            {
+                str(self.shelter_with_non_restricted.pk),
+                str(self.shelter_with_restricted.pk),
+                str(self.shelter_no_available.pk),
+            },
+        )
 
 
 class OperatorShelterBAReviewTestCase(GraphQLBaseTestCase, ParametrizedTestCase):

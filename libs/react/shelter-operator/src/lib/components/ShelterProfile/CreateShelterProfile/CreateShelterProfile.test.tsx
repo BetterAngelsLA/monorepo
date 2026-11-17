@@ -127,7 +127,9 @@ beforeEach(() => {
     activeOrg: { id: 'org-active', name: 'Active Org' },
   });
   mocks.mutate.mockResolvedValue({
-    data: { createShelter: { __typename: 'ShelterType', id: 'shelter-1' } },
+    data: {
+      createShelter: { __typename: 'OperatorShelterType', id: 'shelter-1' },
+    },
   });
 });
 

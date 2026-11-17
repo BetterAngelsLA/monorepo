@@ -79,7 +79,7 @@ class CreateShelterWithTargetOrgTestCase(ShelterTestCase, TestCase):
     MUTATION = """
         mutation ($data: CreateShelterInput!) {
             createShelter(data: $data) {
-                ... on ShelterType {
+                ... on OperatorShelterType {
                     id
                     name
                 }
@@ -134,7 +134,7 @@ class IdentityWideWritesTestCase(ShelterTestCase, TestCase):
     UPDATE_MUTATION = """
         mutation UpdateShelter($data: UpdateShelterInput!) {
             updateShelter(data: $data) {
-                ... on ShelterType {
+                ... on OperatorShelterType {
                     id
                     name
                 }
