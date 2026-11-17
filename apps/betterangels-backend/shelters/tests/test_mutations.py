@@ -7,7 +7,7 @@ from unittest_parametrize import ParametrizedTestCase
 
 from accounts.models import Role, User
 from accounts.services import role_assign
-from shelters.enums import DayOfWeekChoices, ScheduleTypeChoices
+from shelters.enums import DayOfWeekChoices, RoomStyleChoices, ScheduleTypeChoices
 from shelters.groups import GLOBAL_SHELTER_OPERATOR_ROLE
 from shelters.models import SPA, City, ContactInfo, Schedule, Service, ServiceCategory, Shelter, ShelterAvailability
 from shelters.tests.utils import ShelterTestCase
@@ -1511,8 +1511,12 @@ class UpdateShelterAvailabilityTestCase(ShelterTestCase, TestCase):
         payload = response["data"]["updateShelter"]
         self.assertNotIn("messages", payload)
         self.assertEqual(payload["id"], str(self.shelter.pk))
+
+        # The edit itself has to land — a mutation that refuses to write would
+        # also answer without messages.
         self.shelter.refresh_from_db()
         self.assertEqual(self.shelter.total_beds, 10)
+        self.assertEqual(list(self.shelter.room_styles.values_list("name", flat=True)), [RoomStyleChoices.SINGLE_ROOM])
 
 
 class UpdateShelterAdditionalContactsErrorShapeTestCase(ShelterTestCase, TestCase):

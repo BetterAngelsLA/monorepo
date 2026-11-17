@@ -1020,15 +1020,19 @@ class ShelterAvailabilityValidationTestCase(TestCase):
 
         availability.full_clean()
 
-    def test_clean_without_a_shelter_reports_the_missing_fk(self) -> None:
-        """``clean()`` must not dereference an FK that was never set.
-
-        ``full_clean()`` runs ``clean()`` even for excluded fields, so a shelfless
-        instance (the availability admin's add form builds one) must surface the
-        missing FK as a ``ValidationError`` rather than a related-object lookup
-        error the form layer cannot catch.
-        """
+    def test_full_clean_without_a_shelter_reports_the_missing_fk(self) -> None:
+        """A raw writer gets the missing FK from ``clean_fields()``."""
         with self.assertRaises(ValidationError) as raised:
             ShelterAvailability().full_clean()
 
         self.assertIn("shelter", raised.exception.error_dict)
+
+    def test_clean_returns_quietly_when_the_form_excludes_the_fk(self) -> None:
+        """``full_clean(exclude={"shelter"})`` must not dereference ``self.shelter``.
+
+        This is the admin add form's shape: the FK is excluded from model
+        validation because the form field is required and owns that error.
+        Dereferencing it here would raise ``RelatedObjectDoesNotExist`` (an
+        ``AttributeError``) and turn the add page into a 500.
+        """
+        ShelterAvailability().full_clean(exclude={"shelter"})

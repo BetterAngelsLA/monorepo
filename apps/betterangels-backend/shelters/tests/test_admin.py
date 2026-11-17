@@ -348,7 +348,6 @@ class ShelterAvailabilityAdminTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         content = response.content.decode()
         self.assertIn('name="shelter"', content)
-        self.assertNotIn('class="readonly">---</div>', content)
 
     def test_add_page_creates_a_row_for_the_chosen_shelter(self) -> None:
         shelter = self._shelter_without_availability()

@@ -228,7 +228,7 @@ describe('SleepingDetails toAvailabilityPayload', () => {
     ).toEqual({ nonRestrictedBeds: 1, restrictedBeds: 0, restrictionNotes: '' });
   });
 
-  it('sends nothing when the shelter had no availability row and none was entered', () => {
+  it('treats the zeros of a missing availability row as the baseline', () => {
     const empty = {
       ...baseValues,
       nonRestrictedBeds: 0,
@@ -236,6 +236,10 @@ describe('SleepingDetails toAvailabilityPayload', () => {
       restrictionNotes: '',
     };
 
+    // A rowless shelter loads as 0/0/'' — nothing to send until something is typed.
     expect(toAvailabilityPayload(empty, empty)).toBeNull();
+    expect(toAvailabilityPayload({ ...empty, nonRestrictedBeds: 2 }, empty)).toEqual(
+      { nonRestrictedBeds: 2 },
+    );
   });
 });
