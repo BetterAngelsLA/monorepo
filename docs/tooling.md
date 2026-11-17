@@ -102,9 +102,10 @@ yarn nx run betterangels:build-list --platform ios \
   --build-profile preview --runtime-version <hash> [--json] [--limit 50]
 ```
 
-The target runs `eas build:list` directly and forwards flags. `find-build`
-uses the same direct call; the old `@nx/expo:build-list` executor truncated
-large build lists at its first stdout chunk.
+The target runs `eas build:list` directly and forwards flags. CI's
+`find-build` uses the same direct command with `--fingerprint-hash` and
+`--limit 1`; the old `@nx/expo:build-list` executor truncated large lists at
+its first stdout chunk.
 
 ### Labels
 

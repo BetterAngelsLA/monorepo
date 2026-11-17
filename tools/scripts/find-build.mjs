@@ -9,12 +9,12 @@
  *   node tools/scripts/find-build.mjs --project <name> --platform <p> \
  *     --profile <profile> --runtime <hash> [--json] [--force]
  *
- * Status is not filtered out here: a fingerprint builds once, and a dead build is
- * reported rather than treated as "no build" — `eas-builds.ts` turns it into a
- * failure. `--force` (or FORCE_EAS_BUILD) is the way past a build that failed
- * for a reason that has since been fixed. Exits 1 rather than reporting
- * "no build" when `build:list` never succeeds, so an EAS outage cannot silently
- * queue a duplicate.
+ * Only the newest build for the fingerprint is considered: finished or live is
+ * reused, a dead build is reported rather than treated as "no build" —
+ * `eas-builds.ts` turns it into a failure — and no build queues one. `--force`
+ * (or FORCE_EAS_BUILD) is the way past a build that failed for a reason that has
+ * since been fixed. Exits 1 rather than reporting "no build" when `build:list`
+ * never succeeds, so an EAS outage cannot silently queue a duplicate.
  */
 import { execFileSync } from 'child_process';
 import path from 'node:path';

@@ -59,7 +59,11 @@ describe(
       const output = withFakeEas(`
         const args = process.argv.slice(2);
         const limit = args[args.indexOf('--limit') + 1];
-        if (!args.includes('--fingerprint-hash') || limit !== '1') {
+        if (
+          !args.includes('--fingerprint-hash') ||
+          args.includes('--status') ||
+          limit !== '1'
+        ) {
           process.exit(7);
         }
         process.stdout.write(JSON.stringify([{ id: 'latest', status: 'FINISHED' }]));
