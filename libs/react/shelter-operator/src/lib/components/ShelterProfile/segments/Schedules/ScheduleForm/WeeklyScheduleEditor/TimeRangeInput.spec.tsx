@@ -38,8 +38,15 @@ describe('TimeRangeInput', () => {
     expect(screen.queryByText('Next day')).toBeNull();
   });
 
-  it('does not annotate empty times', () => {
-    renderRange('', '');
+  it('does not annotate a range with only a start time', () => {
+    // '' < '20:30' is true, so an unguarded comparison would annotate here.
+    renderRange('20:30', '');
+
+    expect(screen.queryByText('Next day')).toBeNull();
+  });
+
+  it('does not annotate a range with only an end time', () => {
+    renderRange('', '07:30');
 
     expect(screen.queryByText('Next day')).toBeNull();
   });

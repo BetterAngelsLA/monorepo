@@ -1681,7 +1681,8 @@ class UpdateShelterSchedulesTestCase(ShelterTestCase, TestCase):
         )
 
         self.assertIsNone(response.get("errors"))
-        self.assertIn("updateShelter", response["data"])
+        # OperatorShelterType, not an OperationInfo carrying validation messages.
+        self.assertEqual(response["data"]["updateShelter"].get("id"), str(self.shelter.pk))
 
         self.slot.refresh_from_db()
         self.assertEqual(self.slot.start_time, time(20, 30))
