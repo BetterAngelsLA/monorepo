@@ -9,17 +9,18 @@
  *   node tools/scripts/find-build.mjs --project <name> --platform <p> \
  *     --profile <profile> --runtime <hash> [--json] [--force]
  *
- * Status is not filtered out here: a fingerprint builds once, and a dead build is
- * reported rather than treated as "no build" — `eas-builds.ts` turns it into a
- * failure. `--force` (or FORCE_EAS_BUILD) is the way past a build that failed
- * for a reason that has since been fixed. Exits 1 rather than reporting
- * "no build" when `build:list` never succeeds, so an EAS outage cannot silently
- * queue a duplicate.
+ * Only the newest build for the fingerprint is considered: finished or live is
+ * reused, a dead build is reported rather than treated as "no build" —
+ * `eas-builds.ts` turns it into a failure — and no build queues one. `--force`
+ * (or FORCE_EAS_BUILD) is the way past a build that failed for a reason that has
+ * since been fixed. Exits 1 rather than reporting "no build" when `build:list`
+ * never succeeds, so an EAS outage cannot silently queue a duplicate.
  */
 import { execFileSync } from 'child_process';
+import path from 'node:path';
 import minimist from 'minimist';
 
-import { bestBuild, isDeadBuild } from './build-rank.mjs';
+import { isDeadBuild } from './build-rank.mjs';
 import { parseJsonOutput } from './cli-json.mjs';
 
 const argv = minimist(process.argv.slice(2));
@@ -45,48 +46,56 @@ if (argv.force || process.env.FORCE_EAS_BUILD === 'true') {
   process.exit(0);
 }
 
-const parseBuilds = (raw) => {
-  const builds = parseJsonOutput(raw);
+// `@nx/expo:build-list` resolves on its first stdout chunk and kills the child;
+// call eas directly. One build is all the fingerprint needs.
+const projectDir = path.resolve(process.cwd(), 'apps', project);
+const easOptions = {
+  cwd: projectDir,
+  encoding: 'utf8',
+  stdio: ['ignore', 'pipe', 'pipe'],
+  env: process.env,
+  // A build can carry long signed URLs; fail loudly rather than let a future
+  // output-size change truncate.
+  maxBuffer: 10 * 1024 * 1024,
+};
+const latestBuild = () => {
+  const builds = parseJsonOutput(
+    execFileSync(
+      'eas',
+      [
+        'build:list',
+        '--platform',
+        platform,
+        '--build-profile',
+        profile,
+        // The runtime is the fingerprint hash under the fingerprint policy.
+        '--fingerprint-hash',
+        runtime,
+        '--limit',
+        '1',
+        '--json',
+        '--non-interactive',
+      ],
+      easOptions,
+    ),
+  );
   if (!Array.isArray(builds))
     throw new Error('build:list did not return an array');
-  return builds;
+  return builds[0];
 };
-
-const cwd = process.cwd();
-
-const args = [
-  'run',
-  `${project}:build-list`,
-  '--platform',
-  platform,
-  '--buildProfile',
-  profile,
-  '--runtimeVersion',
-  runtime,
-  '--limit',
-  // eas-cli caps this at 50; still deep enough to see past canceled/errored
-  // duplicates to a FINISHED build, since `bestBuild` prefers a finished one.
-  '50',
-  '--json',
-  '--interactive=false',
-];
 
 let lastError;
 for (let attempt = 1; attempt <= attempts; attempt++) {
   try {
-    const raw = execFileSync('nx', args, {
-      cwd,
-      encoding: 'utf8',
-      stdio: ['ignore', 'pipe', 'pipe'],
-      env: process.env,
-    });
-    const builds = parseBuilds(raw);
-    if (builds.length === 0) {
+    // The fingerprint is supposed to build once. Ask for its newest build and
+    // let the status decide: finished/live -> reuse, dead -> fail, none -> queue.
+    // One request with --limit 1 keeps the payload small; do not scan history.
+    const build = latestBuild();
+    if (!build) {
       console.error(`No ${platform} build for ${profile}/${runtime}.`);
       console.log(argv.json ? JSON.stringify({ id: null }) : '');
       process.exit(0);
     }
-    const build = bestBuild(builds) ?? {};
     const { id, status } = build;
     console.error(
       `Found ${platform} build ${id} for ${profile}/${runtime} (status: ${status ?? '?'}).`,

@@ -66,13 +66,13 @@
                         <tr>
                             <td align="left" style="font-size:15px; color:#1E3342; line-height:22px;">
                                 <p style="margin:0 0 12px 0;">
-                                    As a Shelter Operator, you can manage beds, rooms, and reservations at {{ organization_name }}.
+                                    As a Shelter Operator, you can manage beds, rooms, and reservations{% if organization_name.strip %} at {{ organization_name.strip }}{% endif %}.
                                 </p>
                                 <p style="margin:0 0 12px 0;">
                                     Log in using <strong>{{ login_email }}</strong> at:
                                 </p>
                                 <p style="margin:0 0 12px 0;">
-                                    <a href="{{ base_url }}" style="color:#1976D2; text-decoration:underline">{{ base_url }}</a>
+                                    <a href="{{ base_url }}/operator" style="color:#1976D2; text-decoration:underline">{{ base_url }}/operator</a>
                                 </p>
                                 {% if is_demo %}
                                     <p style="margin:0 0 12px 0; color:#B45309;">

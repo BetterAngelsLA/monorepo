@@ -2,6 +2,7 @@
 
 from unittest.mock import Mock, patch
 
+from django.template.loader import render_to_string
 from django.test import TestCase, override_settings
 from model_bakery import baker
 from organizations.models import Organization, OrganizationInvitation
@@ -139,9 +140,64 @@ class SendInvitationTestCase(TestCase):
             role_template=SHELTER_OPERATOR,
         )
 
-        body = Email.objects.get(to=self.email).html_message
-        self.assertIn("https://shelter.example.org", body)
-        self.assertNotIn("betterangels.la", body)
+        email = Email.objects.get(to=self.email)
+        for body in (email.html_message, email.message):
+            self.assertIn("https://shelter.example.org/operator", body)
+            self.assertIn("test organization", body)
+            self.assertNotIn("betterangels.la", body)
+
+    @override_settings(SHELTER_WEB_BASE_URL="https://shelter.example.org/")
+    def test_a_trailing_slash_on_the_base_url_does_not_double_up(self) -> None:
+        """The templates append "/operator", so a trailing slash would render "//operator"."""
+        self.assertEqual(base_url_for(SHELTER_OPERATOR), "https://shelter.example.org")
+
+    def _render_invite(self, **context: object) -> tuple[str, str]:
+        """Render both bodies directly, bypassing ``send_invitation``'s context."""
+        values = {
+            "login_email": "someone@test.com",
+            "base_url": "https://shelter.example.org",
+            "is_demo": False,
+            **context,
+        }
+        return (
+            render_to_string("account/email/shelter_operator_invite.html", values),
+            render_to_string("account/messages/shelter_operator_invite.txt", values),
+        )
+
+    @override_settings(SHELTER_WEB_BASE_URL="https://shelter.example.org")
+    def test_a_shelter_operator_invitation_without_an_organization_reads_cleanly(self) -> None:
+        """``invite_by_email`` can send with no organization; the sentence must parse."""
+        user = baker.make(User, email=self.email)
+
+        self.invitation_backend.send_invitation(
+            user,
+            baker.make(User, email="admin@test.com"),
+            base_url=base_url_for(SHELTER_OPERATOR),
+            role_template=SHELTER_OPERATOR,
+        )
+
+        email = Email.objects.get(to=self.email)
+        self.assertIn("reservations.", email.html_message)
+        self.assertIn("as a Shelter Operator.", email.message)
+
+    def test_the_invite_templates_only_name_a_usable_organization(self) -> None:
+        """The template, not just the sender, decides whether to name the org."""
+        cases: tuple[tuple[str, str | None, str, str], ...] = (
+            ("missing", None, "reservations.", "as a Shelter Operator."),
+            ("blank", "   ", "reservations.", "as a Shelter Operator."),
+            (
+                "padded",
+                "  Acme Housing  ",
+                "reservations at Acme Housing.",
+                "as a Shelter Operator at Acme Housing.",
+            ),
+        )
+
+        for label, name, html_sentence, txt_sentence in cases:
+            with self.subTest(label):
+                html, txt = self._render_invite(organization_name=name)
+                self.assertIn(html_sentence, html)
+                self.assertIn(txt_sentence, txt)
 
     # ── invite_by_email ────────────────────────────────────────────────
 
