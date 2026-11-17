@@ -1,10 +1,10 @@
 Subject: Welcome to Better Angels!
 
-You've been added as a Shelter Operator at {{ organization_name }}.
+You've been added as a Shelter Operator{% if organization_name.strip %} at {{ organization_name.strip }}{% endif %}.
 
 As a Shelter Operator, you can manage beds, rooms, and reservations.
 
-Log in using {{ login_email }} at {{ base_url }}.
+Log in using {{ login_email }} at {{ base_url }}/operator.
 {% if is_demo %}
 IMPORTANT: Because this is the demo environment, you must enter
 your email as {{ login_email }} (with "+demo" before the @) so it
