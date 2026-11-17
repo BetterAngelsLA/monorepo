@@ -141,6 +141,7 @@ export function TaskForm(props: TProps) {
               name="summary"
               disabled={isSubmitting}
               placeholder="Enter title"
+              onDeleteAccessibilityLabel="clear task title"
               onDelete={() => setValue('summary', emptyState.summary)}
               errorMessage={errors.summary?.message}
             />
@@ -208,6 +209,7 @@ export function TaskForm(props: TProps) {
               name="description"
               disabled={isSubmitting}
               placeholder="Enter description"
+              onDeleteAccessibilityLabel="clear task description"
               inputStyle={{ minHeight: 150 }}
               onDelete={() => setValue('description', emptyState.description)}
               errorMessage={errors.description?.message}

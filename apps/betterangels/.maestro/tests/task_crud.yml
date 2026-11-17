@@ -92,7 +92,7 @@ appId: ${MAESTRO_APP_ID}
     id: edit-task-btn
 - tapOn:
     id: summary
-- eraseText
+- tapOn: 'clear task title'
 - inputText: ${output.updatedTaskTitle}
 - tapOn:
     id: keyboard.toolbar.done
@@ -108,7 +108,7 @@ appId: ${MAESTRO_APP_ID}
     direction: DOWN
 - tapOn:
     id: description
-- eraseText
+- tapOn: 'clear task description'
 - inputText: 'Updated by the Maestro task CRUD flow'
 - tapOn:
     id: keyboard.toolbar.done
