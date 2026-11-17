@@ -1555,6 +1555,16 @@ class UpdateShelterAdditionalContactsErrorShapeTestCase(ShelterTestCase, TestCas
         self.shelter = Shelter.objects.create(name="Contacts Error Shelter", organization=self.org)
 
     def test_two_new_contacts_each_with_error(self) -> None:
+        # A valid entry and a pre-existing contact make the atomicity claim
+        # observable: per-item semantics would write the valid entry (and, with
+        # replacement semantics, drop the one absent from the payload).
+        ContactInfo.objects.create(
+            shelter=self.shelter,
+            contact_name="Existing",
+            contact_number="2125550199",
+        )
+        before = set(ContactInfo.objects.filter(shelter=self.shelter).values_list("pk", flat=True))
+
         response = self.execute_graphql(
             self.MUTATION,
             {
@@ -1563,6 +1573,7 @@ class UpdateShelterAdditionalContactsErrorShapeTestCase(ShelterTestCase, TestCas
                     "additionalContacts": [
                         {"contactName": "Ada", "contactNumber": "bad-phone"},
                         {"contactName": "Grace", "contactNumber": "2125550101", "contactEmail": "nope"},
+                        {"contactName": "Valid", "contactNumber": "2125550177"},
                     ],
                 }
             },
@@ -1580,8 +1591,10 @@ class UpdateShelterAdditionalContactsErrorShapeTestCase(ShelterTestCase, TestCas
         self.assertEqual(messages[1]["field"], "additionalContacts.1.contactEmail")
         self.assertIn("email", messages[1]["message"].lower())
 
-        # The rejected payload is refused as a whole: nothing is persisted.
-        self.assertFalse(ContactInfo.objects.filter(shelter=self.shelter).exists())
+        # Refused as a whole: the valid entry is not written, and the existing
+        # contact is neither replaced nor deleted.
+        after = set(ContactInfo.objects.filter(shelter=self.shelter).values_list("pk", flat=True))
+        self.assertSetEqual(after, before)
 
 
 class UpdateShelterSchedulesTestCase(ShelterTestCase, TestCase):
