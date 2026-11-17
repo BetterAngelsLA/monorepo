@@ -66,6 +66,9 @@
       "@monorepo/react/shared": ["./libs/react/shared/src/index.ts"],
       "@monorepo/react/shared/auth": ["./libs/react/shared/src/auth.ts"],
       "@monorepo/react/shelter": ["./libs/react/shelter/src/index.ts"],
+      "@monorepo/react/shelter/constants": [
+        "./libs/react/shelter/src/lib/constants/index.ts"
+      ],
       "@monorepo/react/shelter-operator": [
         "./libs/react/shelter-operator/src/index.ts"
       ],

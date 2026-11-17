@@ -1,6 +1,3 @@
-/**
- * Values the suite shares regardless of what it is testing.
- *
- *   - `constants.ts` — `VIEWPORTS`, the viewport each band pins on a describe
- */
+/** Harness pieces that belong to no page. */
 export * from './constants';
+export * from './localStorage';
