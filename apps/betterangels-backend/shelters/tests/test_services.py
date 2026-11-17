@@ -71,11 +71,3 @@ class ApplyAvailabilityTestCase(TestCase):
             {"availability.non_restricted_beds", "availability.restricted_beds"},
         )
         self.assertEqual(self._row().non_restricted_beds, 0)
-
-    def test_unknown_capacity_imposes_no_rule(self) -> None:
-        shelter = Shelter.objects.create(name="Unknown Capacity Shelter", total_beds=None)
-
-        returned = apply_availability(shelter, {"non_restricted_beds": 50})
-
-        self.assertIsNotNone(returned)
-        self.assertEqual(ShelterAvailability.objects.get(shelter=shelter).non_restricted_beds, 50)

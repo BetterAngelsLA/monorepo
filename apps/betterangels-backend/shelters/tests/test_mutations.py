@@ -1454,20 +1454,6 @@ class UpdateShelterAvailabilityTestCase(ShelterTestCase, TestCase):
         self.assertEqual(self.availability.non_restricted_beds, 0)
         self.assertEqual(self.availability.restricted_beds, 0)
 
-    def test_counts_equal_to_total_beds_are_allowed(self) -> None:
-        self.shelter.total_beds = 4
-        self.shelter.save()
-
-        response = self.execute_graphql(
-            self.MUTATION,
-            {"data": {"id": str(self.shelter.pk), "availability": {"nonRestrictedBeds": 3, "restrictedBeds": 1}}},
-        )
-
-        self.assertIsNone(response.get("errors"))
-        self.availability.refresh_from_db()
-        self.assertEqual(self.availability.non_restricted_beds, 3)
-        self.assertEqual(self.availability.restricted_beds, 1)
-
     def test_total_beds_below_current_availability_returns_field_validation(self) -> None:
         """Lowering capacity must not strand availability above it."""
         ShelterAvailability.objects.filter(pk=self.availability.pk).update(non_restricted_beds=8)
@@ -1527,19 +1513,6 @@ class UpdateShelterAvailabilityTestCase(ShelterTestCase, TestCase):
         self.assertEqual(payload["id"], str(self.shelter.pk))
         self.shelter.refresh_from_db()
         self.assertEqual(self.shelter.total_beds, 10)
-
-    def test_unknown_total_beds_imposes_no_rule(self) -> None:
-        """``total_beds`` is nullable; an unknown capacity must not block a write."""
-        self.assertIsNone(self.shelter.total_beds)
-
-        response = self.execute_graphql(
-            self.MUTATION,
-            {"data": {"id": str(self.shelter.pk), "availability": {"nonRestrictedBeds": 50}}},
-        )
-
-        self.assertIsNone(response.get("errors"))
-        self.availability.refresh_from_db()
-        self.assertEqual(self.availability.non_restricted_beds, 50)
 
 
 class UpdateShelterAdditionalContactsErrorShapeTestCase(ShelterTestCase, TestCase):

@@ -15,6 +15,11 @@ from shelters.admin import (
 from shelters.models import AVAILABILITY_FIELDS, ContactInfo, Service, ServiceCategory, Shelter, ShelterAvailability
 
 
+def make_admin(username: str) -> User:
+    """A superuser for admin-page requests (one per test to keep them independent)."""
+    return User.objects.create_superuser(username=username, email=f"{username}@example.com", password="password")
+
+
 class GroupedServiceWidgetTestCase(TestCase):
     def test_value_from_datadict_ignores_new_tag_placeholders(self) -> None:
         data = QueryDict("", mutable=True)
@@ -229,27 +234,23 @@ class ShelterAdminAvailabilityTestCase(TestCase):
         )
         return staff
 
-    def test_change_page_renders_the_availability_fields(self) -> None:
-        superuser = User.objects.create_superuser(
-            username="availability_render_admin", email="availability_render@example.com", password="password"
-        )
-        self.client.force_login(superuser)
-
+    def _change_page(self, user: User) -> str:
+        """Render the shelter change page as *user* and return its HTML."""
+        self.client.force_login(user)
         response = self.client.get(reverse("admin:shelters_shelter_change", args=[self.shelter.pk]))
-
         self.assertEqual(response.status_code, 200)
-        content = response.content.decode()
+        return response.content.decode()
+
+    def test_change_page_renders_the_availability_fields(self) -> None:
+        content = self._change_page(make_admin("availability_render_admin"))
+
         for name in AVAILABILITY_FIELDS:
             self.assertIn(f'name="{name}"', content)
 
     def test_change_page_renders_the_availability_fields_for_a_scoped_operator(self) -> None:
         """Changing the shelter is enough authority to change its availability."""
-        self.client.force_login(self._scoped_change_user())
+        content = self._change_page(self._scoped_change_user())
 
-        response = self.client.get(reverse("admin:shelters_shelter_change", args=[self.shelter.pk]))
-
-        self.assertEqual(response.status_code, 200)
-        content = response.content.decode()
         for name in AVAILABILITY_FIELDS:
             self.assertIn(f'name="{name}"', content)
 
@@ -261,12 +262,8 @@ class ShelterAdminAvailabilityTestCase(TestCase):
         staff.user_permissions.add(
             Permission.objects.get(content_type__app_label="shelters", codename="view_shelter"),
         )
-        self.client.force_login(staff)
+        content = self._change_page(staff)
 
-        response = self.client.get(reverse("admin:shelters_shelter_change", args=[self.shelter.pk]))
-
-        self.assertEqual(response.status_code, 200)
-        content = response.content.decode()
         for name in AVAILABILITY_FIELDS:
             self.assertNotIn(f'name="{name}"', content)
         self.assertIn("Available unrestricted beds", content)
@@ -274,10 +271,7 @@ class ShelterAdminAvailabilityTestCase(TestCase):
         self.assertIn("Restriction notes", content)
 
     def test_add_page_renders_the_availability_fields(self) -> None:
-        superuser = User.objects.create_superuser(
-            username="availability_add_admin", email="availability_add@example.com", password="password"
-        )
-        self.client.force_login(superuser)
+        self.client.force_login(make_admin("availability_add_admin"))
 
         response = self.client.get(reverse("admin:shelters_shelter_add"))
 
@@ -331,10 +325,7 @@ class ShelterAvailabilityAdminTestCase(TestCase):
         self.assertIsNone(self.model_admin.total_beds(ShelterAvailability()))
 
     def test_change_form_lists_the_shelter_and_total_beds(self) -> None:
-        superuser = User.objects.create_superuser(
-            username="availability_admin_form", email="availability_admin_form@example.com", password="password"
-        )
-        self.client.force_login(superuser)
+        self.client.force_login(make_admin("availability_admin_form"))
 
         response = self.client.get(reverse("admin:shelters_shelteravailability_change", args=[self.availability.pk]))
 
@@ -352,10 +343,7 @@ class ShelterAvailabilityAdminTestCase(TestCase):
     def test_add_page_offers_the_shelter_field(self) -> None:
         """The FK is what the counts are validated against; it must be settable once."""
         self._shelter_without_availability()
-        superuser = User.objects.create_superuser(
-            username="availability_add_page", email="availability_add_page@example.com", password="password"
-        )
-        self.client.force_login(superuser)
+        self.client.force_login(make_admin("availability_add_page"))
 
         response = self.client.get(reverse("admin:shelters_shelteravailability_add"))
 
@@ -366,10 +354,7 @@ class ShelterAvailabilityAdminTestCase(TestCase):
 
     def test_add_page_creates_a_row_for_the_chosen_shelter(self) -> None:
         shelter = self._shelter_without_availability()
-        superuser = User.objects.create_superuser(
-            username="availability_add_save", email="availability_add_save@example.com", password="password"
-        )
-        self.client.force_login(superuser)
+        self.client.force_login(make_admin("availability_add_save"))
 
         response = self.client.post(
             reverse("admin:shelters_shelteravailability_add"),
@@ -389,10 +374,7 @@ class ShelterAvailabilityAdminTestCase(TestCase):
 
     def test_add_page_rejects_counts_above_the_chosen_shelters_capacity(self) -> None:
         shelter = self._shelter_without_availability()
-        superuser = User.objects.create_superuser(
-            username="availability_add_cap", email="availability_add_cap@example.com", password="password"
-        )
-        self.client.force_login(superuser)
+        self.client.force_login(make_admin("availability_add_cap"))
 
         response = self.client.post(
             reverse("admin:shelters_shelteravailability_add"),
