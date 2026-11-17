@@ -238,10 +238,6 @@
         }
       }
     },
-    "build-list": {
-      "executor": "@nx/expo:build-list",
-      "cache": false
-    },
     "privacy-test": {
       "executor": "nx:run-commands",
       "cache": true,

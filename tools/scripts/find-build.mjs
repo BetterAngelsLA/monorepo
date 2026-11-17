@@ -17,6 +17,7 @@
  * queue a duplicate.
  */
 import { execFileSync } from 'child_process';
+import path from 'node:path';
 import minimist from 'minimist';
 
 import { bestBuild, isDeadBuild } from './build-rank.mjs';
@@ -52,33 +53,36 @@ const parseBuilds = (raw) => {
   return builds;
 };
 
-const cwd = process.cwd();
-
+// `@nx/expo:build-list` resolves on its first stdout chunk and kills the child,
+// so a build list larger than that chunk is truncated. Call eas directly.
+const projectDir = path.resolve(process.cwd(), 'apps', project);
 const args = [
-  'run',
-  `${project}:build-list`,
+  'build:list',
   '--platform',
   platform,
-  '--buildProfile',
+  '--build-profile',
   profile,
-  '--runtimeVersion',
+  '--runtime-version',
   runtime,
   '--limit',
   // eas-cli caps this at 50; still deep enough to see past canceled/errored
   // duplicates to a FINISHED build, since `bestBuild` prefers a finished one.
   '50',
   '--json',
-  '--interactive=false',
+  '--non-interactive',
 ];
 
 let lastError;
 for (let attempt = 1; attempt <= attempts; attempt++) {
   try {
-    const raw = execFileSync('nx', args, {
-      cwd,
+    const raw = execFileSync('eas', args, {
+      cwd: projectDir,
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'pipe'],
       env: process.env,
+      // 50 builds with signed URLs is a few hundred KB; fail loudly rather than
+      // let a future output-size change truncate again.
+      maxBuffer: 10 * 1024 * 1024,
     });
     const builds = parseBuilds(raw);
     if (builds.length === 0) {
