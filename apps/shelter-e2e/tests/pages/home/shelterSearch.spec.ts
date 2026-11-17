@@ -108,7 +108,8 @@ test('searching a listed shelter by name lists it again', async ({ page }) => {
 
   expect(
     name,
-    'the environment returned no public shelters in the default map area',
+    'the environment has no public shelters in the default map area — seed ' +
+      'the database first (see apps/shelter-e2e/README.md)',
   ).toBeTruthy();
 
   await page.getByRole('button', { name: 'Search', exact: true }).click();

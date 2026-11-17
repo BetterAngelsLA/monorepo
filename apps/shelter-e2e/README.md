@@ -155,6 +155,11 @@ Environment notes for the home specs:
 - The results line depends on the environment's data, so the specs never
   hardcode it: the map-area search asserts the count line's shape, and the name
   search derives its term from a shelter the page already lists.
+- A clean local database has no shelters, so requries seeding else some tests
+  will fail. Can seed shelters via:
+  of at least 10 so one lands in view:
+  `cd apps/betterangels-backend/shelters/scripts && uv run python seed_shelters.py 10`
+  (see [`docs/backend_readme.md`](../../docs/backend_readme.md#seeding-shelters)).
 - Response-shaped behaviour — exact counts for a fixture, short pages, card
   field mapping — is asserted in `SheltersDisplay.test.tsx` in
   `libs/react/shelter`, next to the component. Nothing here fakes the API: a
