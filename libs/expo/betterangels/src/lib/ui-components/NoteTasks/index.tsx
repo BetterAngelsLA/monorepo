@@ -91,7 +91,7 @@ export default function NoteTasks(props: INoteTasksProps) {
 
   // --- DRAFT HANDLERS ---
   const handleDraftSave = (data: TaskFormData, existingId?: string) => {
-    if (!onDraftTasksChange) return;
+    if (!onDraftTasksChange) return true;
 
     const newTask: LocalDraftTask = {
       // eslint-disable-next-line react-hooks/purity -- Date.now() is called in event handler, not render
@@ -112,6 +112,8 @@ export default function NoteTasks(props: INoteTasksProps) {
     } else {
       onDraftTasksChange([...(tasks as LocalDraftTask[]), newTask]);
     }
+
+    return true;
   };
 
   const handleDraftDelete = (id: string) => {
@@ -121,13 +123,18 @@ export default function NoteTasks(props: INoteTasksProps) {
   };
 
   // --- LIVE HANDLERS ---
-  const handleLiveSave = async (data: TaskFormData, existingId?: string) => {
+  // NoteForm currently mounts this component only in draft mode. Keep the live
+  // branch honest for a future consumer: `false` is what keeps the sheet open.
+  const handleLiveSave = async (
+    data: TaskFormData,
+    existingId?: string,
+  ): Promise<boolean> => {
     try {
       const cleanStatus = data.status || undefined;
       const cleanTeamId = !data.teamId ? null : data.teamId;
 
       if (existingId) {
-        await updateTask({
+        const updated = await updateTask({
           variables: {
             data: {
               ...data,
@@ -137,6 +144,17 @@ export default function NoteTasks(props: INoteTasksProps) {
             },
           },
         });
+
+        const updatedTask = updated.data?.updateTask;
+
+        if (updatedTask?.__typename === 'OperationInfo') {
+          showSnackbar({
+            message: updatedTask.messages[0]?.message ?? 'Failed to save task',
+            type: 'error',
+          });
+
+          return false;
+        }
       } else {
         // `id` belongs to an update payload; a create names no row.
         const { id: _existingId, ...fields } = data;
@@ -154,13 +172,19 @@ export default function NoteTasks(props: INoteTasksProps) {
 
         if (!created.ok) {
           showSnackbar({ message: created.message, type: 'error' });
-          return;
+
+          return false;
         }
       }
+
       refetch?.();
+
+      return true;
     } catch (err) {
       console.error(err);
       showSnackbar({ message: 'Failed to save task', type: 'error' });
+
+      return false;
     }
   };
 

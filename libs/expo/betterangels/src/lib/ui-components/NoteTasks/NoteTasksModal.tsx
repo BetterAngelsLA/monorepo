@@ -17,9 +17,23 @@ interface INoteTasksModalProps {
   refetch: () => void;
   teamId?: string | null;
   task?: UpdateTaskInput;
-  onSubmit?: (data: TaskFormData, existingId?: string) => void;
+  onSubmit?: (
+    data: TaskFormData,
+    existingId?: string,
+  ) => Promise<boolean | void> | boolean | void;
   onDelete?: (id: string) => void;
   closeModal: () => void;
+}
+
+/** Map the API's field names onto the form's. */
+function toTaskFormField(
+  apiField: string | null | undefined,
+): keyof TaskFormData | undefined {
+  if (!apiField) return undefined;
+  if (apiField === 'assignee') return 'assigneeId';
+  if (apiField === 'team') return 'teamId';
+
+  return apiField as keyof TaskFormData;
 }
 
 export default function NoteTasksModal(props: INoteTasksModalProps) {
@@ -68,8 +82,14 @@ export default function NoteTasksModal(props: INoteTasksModalProps) {
   ): Promise<TTaskFormSubmitResult | void> => {
     // A. Draft Mode
     if (onSubmit) {
-      onSubmit(formData, task?.id);
-      closeModal();
+      const saved = await onSubmit(formData, task?.id);
+
+      // `false` means the save was refused; leave the sheet open with whatever
+      // message the caller showed. Void keeps the old close-on-save behavior.
+      if (saved !== false) {
+        closeModal();
+      }
+
       return undefined;
     }
 
@@ -112,6 +132,16 @@ export default function NoteTasksModal(props: INoteTasksModalProps) {
 
         if (!created.ok) {
           showSnackbar({ message: created.message, type: 'error' });
+
+          const refusal = created.result?.data?.createTask;
+
+          if (refusal?.__typename === 'OperationInfo') {
+            return {
+              field: toTaskFormField(refusal.messages[0]?.field),
+              message: created.message,
+            };
+          }
+
           return;
         }
 
@@ -128,21 +158,17 @@ export default function NoteTasksModal(props: INoteTasksModalProps) {
             : undefined;
 
       if (payload?.__typename === 'OperationInfo') {
+        const first = payload.messages[0];
+
         showSnackbar({
-          message: payload.messages[0]?.message ?? 'Failed to save task.',
+          message: first?.message ?? 'Failed to save task.',
           type: 'error',
         });
 
-        const first = payload.messages[0];
-        const apiField = first?.field ?? null;
-        const field =
-          apiField === 'assignee'
-            ? 'assigneeId'
-            : apiField === 'team'
-              ? 'teamId'
-              : (apiField as keyof TaskFormData | null);
-
-        return { field: field ?? undefined, message: first?.message ?? '' };
+        return {
+          field: toTaskFormField(first?.field),
+          message: first?.message ?? '',
+        };
       }
 
       refetch();

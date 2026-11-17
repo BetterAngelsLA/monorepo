@@ -96,16 +96,6 @@ export function TasksTab(props: TProps) {
         return;
       }
 
-      if (outcome.result.data?.createTask.__typename === 'OperationInfo') {
-        showSnackbar({
-          message:
-            outcome.result.data.createTask.messages[0]?.message ??
-            TASK_CREATE_FAILED_MESSAGE,
-          type: 'error',
-        });
-        return;
-      }
-
       closeForm();
     } catch (e) {
       showSnackbar({

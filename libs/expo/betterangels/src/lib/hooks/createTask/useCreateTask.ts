@@ -21,9 +21,11 @@ type TCreateTaskOptions = {
  * Create a task at the active organization.
  *
  * The org is not the caller's to pass: the server requires one, so it is added
- * here and nowhere else. A missing org comes back as `ok: false` with the
- * sentence to show, so the caller's message and its early return sit in the same
- * branch instead of one layer apart.
+ * here and nowhere else. A refusal — no org locally, or a server-side
+ * OperationInfo — comes back as `ok: false` with the sentence to show, so the
+ * caller's message and its early return sit in the same branch instead of one
+ * layer apart. `ok` means the server accepted the task, not merely that the
+ * mutation resolved.
  */
 export function useCreateTask() {
   const activeOrgId = useActiveOrgId();
@@ -32,13 +34,27 @@ export function useCreateTask() {
   return useCallback(
     async (data: TCreateTaskData, options?: TCreateTaskOptions) => {
       if (!activeOrgId) {
-        return { ok: false as const, message: NO_ACTIVE_ORG_MESSAGE };
+        return {
+          ok: false as const,
+          message: NO_ACTIVE_ORG_MESSAGE,
+          result: undefined,
+        };
       }
 
       const result = await createTask({
         ...options,
         variables: { data: { ...data, organizationId: activeOrgId } },
       });
+
+      const created = result.data?.createTask;
+
+      if (created?.__typename === 'OperationInfo') {
+        return {
+          ok: false as const,
+          message: created.messages[0]?.message ?? TASK_CREATE_FAILED_MESSAGE,
+          result,
+        };
+      }
 
       return { ok: true as const, result };
     },

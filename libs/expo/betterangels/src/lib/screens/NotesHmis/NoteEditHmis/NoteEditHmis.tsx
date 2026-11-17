@@ -293,7 +293,11 @@ export function NoteEditHmis(props: TProps) {
         });
       }
 
-      await applyTasks(tasks, id, clientId);
+      const taskResult = await applyTasks(tasks, id, clientId);
+
+      if (taskResult.message) {
+        showSnackbar({ message: taskResult.message, type: 'error' });
+      }
 
       await applyBucket(
         id,

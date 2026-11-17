@@ -181,7 +181,11 @@ export function NoteCreateHmis(props: TProps) {
       }
       // 4. Create Tasks (Link to the new Note)
 
-      await applyTasks(tasks, hmisNoteId, clientId);
+      const taskResult = await applyTasks(tasks, hmisNoteId, clientId);
+
+      if (taskResult.message) {
+        showSnackbar({ message: taskResult.message, type: 'error' });
+      }
 
       const draftServices = services ?? {};
 
