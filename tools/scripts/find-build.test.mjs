@@ -1,9 +1,10 @@
 /**
- * `find-build` talks to `eas` directly and must read the whole build list.
+ * `find-build` talks to `eas` directly and asks for one build for the fingerprint.
  *
- * A fake `eas` lets us exercise the transport without the network. The large
- * case is the regression: the old nx executor returned only the first 64 KiB
- * chunk, so a list of this size did not parse as an array.
+ * A fake `eas` lets us exercise the lookup without the network:
+ * - the newest build is reused when it is finished or in progress;
+ * - a dead newest build fails loudly so the caller does not queue a duplicate;
+ * - no build queues one.
  */
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
@@ -54,39 +55,39 @@ describe(
   'find-build',
   { skip: process.platform === 'win32' && 'requires a POSIX eas shim' },
   () => {
-    it('reads a build list larger than the old 64 KiB chunk', () => {
-      // 40 builds of ~2 KB make the list larger than 64 KiB, while the one
-      // build find-build prints stays small (process.exit can truncate a large
-      // stdout write, which is a separate concern).
-      const builds = Array.from({ length: 40 }, (_, i) => ({
-        id: `b${i}`,
-        status: i === 39 ? 'FINISHED' : 'CANCELED',
-        message: 'x'.repeat(2_000),
-      }));
+    it('asks for one build by fingerprint', () => {
       const output = withFakeEas(`
         const args = process.argv.slice(2);
-        if (args.includes('--status')) {
-          process.stdout.write('[]');
-        } else {
-          process.stdout.write(JSON.stringify(${JSON.stringify(builds)}));
+        const limit = args[args.indexOf('--limit') + 1];
+        if (!args.includes('--fingerprint-hash') || limit !== '1') {
+          process.exit(7);
         }
+        process.stdout.write(JSON.stringify([{ id: 'latest', status: 'FINISHED' }]));
       `);
 
-      // Only the last entry is usable, so a truncated fallback cannot pass.
-      assert.equal(JSON.parse(output).id, 'b39');
+      assert.equal(JSON.parse(output).id, 'latest');
     });
 
-    it('uses one finished build without fetching the whole list', () => {
-      const output = withFakeEas(`
-        const args = process.argv.slice(2);
-        if (args.includes('--status')) {
-          process.stdout.write(JSON.stringify([{ id: 'one', status: 'FINISHED' }]));
-        } else {
-          process.exit(42);
-        }
-      `);
+    it('reuses an in-progress build instead of queueing another', () => {
+      const output = withFakeEas(
+        `process.stdout.write(JSON.stringify([{ id: 'running', status: 'IN_PROGRESS' }]));`,
+      );
 
-      assert.equal(JSON.parse(output).id, 'one');
+      assert.equal(JSON.parse(output).id, 'running');
+    });
+
+    it('fails when the newest build is dead', () => {
+      assert.throws(
+        () =>
+          withFakeEas(
+            `process.stdout.write(JSON.stringify([{ id: 'dead', status: 'CANCELED' }]));`,
+          ),
+        (error) => {
+          assert.equal(error.status, 1);
+          assert.match(String(error.stderr), /is CANCELED/);
+          return true;
+        },
+      );
     });
 
     it('reports no build for an empty list', () => {

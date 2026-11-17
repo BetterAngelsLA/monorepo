@@ -20,7 +20,7 @@ import { execFileSync } from 'child_process';
 import path from 'node:path';
 import minimist from 'minimist';
 
-import { bestBuild, isDeadBuild } from './build-rank.mjs';
+import { isDeadBuild } from './build-rank.mjs';
 import { parseJsonOutput } from './cli-json.mjs';
 
 const argv = minimist(process.argv.slice(2));
@@ -89,25 +89,16 @@ const listBuilds = (extraArgs) =>
 let lastError;
 for (let attempt = 1; attempt <= attempts; attempt++) {
   try {
-    // A fingerprint can have many duplicate finished builds. One finished build
-    // is enough to reuse it, and asking for one keeps the payload small. Only
-    // fall back to the ranked list when no finished build exists, where the
-    // in-progress/dead status still matters.
-    const finished = listBuilds(['--status', 'finished', '--limit', '1']);
-    const builds = finished.length
-      ? finished
-      : listBuilds([
-          '--limit',
-          // eas-cli caps this at 50; deep enough to see past canceled/errored
-          // duplicates to a live build.
-          '50',
-        ]);
+    // The fingerprint is supposed to build once. Ask for its newest build and
+    // let the status decide: finished/live -> reuse, dead -> fail, none -> queue.
+    // One request with --limit 1 keeps the payload small; do not scan history.
+    const builds = listBuilds(['--limit', '1']);
     if (builds.length === 0) {
       console.error(`No ${platform} build for ${profile}/${runtime}.`);
       console.log(argv.json ? JSON.stringify({ id: null }) : '');
       process.exit(0);
     }
-    const build = bestBuild(builds) ?? {};
+    const build = builds[0];
     const { id, status } = build;
     console.error(
       `Found ${platform} build ${id} for ${profile}/${runtime} (status: ${status ?? '?'}).`,
