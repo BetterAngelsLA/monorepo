@@ -91,7 +91,7 @@ const AVAILABILITY_FIELD_PREFIX = `${AVAILABILITY_INPUT}.`;
 export type AvailabilityPayload = Partial<
   Pick<
     SleepingDetailsFormData,
-    'nonRestrictedBeds' | 'restrictedBeds' | 'restrictionNotes'
+    (typeof AVAILABILITY_COUNT_FIELDS)[number] | 'restrictionNotes'
   >
 >;
 
@@ -118,7 +118,9 @@ export function toAvailabilityPayload(
   if (data.restrictedBeds !== stored.restrictedBeds) {
     payload.restrictedBeds = data.restrictedBeds;
   }
-  if (data.restrictionNotes !== stored.restrictionNotes) {
+  // `data` is zod-parsed, so its note is trimmed; compare against the trimmed
+  // baseline or a stored note with surrounding whitespace always looks edited.
+  if (data.restrictionNotes !== stored.restrictionNotes.trim()) {
     payload.restrictionNotes = data.restrictionNotes;
   }
 

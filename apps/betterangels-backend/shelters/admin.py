@@ -320,12 +320,22 @@ class ShelterForm(forms.ModelForm):
             self.initial.update({name: getattr(availability, name) for name in AVAILABILITY_FIELDS})
 
     def save_availability(self) -> None:
-        """Write the availability fields through the shared service writer."""
+        """Write the availability fields this submission changed.
+
+        Only the changed fields reach the writer: the admin re-reads the object
+        when the form is posted, so ``initial`` is the current row, and comparing
+        against it keeps a page that was left open from reverting an edit made
+        elsewhere — the same partial update the API performs.
+        """
         if not self.instance.pk:
             return
 
-        values = {name: self.cleaned_data[name] for name in AVAILABILITY_FIELDS if name in self.cleaned_data}
-        apply_availability(self.instance, values)
+        changed = {
+            name: self.cleaned_data[name]
+            for name in AVAILABILITY_FIELDS
+            if name in self.cleaned_data and self.cleaned_data[name] != self.initial.get(name)
+        }
+        apply_availability(self.instance, changed)
 
     def clean_services(self) -> Any:
         services = self.cleaned_data.get("services")
