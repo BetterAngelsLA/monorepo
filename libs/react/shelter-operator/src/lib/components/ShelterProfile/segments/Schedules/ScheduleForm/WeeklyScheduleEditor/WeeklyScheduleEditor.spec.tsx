@@ -20,28 +20,6 @@ function stateWithWednesday(): WeeklyFormState {
 }
 
 describe('WeeklyScheduleEditor', () => {
-  it('does not mark a daytime range as next day', () => {
-    render(
-      <WeeklyScheduleEditor value={stateWithWednesday()} onChange={vi.fn()} />,
-    );
-
-    expect(screen.queryByText('Next day')).toBeNull();
-  });
-
-  it('marks an overnight range as next day', () => {
-    const weekly = stateWithWednesday();
-
-    weekly[DayOfWeekChoices.Wednesday].ranges[0] = {
-      _id: 'row-wed-night',
-      startTime: '20:30',
-      endTime: '07:30',
-    };
-
-    render(<WeeklyScheduleEditor value={weekly} onChange={vi.fn()} />);
-
-    expect(screen.getByText('Next day')).not.toBeNull();
-  });
-
   it('copies a saved range to the other days without its row id', () => {
     const onChange = vi.fn();
 

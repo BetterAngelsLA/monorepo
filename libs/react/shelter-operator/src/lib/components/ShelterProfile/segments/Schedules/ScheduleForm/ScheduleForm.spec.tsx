@@ -122,7 +122,7 @@ describe('ScheduleForm', () => {
     );
 
     // Without this, 8:30 PM - 7:30 AM is ambiguous to whoever enters it.
-    expect(screen.getByText('Next day')).not.toBeNull();
+    expect(screen.queryByText('Next day')).not.toBeNull();
 
     unmount();
 
