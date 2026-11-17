@@ -86,14 +86,13 @@ export const AVAILABILITY_COUNT_FIELDS = [
   'nonRestrictedBeds',
   'restrictedBeds',
 ] as const;
-const AVAILABILITY_FIELD_NAMES = [
-  ...AVAILABILITY_COUNT_FIELDS,
-  'restrictionNotes',
-] as const;
 const AVAILABILITY_FIELD_PREFIX = `${AVAILABILITY_INPUT}.`;
 
 export type AvailabilityPayload = Partial<
-  Pick<SleepingDetailsFormData, (typeof AVAILABILITY_FIELD_NAMES)[number]>
+  Pick<
+    SleepingDetailsFormData,
+    'nonRestrictedBeds' | 'restrictedBeds' | 'restrictionNotes'
+  >
 >;
 
 /**
@@ -111,10 +110,16 @@ export function toAvailabilityPayload(
 ): AvailabilityPayload | null {
   const payload: AvailabilityPayload = {};
 
-  for (const name of AVAILABILITY_FIELD_NAMES) {
-    if (data[name] !== stored[name]) {
-      payload[name] = data[name];
-    }
+  // Written out per field rather than looped over the name tuple: a dynamic key
+  // widens to the union of the three value types, which does not assign.
+  if (data.nonRestrictedBeds !== stored.nonRestrictedBeds) {
+    payload.nonRestrictedBeds = data.nonRestrictedBeds;
+  }
+  if (data.restrictedBeds !== stored.restrictedBeds) {
+    payload.restrictedBeds = data.restrictedBeds;
+  }
+  if (data.restrictionNotes !== stored.restrictionNotes) {
+    payload.restrictionNotes = data.restrictionNotes;
   }
 
   return Object.keys(payload).length ? payload : null;
