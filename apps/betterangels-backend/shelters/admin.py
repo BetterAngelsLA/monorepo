@@ -313,14 +313,12 @@ class ShelterForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self._pending_service_entries: list[tuple[int, str]] = []
 
-        if self.instance.pk:
-            try:
-                availability = self.instance.availability
-            except ObjectDoesNotExist:
-                # Older rows predate the auto-created availability; the defaults
-                # declared above stand in until ``save_availability()`` creates it.
-                availability = None
-            if availability is not None:
+        # Older rows predate the auto-created availability; the defaults declared
+        # above stand in until ``save_availability()`` creates it.
+        # ``RelatedObjectDoesNotExist`` subclasses ``AttributeError``, so getattr
+        # covers the missing row without a try/except.
+        availability = getattr(self.instance, "availability", None) if self.instance.pk else None
+        if availability is not None:
                 self.initial.update({name: getattr(availability, name) for name in AVAILABILITY_FIELDS})
 
     def save_availability(self) -> None:

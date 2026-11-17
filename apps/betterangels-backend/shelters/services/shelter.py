@@ -171,15 +171,6 @@ def resolve_pending_service_entries(entries: list[tuple[int, str]]) -> list[Serv
     return resolved
 
 
-def _contact_error_dict(exc: ValidationError, index: int) -> dict[str, list[str]]:
-    """Re-key a single contact's ``full_clean()`` errors under an indexed path.
-
-    The prefix is ``additional_contacts.<index>`` so the GraphQL layer can report
-    which contact in the list failed.
-    """
-    return rekey_validation_errors(exc, f"additional_contacts.{index}")
-
-
 def _apply_additional_contacts(shelter: Shelter, contacts: list[Any]) -> None:
     """Apply list-level full-replacement semantics to a shelter's additional contacts.
 
@@ -235,7 +226,7 @@ def _apply_additional_contacts(shelter: Shelter, contacts: list[Any]) -> None:
             try:
                 obj.full_clean()
             except ValidationError as exc:
-                errors.update(_contact_error_dict(exc, index))
+                errors.update(rekey_validation_errors(exc, f"additional_contacts.{index}"))
                 continue
             to_save.append(obj)
             keep_ids.add(obj.pk)
@@ -245,7 +236,7 @@ def _apply_additional_contacts(shelter: Shelter, contacts: list[Any]) -> None:
         try:
             contact.full_clean()
         except ValidationError as exc:
-            errors.update(_contact_error_dict(exc, index))
+            errors.update(rekey_validation_errors(exc, f"additional_contacts.{index}"))
             continue
         new_objs.append(contact)
 
