@@ -21,9 +21,12 @@ const dateField = z
  * no way to show a 24-hour day, so the row would come back looking like
  * `09:00 - 09:00` with the shelter open all day. A same-time typo is worth a
  * clear error; real 24-hour support needs its own display work.
+ *
+ * Empty times are not "equal": each field already fails its own format check,
+ * and telling someone who has typed nothing that the two times match is wrong.
  */
-const endTimeAfterStart = (r: { startTime: string; endTime: string }) =>
-  r.startTime !== r.endTime;
+const timesDiffer = (r: { startTime: string; endTime: string }) =>
+  r.startTime === '' || r.endTime === '' || r.startTime !== r.endTime;
 
 const equalTimesMessage = "Start and end time can't be the same";
 
@@ -42,7 +45,7 @@ export const timeRangeSchema = z
     startDate: dateField.optional(),
     endDate: dateField.optional(),
   })
-  .refine(endTimeAfterStart, {
+  .refine(timesDiffer, {
     message: equalTimesMessage,
     path: ['endTime'],
   });
@@ -135,7 +138,7 @@ export const exceptionEntrySchema = z
     }),
   ])
   // Only an open exception carries times; a closure is all day by definition.
-  .refine((e) => e.closedAllDay || e.startTime !== e.endTime, {
+  .refine((e) => e.closedAllDay || timesDiffer(e), {
     message: equalTimesMessage,
     path: ['endTime'],
   })

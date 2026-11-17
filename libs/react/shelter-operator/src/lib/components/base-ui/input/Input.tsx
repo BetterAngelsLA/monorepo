@@ -63,6 +63,14 @@ export const Input = forwardRef<
 
   const shouldShowError = Boolean(error) && !isFocused;
 
+  // Merge rather than replace: the field may already point at its own helper
+  // text (e.g. the schedule editor's "Next day" note) and the error message
+  // must be added to that, not overwrite it.
+  const describedBy =
+    [inputProps['aria-describedby'], shouldShowError ? messageId : undefined]
+      .filter(Boolean)
+      .join(' ') || undefined;
+
   const handleFocus = (
     e: FocusEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
@@ -134,7 +142,7 @@ export const Input = forwardRef<
             onFocus={handleFocus}
             onBlur={handleBlur}
             aria-invalid={shouldShowError ? true : undefined}
-            aria-describedby={shouldShowError ? messageId : undefined}
+            aria-describedby={describedBy}
             className={mergeCss([
               'min-h-[7.5rem] w-full resize-none border-none bg-transparent text-sm leading-6 text-gray-900 placeholder:text-gray-400 outline-none',
               inputClassName,
@@ -152,7 +160,7 @@ export const Input = forwardRef<
             onFocus={handleFocus}
             onBlur={handleBlur}
             aria-invalid={shouldShowError ? true : undefined}
-            aria-describedby={shouldShowError ? messageId : undefined}
+            aria-describedby={describedBy}
             className={mergeCss([
               'h-full w-full border-none bg-transparent text-sm text-gray-900 placeholder:text-gray-400 outline-none',
               inputClassName,

@@ -85,6 +85,21 @@ describe('timeRangeSchema', () => {
     ]);
     expect(result.error?.issues[0].path).toStrictEqual(['endTime']);
   });
+
+  it('reports a blank range as missing times, not as equal times', () => {
+    // Both fields already fail their own check; "can't be the same" would be
+    // wrong advice for a row where nothing has been typed yet.
+    const result = timeRangeSchema.safeParse({
+      _id: 'r1',
+      startTime: '',
+      endTime: '',
+    });
+
+    expect(result.error?.issues.map((issue) => issue.message)).toStrictEqual([
+      'Invalid time format (HH:MM)',
+      'Invalid time format (HH:MM)',
+    ]);
+  });
 });
 
 describe('scheduleFormSchema', () => {
@@ -127,6 +142,18 @@ describe('scheduleFormSchema', () => {
         ],
       }),
     ).toStrictEqual([]);
+  });
+
+  it('reports a blank exception as missing times, not as equal times', () => {
+    expect(
+      issueMessages({
+        weekly: buildDefaultWeeklyState(),
+        exceptions: [{ ...openException, startTime: '', endTime: '' }],
+      }),
+    ).toStrictEqual([
+      'Invalid time format (HH:MM)',
+      'Invalid time format (HH:MM)',
+    ]);
   });
 
   it('rejects an exception with equal times', () => {
