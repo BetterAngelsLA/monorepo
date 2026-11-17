@@ -23,6 +23,7 @@ import {
   NoteFormFieldNamesHmis,
 } from '../NoteFormHmis/formSchema';
 import splitBucket, { TBucket } from '../utils/splitBucket';
+import { reportTaskFailures } from '../utils/reportTaskFailures';
 import { useApplyTasks } from '../utils/useApplyTasks';
 import { CreateNoteHmisDocument } from './__generated__/createClientNoteHmis.generated';
 import {
@@ -183,9 +184,7 @@ export function NoteCreateHmis(props: TProps) {
 
       const taskResult = await applyTasks(tasks, hmisNoteId, clientId);
 
-      if (taskResult.message) {
-        showSnackbar({ message: taskResult.message, type: 'error' });
-      }
+      reportTaskFailures(taskResult.message, showSnackbar);
 
       const draftServices = services ?? {};
 

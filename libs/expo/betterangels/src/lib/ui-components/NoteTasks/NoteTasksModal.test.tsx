@@ -16,18 +16,21 @@ const mocks = vi.hoisted(() => ({
   onSubmit: vi.fn(),
   refetch: vi.fn(),
   showSnackbar: vi.fn(),
+  submitResult: undefined as unknown,
 }));
 
 vi.mock('../TaskForm', () => ({
   TaskForm: ({
     onSubmit,
   }: {
-    onSubmit: (data: { summary: string }) => void;
+    onSubmit: (data: { summary: string }) => unknown;
   }) => (
     <Pressable
       accessibilityRole="button"
       testID="task-form-submit"
-      onPress={() => onSubmit({ summary: 'A task' })}
+      onPress={async () => {
+        mocks.submitResult = await onSubmit({ summary: 'A task' });
+      }}
     >
       <Text>Save</Text>
     </Pressable>
@@ -48,6 +51,7 @@ beforeEach(() => {
   mocks.onSubmit.mockReset();
   mocks.refetch.mockReset();
   mocks.showSnackbar.mockReset();
+  mocks.submitResult = undefined;
 });
 
 async function renderModal() {
@@ -68,6 +72,20 @@ describe('NoteTasksModal onSubmit', () => {
     fireEvent.press(modal.getByTestId('task-form-submit'));
 
     await waitFor(() => expect(mocks.onSubmit).toHaveBeenCalledTimes(1));
+    expect(mocks.closeModal).not.toHaveBeenCalled();
+  });
+
+  it('propagates a field result and stays open', async () => {
+    const fieldResult = {
+      field: 'assigneeId' as const,
+      message: 'Not allowed',
+    };
+    mocks.onSubmit.mockResolvedValue(fieldResult);
+
+    const modal = await renderModal();
+    fireEvent.press(modal.getByTestId('task-form-submit'));
+
+    await waitFor(() => expect(mocks.submitResult).toEqual(fieldResult));
     expect(mocks.closeModal).not.toHaveBeenCalled();
   });
 

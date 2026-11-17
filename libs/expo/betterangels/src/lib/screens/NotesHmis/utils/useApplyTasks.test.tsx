@@ -95,7 +95,7 @@ describe('useApplyTasks', () => {
     mocks.activeOrgId = 'org-1';
     const { result } = await renderHook(() => useApplyTasks());
 
-    await result.current.applyTasks(
+    const outcome = await result.current.applyTasks(
       [draftTask()],
       'hmis-note-1',
       'hmis-client-1',
@@ -109,6 +109,8 @@ describe('useApplyTasks', () => {
         hmisClientProfile: 'hmis-client-1',
       }),
     );
+    expect(outcome.failedCreates).toEqual([]);
+    expect(outcome.message).toBeUndefined();
   });
 
   it('reports a refused create instead of discarding it', async () => {

@@ -20,7 +20,11 @@ interface INoteTasksModalProps {
   onSubmit?: (
     data: TaskFormData,
     existingId?: string,
-  ) => Promise<boolean | void> | boolean | void;
+  ) =>
+    | Promise<boolean | TTaskFormSubmitResult | void>
+    | boolean
+    | TTaskFormSubmitResult
+    | void;
   onDelete?: (id: string) => void;
   closeModal: () => void;
 }
@@ -84,12 +88,18 @@ export default function NoteTasksModal(props: INoteTasksModalProps) {
     if (onSubmit) {
       const saved = await onSubmit(formData, task?.id);
 
-      // `false` means the save was refused; leave the sheet open with whatever
-      // message the caller showed. Void keeps the old close-on-save behavior.
-      if (saved !== false) {
-        closeModal();
+      // `false` means the caller showed a refusal; leave the sheet open.
+      // A `{ field, message }` result is propagated so the form marks the
+      // offending field. `true`/void keep the old close-on-save behavior.
+      if (saved === false) {
+        return undefined;
       }
 
+      if (saved && typeof saved === 'object') {
+        return saved;
+      }
+
+      closeModal();
       return undefined;
     }
 
