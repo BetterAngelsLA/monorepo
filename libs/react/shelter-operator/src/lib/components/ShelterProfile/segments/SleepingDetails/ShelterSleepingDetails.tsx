@@ -124,8 +124,7 @@ export function ShelterSleepingDetails(props: TProps) {
     setEditMode(false);
   }
 
-  // A failed profile query used to render an empty tab, which reads as "this
-  // shelter has no sleeping details" rather than "this did not load".
+  // A failed query must not read as "this shelter has no sleeping details".
   if (error) {
     return (
       <Text variant="body" className="px-6 py-4">

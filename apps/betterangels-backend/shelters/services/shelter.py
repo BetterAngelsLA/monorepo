@@ -373,12 +373,9 @@ def shelter_update(*, user: "User", data: dict[str, Any]) -> Shelter:
 
     availability_row = apply_availability(shelter, availability or {}) if has_availability else None
 
-    # Only a *changed* total can strand availability, so the guard runs on the
-    # transition rather than on the field's presence. Keying off presence froze
-    # every save for a shelter whose counts already exceeded a total it did not
-    # touch — including saves that only renamed a room style.
-    # Checked even when an availability payload was submitted (it validates its
-    # own counts against the new total): an empty payload must not skip the guard.
+    # Only a changed total can strand availability. Keying off the field's presence
+    # instead would re-check every save, because clients always send `totalBeds`.
+    # An empty availability payload must not skip it either.
     if "total_beds" in scalar_data and shelter.total_beds != original_total_beds:
         _require_availability_fits_total_beds(shelter, availability_row)
 

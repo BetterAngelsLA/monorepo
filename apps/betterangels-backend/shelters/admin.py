@@ -315,20 +315,12 @@ class ShelterForm(forms.ModelForm):
 
         # Older rows predate the auto-created availability; the defaults declared
         # above stand in until ``save_availability()`` creates it.
-        # ``RelatedObjectDoesNotExist`` subclasses ``AttributeError``, so getattr
-        # covers the missing row without a try/except.
         availability = getattr(self.instance, "availability", None) if self.instance.pk else None
         if availability is not None:
             self.initial.update({name: getattr(availability, name) for name in AVAILABILITY_FIELDS})
 
     def save_availability(self) -> None:
-        """Persist the availability fields onto the ``Shelter.availability`` row.
-
-        Called from ``ShelterAdmin.save_related`` and delegates to
-        :func:`shelters.services.availability.apply_availability`, the same writer
-        ``updateShelter`` uses, so the admin and the API apply one rule and both
-        skip unchanged values (no availability event for an unrelated edit).
-        """
+        """Write the availability fields through the shared service writer."""
         if not self.instance.pk:
             return
 
