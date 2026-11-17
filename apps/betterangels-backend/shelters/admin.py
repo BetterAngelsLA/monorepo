@@ -12,7 +12,7 @@ from django import forms
 from django.contrib import admin, messages
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION
 from django.contrib.auth import get_user_model
-from django.core.exceptions import FieldDoesNotExist, ObjectDoesNotExist, ValidationError
+from django.core.exceptions import FieldDoesNotExist, ValidationError
 from django.core.files.base import ContentFile
 from django.db import models, transaction
 from django.db.models import Count, F, OuterRef, QuerySet, Subquery, Value
@@ -319,7 +319,7 @@ class ShelterForm(forms.ModelForm):
         # covers the missing row without a try/except.
         availability = getattr(self.instance, "availability", None) if self.instance.pk else None
         if availability is not None:
-                self.initial.update({name: getattr(availability, name) for name in AVAILABILITY_FIELDS})
+            self.initial.update({name: getattr(availability, name) for name in AVAILABILITY_FIELDS})
 
     def save_availability(self) -> None:
         """Persist the availability fields onto the ``Shelter.availability`` row.
@@ -400,12 +400,8 @@ class ShelterForm(forms.ModelForm):
         return cleaned_data
 
     def _validate_availability_counts(self, cleaned_data: dict) -> None:
-        """Surface the model's capacity rule as a field error on the change form.
+        """Surface the shared rule as a field error before ``save_related`` saves."""
 
-        ``ShelterAvailability.clean()`` enforces it for every writer; validating
-        here as well keeps the admin from failing inside ``save_related`` after the
-        shelter has already been saved.
-        """
         non_restricted_beds = cleaned_data.get("non_restricted_beds")
         restricted_beds = cleaned_data.get("restricted_beds")
         if non_restricted_beds is None or restricted_beds is None:
@@ -418,9 +414,8 @@ class ShelterForm(forms.ModelForm):
                 total_beds=cleaned_data.get("total_beds"),
             )
         except ValidationError as exc:
-            for field, errors in (exc.error_dict or {}).items():
-                for error in errors:
-                    self.add_error(field, error)
+            # ``add_error(None, …)`` distributes a multi-field ValidationError.
+            self.add_error(None, exc)
 
     def _validate_other_fields(self, cleaned_data: dict) -> None:
         """Validate that _other fields are filled when 'Other' is selected."""
@@ -1417,11 +1412,8 @@ class ShelterAdmin(ImportExportModelAdmin):
     # against the model, which has no such column, so these admin methods are what
     # the readonly branch of the fieldset renders (and labels) for view-only users.
     def _availability_value(self, obj: Shelter, name: str) -> Any:
-        try:
-            availability = obj.availability
-        except ObjectDoesNotExist:
-            return None
-        return getattr(availability, name)
+        availability = getattr(obj, "availability", None)
+        return getattr(availability, name, None)
 
     @admin.display(description="Available unrestricted beds")
     def non_restricted_beds(self, obj: Shelter) -> Any:

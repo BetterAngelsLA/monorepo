@@ -135,7 +135,7 @@ export function ShelterSleepingDetails(props: TProps) {
     );
   }
 
-  if (!shelter || !stored) {
+  if (!stored) {
     return null;
   }
 

@@ -15,6 +15,17 @@ from shelters.admin import (
 from shelters.models import AVAILABILITY_FIELDS, ContactInfo, Service, ServiceCategory, Shelter, ShelterAvailability
 
 
+def make_staff(username: str, *codenames: str) -> User:
+    """A staff user holding *codenames* on ``shelters`` (and nothing else)."""
+    staff = User.objects.create_user(
+        username=username, email=f"{username}@example.com", password="password", is_staff=True
+    )
+    staff.user_permissions.add(
+        *(Permission.objects.get(content_type__app_label="shelters", codename=code) for code in codenames)
+    )
+    return staff
+
+
 def make_admin(username: str) -> User:
     """A superuser for admin-page requests (one per test to keep them independent)."""
     return User.objects.create_superuser(username=username, email=f"{username}@example.com", password="password")
@@ -225,14 +236,7 @@ class ShelterAdminAvailabilityTestCase(TestCase):
 
     def _scoped_change_user(self) -> User:
         """A staff user who may change the shelter but holds no availability perm."""
-        staff = User.objects.create_user(
-            username="scoped_render", email="scoped_render@example.com", password="password", is_staff=True
-        )
-        staff.user_permissions.add(
-            Permission.objects.get(content_type__app_label="shelters", codename="change_shelter"),
-            Permission.objects.get(content_type__app_label="shelters", codename="view_shelter"),
-        )
-        return staff
+        return make_staff("scoped_render", "change_shelter", "view_shelter")
 
     def _change_page(self, user: User) -> str:
         """Render the shelter change page as *user* and return its HTML."""
@@ -256,13 +260,7 @@ class ShelterAdminAvailabilityTestCase(TestCase):
 
     def test_change_page_renders_availability_readonly_for_a_view_only_user(self) -> None:
         """Without change permission the declared fields must still render read-only."""
-        staff = User.objects.create_user(
-            username="view_only_render", email="view_only@example.com", password="password", is_staff=True
-        )
-        staff.user_permissions.add(
-            Permission.objects.get(content_type__app_label="shelters", codename="view_shelter"),
-        )
-        content = self._change_page(staff)
+        content = self._change_page(make_staff("view_only_render", "view_shelter"))
 
         for name in AVAILABILITY_FIELDS:
             self.assertNotIn(f'name="{name}"', content)
