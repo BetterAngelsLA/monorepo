@@ -46,27 +46,20 @@ if (argv.force || process.env.FORCE_EAS_BUILD === 'true') {
   process.exit(0);
 }
 
-const parseBuilds = (raw) => {
-  const builds = parseJsonOutput(raw);
-  if (!Array.isArray(builds))
-    throw new Error('build:list did not return an array');
-  return builds;
-};
-
-// `@nx/expo:build-list` resolves on its first stdout chunk and kills the child,
-// so a build list larger than that chunk is truncated. Call eas directly.
+// `@nx/expo:build-list` resolves on its first stdout chunk and kills the child;
+// call eas directly. One build is all the fingerprint needs.
 const projectDir = path.resolve(process.cwd(), 'apps', project);
 const easOptions = {
   cwd: projectDir,
   encoding: 'utf8',
   stdio: ['ignore', 'pipe', 'pipe'],
   env: process.env,
-  // 50 builds with signed URLs is a few hundred KB; fail loudly rather than
-  // let a future output-size change truncate again.
+  // A build can carry long signed URLs; fail loudly rather than let a future
+  // output-size change truncate.
   maxBuffer: 10 * 1024 * 1024,
 };
-const listBuilds = (extraArgs) =>
-  parseBuilds(
+const latestBuild = () => {
+  const builds = parseJsonOutput(
     execFileSync(
       'eas',
       [
@@ -78,13 +71,18 @@ const listBuilds = (extraArgs) =>
         // The runtime is the fingerprint hash under the fingerprint policy.
         '--fingerprint-hash',
         runtime,
+        '--limit',
+        '1',
         '--json',
         '--non-interactive',
-        ...extraArgs,
       ],
       easOptions,
     ),
   );
+  if (!Array.isArray(builds))
+    throw new Error('build:list did not return an array');
+  return builds[0];
+};
 
 let lastError;
 for (let attempt = 1; attempt <= attempts; attempt++) {
@@ -92,13 +90,12 @@ for (let attempt = 1; attempt <= attempts; attempt++) {
     // The fingerprint is supposed to build once. Ask for its newest build and
     // let the status decide: finished/live -> reuse, dead -> fail, none -> queue.
     // One request with --limit 1 keeps the payload small; do not scan history.
-    const builds = listBuilds(['--limit', '1']);
-    if (builds.length === 0) {
+    const build = latestBuild();
+    if (!build) {
       console.error(`No ${platform} build for ${profile}/${runtime}.`);
       console.log(argv.json ? JSON.stringify({ id: null }) : '');
       process.exit(0);
     }
-    const build = builds[0];
     const { id, status } = build;
     console.error(
       `Found ${platform} build ${id} for ${profile}/${runtime} (status: ${status ?? '?'}).`,
