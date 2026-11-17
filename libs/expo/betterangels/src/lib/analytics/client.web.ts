@@ -1,6 +1,7 @@
 import {
   POSTHOG_PROXY_HOST,
   POSTHOG_UI_HOST,
+  stripUrlProperties,
 } from '@monorepo/shared/shelter-handoff';
 import posthog, { type PostHogConfig } from 'posthog-js';
 import type { AnalyticsClient } from './clientContract';
@@ -58,6 +59,22 @@ export function webAnalyticsConfig(): Partial<PostHogConfig> {
     capture_pageview: false,
     capture_pageleave: false,
     autocapture: false,
+    /**
+     * Those three flags stop the events the SDK sends on its own, not the URL it
+     * attaches to every `capture()`. A client profile is `/client/<id>`, so the
+     * URL properties come off here rather than relying on the flags.
+     *
+     * `before_send`, not `sanitize_properties`: the latter is deprecated in the
+     * pinned SDK, and `before_send` runs once every property is computed.
+     *
+     * No route context is lost that this build needs: the funnel is two named
+     * events, and anything that wants the surface can send it as its own
+     * non-identifying property.
+     */
+    before_send: (event) => ({
+      ...event,
+      properties: stripUrlProperties(event.properties),
+    }),
     // localStorage rather than the default cookie jar: nothing else on this
     // origin needs the id, and no cookie is set in a staff browser.
     persistence: 'localStorage',

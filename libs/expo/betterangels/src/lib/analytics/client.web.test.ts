@@ -1,5 +1,7 @@
 import type { PostHogConfig } from 'posthog-js';
 
+const CLIENT_ID = '550e8400-e29b-41d4-a716-446655440000';
+
 /**
  * The web client's own configuration.
  *
@@ -85,6 +87,38 @@ it('does not capture page URLs or clicks on its own', async () => {
   expect(options['capture_pageview']).toBe(false);
   expect(options['capture_pageleave']).toBe(false);
   expect(options['autocapture']).toBe(false);
+});
+
+it('sends no client id from a client profile, whatever property carries it', async () => {
+  const { getAnalyticsClient } = await importClient();
+  getAnalyticsClient();
+
+  const { options } = initCall();
+  // The flags above suppress `$pageview`/autocapture, not the URL the SDK adds
+  // to every capture, so `before_send` is what has to hold.
+  const beforeSend = options['before_send'] as unknown as (
+    event: { properties: Record<string, unknown> } | null,
+  ) => { properties: Record<string, unknown> } | null;
+
+  const event = beforeSend({
+    properties: {
+      source: 'client_profile',
+      handoff: true,
+      $current_url: `https://app.betterangels.la/client/${CLIENT_ID}`,
+      $pathname: `/client/${CLIENT_ID}`,
+      $host: 'app.betterangels.la',
+      $referrer: 'https://app.betterangels.la/',
+      $referring_domain: 'app.betterangels.la',
+      $initial_$current_url: `https://app.betterangels.la/client/${CLIENT_ID}`,
+    },
+  });
+
+  expect(JSON.stringify(event)).not.toContain(CLIENT_ID);
+  // The event's own properties are untouched.
+  expect(event?.properties).toEqual({
+    source: 'client_profile',
+    handoff: true,
+  });
 });
 
 it('sends through the first-party proxy so blockers do not match the domain', async () => {

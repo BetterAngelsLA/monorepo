@@ -19,6 +19,29 @@ it('records this site but never leaves an input unmasked', () => {
   expect(config.session_recording?.blockSelector).toBe('.ph-no-capture');
 });
 
+it('keeps a public page url but drops the operator one', () => {
+  const config = buildInitConfig({ handoff: {} });
+  const beforeSend = config.before_send as unknown as (
+    event: { properties: Record<string, unknown> } | null,
+  ) => { properties: Record<string, unknown> } | null;
+
+  const publicPage = {
+    $current_url: 'https://shelter.betterangels.la/shelter/123',
+    $pathname: '/shelter/123',
+    $host: 'shelter.betterangels.la',
+  };
+  const operatorPage = {
+    $current_url: 'https://shelter.betterangels.la/operator/shelter/123',
+    $pathname: '/operator/shelter/123',
+    $host: 'shelter.betterangels.la',
+  };
+
+  // Page views stay on for the public routes, so their URL is worth keeping.
+  expect(beforeSend({ properties: publicPage })?.properties).toBe(publicPage);
+  // The operator app shares the origin; New Relic redacts these paths too.
+  expect(beforeSend({ properties: operatorPage })?.properties).toEqual({});
+});
+
 it('continues the handed-over session when one arrives', () => {
   const config = buildInitConfig({
     handoff: { distinctId: 'distinct-1', sessionId: 'session-1' },

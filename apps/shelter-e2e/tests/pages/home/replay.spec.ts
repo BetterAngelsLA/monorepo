@@ -25,12 +25,17 @@ test('records and delivers session snapshots', async ({ page }) => {
   test.setTimeout(120_000);
 
   const snapshotSizes: number[] = [];
+  const snapshotStatuses: number[] = [];
 
-  page.on('request', (request) => {
-    const { pathname } = new URL(request.url());
+  // A response, not a request: `request` fires even for a payload the proxy or
+  // PostHog rejected, which is the silent drop this test exists to catch.
+  page.on('response', (response) => {
+    const { pathname } = new URL(response.url());
+    const body = response.request().postDataBuffer();
 
-    if (pathname === '/s/' && request.postDataBuffer()) {
-      snapshotSizes.push(request.postDataBuffer()!.length);
+    if (pathname === '/s/' && body) {
+      snapshotSizes.push(body.length);
+      snapshotStatuses.push(response.status());
     }
   });
 
@@ -44,6 +49,11 @@ test('records and delivers session snapshots', async ({ page }) => {
   expect(snapshotSizes.length, 'no snapshot payload was sent').toBeGreaterThan(
     0,
   );
+  // A 400/401/413 means the server refused the snapshot, not that replay works.
+  expect(
+    snapshotStatuses.every((status) => status > 0 && status < 400),
+    `snapshot delivery failed: ${JSON.stringify(snapshotStatuses)}`,
+  ).toBe(true);
   // A full snapshot carries the DOM; a keepalive-only payload would be tiny.
   expect(Math.max(...snapshotSizes)).toBeGreaterThan(1_000);
 });

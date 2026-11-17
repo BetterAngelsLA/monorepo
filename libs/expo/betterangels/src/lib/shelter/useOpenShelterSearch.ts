@@ -82,7 +82,23 @@ export function useOpenShelterSearch(source: ShelterSearchSource) {
         await flushAnalytics();
       }
 
-      await openShelterSite(withShelterHandoff(url, identity), Platform.OS);
+      const visit = openShelterSite(
+        withShelterHandoff(url, identity),
+        Platform.OS,
+      );
+
+      /**
+       * On native the promise settles when the in-app browser is *dismissed*,
+       * not when it opens, so holding the busy state until then keeps the pill
+       * disabled for the whole shelter visit. Release it once the open has been
+       * issued; the web branch keeps it until the popup is known to have won.
+       */
+      if (Platform.OS !== 'web') {
+        openingRef.current = false;
+        setOpening(false);
+      }
+
+      await visit;
     } catch {
       // No landing event will follow this press, so say so rather than leaving
       // a start with no end.

@@ -13,11 +13,13 @@ import type { AnalyticsClient } from './clientContract';
 const posthog = vi.hoisted(() => {
   const calls: Array<{ apiKey: string; options: Record<string, unknown> }> = [];
   const registerCalls: Array<Record<string, unknown>> = [];
+  const resetCalls: number[] = [];
 
   /** Typed against the contract: the adapter below must keep every member. */
   class PostHogMock implements Partial<AnalyticsClient> {
     static calls = calls;
     static registerCalls = registerCalls;
+    static resetCalls = resetCalls;
 
     capture = vi.fn();
     register = (properties: Record<string, unknown>) => {
@@ -25,7 +27,9 @@ const posthog = vi.hoisted(() => {
     };
     flush = vi.fn(() => Promise.resolve());
     identify = vi.fn();
-    reset = vi.fn();
+    reset = () => {
+      resetCalls.push(1);
+    };
     getDistinctId = () => 'distinct-1';
     getSessionId = () => '018f4c0e-0000-7000-8000-000000000000';
 
@@ -48,6 +52,7 @@ async function importClient() {
 beforeEach(() => {
   posthog.PostHogMock.calls.length = 0;
   posthog.PostHogMock.registerCalls.length = 0;
+  posthog.PostHogMock.resetCalls.length = 0;
 });
 
 afterEach(() => {
@@ -93,6 +98,10 @@ it('puts the common properties back after a reset', async () => {
   posthog.PostHogMock.registerCalls.length = 0;
   client?.reset();
 
+  // Clearing the SDK identity is the point of a reset: on a shared tablet the
+  // next worker must not inherit this one's Person. Asserting only the
+  // re-register would pass an adapter that never called `reset()`.
+  expect(posthog.PostHogMock.resetCalls).toHaveLength(1);
   expect(posthog.PostHogMock.registerCalls).toContainEqual(
     expect.objectContaining({ environment: expect.anything() }),
   );

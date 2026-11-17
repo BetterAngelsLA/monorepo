@@ -3,9 +3,20 @@ import {
   POSTHOG_UI_HOST,
   ShelterSearchEvent,
   decodeShelterHandoff,
+  redactPrivateRouteProperties,
   type ShelterHandoff,
 } from '@monorepo/shared/shelter-handoff';
 import type { PostHogConfig } from 'posthog-js';
+
+/**
+ * Paths that belong to a signed-in surface.
+ *
+ * The site serves the staff operator app under `/operator` (see `App.tsx`),
+ * and the site's New Relic privacy rules redact those URLs. Kept local rather
+ * than imported so this module — loaded before React mounts — does not pull the
+ * shelter UI barrel in behind it.
+ */
+const PRIVATE_PATH_PREFIXES = ['/operator'];
 
 /**
  * PostHog for the public shelter site.
@@ -137,6 +148,22 @@ export function buildInitConfig({
       maskAllInputs: true,
       blockSelector: '.ph-no-capture',
     },
+    /**
+     * Page views are deliberately left at the SDK default (`history_change`):
+     * this is a public site and its routes are what the funnel is about. But
+     * `$current_url`/`$pathname` ride on every capture, and the staff operator
+     * app shares the origin, so those paths are dropped here.
+     *
+     * `before_send`, not `sanitize_properties`: the latter is deprecated in the
+     * pinned SDK, and `before_send` runs once every property is computed.
+     */
+    before_send: (event) => ({
+      ...event,
+      properties: redactPrivateRouteProperties(
+        event.properties,
+        PRIVATE_PATH_PREFIXES,
+      ),
+    }),
     ...(allowsAutomatedTraffic({
       isDev: import.meta.env.DEV,
       e2eFlag: import.meta.env.VITE_POSTHOG_E2E,

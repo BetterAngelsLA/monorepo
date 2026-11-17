@@ -34,7 +34,20 @@ const CAPTURE_PATH = /\/(s|e|i\/v0\/e|batch|capture)\/?$/;
  * never arrive, and say nothing about the missing key.
  */
 export function analyticsConfigured(env = process.env): boolean {
-  if (env.BASE_URL || env.PREVIEW_DEPLOYED_APPS) return true;
+  if (env.BASE_URL) return true;
+  // `PREVIEW_DEPLOYED_APPS` is job-wide: on a PR that only touches this suite,
+  // `shelter-web` is not deployed and the specs fall back to a dev server that
+  // may have no key. Require the app to actually be in the preview and the
+  // branch path to exist, matching `e2eBaseUrl`.
+  if (
+    env.BRANCH_NAME &&
+    String(env.PREVIEW_DEPLOYED_APPS ?? '')
+      .split(',')
+      .map((name) => name.trim())
+      .includes('shelter-web')
+  ) {
+    return true;
+  }
   if (env.VITE_POSTHOG_API_KEY) return true;
 
   return Boolean(localApiKey());
@@ -49,8 +62,10 @@ function localApiKey(): string | undefined {
     const match = readFileSync(file, 'utf8').match(
       /^VITE_POSTHOG_API_KEY=(.*)$/m,
     );
+    const key = match?.[1].trim().replace(/^["']|["']$/g, '');
 
-    return match?.[1].trim().replace(/^["']|["']$/g, '') || undefined;
+    // A `.env` that merely exists must not hide a key in the next one.
+    if (key) return key;
   }
 
   return undefined;
