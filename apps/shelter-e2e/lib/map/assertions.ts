@@ -45,10 +45,6 @@ export async function assertMapUi(page: Page): Promise<void> {
     .poll(async () => (await readCamera(page)).zoom)
     .toBe(openingZoom);
 
-  // Every idle reveals the button today, the initial one included, so this
-  // first assertion is weak until that behaviour changes.
-  await expect(getSearchThisAreaButton(page)).toBeVisible();
-
   await getSearchThisAreaButton(page).click();
   await expect(getSearchThisAreaButton(page)).toBeHidden();
 

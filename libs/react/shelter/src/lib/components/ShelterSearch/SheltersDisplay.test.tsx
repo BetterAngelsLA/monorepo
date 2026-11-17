@@ -40,8 +40,9 @@ vi.mock('react-router', async () => {
  * `SheltersDisplay` decides *how* the results are presented — count line,
  * source line, one card per result, empty state — so every assertion here is
  * about a response shape this file owns rather than about what an environment's
- * database happens to hold. The e2e spec keeps only the wiring (`shelter-search`
- * in `apps/shelter-e2e`) against a stubbed endpoint.
+ * database happens to hold. The e2e spec (`pages/home/shelterSearch.spec.ts` in
+ * `apps/shelter-e2e`) keeps only the wiring, against whatever the target's API
+ * returns.
  */
 
 type TResult = PublicSheltersQuery['shelters']['results'][number];

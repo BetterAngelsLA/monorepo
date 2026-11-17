@@ -118,7 +118,8 @@ Anonymous, client-side flows so far:
     `/search`), the map-area search reporting a count and its source, a name
     search re-deriving a shelter that is already listed, and the empty state for
     a name nothing matches. Inputs come from the page itself, so the same specs
-    run against local, DEV and prod.
+    run against any target that has public shelters — a clean local database
+    has none, see the environment notes below.
   - `pages/sign-in/form.spec.ts`: sign-in form enable/disable logic.
 - `tests/layout/` — widgets `MainLayout` renders on every page, named after the
   widget rather than the page (`libs/react/shelter/src/lib/layout/` is their
@@ -155,9 +156,11 @@ Environment notes for the home specs:
 - The results line depends on the environment's data, so the specs never
   hardcode it: the map-area search asserts the count line's shape, and the name
   search derives its term from a shelter the page already lists.
-- A clean local database has no shelters, so requries seeding else some tests
-  will fail. Can seed shelters via:
-  of at least 10 so one lands in view:
+- A clean local database has no public shelters, and the name-search spec needs
+  one inside the default map area, so that spec fails until the database is
+  seeded. Any approved, non-private shelter in view will do; the random seed
+  script is the quickest source — run it with a count of at least 10 so one
+  lands in view:
   `cd apps/betterangels-backend/shelters/scripts && uv run python seed_shelters.py 10`
   (see [`docs/backend_readme.md`](../../docs/backend_readme.md#seeding-shelters)).
 - Response-shaped behaviour — exact counts for a fixture, short pages, card
