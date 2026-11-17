@@ -60,6 +60,13 @@ class AuditShelterAvailabilityTestCase(TestCase):
 
         self.assertIn("No shelter availability exceeds its capacity.", output)
 
+    def test_a_shelter_without_an_availability_row_is_skipped(self) -> None:
+        """The reverse OneToOne raises when the row is missing; that is not a violation."""
+        shelter = Shelter.objects.create(name="No Availability Row", total_beds=4)
+        ShelterAvailability.objects.filter(shelter=shelter).delete()
+
+        self.assertIn("No shelter availability exceeds its capacity.", self._run())
+
     def test_fail_flag_raises_so_the_deploy_can_stop(self) -> None:
         self._stranded(total_beds=4, non_restricted=6)
 

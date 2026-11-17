@@ -47,11 +47,12 @@ class ApplyAvailabilityTestCase(TestCase):
     def test_skips_the_write_when_the_value_already_matches(self) -> None:
         """An unrelated profile save must not add an availability audit event."""
         first = apply_availability(self.shelter, {"non_restricted_beds": 2})
+        assert first is not None
         updated_at = first.updated_at
 
         again = apply_availability(self.shelter, {"non_restricted_beds": 2})
+        assert again is not None
 
-        self.assertIsNotNone(again)
         again.refresh_from_db()
         self.assertEqual(again.updated_at, updated_at)
 
