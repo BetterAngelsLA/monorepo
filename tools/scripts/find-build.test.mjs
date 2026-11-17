@@ -63,12 +63,30 @@ describe(
         status: i === 39 ? 'FINISHED' : 'CANCELED',
         message: 'x'.repeat(2_000),
       }));
-      const output = withFakeEas(
-        `process.stdout.write(JSON.stringify(${JSON.stringify(builds)}));`,
-      );
+      const output = withFakeEas(`
+        const args = process.argv.slice(2);
+        if (args.includes('--status')) {
+          process.stdout.write('[]');
+        } else {
+          process.stdout.write(JSON.stringify(${JSON.stringify(builds)}));
+        }
+      `);
 
-      // Only the last entry is usable, so a truncated list cannot pass.
+      // Only the last entry is usable, so a truncated fallback cannot pass.
       assert.equal(JSON.parse(output).id, 'b39');
+    });
+
+    it('uses one finished build without fetching the whole list', () => {
+      const output = withFakeEas(`
+        const args = process.argv.slice(2);
+        if (args.includes('--status')) {
+          process.stdout.write(JSON.stringify([{ id: 'one', status: 'FINISHED' }]));
+        } else {
+          process.exit(42);
+        }
+      `);
+
+      assert.equal(JSON.parse(output).id, 'one');
     });
 
     it('reports no build for an empty list', () => {

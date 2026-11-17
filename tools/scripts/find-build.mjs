@@ -56,35 +56,52 @@ const parseBuilds = (raw) => {
 // `@nx/expo:build-list` resolves on its first stdout chunk and kills the child,
 // so a build list larger than that chunk is truncated. Call eas directly.
 const projectDir = path.resolve(process.cwd(), 'apps', project);
-const args = [
-  'build:list',
-  '--platform',
-  platform,
-  '--build-profile',
-  profile,
-  '--runtime-version',
-  runtime,
-  '--limit',
-  // eas-cli caps this at 50; still deep enough to see past canceled/errored
-  // duplicates to a FINISHED build, since `bestBuild` prefers a finished one.
-  '50',
-  '--json',
-  '--non-interactive',
-];
+const easOptions = {
+  cwd: projectDir,
+  encoding: 'utf8',
+  stdio: ['ignore', 'pipe', 'pipe'],
+  env: process.env,
+  // 50 builds with signed URLs is a few hundred KB; fail loudly rather than
+  // let a future output-size change truncate again.
+  maxBuffer: 10 * 1024 * 1024,
+};
+const listBuilds = (extraArgs) =>
+  parseBuilds(
+    execFileSync(
+      'eas',
+      [
+        'build:list',
+        '--platform',
+        platform,
+        '--build-profile',
+        profile,
+        // The runtime is the fingerprint hash under the fingerprint policy.
+        '--fingerprint-hash',
+        runtime,
+        '--json',
+        '--non-interactive',
+        ...extraArgs,
+      ],
+      easOptions,
+    ),
+  );
 
 let lastError;
 for (let attempt = 1; attempt <= attempts; attempt++) {
   try {
-    const raw = execFileSync('eas', args, {
-      cwd: projectDir,
-      encoding: 'utf8',
-      stdio: ['ignore', 'pipe', 'pipe'],
-      env: process.env,
-      // 50 builds with signed URLs is a few hundred KB; fail loudly rather than
-      // let a future output-size change truncate again.
-      maxBuffer: 10 * 1024 * 1024,
-    });
-    const builds = parseBuilds(raw);
+    // A fingerprint can have many duplicate finished builds. One finished build
+    // is enough to reuse it, and asking for one keeps the payload small. Only
+    // fall back to the ranked list when no finished build exists, where the
+    // in-progress/dead status still matters.
+    const finished = listBuilds(['--status', 'finished', '--limit', '1']);
+    const builds = finished.length
+      ? finished
+      : listBuilds([
+          '--limit',
+          // eas-cli caps this at 50; deep enough to see past canceled/errored
+          // duplicates to a live build.
+          '50',
+        ]);
     if (builds.length === 0) {
       console.error(`No ${platform} build for ${profile}/${runtime}.`);
       console.log(argv.json ? JSON.stringify({ id: null }) : '');
