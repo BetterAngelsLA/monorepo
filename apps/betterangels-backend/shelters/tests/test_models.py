@@ -1,5 +1,6 @@
 import datetime
 import random
+import unittest
 from typing import Any, Optional
 
 from django.core.exceptions import ValidationError
@@ -782,6 +783,88 @@ class ScheduleModelTestCase(TestCase):
         )
         wed_noon = datetime.datetime(2026, 3, 4, 12, 0)  # Wednesday
         self.assertNotIn(shelter, Shelter.objects.open_at(wed_noon))
+
+
+class OvernightExceptionTestCase(TestCase):
+    """A partial-day exception that runs past midnight should cover one night.
+
+    A single-row exception ``20:30 -> 07:30`` dated Dec 24 means "closed from
+    20:30 on the 24th until 07:30 on the 25th". Exceptions are evaluated against
+    the calendar date of the query, so today it instead closes 00:00-07:30 and
+    20:30-24:00 on the 24th and leaves the 25th's early morning open.
+
+    The two ``expectedFailure`` tests pin the intended semantics. If the
+    behaviour is fixed they become unexpected successes and fail the run, which
+    is the prompt to delete the markers.
+    """
+
+    def setUp(self) -> None:
+        self.shelter = Shelter.objects.create(name="Overnight Exception Shelter")
+
+        # Open 24 h every day, so any "closed" result comes from the exception.
+        Schedule.objects.create(
+            shelter=self.shelter,
+            schedule_type=ScheduleTypeChoices.OPERATING,
+            day=None,
+            start_time=datetime.time(0, 0),
+            end_time=datetime.time(0, 0),
+        )
+
+        # Christmas Eve: closed from 20:30 until 07:30 the next morning.
+        Schedule.objects.create(
+            shelter=self.shelter,
+            schedule_type=ScheduleTypeChoices.OPERATING,
+            day=None,
+            start_time=datetime.time(20, 30),
+            end_time=datetime.time(7, 30),
+            start_date=datetime.date(2026, 12, 24),
+            end_date=datetime.date(2026, 12, 24),
+            is_exception=True,
+        )
+
+    def is_open_at(self, *when: int) -> bool:
+        return self.shelter in Shelter.objects.open_at(datetime.datetime(*when))
+
+    @unittest.expectedFailure
+    def test_closure_starts_when_its_window_starts(self) -> None:
+        """The morning before the exception date is not part of the closure."""
+        self.assertTrue(self.is_open_at(2026, 12, 24, 2, 0))
+
+    @unittest.expectedFailure
+    def test_closure_ends_when_its_window_ends(self) -> None:
+        """The early morning after the exception date is still closed."""
+        self.assertFalse(self.is_open_at(2026, 12, 25, 2, 0))
+
+    def test_two_same_day_rows_express_the_same_closure(self) -> None:
+        """The shape the model can express today: split the closure at midnight."""
+        Schedule.objects.filter(shelter=self.shelter, is_exception=True).delete()
+
+        Schedule.objects.create(
+            shelter=self.shelter,
+            schedule_type=ScheduleTypeChoices.OPERATING,
+            day=None,
+            start_time=datetime.time(20, 30),
+            end_time=datetime.time(0, 0),
+            start_date=datetime.date(2026, 12, 24),
+            end_date=datetime.date(2026, 12, 24),
+            is_exception=True,
+        )
+        Schedule.objects.create(
+            shelter=self.shelter,
+            schedule_type=ScheduleTypeChoices.OPERATING,
+            day=None,
+            start_time=datetime.time(0, 0),
+            end_time=datetime.time(7, 30),
+            start_date=datetime.date(2026, 12, 25),
+            end_date=datetime.date(2026, 12, 25),
+            is_exception=True,
+        )
+
+        self.assertTrue(self.is_open_at(2026, 12, 24, 2, 0))
+        self.assertTrue(self.is_open_at(2026, 12, 24, 12, 0))
+        self.assertFalse(self.is_open_at(2026, 12, 24, 22, 0))
+        self.assertFalse(self.is_open_at(2026, 12, 25, 2, 0))
+        self.assertTrue(self.is_open_at(2026, 12, 25, 8, 0))
 
 
 class CreateSchedulesServiceTestCase(TestCase):
