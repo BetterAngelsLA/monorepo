@@ -20,9 +20,11 @@
  *   EXPO_TOKEN   - EAS authentication token
  *   BRANCH_NAME  - Git branch name
  *
- * EXPO_PUBLIC_* secrets (for fingerprint computation):
+ * EXPO_PUBLIC_* secrets (for fingerprint / EAS update env parity):
+ *   EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY
  *   EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY
  *   EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY
+ *   EXPO_PUBLIC_NEW_RELIC_WEB_LICENSE_KEY
  *   EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS
  *   EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID
  */
