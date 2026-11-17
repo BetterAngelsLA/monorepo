@@ -19,11 +19,20 @@ export function getResultsSource(page: Page): Locator {
     .first();
 }
 
-/** A shelter card, matched by the name it shows. */
+/**
+ * A shelter card, matched by the exact name it shows. Scoped to the name node
+ * rather than the card's text, so a name filter that does nothing cannot pass
+ * by matching an address or description.
+ */
 export function getShelterCard(page: Page, name: string): Locator {
+  const cardNameNode = page
+    .getByTestId('shelter-card-name')
+    .getByText(name, { exact: true });
+
   return page
     .getByTestId('shelter-card')
-    .filter({ visible: true, hasText: name })
+    .filter({ visible: true })
+    .filter({ has: cardNameNode })
     .first();
 }
 
