@@ -196,8 +196,6 @@ class ShelterTypeMixin:
     website: auto
     media_links: List[MediaLinkType]
 
-    availability: Optional[ShelterAvailabilityType]
-
     _hero_photos: Optional[List[ShelterPhotoType]] = None
 
     @strawberry_django.field(
@@ -282,6 +280,11 @@ class ShelterType(ShelterTypeMixin):
 # Operator list reads: the ``*_queryset`` wrappers below are the reach-scoped,
 # fail-closed gate; the query's own ``filters`` variable only narrows the view.
 class OperatorShelterType(ShelterTypeMixin):
+    # Operator-only: bed counts are internal capacity data.  Deliberately not on
+    # ``ShelterTypeMixin``, so the public ``shelter``/``shelters`` queries do not
+    # expose them.
+    availability: Optional[ShelterAvailabilityType]
+
     @strawberry_django.field(only=["overall_rating"])
     def overall_rating(self, root: models.Shelter, info: Info) -> Optional[int]:
         """BA-only review field — global-tier gate (ADR 0001 §2.4)."""

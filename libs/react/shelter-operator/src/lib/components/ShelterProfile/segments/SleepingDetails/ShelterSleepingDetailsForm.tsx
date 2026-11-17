@@ -14,6 +14,7 @@ import {
   formSchema,
   SleepingDetailsFormData,
 } from './formSchema';
+import { NumberField } from './NumberField';
 
 type TProps = {
   values?: Partial<SleepingDetailsFormData>;
@@ -71,29 +72,7 @@ export function ShelterSleepingDetailsForm(props: TProps) {
         />
 
         <Form.Content>
-          <Form.Block columns={2}>
-            <Controller
-              name="totalBeds"
-              control={control}
-              render={({ field }) => (
-                <Input
-                  label="Total Beds"
-                  dataType="number"
-                  value={field.value ?? ''}
-                  min={0}
-                  onChange={(event) => {
-                    const value = event.target.valueAsNumber;
-
-                    field.onChange(Number.isNaN(value) ? null : value);
-                  }}
-                  onBlur={field.onBlur}
-                  disabled={disabled}
-                  isViewMode={isViewMode}
-                  error={errors.totalBeds?.message}
-                />
-              )}
-            />
-
+          <Form.Block columns={3}>
             <ComboBox
               control={control}
               name="roomStyles"
@@ -109,6 +88,50 @@ export function ShelterSleepingDetailsForm(props: TProps) {
               disabled={disabled}
             />
           </Form.Block>
+          <Form.Block columns={3}>
+            <NumberField
+              control={control}
+              name="totalBeds"
+              label="Total Beds"
+              error={errors.totalBeds?.message}
+              disabled={disabled}
+              isViewMode={isViewMode}
+            />
+            <NumberField
+              control={control}
+              name="nonRestrictedBeds"
+              label="Available Unrestricted Beds"
+              error={errors.nonRestrictedBeds?.message}
+              disabled={disabled}
+              isViewMode={isViewMode}
+            />
+
+            <NumberField
+              control={control}
+              name="restrictedBeds"
+              label="Available Restricted Beds"
+              error={errors.restrictedBeds?.message}
+              disabled={disabled}
+              isViewMode={isViewMode}
+            />
+          </Form.Block>
+          <Controller
+            name="restrictionNotes"
+            control={control}
+            render={({ field }) => (
+              <Input
+                label="Restriction Notes"
+                variant="paragraph"
+                rows={3}
+                value={field.value ?? ''}
+                onChange={(event) => field.onChange(event.target.value)}
+                onBlur={field.onBlur}
+                disabled={disabled}
+                isViewMode={isViewMode}
+                error={errors.restrictionNotes?.message}
+              />
+            )}
+          />
 
           <Controller
             name="addNotesSleepingDetails"

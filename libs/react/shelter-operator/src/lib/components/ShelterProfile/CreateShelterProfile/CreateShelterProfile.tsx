@@ -103,7 +103,7 @@ export function CreateShelterProfile(props: TProps) {
       const fieldErrors = getFieldErrorsOrThrow({
         response,
         operationKey: 'createShelter',
-        successTypename: 'ShelterType',
+        successTypename: 'OperatorShelterType',
         fields: formFieldNames,
       });
 
@@ -115,7 +115,7 @@ export function CreateShelterProfile(props: TProps) {
 
       const result = response.data?.createShelter;
 
-      if (result?.__typename !== 'ShelterType') {
+      if (result?.__typename !== 'OperatorShelterType') {
         throw new Error('Failed to create shelter');
       }
 

@@ -86,7 +86,7 @@ export function ShelterSchedules(props: TProps) {
 
       const result = response.data?.updateShelter;
 
-      if (result?.__typename === 'ShelterType') {
+      if (result?.__typename === 'OperatorShelterType') {
         showToast({
           status: 'success',
           title: isDelete ? 'Schedule deleted.' : 'Schedule updated.',

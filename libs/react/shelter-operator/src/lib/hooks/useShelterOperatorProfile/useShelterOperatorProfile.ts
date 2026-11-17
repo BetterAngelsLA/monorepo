@@ -5,8 +5,10 @@ import { GetShelterOperatorProfileDocument } from './__generated__/useShelterOpe
  * Fetches the profile data for a shelter, such as name, address, and
  * other general information that changes infrequently.
  *
- * For day-to-day operational data like bed/room inventory and availability,
- * use a separate dedicated hook instead.
+ * For day-to-day operational data like bed/room inventory, use a separate
+ * dedicated hook instead. Availability is the exception: it is edited from the
+ * Sleeping Details tab, so it rides on this query and its mutation sends only the
+ * fields that changed (see `toAvailabilityPayload`).
  */
 export function useShelterOperatorProfile(shelterId: string) {
   const { data, loading, error } = useQuery(GetShelterOperatorProfileDocument, {

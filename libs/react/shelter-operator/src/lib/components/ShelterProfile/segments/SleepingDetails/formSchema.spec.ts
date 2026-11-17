@@ -1,8 +1,17 @@
 import { RoomStyleChoices } from '@monorepo/react/shelter';
-import { formSchema } from './formSchema';
+import type { ShelterProfileType } from '../../types';
+import {
+  formSchema,
+  toAvailabilityPayload,
+  toFormData,
+  toFormFieldErrors,
+} from './formSchema';
 
 const baseValues = {
   totalBeds: null,
+  nonRestrictedBeds: 0,
+  restrictedBeds: 0,
+  restrictionNotes: '',
   roomStyles: [],
   roomStylesOther: null,
   addNotesSleepingDetails: '',
@@ -56,5 +65,181 @@ describe('SleepingDetails formSchema — Other field pairs', () => {
     const result = formSchema.safeParse(baseValues);
 
     expect(result.success).toBe(true);
+  });
+});
+
+describe('SleepingDetails formSchema — availability counts', () => {
+  it('rejects counts above the total beds on both counters', () => {
+    const result = formSchema.safeParse({
+      ...baseValues,
+      totalBeds: 4,
+      nonRestrictedBeds: 3,
+      restrictedBeds: 2,
+    });
+
+    expect(issuePaths(result)).toEqual(['nonRestrictedBeds', 'restrictedBeds']);
+
+    if (result.success) {
+      throw new Error('Expected the availability cap to reject the values.');
+    }
+
+    expect(result.error.issues[0].message).toBe(
+      "Unrestricted + restricted beds (5) cannot exceed the shelter's total beds (4).",
+    );
+  });
+
+  it('explains that a cleared counter needs a number', () => {
+    const result = formSchema.safeParse({
+      ...baseValues,
+      nonRestrictedBeds: null,
+    });
+
+    if (result.success) {
+      throw new Error('Expected a cleared counter to be rejected.');
+    }
+
+    expect(result.error.issues[0].message).toBe(
+      'Unrestricted beds must be a number',
+    );
+  });
+
+  it('accepts counts equal to the total beds', () => {
+    const result = formSchema.safeParse({
+      ...baseValues,
+      totalBeds: 4,
+      nonRestrictedBeds: 3,
+      restrictedBeds: 1,
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it('imposes no cap when the total beds are unknown', () => {
+    const result = formSchema.safeParse({
+      ...baseValues,
+      totalBeds: null,
+      nonRestrictedBeds: 30,
+      restrictedBeds: 10,
+    });
+
+    expect(result.success).toBe(true);
+  });
+});
+
+describe('SleepingDetails toFormData', () => {
+  const shelter = (availability: unknown) =>
+    ({
+      totalBeds: 10,
+      roomStyles: [],
+      roomStylesOther: null,
+      addNotesSleepingDetails: '',
+      availability,
+    }) as unknown as ShelterProfileType;
+
+  it('maps the availability row onto the availability fields', () => {
+    expect(
+      toFormData(
+        shelter({
+          nonRestrictedBeds: 4,
+          restrictedBeds: 2,
+          restrictionNotes: 'Women only',
+        }),
+      ),
+    ).toEqual(
+      expect.objectContaining({
+        nonRestrictedBeds: 4,
+        restrictedBeds: 2,
+        restrictionNotes: 'Women only',
+      }),
+    );
+  });
+
+  it('falls back to zero and blank when the shelter has no availability row', () => {
+    expect(toFormData(shelter(null))).toEqual(
+      expect.objectContaining({
+        nonRestrictedBeds: 0,
+        restrictedBeds: 0,
+        restrictionNotes: '',
+      }),
+    );
+  });
+});
+
+describe('SleepingDetails toFormFieldErrors', () => {
+  it('re-points availability messages at the fields the form renders', () => {
+    expect(
+      toFormFieldErrors([
+        { field: 'availability.nonRestrictedBeds', message: 'first' },
+        { field: 'availability.restrictedBeds', message: 'second' },
+        { field: 'name', message: 'untouched' },
+      ]),
+    ).toEqual([
+      { field: 'nonRestrictedBeds', message: 'first' },
+      { field: 'restrictedBeds', message: 'second' },
+      { field: 'name', message: 'untouched' },
+    ]);
+  });
+
+  it('folds a parent-level availability message onto both counters', () => {
+    expect(
+      toFormFieldErrors([{ field: 'availability', message: 'cap' }]),
+    ).toEqual([
+      { field: 'nonRestrictedBeds', message: 'cap' },
+      { field: 'restrictedBeds', message: 'cap' },
+    ]);
+  });
+});
+
+describe('SleepingDetails toAvailabilityPayload', () => {
+  const stored = {
+    ...baseValues,
+    nonRestrictedBeds: 4,
+    restrictedBeds: 2,
+    restrictionNotes: 'Women only',
+  };
+
+  it('sends nothing when the counters and notes are untouched', () => {
+    expect(toAvailabilityPayload(stored, stored)).toBeNull();
+  });
+
+  it('sends only the field that changed', () => {
+    expect(toAvailabilityPayload({ ...stored, restrictedBeds: 3 }, stored)).toEqual(
+      { restrictedBeds: 3 },
+    );
+  });
+
+  it('sends a cleared note as an empty string', () => {
+    expect(
+      toAvailabilityPayload({ ...stored, restrictionNotes: '' }, stored),
+    ).toEqual({ restrictionNotes: '' });
+  });
+
+  it('sends every field when all of them changed', () => {
+    expect(
+      toAvailabilityPayload(
+        {
+          ...stored,
+          nonRestrictedBeds: 1,
+          restrictedBeds: 0,
+          restrictionNotes: '',
+        },
+        stored,
+      ),
+    ).toEqual({ nonRestrictedBeds: 1, restrictedBeds: 0, restrictionNotes: '' });
+  });
+
+  it('treats the zeros of a missing availability row as the baseline', () => {
+    const empty = {
+      ...baseValues,
+      nonRestrictedBeds: 0,
+      restrictedBeds: 0,
+      restrictionNotes: '',
+    };
+
+    // A rowless shelter loads as 0/0/'' — nothing to send until something is typed.
+    expect(toAvailabilityPayload(empty, empty)).toBeNull();
+    expect(toAvailabilityPayload({ ...empty, nonRestrictedBeds: 2 }, empty)).toEqual(
+      { nonRestrictedBeds: 2 },
+    );
   });
 });
