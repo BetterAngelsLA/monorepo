@@ -1667,6 +1667,29 @@ class UpdateShelterSchedulesTestCase(ShelterTestCase, TestCase):
         self.assertEqual(self.slot.start_time, time(10, 0))
         self.assertEqual(Schedule.objects.filter(shelter=self.shelter).count(), 1)
 
+    def test_overnight_range_round_trips_through_the_api(self) -> None:
+        """An end time before the start is an overnight range, not an error."""
+        response = self._update(
+            [
+                self._entry(
+                    id=str(self.slot.pk),
+                    startTime="20:30:00",
+                    endTime="07:30:00",
+                )
+            ],
+            schedule_type="OPERATING",
+        )
+
+        self.assertIsNone(response.get("errors"))
+        self.assertIn("updateShelter", response["data"])
+
+        self.slot.refresh_from_db()
+        self.assertEqual(self.slot.start_time, time(20, 30))
+        self.assertEqual(self.slot.end_time, time(7, 30))
+        # 20:30 -> 07:30 is 11 h measured modulo the day.
+        self.assertEqual(self.slot.duration_minutes, 660)
+        self.assertEqual(Schedule.objects.filter(shelter=self.shelter).count(), 1)
+
     def test_omitting_the_schedule_deletes_it(self) -> None:
         response = self._update([], schedule_type="OPERATING")
 
