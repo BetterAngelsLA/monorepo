@@ -95,6 +95,17 @@ Nothing is skipped for being a JS-only change: an EAS Update is useless without
 a binary of the same runtime to run it, and a fingerprint that only ever saw JS
 changes would never get one.
 
+To inspect the builds for a fingerprint directly:
+
+```bash
+yarn nx run betterangels:build-list --platform ios \
+  --build-profile preview --runtime-version <hash> [--json] [--limit 50]
+```
+
+The target runs `eas build:list` directly and forwards flags. `find-build`
+uses the same direct call; the old `@nx/expo:build-list` executor truncated
+large build lists at its first stdout chunk.
+
 ### Labels
 
 | Label             | Effect                                                                                             |
