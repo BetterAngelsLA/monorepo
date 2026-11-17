@@ -90,8 +90,8 @@ from .models import (
     VaccinationRequirement,
     Video,
     get_fields_with_other_option,
-    validate_availability_counts,
 )
+from .validators import validate_availability_counts
 from .widgets import MultiDayCheckboxWidget
 
 T = TypeVar("T", bound=models.Model)
@@ -1716,6 +1716,9 @@ class ReservationAdmin(admin.ModelAdmin):
 class ShelterAvailabilityAdmin(admin.ModelAdmin):
     list_display = ("shelter", "non_restricted_beds", "restricted_beds", "updated_by", "updated_at", "created_at")
     list_filter = ("updated_at",)
+    # `list_display` renders the shelter per row; without this the changelist is
+    # one query per availability row.
+    list_select_related = ("shelter",)
     search_fields = ("shelter__name",)
     autocomplete_fields = ["shelter"]
     readonly_fields = ("total_beds", "created_at", "updated_at", "updated_by")

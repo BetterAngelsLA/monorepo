@@ -51,7 +51,11 @@ def apply_availability(shelter: Shelter, values: Mapping[str, Any]) -> Optional[
         setattr(availability, field, value)
 
     try:
-        availability.full_clean()
+        # Both checks are redundant here: the row was addressed by its shelter, and
+        # the shelter is an instance the caller fetched or just saved. Skipping the
+        # FK-existence probe and the OneToOne uniqueness re-check takes an
+        # availability write from four queries to two.
+        availability.full_clean(exclude=["shelter"], validate_unique=False)
     except ValidationError as exc:
         raise ValidationError(rekey_validation_errors(exc, "availability")) from exc
 

@@ -127,6 +127,17 @@ class Query:
         return shelter_occupancy_metrics_selector(shelter=shelter, start=start, end=end)
 
 
+def _operator_shelter(shelter: Shelter) -> OperatorShelterType:
+    """The mutation payload for a shelter.
+
+    ``strawberry_django`` resolves the GraphQL type from the model instance, so the
+    object returned to the client is a ``Shelter`` even though the resolver's
+    annotation (the schema contract) is the Strawberry type. One documented cast
+    instead of one per mutation.
+    """
+    return cast(OperatorShelterType, shelter)
+
+
 @strawberry.type
 class Mutation:
     # ── Shelter ────────────────────────────────────────────────────────────
@@ -136,14 +147,14 @@ class Mutation:
         """Create a shelter — authorization lives in :func:`shelter_create` (ADR 0001 §2.6)."""
         user = cast(User, get_current_user(info))
         clean = strawberry.asdict(data)
-        return cast(OperatorShelterType, shelter_create(user=user, data=clean))
+        return _operator_shelter(shelter_create(user=user, data=clean))
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def update_shelter(self, info: Info, data: UpdateShelterInput) -> OperatorShelterType:
         """Update a shelter — authorization lives in :func:`shelter_update` (ADR 0001 §2.6)."""
         user = cast(User, get_current_user(info))
         clean = strawberry.asdict(data)
-        return cast(OperatorShelterType, shelter_update(user=user, data=clean))
+        return _operator_shelter(shelter_update(user=user, data=clean))
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def delete_shelter(self, info: Info, id: ID) -> DeletedObjectType:

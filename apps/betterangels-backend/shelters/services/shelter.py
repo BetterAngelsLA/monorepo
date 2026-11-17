@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
@@ -14,7 +14,6 @@ from shelters.models import (
     ServiceCategory,
     Shelter,
     ShelterAvailability,
-    validate_availability_counts,
 )
 from shelters.permissions import BA_REVIEW_FIELDS, can_change_ba_review
 from shelters.selectors import shelter_get
@@ -27,9 +26,10 @@ from shelters.services.utils import (
     _sync_schedules,
     rekey_validation_errors,
 )
+from shelters.validators import validate_availability_counts
 
 
-def _require_permission_on_ba_review_change(user: "User", data: Dict[str, Any]) -> None:
+def _require_permission_on_ba_review_change(user: "User", data: dict[str, Any]) -> None:
     if any(field in data for field in BA_REVIEW_FIELDS) and not can_change_ba_review(user):
         raise PermissionDenied("Editing BA review fields is not allowed with this role.")
 
@@ -63,7 +63,7 @@ if TYPE_CHECKING:
     from accounts.models import User
 
 
-def _apply_services(shelter: Shelter, raw_services: List[Any]) -> None:
+def _apply_services(shelter: Shelter, raw_services: list[Any]) -> None:
     service_pks: list[Any] = []
     pending_entries: list[tuple[int, str]] = []
     seen_pending: set[tuple[int, str]] = set()
@@ -180,7 +180,7 @@ def _contact_error_dict(exc: ValidationError, index: int) -> dict[str, list[str]
     return rekey_validation_errors(exc, f"additional_contacts.{index}")
 
 
-def _apply_additional_contacts(shelter: Shelter, contacts: List[Any]) -> None:
+def _apply_additional_contacts(shelter: Shelter, contacts: list[Any]) -> None:
     """Apply list-level full-replacement semantics to a shelter's additional contacts.
 
     The submitted list is authoritative: entries absent from the payload are
@@ -262,7 +262,7 @@ def _apply_additional_contacts(shelter: Shelter, contacts: List[Any]) -> None:
 
 
 @transaction.atomic
-def shelter_create(*, user: "User", data: Dict[str, Any]) -> Shelter:
+def shelter_create(*, user: "User", data: dict[str, Any]) -> Shelter:
     """Create a new Shelter with all M2M relationships and schedules.
 
     The target organization is the create anchor and travels in the payload
@@ -290,7 +290,7 @@ def shelter_create(*, user: "User", data: Dict[str, Any]) -> Shelter:
     require_can(user, Shelter.perms.ADD, org=organization_id)
 
     scalar_data, m2m_data, schedules_data = _prepare_shelter_data(data, _SHELTER_M2M_FIELDS)
-    raw_services: List[Any] = m2m_data.pop("services", []) or []
+    raw_services: list[Any] = m2m_data.pop("services", []) or []
 
     shelter = Shelter(**scalar_data)
     shelter.full_clean()
@@ -306,7 +306,7 @@ def shelter_create(*, user: "User", data: Dict[str, Any]) -> Shelter:
 
 
 @transaction.atomic
-def shelter_update(*, user: "User", data: Dict[str, Any]) -> Shelter:
+def shelter_update(*, user: "User", data: dict[str, Any]) -> Shelter:
     """Update an existing Shelter with partial data.
 
     Resolves *shelter* via :func:`~shelters.selectors.shelter_get` with
@@ -365,7 +365,7 @@ def shelter_update(*, user: "User", data: Dict[str, Any]) -> Shelter:
     schedule_type = data.pop("schedule_type", None)
 
     scalar_data, m2m_data, schedules_data = _prepare_shelter_data(data, _SHELTER_M2M_FIELDS)
-    raw_services: List[Any] = m2m_data.pop("services", []) or []
+    raw_services: list[Any] = m2m_data.pop("services", []) or []
 
     for k, v in scalar_data.items():
         setattr(shelter, k, v)
