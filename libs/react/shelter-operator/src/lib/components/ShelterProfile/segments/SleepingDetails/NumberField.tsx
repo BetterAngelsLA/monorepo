@@ -11,6 +11,7 @@ type TProps = {
   error?: string;
   disabled?: boolean;
   isViewMode?: boolean;
+  className?: string;
 };
 
 export function NumberField({
@@ -20,6 +21,7 @@ export function NumberField({
   error,
   disabled = false,
   isViewMode = false,
+  className,
 }: TProps) {
   return (
     <Controller
@@ -40,6 +42,7 @@ export function NumberField({
           disabled={disabled}
           isViewMode={isViewMode}
           error={error}
+          className={className}
         />
       )}
     />

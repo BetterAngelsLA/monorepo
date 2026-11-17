@@ -10,6 +10,7 @@ import {
   useUpdateShelterProfile,
   UseUpdateShelterProfileInput,
 } from '../../../../hooks';
+import { Text } from '../../../base-ui/text/text';
 import { useToast } from '../../../base-ui/toast';
 import { ShelterSleepingDetailsForm } from './ShelterSleepingDetailsForm';
 import {
@@ -53,7 +54,7 @@ export function ShelterSleepingDetails(props: TProps) {
   const [isEditMode, setEditMode] = useState<boolean>(false);
   const [disabled, setDisabled] = useState<boolean>(false);
 
-  const { shelter } = useShelterOperatorProfile(shelterId);
+  const { shelter, error } = useShelterOperatorProfile(shelterId);
   const { updateShelter } = useUpdateShelterProfile();
   const { showToast } = useToast();
   const { canEditShelter } = useShelterPermissions();
@@ -121,6 +122,17 @@ export function ShelterSleepingDetails(props: TProps) {
 
   function onCancel() {
     setEditMode(false);
+  }
+
+  // A failed profile query used to render an empty tab, which reads as "this
+  // shelter has no sleeping details" rather than "this did not load".
+  if (error) {
+    return (
+      <Text variant="body" className="px-6 py-4">
+        We couldn&rsquo;t load this shelter&rsquo;s sleeping details. Refresh the
+        page to try again.
+      </Text>
+    );
   }
 
   if (!shelter || !stored) {

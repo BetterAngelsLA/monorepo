@@ -132,6 +132,10 @@ export function toAvailabilityPayload(
  * `availability.<field>`; the form renders them as top-level fields. A
  * parent-level `availability` message belongs to both counters, mirroring where
  * the backend attributes the cap.
+ *
+ * The message text is rendered verbatim: `getFieldErrorsOrThrow` only hands over
+ * `VALIDATION` messages, which is the "known, expected key" the styleguide allows
+ * to be shown. Anything else is thrown as a generic error before reaching here.
  */
 export function toFormFieldErrors(
   errors: { field: string; message: string }[],
