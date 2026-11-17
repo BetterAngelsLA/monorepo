@@ -288,6 +288,25 @@ class ShelterAdminAvailabilityTestCase(TestCase):
         self.assertEqual(self.availability.restricted_beds, 2)
         self.assertEqual(self.availability.restriction_notes, "Men only")
 
+    def test_save_does_not_revert_availability_changed_elsewhere(self) -> None:
+        """A page left open must not write its stale counters back.
+
+        The form's ``initial`` is the row at render time; a save that leaves the
+        availability inputs alone should send nothing, so an edit made in the
+        meantime (another operator, or the API) survives.
+        """
+        form = ShelterForm(instance=self.shelter)
+        form.cleaned_data = {name: form.initial[name] for name in AVAILABILITY_FIELDS}
+        form.save_m2m = lambda: None  # type: ignore[method-assign]
+
+        # Someone else changes availability after the page was rendered.
+        ShelterAvailability.objects.filter(pk=self.availability.pk).update(non_restricted_beds=3)
+
+        self.model_admin.save_related(self._request_for(self._scoped_change_user()), form, [], change=True)
+
+        self.availability.refresh_from_db()
+        self.assertEqual(self.availability.non_restricted_beds, 3)
+
     def test_add_flow_updates_the_signal_created_row(self) -> None:
         """On the add page the signal creates the row during ``form.save()``.
 
