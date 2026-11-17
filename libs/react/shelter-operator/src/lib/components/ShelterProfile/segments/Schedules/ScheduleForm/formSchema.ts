@@ -12,6 +12,21 @@ const dateField = z
 
 // Standard Schedules
 
+/**
+ * A range may cross midnight: a shelter open 8:30 PM – 7:30 AM starts on one day
+ * and ends on the next.
+ *
+ * Equal times are rejected rather than read as 24 hours. The model has no
+ * ordering rule — `duration_minutes` is a modulo-1440 duration — but the UI has
+ * no way to show a 24-hour day, so the row would come back looking like
+ * `09:00 - 09:00` with the shelter open all day. A same-time typo is worth a
+ * clear error; real 24-hour support needs its own display work.
+ */
+const endTimeAfterStart = (r: { startTime: string; endTime: string }) =>
+  r.startTime !== r.endTime;
+
+const equalTimesMessage = "Start and end time can't be the same";
+
 export const timeRangeSchema = z
   .object({
     _id: z.string(),
@@ -27,8 +42,8 @@ export const timeRangeSchema = z
     startDate: dateField.optional(),
     endDate: dateField.optional(),
   })
-  .refine((r) => r.startTime < r.endTime, {
-    message: 'Start time must be before end time',
+  .refine(endTimeAfterStart, {
+    message: equalTimesMessage,
     path: ['endTime'],
   });
 
@@ -110,18 +125,20 @@ export const exceptionEntrySchema = z
       startTime: z.string(),
       endTime: z.string(),
     }),
-    z
-      .object({
-        ...exceptionBaseFields,
-        closedAllDay: z.literal(false),
-        startTime: timeField,
-        endTime: timeField,
-      })
-      .refine((e) => e.startTime < e.endTime, {
-        message: 'Start time must be before end time',
-        path: ['endTime'],
-      }),
+    // An exception's hours can cross midnight too, exactly like a weekly
+    // range, so its times are format-checked only.
+    z.object({
+      ...exceptionBaseFields,
+      closedAllDay: z.literal(false),
+      startTime: timeField,
+      endTime: timeField,
+    }),
   ])
+  // Only an open exception carries times; a closure is all day by definition.
+  .refine((e) => e.closedAllDay || e.startTime !== e.endTime, {
+    message: equalTimesMessage,
+    path: ['endTime'],
+  })
   .refine((e) => e.startDate <= e.endDate, {
     message: 'Start date must be on or before end date',
     path: ['endDate'],

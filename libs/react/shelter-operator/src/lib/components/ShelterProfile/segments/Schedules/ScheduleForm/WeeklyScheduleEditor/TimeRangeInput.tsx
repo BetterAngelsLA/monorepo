@@ -33,6 +33,11 @@ type TProps = {
 export function TimeRangeInput(props: TProps) {
   const { startTime, endTime, onChange, disabled = false, error } = props;
 
+  // An end before the start is the next morning, not a mistake. Say so: without
+  // this, "8:30 PM – 7:30 AM" is ambiguous to the person entering it.
+  const crossesMidnight =
+    startTime !== '' && endTime !== '' && endTime < startTime;
+
   return (
     <div className="flex flex-col gap-1">
       <div className="flex items-center gap-2">
@@ -51,6 +56,12 @@ export function TimeRangeInput(props: TProps) {
           disabled={disabled}
           label="End time"
         />
+
+        {crossesMidnight && (
+          <span className="text-xs text-gray-500 whitespace-nowrap">
+            Next day
+          </span>
+        )}
       </div>
 
       {error && <span className="text-xs text-red-600">{error}</span>}
