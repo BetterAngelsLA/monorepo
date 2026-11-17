@@ -1,6 +1,5 @@
 import datetime
 import random
-import unittest
 from typing import Any, Optional
 
 from django.core.exceptions import ValidationError
@@ -786,16 +785,12 @@ class ScheduleModelTestCase(TestCase):
 
 
 class OvernightExceptionTestCase(TestCase):
-    """A partial-day exception that runs past midnight should cover one night.
+    """A partial-day exception that runs past midnight covers one night.
 
     A single-row exception ``20:30 -> 07:30`` dated Dec 24 means "closed from
-    20:30 on the 24th until 07:30 on the 25th". Exceptions are evaluated against
-    the calendar date of the query, so today it instead closes 00:00-07:30 and
-    20:30-24:00 on the 24th and leaves the 25th's early morning open.
-
-    The two ``expectedFailure`` tests pin the intended semantics. If the
-    behaviour is fixed they become unexpected successes and fail the run, which
-    is the prompt to delete the markers.
+    20:30 on the 24th until 07:30 on the 25th": the evening belongs to the 24th
+    and the tail to the 25th's early morning, because date bounds follow the
+    window's start date.
     """
 
     def setUp(self) -> None:
@@ -825,18 +820,16 @@ class OvernightExceptionTestCase(TestCase):
     def is_open_at(self, *when: int) -> bool:
         return self.shelter in Shelter.objects.open_at(datetime.datetime(*when))
 
-    @unittest.expectedFailure
     def test_closure_starts_when_its_window_starts(self) -> None:
         """The morning before the exception date is not part of the closure."""
         self.assertTrue(self.is_open_at(2026, 12, 24, 2, 0))
 
-    @unittest.expectedFailure
     def test_closure_ends_when_its_window_ends(self) -> None:
         """The early morning after the exception date is still closed."""
         self.assertFalse(self.is_open_at(2026, 12, 25, 2, 0))
 
     def test_two_same_day_rows_express_the_same_closure(self) -> None:
-        """The shape the model can express today: split the closure at midnight."""
+        """The same closure can also be entered as two same-day rows."""
         Schedule.objects.filter(shelter=self.shelter, is_exception=True).delete()
 
         Schedule.objects.create(
@@ -865,6 +858,138 @@ class OvernightExceptionTestCase(TestCase):
         self.assertFalse(self.is_open_at(2026, 12, 24, 22, 0))
         self.assertFalse(self.is_open_at(2026, 12, 25, 2, 0))
         self.assertTrue(self.is_open_at(2026, 12, 25, 8, 0))
+
+
+class ShiftScopedScheduleTestCase(TestCase):
+    """Date bounds follow the day a window starts, for every row shape.
+
+    A window keeps its start date for its whole length: an overnight row dated
+    Dec 24 owns the evening of the 24th and the early morning of the 25th.
+    """
+
+    OPEN_24H = {
+        "day": None,
+        "start_time": datetime.time(0, 0),
+        "end_time": datetime.time(0, 0),
+    }
+
+    def make_shelter(self, *rows: dict[str, Any]) -> Shelter:
+        shelter = Shelter.objects.create(name="Shift Scoped Shelter")
+        for row in rows:
+            Schedule.objects.create(
+                shelter=shelter,
+                schedule_type=ScheduleTypeChoices.OPERATING,
+                **row,
+            )
+        return shelter
+
+    def overnight(
+        self,
+        start_date: str,
+        end_date: str,
+        *,
+        start: datetime.time = datetime.time(20, 30),
+        end: datetime.time = datetime.time(7, 30),
+        day: DayOfWeekChoices | None = None,
+        is_exception: bool = True,
+    ) -> dict[str, Any]:
+        return {
+            "day": day,
+            "start_time": start,
+            "end_time": end,
+            "start_date": datetime.date.fromisoformat(start_date),
+            "end_date": datetime.date.fromisoformat(end_date),
+            "is_exception": is_exception,
+        }
+
+    def is_open(self, shelter: Shelter, *when: int) -> bool:
+        return shelter in Shelter.objects.open_at(datetime.datetime(*when))
+
+    def test_overnight_exception_range_covers_the_last_morning(self) -> None:
+        shelter = self.make_shelter(self.OPEN_24H, self.overnight("2026-12-24", "2026-12-26"))
+
+        for when in [
+            (2026, 12, 24, 22, 0),
+            (2026, 12, 25, 2, 0),
+            (2026, 12, 25, 22, 0),
+            (2026, 12, 26, 2, 0),
+            (2026, 12, 26, 22, 0),
+            (2026, 12, 27, 2, 0),
+        ]:
+            self.assertFalse(self.is_open(shelter, *when), f"should be closed at {when}")
+
+        for when in [(2026, 12, 24, 12, 0), (2026, 12, 26, 12, 0), (2026, 12, 27, 8, 0)]:
+            self.assertTrue(self.is_open(shelter, *when), f"should be open at {when}")
+
+    def test_seasonal_overnight_row_covers_the_tail_after_end_date(self) -> None:
+        shelter = self.make_shelter(
+            {
+                "day": DayOfWeekChoices.MONDAY,
+                "start_time": datetime.time(20, 30),
+                "end_time": datetime.time(7, 30),
+                "start_date": datetime.date(2026, 3, 2),
+                "end_date": datetime.date(2026, 3, 2),
+            }
+        )
+
+        self.assertTrue(self.is_open(shelter, 2026, 3, 2, 22, 0))
+        self.assertTrue(self.is_open(shelter, 2026, 3, 3, 2, 0))
+        self.assertFalse(self.is_open(shelter, 2026, 3, 3, 8, 0))
+        self.assertFalse(self.is_open(shelter, 2026, 3, 9, 2, 0))
+
+    def test_day_specific_overnight_exception(self) -> None:
+        shelter = self.make_shelter(
+            self.OPEN_24H,
+            self.overnight("2026-03-02", "2026-03-02", day=DayOfWeekChoices.MONDAY),
+        )
+
+        self.assertFalse(self.is_open(shelter, 2026, 3, 2, 22, 0))
+        self.assertFalse(self.is_open(shelter, 2026, 3, 3, 2, 0))
+        self.assertTrue(self.is_open(shelter, 2026, 3, 3, 8, 0))
+        self.assertTrue(self.is_open(shelter, 2026, 3, 2, 2, 0))
+
+    def test_all_day_exception_does_not_shift(self) -> None:
+        shelter = self.make_shelter(
+            self.OPEN_24H,
+            {
+                "day": None,
+                "start_date": datetime.date(2026, 12, 24),
+                "end_date": datetime.date(2026, 12, 24),
+                "is_exception": True,
+            },
+        )
+
+        self.assertFalse(self.is_open(shelter, 2026, 12, 24, 10, 0))
+        self.assertTrue(self.is_open(shelter, 2026, 12, 25, 0, 30))
+        self.assertTrue(self.is_open(shelter, 2026, 12, 25, 10, 0))
+
+    def test_non_overnight_exception_is_unchanged(self) -> None:
+        shelter = self.make_shelter(
+            self.OPEN_24H,
+            self.overnight(
+                "2026-12-24",
+                "2026-12-24",
+                start=datetime.time(9, 0),
+                end=datetime.time(17, 0),
+            ),
+        )
+
+        self.assertFalse(self.is_open(shelter, 2026, 12, 24, 10, 0))
+        self.assertTrue(self.is_open(shelter, 2026, 12, 24, 8, 0))
+        self.assertTrue(self.is_open(shelter, 2026, 12, 25, 2, 0))
+
+    def test_weekly_overnight_row_without_date_bounds(self) -> None:
+        shelter = self.make_shelter(
+            {
+                "day": DayOfWeekChoices.MONDAY,
+                "start_time": datetime.time(20, 30),
+                "end_time": datetime.time(7, 30),
+            }
+        )
+
+        self.assertTrue(self.is_open(shelter, 2026, 3, 2, 22, 0))
+        self.assertTrue(self.is_open(shelter, 2026, 3, 3, 2, 0))
+        self.assertFalse(self.is_open(shelter, 2026, 3, 3, 8, 0))
 
 
 class CreateSchedulesServiceTestCase(TestCase):

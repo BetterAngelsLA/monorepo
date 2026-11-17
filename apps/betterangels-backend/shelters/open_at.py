@@ -3,7 +3,7 @@
 import datetime
 from typing import TYPE_CHECKING, Sequence
 
-from django.db.models import Exists, F, OuterRef, Q, QuerySet, Value
+from django.db.models import Case, DateField, Exists, F, IntegerField, OuterRef, Q, QuerySet, Value, When
 from django.db.models.functions import Mod
 from django.db.models.lookups import LessThan
 
@@ -52,6 +52,13 @@ def shelters_open_at(
     For every-day schedules (``day=None``) the interval is stored on a
     1440-minute daily clock instead.
 
+    **Date bounds follow the shift's start**
+
+    ``start_date`` / ``end_date`` and exception dates bound the day the window
+    *starts*: a Monday 20:30-07:30 shift is Monday's for its whole length, so
+    Tuesday 02:00 is checked against Monday's date. ``shift_date`` below is that
+    date — today, or yesterday when the after-midnight tail is being queried.
+
     .. note::
 
         Start time is **inclusive**, end time is **exclusive**.
@@ -92,6 +99,35 @@ def shelters_open_at(
 
     covers = timed_covers | full_day_covers
 
+    # A window belongs to the day it starts: a Monday 20:30-07:30 shift is
+    # Monday's for its whole length. Seasonal bounds and exception dates must
+    # therefore be checked against the shift's start date, not the query date,
+    # or the after-midnight tail is evaluated against the wrong day.
+    #
+    # ``elapsed_minutes`` is how long ago the current shift started (0-1439 on
+    # the clock the row uses). If that is longer than the minutes elapsed today,
+    # the start crossed midnight and the shift belongs to yesterday.
+    elapsed_minutes = Case(
+        When(
+            day__isnull=True,
+            then=Mod(Value(query_dm) - F("start_cycle_minutes") + DAILY_MINUTES, DAILY_MINUTES),
+        ),
+        default=Mod(Value(query_wm) - F("start_cycle_minutes") + WEEK_MINUTES, WEEK_MINUTES),
+        output_field=IntegerField(),
+    )
+    shift_date = Case(
+        When(
+            LessThan(Value(query_dm), elapsed_minutes),
+            then=Value(date - datetime.timedelta(days=1)),
+        ),
+        default=Value(date),
+        output_field=DateField(),
+    )
+    shift_date_bounds = [
+        Q(start_date=None) | Q(start_date__lte=shift_date),
+        Q(end_date=None) | Q(end_date__gte=shift_date),
+    ]
+
     # For each requested schedule type independently:
     #   - The shelter must have a non-exception schedule row of that type
     #     covering *dt*.
@@ -109,8 +145,7 @@ def shelters_open_at(
                 is_exception=False,
             ).filter(
                 covers,
-                Q(start_date=None) | Q(start_date__lte=date),
-                Q(end_date=None) | Q(end_date__gte=date),
+                *shift_date_bounds,
             )
         )
 
@@ -121,8 +156,7 @@ def shelters_open_at(
                 is_exception=True,
             ).filter(
                 covers,
-                Q(start_date=None) | Q(start_date__lte=date),
-                Q(end_date=None) | Q(end_date__gte=date),
+                *shift_date_bounds,
             )
         )
 
