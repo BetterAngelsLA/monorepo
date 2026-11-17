@@ -1,7 +1,7 @@
 import { BaError, getFieldErrorsOrThrow } from '@monorepo/ba-platform';
 import { applyFieldErrors } from '@monorepo/react/shared';
 import { RoomStyleChoices } from '@monorepo/react/shelter';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { UseFormSetError } from 'react-hook-form';
 import {
   updateShelterProfileMeta,
@@ -16,6 +16,7 @@ import {
   AVAILABILITY_INPUT,
   type SleepingDetailsFormData,
   formFieldNames,
+  toAvailabilityPayload,
   toFormData,
   toFormFieldErrors,
 } from './formSchema';
@@ -23,15 +24,17 @@ import {
 function toUpdateInput(
   shelterId: string,
   data: SleepingDetailsFormData,
+  stored: SleepingDetailsFormData,
 ): UseUpdateShelterProfileInput {
+  const availability = toAvailabilityPayload(data, stored);
+
   return {
     id: shelterId,
     totalBeds: data.totalBeds ?? null,
-    availability: {
-      nonRestrictedBeds: data.nonRestrictedBeds,
-      restrictedBeds: data.restrictedBeds,
-      restrictionNotes: data.restrictionNotes,
-    },
+    // Only the fields that changed: the API applies `availability` as a
+    // partial update, and an untouched counter must not be rewritten with the
+    // value this form loaded.
+    ...(availability ? { availability } : {}),
     roomStyles: data.roomStyles,
     roomStylesOther: data.roomStyles.includes(RoomStyleChoices.Other)
       ? (data.roomStylesOther ?? null)
@@ -55,15 +58,26 @@ export function ShelterSleepingDetails(props: TProps) {
   const { showToast } = useToast();
   const { canEditShelter } = useShelterPermissions();
 
+  // Computed once per loaded profile and used for both the form's initial
+  // values and the "did this field change?" diff, so the two cannot drift.
+  const stored = useMemo(
+    () => (shelter ? toFormData(shelter) : null),
+    [shelter],
+  );
+
   async function onSubmit(
     data: SleepingDetailsFormData,
     setError: UseFormSetError<SleepingDetailsFormData>,
   ) {
+    if (!stored) {
+      return;
+    }
+
     try {
       setDisabled(true);
 
       const response = await updateShelter({
-        variables: { data: toUpdateInput(shelterId, data) },
+        variables: { data: toUpdateInput(shelterId, data, stored) },
       });
 
       const fieldErrors = getFieldErrorsOrThrow({
@@ -109,13 +123,13 @@ export function ShelterSleepingDetails(props: TProps) {
     setEditMode(false);
   }
 
-  if (!shelter) {
+  if (!shelter || !stored) {
     return null;
   }
 
   return (
     <ShelterSleepingDetailsForm
-      values={toFormData(shelter)}
+      values={stored}
       onSubmit={onSubmit}
       isViewMode={!isEditMode}
       onEditClick={canEditShelter ? () => setEditMode(true) : undefined}

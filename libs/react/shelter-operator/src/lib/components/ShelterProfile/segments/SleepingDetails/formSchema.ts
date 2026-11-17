@@ -86,7 +86,39 @@ export const AVAILABILITY_COUNT_FIELDS = [
   'nonRestrictedBeds',
   'restrictedBeds',
 ] as const;
+const AVAILABILITY_FIELD_NAMES = [
+  ...AVAILABILITY_COUNT_FIELDS,
+  'restrictionNotes',
+] as const;
 const AVAILABILITY_FIELD_PREFIX = `${AVAILABILITY_INPUT}.`;
+
+export type AvailabilityPayload = Partial<
+  Pick<SleepingDetailsFormData, (typeof AVAILABILITY_FIELD_NAMES)[number]>
+>;
+
+/**
+ * The availability fields the operator actually changed, or `null` if none.
+ *
+ * The API treats `availability` as a partial update, so sending only the edited
+ * fields is what keeps a save from this tab from overwriting fresher counts
+ * entered elsewhere: an untouched counter is omitted rather than resent, and a
+ * save that does not touch availability carries no availability payload at all
+ * (so it adds no audit event either).
+ */
+export function toAvailabilityPayload(
+  data: SleepingDetailsFormData,
+  stored: SleepingDetailsFormData,
+): AvailabilityPayload | null {
+  const payload: AvailabilityPayload = {};
+
+  for (const name of AVAILABILITY_FIELD_NAMES) {
+    if (data[name] !== stored[name]) {
+      payload[name] = data[name];
+    }
+  }
+
+  return Object.keys(payload).length ? payload : null;
+}
 
 /**
  * Re-points availability validation messages at the form fields they belong to.

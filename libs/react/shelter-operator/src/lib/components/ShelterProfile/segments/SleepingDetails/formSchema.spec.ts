@@ -1,6 +1,11 @@
 import { RoomStyleChoices } from '@monorepo/react/shelter';
 import type { ShelterProfileType } from '../../types';
-import { formSchema, toFormData, toFormFieldErrors } from './formSchema';
+import {
+  formSchema,
+  toAvailabilityPayload,
+  toFormData,
+  toFormFieldErrors,
+} from './formSchema';
 
 const baseValues = {
   totalBeds: null,
@@ -182,5 +187,55 @@ describe('SleepingDetails toFormFieldErrors', () => {
       { field: 'nonRestrictedBeds', message: 'cap' },
       { field: 'restrictedBeds', message: 'cap' },
     ]);
+  });
+});
+
+describe('SleepingDetails toAvailabilityPayload', () => {
+  const stored = {
+    ...baseValues,
+    nonRestrictedBeds: 4,
+    restrictedBeds: 2,
+    restrictionNotes: 'Women only',
+  };
+
+  it('sends nothing when the counters and notes are untouched', () => {
+    expect(toAvailabilityPayload(stored, stored)).toBeNull();
+  });
+
+  it('sends only the field that changed', () => {
+    expect(toAvailabilityPayload({ ...stored, restrictedBeds: 3 }, stored)).toEqual(
+      { restrictedBeds: 3 },
+    );
+  });
+
+  it('sends a cleared note as an empty string', () => {
+    expect(
+      toAvailabilityPayload({ ...stored, restrictionNotes: '' }, stored),
+    ).toEqual({ restrictionNotes: '' });
+  });
+
+  it('sends every field when all of them changed', () => {
+    expect(
+      toAvailabilityPayload(
+        {
+          ...stored,
+          nonRestrictedBeds: 1,
+          restrictedBeds: 0,
+          restrictionNotes: '',
+        },
+        stored,
+      ),
+    ).toEqual({ nonRestrictedBeds: 1, restrictedBeds: 0, restrictionNotes: '' });
+  });
+
+  it('sends nothing when the shelter had no availability row and none was entered', () => {
+    const empty = {
+      ...baseValues,
+      nonRestrictedBeds: 0,
+      restrictedBeds: 0,
+      restrictionNotes: '',
+    };
+
+    expect(toAvailabilityPayload(empty, empty)).toBeNull();
   });
 });
