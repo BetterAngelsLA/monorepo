@@ -105,8 +105,15 @@ describe('ScheduleForm', () => {
     expect(onSave).not.toHaveBeenCalled();
   });
 
-  it('marks an overnight range as ending the next day', () => {
-    render(
+  it('marks an overnight range as ending the next day, and only those', () => {
+    const daytimeRow = {
+      ...savedOvernightRow,
+      id: 'mon-day',
+      startTime: '09:00:00',
+      endTime: '17:00:00',
+    };
+
+    const { unmount } = render(
       <ScheduleForm
         scheduleType={ScheduleTypeChoices.Operating}
         initialSchedules={[savedOvernightRow]}
@@ -116,6 +123,20 @@ describe('ScheduleForm', () => {
 
     // Without this, 8:30 PM - 7:30 AM is ambiguous to whoever enters it.
     expect(screen.getByText('Next day')).not.toBeNull();
+
+    unmount();
+
+    // A same-day range must not carry the label; without this the assertion
+    // above would pass even if the end-before-start detection were dropped.
+    render(
+      <ScheduleForm
+        scheduleType={ScheduleTypeChoices.Operating}
+        initialSchedules={[daytimeRow]}
+        onSave={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByText('Next day')).toBeNull();
   });
 
   it('saves an overnight range typed into a day', async () => {
