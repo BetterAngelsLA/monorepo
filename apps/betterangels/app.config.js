@@ -24,6 +24,14 @@ if (
   );
 }
 
+// A web deploy publishes version.json, which open tabs compare against the id
+// compiled into this bundle. Built without it, the two can never agree.
+if (process.env.EXPO_WEB_BASE_URL && !process.env.EXPO_PUBLIC_BUILD_ID?.trim()) {
+  throw new Error(
+    'EXPO_PUBLIC_BUILD_ID is required for a web deploy build (the commit being built).',
+  );
+}
+
 // Link host for universal links / App Links; set per EAS profile.
 const HOSTNAME = process.env.EXPO_PUBLIC_OUTREACH_HOST?.trim();
 
