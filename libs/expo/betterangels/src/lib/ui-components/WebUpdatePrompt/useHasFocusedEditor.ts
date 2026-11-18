@@ -12,7 +12,7 @@ import { Platform } from 'react-native';
  * Web-only by construction — there is no `document` on native, and the native
  * update path is a different prompt.
  */
-const isEditableElement = (element: Element | null): boolean => {
+export const isEditableElement = (element: Element | null): boolean => {
   if (!element) return false;
 
   const tag = element.tagName;
