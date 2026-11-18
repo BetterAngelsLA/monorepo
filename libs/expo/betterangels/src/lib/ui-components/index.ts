@@ -1,6 +1,6 @@
 export { default as AddressField } from './AddressField';
 export { AppUpdatePrompt } from './AppUpdatePrompt';
-export { WebUpdatePrompt } from './WebUpdatePrompt';
+export { WebUpdateManager } from './WebUpdate';
 export { default as AuthContainer } from './AuthContainer';
 export * from './ClientCard';
 export * from './ClientCardHmis';

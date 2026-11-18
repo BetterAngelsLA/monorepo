@@ -10,7 +10,7 @@ import {
   AppUpdatePrompt,
   ErrorCrashView,
   useNewRelic,
-  WebUpdatePrompt,
+  WebUpdateManager,
 } from '@monorepo/expo/betterangels';
 import { asyncStorageAdapter } from '@monorepo/expo/shared/utils';
 
@@ -74,7 +74,7 @@ export default function RootLayout() {
               channel there — so this offers a reload once the deployed build id
               differs from the one compiled into this bundle.
             */}
-            <WebUpdatePrompt ownBuildId={BUILD_ID} />
+            <WebUpdateManager ownBuildId={BUILD_ID} />
             <StatusBar style={Platform.OS === 'ios' ? 'light' : 'auto'} />
             <AppRoutesStack />
           </BaDataProviders>

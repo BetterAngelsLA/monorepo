@@ -178,13 +178,20 @@ const currentKeys = new Set(
  *
  * Stale assets are pruned by age afterwards (see below) instead of by the sync.
  */
+const IMMUTABLE_PREFIXES = ['_expo/static/', 'assets/'];
+
+const isImmutable = (key) => IMMUTABLE_PREFIXES.some((prefix) => key.startsWith(prefix));
+
+const includeImmutable = IMMUTABLE_PREFIXES.map((prefix) => `--include "${prefix}*"`).join(' ');
+const excludeImmutable = IMMUTABLE_PREFIXES.map((prefix) => `--exclude "${prefix}*"`).join(' ');
+
 execSync(
-  `aws s3 sync "${distPath}" "${s3Dest}" --no-cli-pager --cache-control "public, max-age=31536000, immutable" --exclude "*" --include "_expo/static/*" --include "assets/*"`,
+  `aws s3 sync "${distPath}" "${s3Dest}" --no-cli-pager --cache-control "public, max-age=31536000, immutable" --exclude "*" ${includeImmutable}`,
   { stdio: 'inherit' },
 );
 
 execSync(
-  `aws s3 sync "${distPath}" "${s3Dest}" --delete --no-cli-pager --cache-control "no-cache" --exclude "_expo/*" --exclude "assets/*"`,
+  `aws s3 sync "${distPath}" "${s3Dest}" --delete --no-cli-pager --cache-control "no-cache" ${excludeImmutable}`,
   { stdio: 'inherit' },
 );
 console.log('✅ S3 sync complete.');
@@ -258,31 +265,34 @@ try {
 }
 
 /*
- * What gets purged depends on the app, because this one script deploys four of
- * them and only this one is a single-entry SPA whose assets are all hashed.
+ * Purge what this deploy actually replaced, derived from the build rather than
+ * from a list of file names: every uploaded file that is not content-addressed,
+ * plus the bare deploy root (which is what the site's `/` resolves to).
  *
- * For the Expo app, only the mutable files are purged: content-hashed assets
- * arrive under a new name when they change, so invalidating them cannot change
- * what is served, and `/*` made every deploy wait on a purge of several
- * megabytes that were already immutable. Its unhashed files are listed too —
- * `favicon.ico` and `metadata.json` are not content-addressed and would
- * otherwise keep serving the previous build.
+ * Nothing here needs to know what the files are called — a new entry point, a
+ * manifest, a favicon or an `iframe.html` is picked up because it is simply a
+ * mutable file that was just uploaded. That also makes it safe for the four
+ * different apps this script deploys, which have different roots.
  *
- * The others (admin, shelter-web, storybook) carry mutable files this list does
- * not know about: `site.webmanifest`, `browserconfig.xml`, PWA icons, and
- * storybook's `iframe.html` plus `sb-manager/*`. They keep the whole-prefix
- * purge.
+ * Fallback: a very large mutable set would be a slow invalidation, and `/*`
+ * purges the same bytes for the price of one path, so switch to it above the
+ * threshold.
  */
-const isSingleEntrySpa = NX_TASK_TARGET_PROJECT === 'betterangels';
-const invalidationPaths = isSingleEntrySpa
-  ? [
-      `${cfPath}/`,
-      `${cfPath}/index.html`,
-      `${cfPath}/version.json`,
-      `${cfPath}/favicon.ico`,
-      `${cfPath}/metadata.json`,
-    ]
-  : [`${cfPath}/*`];
+const MAX_EXPLICIT_INVALIDATION_PATHS = 100;
+
+const mutableKeys = [...currentKeys].filter((key) => !isImmutable(key)).sort();
+const rootObjectExists = currentKeys.has('index.html');
+
+const explicitPaths = [
+  ...(rootObjectExists ? [`${cfPath}/`] : []),
+  ...mutableKeys.map((key) => `${cfPath}/${key}`),
+];
+
+const invalidationPaths =
+  explicitPaths.length > MAX_EXPLICIT_INVALIDATION_PATHS
+    ? [`${cfPath}/*`]
+    : explicitPaths;
+
 const invalidationId = execSync(
   `aws cloudfront create-invalidation --distribution-id "${CF_DISTRIBUTION_ID}" --paths ${invalidationPaths.map((p) => `"${p}"`).join(' ')} --query 'Invalidation.Id' --output text --no-cli-pager`,
   { encoding: 'utf8' },

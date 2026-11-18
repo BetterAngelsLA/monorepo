@@ -50,7 +50,7 @@ const warnOnceAboutUnusableId = (value: string) => {
 
   hasWarnedAboutUnusableId = true;
   console.warn(
-    `[WebUpdatePrompt] build id ${JSON.stringify(value)} is not a commit sha; the update check is disabled for this session.`,
+    `[WebUpdate] build id ${JSON.stringify(value)} is not a commit sha; the update check is disabled for this session.`,
   );
 };
 
@@ -94,6 +94,7 @@ export const isStaleBuild = (
  */
 export function useWebUpdateCheck(ownBuildId: string | undefined) {
   const [updateAvailable, setUpdateAvailable] = useState(false);
+  const [staleSince, setStaleSince] = useState<number | null>(null);
   const [dismissed, setDismissed] = useState(false);
   const [deployedBuildId, setDeployedBuildId] = useState<string | null>(null);
   const lastCheckRef = useRef(0);
@@ -125,6 +126,11 @@ export function useWebUpdateCheck(ownBuildId: string | undefined) {
       // leaves the prompt on screen forever if it can only ever be set true, and
       // offers a reload that would change nothing.
       setUpdateAvailable(stale);
+      setStaleSince((current) => {
+        if (!stale) return null;
+
+        return current ?? Date.now();
+      });
 
       // Only a scheduled poll re-arms a "Not now". Doing it on every check would
       // turn returning to the tab into a nag; doing it never would let one
@@ -168,11 +174,20 @@ export function useWebUpdateCheck(ownBuildId: string | undefined) {
     if (deployedBuildId) markReloadAttempt(deployedBuildId);
   }, [deployedBuildId]);
 
+  /** Whether a reload was already attempted for the deployment now live. */
+  const guardActive = useCallback(
+    () => (deployedBuildId ? isReloadGuardActive(deployedBuildId) : false),
+    [deployedBuildId],
+  );
+
   return {
     updateAvailable,
+    /** When this tab was first seen to be behind, or null while current. */
+    staleSince,
     dismissed,
     dismiss,
     noteReloadAttempt,
+    guardActive,
     /** Exposed for the prompt and for tests; the effect calls it internally. */
     check,
   };

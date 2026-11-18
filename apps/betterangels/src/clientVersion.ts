@@ -10,7 +10,7 @@
 // They need different strings. The header wants everything that distinguishes a
 // running bundle, including the OTA update id on a device. The comparison wants
 // the commit alone — an OTA id would never appear in `version.json`. That is why
-// the screen passes the raw `BUILD_ID` to `WebUpdatePrompt` and only the header
+// the screen passes the raw `BUILD_ID` to the update manager and only the header
 // gets `getBundleVersion()`.
 //
 // On web `EXPO_PUBLIC_BUILD_ID` is the commit the export was built from. On
