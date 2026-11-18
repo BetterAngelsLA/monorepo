@@ -12,6 +12,9 @@ import pytest
 import structlog
 from django.test import RequestFactory
 
+from django.conf import settings
+from django_structlog import signals
+
 from common.request_metadata import MAX_CLIENT_VERSION_LENGTH, bind_client_version
 
 
@@ -51,3 +54,21 @@ def test_strips_control_characters() -> None:
 
 def test_truncates_to_the_documented_limit() -> None:
     assert len(_bind("a" * 500)["client_version"]) == MAX_CLIENT_VERSION_LENGTH
+
+
+def test_receiver_is_connected_to_the_request_signals() -> None:
+    """A unit test of the callable would pass even if nothing ever called it.
+
+    The failure mode this guards is an unwired receiver: `CommonConfig.ready()`
+    losing the import, which silently returns every log line to having no build
+    id.
+    """
+    live = signals.bind_extra_request_metadata._live_receivers(None)  # noqa: SLF001
+
+    assert bind_client_version in live
+
+
+def test_request_logging_middleware_is_installed() -> None:
+    """The other half of the wiring: without it no request lifecycle is logged."""
+
+    assert "django_structlog.middlewares.RequestMiddleware" in settings.MIDDLEWARE

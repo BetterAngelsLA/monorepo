@@ -25,6 +25,17 @@
 
 export const RELOAD_GUARD_KEY = 'web-update:reloaded-at';
 
+/**
+ * The same prefix length the staleness comparison uses. The guard keys on the
+ * deployment id, and the same commit can be spelled at two lengths (the bundle's
+ * inline value vs `version.json`'s), so an unnormalised comparison would fail
+ * open exactly once — on the reload the guard exists to suppress.
+ */
+const COMPARABLE_LENGTH = 12;
+
+const normalize = (value: string) =>
+  value.trim().toLowerCase().slice(0, COMPARABLE_LENGTH);
+
 /** How long after a reload attempt the prompt stays quiet for the same build. */
 export const RELOAD_GUARD_MS = 10 * 60 * 1000;
 
@@ -86,7 +97,7 @@ export const isReloadGuardActive = (
   if (!record || !deployedBuildId) return false;
 
   // A different id means a new deployment landed after the attempt: offer it.
-  if (record.buildId !== deployedBuildId) return false;
+  if (normalize(record.buildId) !== normalize(deployedBuildId)) return false;
 
   const elapsed = now - record.at;
 

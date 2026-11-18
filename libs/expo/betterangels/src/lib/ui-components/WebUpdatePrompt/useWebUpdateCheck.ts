@@ -119,15 +119,18 @@ export function useWebUpdateCheck(ownBuildId: string | undefined) {
       // rather than offering a reload that would land on the same bundle again.
       if (isReloadGuardActive(deployed)) return;
 
-      if (isStaleBuild(ownBuildId, deployed)) {
-        setUpdateAvailable(true);
+      const stale = isStaleBuild(ownBuildId, deployed);
 
-        // Only a scheduled poll re-arms a "Not now". Doing it on every check
-        // would turn returning to the tab into a nag; doing it never would let
-        // one dismissal hide a stale build for the tab's whole life, which is
-        // the outcome this feature exists to prevent.
-        if (reArmDismissal) setDismissed(false);
-      }
+      // Assigned, not merely raised: a rollback to the build this tab is running
+      // leaves the prompt on screen forever if it can only ever be set true, and
+      // offers a reload that would change nothing.
+      setUpdateAvailable(stale);
+
+      // Only a scheduled poll re-arms a "Not now". Doing it on every check would
+      // turn returning to the tab into a nag; doing it never would let one
+      // dismissal hide a stale build for the tab's whole life, which is the
+      // outcome this feature exists to prevent.
+      if (stale && reArmDismissal) setDismissed(false);
     } finally {
       isCheckingRef.current = false;
     }
@@ -165,5 +168,12 @@ export function useWebUpdateCheck(ownBuildId: string | undefined) {
     if (deployedBuildId) markReloadAttempt(deployedBuildId);
   }, [deployedBuildId]);
 
-  return { updateAvailable, dismissed, dismiss, noteReloadAttempt };
+  return {
+    updateAvailable,
+    dismissed,
+    dismiss,
+    noteReloadAttempt,
+    /** Exposed for the prompt and for tests; the effect calls it internally. */
+    check,
+  };
 }

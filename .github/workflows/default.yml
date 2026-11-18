@@ -305,6 +305,15 @@ jobs:
           # runners.
           export TEST_DB_WORKERS=logical
           export PYTEST_ADDOPTS="-n logical --durations=25"
+          # Every command below runs *inside this container*, and compose forwards
+          # only the variables its own file lists. A variable set in the step env
+          # but missing from that list arrives empty, silently: the web export
+          # would inline no build id and the deploy would refuse to publish a
+          # manifest for it. Fails here, once, instead of on the deploy.
+          if [[ -z "${EXPO_PUBLIC_BUILD_ID:-}" ]]; then
+            echo "EXPO_PUBLIC_BUILD_ID did not reach the container; the web deploy would be blocked." >&2
+            exit 1
+          fi
           # EAS/vite builds consume EXPO_TOKEN and cloud credentials; forked
           # PRs still run lint/typecheck/test but must not run build.
           # Both PR previews (web deploy and EAS update) run in the separate
