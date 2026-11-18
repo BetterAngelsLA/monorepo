@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { execSync } from 'child_process';
-import { existsSync } from 'fs';
+import { existsSync, readdirSync, writeFileSync } from 'fs';
+import { basename, relative, resolve } from 'path';
 
 import { getBranchBasePath } from '../shared/get-base-path.mjs';
 
@@ -62,21 +63,238 @@ if (!distPath) {
 
 console.log(`📦 ${NX_TASK_TARGET_PROJECT} → ${s3Dest} (from ${distPath})`);
 
-// --- Deploy ---
-execSync(`aws s3 sync "${distPath}" "${s3Dest}" --delete --no-cli-pager`, {
-  stdio: 'inherit',
-});
-console.log('✅ S3 sync complete.');
+// --- Build identity ---
+/*
+ * The id the app compares itself against. Bundles carry the same value inlined
+ * as `EXPO_PUBLIC_BUILD_ID` (see the project's `export-web` target), so a tab
+ * can tell whether the deployment has moved past it.
+ *
+ * A commit sha rather than a timestamp: it is stable for a rebuild of the same
+ * tree, so a redeploy of unchanged code does not make every open tab prompt.
+ */
+const buildIdFromEnv = process.env.EXPO_PUBLIC_BUILD_ID?.trim();
+const buildId = (
+  buildIdFromEnv || execSync('git rev-parse --short=12 HEAD', { encoding: 'utf8' }).trim()
+).trim();
 
 /*
- * One path (the deploy prefix) rather than a walk of the files just written:
- * content-hashed assets arrive under a new name when they change, so
- * invalidating them cannot change what is served — the enumeration was an
- * optimization nobody measured, and one path is the cheapest thing CloudFront
- * processes.
+ * The bundle carries whatever this variable held at *export* time, so a deploy
+ * that invents its own id publishes a manifest the bundle can never equal — and
+ * the client would then offer a reload on every single load. For the one app
+ * that reads the manifest that is fatal, so refuse rather than ship it.
+ *
+ * The other apps this script deploys (admin, shelter-web, storybook) have no
+ * update prompt; they get a manifest because `version.json` is written for all
+ * of them, and a git fallback is a reasonable label for an artifact nobody
+ * compares against.
  */
+/*
+ * Which apps must not ship without a matching manifest id. The Nx project name
+ * is not enough: a manual `--dist` run has no Nx environment, so the name
+ * defaults to `'web'` and the guard would silently fail open on exactly the kind
+ * of hand-run production deploy that most needs it. So the deploy target sets an
+ * explicit flag, and the dist directory name is a second signal for the manual
+ * path.
+ */
+const appReadsManifest =
+  process.env.REQUIRES_BUNDLE_ID === '1' ||
+  NX_TASK_TARGET_PROJECT === 'betterangels' ||
+  basename(distPath) === 'betterangels';
+
+if (!buildIdFromEnv && appReadsManifest) {
+  console.error(
+    '❌ EXPO_PUBLIC_BUILD_ID is unset, but this app compares version.json against it.\n' +
+      '   Building and deploying with different ids would prompt every open tab forever.\n' +
+      '   Re-run the export with EXPO_PUBLIC_BUILD_ID set to the commit being deployed.',
+  );
+  process.exit(1);
+}
+
+if (!buildIdFromEnv) {
+  console.warn(
+    '⚠️  EXPO_PUBLIC_BUILD_ID is unset; version.json labels the artifact with the git sha.',
+  );
+}
+
+console.log(`🏷  build id: ${buildId} (source: ${buildIdFromEnv ? 'env' : 'git'})`);
+const versionManifest = `${distPath}/version.json`;
+
+writeFileSync(
+  versionManifest,
+  `${JSON.stringify({ buildId, deployedAt: new Date().toISOString() }, null, 2)}\n`,
+);
+
+const ASSET_RETENTION_DAYS = Number(process.env.ASSET_RETENTION_DAYS ?? 30);
+
+/*
+ * Validated *before* the upload below, not when it is finally used: a bad value
+ * used to throw on `new Date(NaN).toISOString()` after both syncs and before the
+ * invalidation, which fails a deploy that has already shipped the revision and
+ * left the edge unpurged. And a zero or negative window would make every asset
+ * ever uploaded eligible for deletion.
+ */
+if (!Number.isInteger(ASSET_RETENTION_DAYS) || ASSET_RETENTION_DAYS < 1) {
+  console.error(
+    `❌ ASSET_RETENTION_DAYS must be a positive integer (got ${JSON.stringify(process.env.ASSET_RETENTION_DAYS)}).`,
+  );
+  process.exit(1);
+}
+
+const prefixBase = s3Path ? `${s3Path}/` : '';
+
+/*
+ * Age alone is not a safe criterion: an asset the current build still references
+ * can be older than the window (a font nobody has touched), and deleting it
+ * would break the app that is serving right now. So the current build's own keys
+ * are excluded unconditionally, and the window only ever applies to superseded
+ * assets.
+ */
+const distRoot = resolve(distPath);
+const currentKeys = new Set(
+  readdirSync(distRoot, { recursive: true, withFileTypes: true })
+    .filter((entry) => entry.isFile())
+    // Resolved on both sides: a `--dist` of `./dist/apps/betterangels`, a
+    // trailing slash or a symlinked path all normalise to the same root, where a
+    // `startsWith` on the raw strings silently matched nothing — which would
+    // have made every asset look superseded.
+    .map((entry) => relative(distRoot, resolve(entry.parentPath, entry.name))),
+);
+
+// --- Deploy ---
+/*
+ * Two passes, because the two kinds of file want opposite cache policies and
+ * `aws s3 sync` takes one `--cache-control` per run.
+ *
+ * 1. Content-hashed assets are immutable: a given URL's bytes never change, so
+ *    they can be cached for a year. This pass deliberately omits `--delete` so
+ *    the *previous* build's assets stay in place. A browser that still holds old
+ *    HTML then fetches its own chunks and runs old code — degraded, but working.
+ *    With `--delete`, those requests 404 and the app paints nothing at all.
+ *
+ * 2. Everything else — `index.html`, `version.json`, metadata — is the entry
+ *    point and must be revalidated on every load, or a stale shell outlives the
+ *    assets it names. `--delete` is safe here: there is no per-build content to
+ *    preserve at the root.
+ *
+ * Stale assets are pruned by age afterwards (see below) instead of by the sync.
+ */
+const IMMUTABLE_PREFIXES = ['_expo/static/', 'assets/'];
+
+const isImmutable = (key) => IMMUTABLE_PREFIXES.some((prefix) => key.startsWith(prefix));
+
+const includeImmutable = IMMUTABLE_PREFIXES.map((prefix) => `--include "${prefix}*"`).join(' ');
+const excludeImmutable = IMMUTABLE_PREFIXES.map((prefix) => `--exclude "${prefix}*"`).join(' ');
+
+execSync(
+  `aws s3 sync "${distPath}" "${s3Dest}" --no-cli-pager --cache-control "public, max-age=31536000, immutable" --exclude "*" ${includeImmutable}`,
+  { stdio: 'inherit' },
+);
+
+execSync(
+  `aws s3 sync "${distPath}" "${s3Dest}" --delete --no-cli-pager --cache-control "no-cache" ${excludeImmutable}`,
+  { stdio: 'inherit' },
+);
+console.log('✅ S3 sync complete.');
+
+// --- Prune old assets ---
+/*
+ * Retention replaces `--delete`: assets older than the window below are removed
+ * once no plausible cached shell can still reference them. Browsers revalidate
+ * `index.html` on every load now (the `no-cache` above), so the window only has
+ * to cover a tab left open across a deploy, plus headroom for a client whose
+ * clock or cache behaviour is unusual.
+ *
+ * Everything this block needs is computed *before* the upload below: a bad
+ * `ASSET_RETENTION_DAYS` used to abort the deploy after S3 had received the new
+ * revision and before the edge was purged, which is the one state that leaves
+ * production inconsistent.
+ */
+try {
+  const cutoff = new Date(
+    Date.now() - ASSET_RETENTION_DAYS * 24 * 60 * 60 * 1000,
+  ).toISOString();
+
+  let pruned = 0;
+  const failed = [];
+
+  for (const assetPrefix of ['_expo/static/', 'assets/']) {
+    // JSON, not `--output text`: text renders a null result as the literal
+    // `None`, which the old parser would happily try to delete, and a
+    // whitespace split is only safe while no key contains whitespace — which
+    // this script does not control.
+    const listing = execSync(
+      `aws s3api list-objects-v2 --bucket "${S3_BUCKET}" --prefix "${prefixBase}${assetPrefix}" --query "Contents[?LastModified<='${cutoff}'].Key" --output json --no-cli-pager`,
+      { encoding: 'utf8' },
+    );
+
+    const stale = (JSON.parse(listing || '[]') ?? [])
+      .filter((key) => typeof key === 'string')
+      .filter((key) => !currentKeys.has(key.slice(prefixBase.length)));
+
+    // Batched: delete-objects takes at most 1000 keys per call.
+    for (let i = 0; i < stale.length; i += 1000) {
+      const batch = stale.slice(i, i + 1000);
+      const objects = JSON.stringify({ Objects: batch.map((Key) => ({ Key })) });
+
+      const result = execSync(
+        `aws s3api delete-objects --bucket "${S3_BUCKET}" --delete '${objects}' --query "Errors" --output json --no-cli-pager`,
+        { encoding: 'utf8' },
+      );
+
+      // Per-key failures come back as a 200 with an `Errors` array, so an
+      // unchecked delete reports more than it achieved.
+      const batchErrors = JSON.parse(result || '[]') ?? [];
+
+      failed.push(...batchErrors);
+      pruned += batch.length - batchErrors.length;
+    }
+  }
+
+  console.log(
+    pruned
+      ? `🧹 Pruned ${pruned} superseded asset(s) older than ${ASSET_RETENTION_DAYS}d.`
+      : `🧹 Nothing to prune (${ASSET_RETENTION_DAYS}d window).`,
+  );
+
+  if (failed.length) {
+    console.warn(`⚠️  ${failed.length} asset deletion(s) were refused by S3.`);
+  }
+} catch (err) {
+  // Never fail a deploy on housekeeping: the new revision is already up.
+  console.warn(`⚠️  Asset pruning skipped: ${err.message}`);
+}
+
+/*
+ * Purge what this deploy actually replaced, derived from the build rather than
+ * from a list of file names: every uploaded file that is not content-addressed,
+ * plus the bare deploy root (which is what the site's `/` resolves to).
+ *
+ * Nothing here needs to know what the files are called — a new entry point, a
+ * manifest, a favicon or an `iframe.html` is picked up because it is simply a
+ * mutable file that was just uploaded. That also makes it safe for the four
+ * different apps this script deploys, which have different roots.
+ *
+ * Fallback: a very large mutable set would be a slow invalidation, and `/*`
+ * purges the same bytes for the price of one path, so switch to it above the
+ * threshold.
+ */
+const MAX_EXPLICIT_INVALIDATION_PATHS = 100;
+
+const mutableKeys = [...currentKeys].filter((key) => !isImmutable(key)).sort();
+const rootObjectExists = currentKeys.has('index.html');
+
+const explicitPaths = [
+  ...(rootObjectExists ? [`${cfPath}/`] : []),
+  ...mutableKeys.map((key) => `${cfPath}/${key}`),
+];
+
+const invalidationPaths =
+  explicitPaths.length > MAX_EXPLICIT_INVALIDATION_PATHS
+    ? [`${cfPath}/*`]
+    : explicitPaths;
+
 const invalidationId = execSync(
-  `aws cloudfront create-invalidation --distribution-id "${CF_DISTRIBUTION_ID}" --paths "${cfPath}/*" --query 'Invalidation.Id' --output text --no-cli-pager`,
+  `aws cloudfront create-invalidation --distribution-id "${CF_DISTRIBUTION_ID}" --paths ${invalidationPaths.map((p) => `"${p}"`).join(' ')} --query 'Invalidation.Id' --output text --no-cli-pager`,
   { encoding: 'utf8' },
 ).trim();
 console.log(`✅ CloudFront invalidation sent: ${invalidationId}`);
@@ -96,8 +314,8 @@ console.log(`✅ CloudFront invalidation sent: ${invalidationId}`);
  * Production has no such consumer (no e2e step runs there), so an unconfirmed
  * invalidation is a warning: the upload already happened and CloudFront finishes
  * on its own, and failing would turn a successful main push red for nothing.
- * `/*` is also the invalidation most likely to be slow, and re-running the job
- * only re-confirms what AWS already did.
+ * The entry-point invalidation is also the one most likely to be slow on a large
+ * distribution, and re-running the job only re-confirms what AWS already did.
  */
 const isProduction = process.env.NX_TASK_TARGET_CONFIGURATION === 'production';
 try {
