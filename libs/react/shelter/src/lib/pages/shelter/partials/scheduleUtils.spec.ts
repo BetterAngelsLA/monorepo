@@ -365,13 +365,33 @@ describe('getAggregateStatus', () => {
     ).toStrictEqual({ tone: 'closed', statusText: 'Closing Soon' });
   });
 
-  it('stays closed when another schedule type is closed', () => {
+  it('reports partially open when another type is closed', () => {
+    // A closing-soon type is still open, so one open + one closed is partial,
+    // not closed.
     expect(
       getAggregateStatus(
         [lateShift, intakeClosed],
         [ScheduleTypeChoices.Operating, ScheduleTypeChoices.Intake],
         now,
       ),
-    ).toStrictEqual({ tone: 'closed', statusText: 'Closed' });
+    ).toStrictEqual({ tone: 'partial', statusText: 'Partially Open' });
+  });
+
+  it('reports open when another type is open beyond the hour', () => {
+    const intakeOpen = row({
+      id: 'intake-open',
+      scheduleType: ScheduleTypeChoices.Intake,
+      day: DayOfWeekChoices.Tuesday,
+      startTime: '09:00:00',
+      endTime: '17:00:00',
+    });
+
+    expect(
+      getAggregateStatus(
+        [lateShift, intakeOpen],
+        [ScheduleTypeChoices.Operating, ScheduleTypeChoices.Intake],
+        now,
+      ),
+    ).toStrictEqual({ tone: 'open', statusText: 'Open Now' });
   });
 });

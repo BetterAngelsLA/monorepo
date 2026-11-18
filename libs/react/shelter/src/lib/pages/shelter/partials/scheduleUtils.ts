@@ -13,6 +13,7 @@ import {
 type Schedule = ShelterType['schedules'][number];
 
 const CLOSING_SOON_MINUTES = 60;
+const CLOSING_SOON_STATUS = 'Closing soon';
 const MINUTES_PER_DAY = 24 * 60;
 
 /**
@@ -113,7 +114,7 @@ export interface WeeklyScheduleDay {
 
 export interface OperatingStatus {
   tone: 'open' | 'closed';
-  statusText: 'Open now' | 'Closing soon' | 'Closed';
+  statusText: 'Open now' | typeof CLOSING_SOON_STATUS | 'Closed';
   detailText: string;
 }
 
@@ -136,26 +137,32 @@ export function getAggregateStatus(
     return getOperatingStatus(typed, now, type);
   });
 
-  const anyOpen = statuses.some((s) => s.tone === 'open');
-  const anyClosed = statuses.some((s) => s.tone === 'closed');
+  // "Closing soon" carries a closed tone for its red colour, but the shelter is
+  // still open: a service that closes in ten minutes has not closed. Only a
+  // type that is actually shut counts against the shelter being open.
+  const isOpenNow = (status: OperatingStatus) =>
+    status.tone === 'open' || status.statusText === CLOSING_SOON_STATUS;
 
-  if (anyOpen && !anyClosed) {
-    return { tone: 'open', statusText: 'Open Now' };
-  }
-  if (anyClosed && !anyOpen) {
-    // "Closing soon" carries a closed tone, but the shelter is still open. When
-    // that is the only reason nothing reads as open, the header has to say so
-    // instead of contradicting the hours dialog.
-    const closingSoon = statuses.every(
-      (status) => status.statusText === 'Closing soon',
-    );
+  const anyOpen = statuses.some(isOpenNow);
+  const anyClosed = statuses.some((status) => !isOpenNow(status));
 
-    return {
-      tone: 'closed',
-      statusText: closingSoon ? 'Closing Soon' : 'Closed',
-    };
+  if (anyOpen && anyClosed) {
+    return { tone: 'partial', statusText: 'Partially Open' };
   }
-  return { tone: 'partial', statusText: 'Partially Open' };
+  if (!anyOpen) {
+    return { tone: 'closed', statusText: 'Closed' };
+  }
+
+  // Every type is open; only warn about closing when all of them are.
+  const allClosingSoon = statuses.every(
+    (status) => status.statusText === CLOSING_SOON_STATUS,
+  );
+
+  if (allClosingSoon) {
+    return { tone: 'closed', statusText: 'Closing Soon' };
+  }
+
+  return { tone: 'open', statusText: 'Open Now' };
 }
 
 /**
@@ -361,7 +368,7 @@ export function getOperatingStatus(
     if (remainingMinutes <= CLOSING_SOON_MINUTES) {
       return {
         tone: 'closed',
-        statusText: 'Closing soon',
+        statusText: CLOSING_SOON_STATUS,
         detailText: formatClock(closesAt),
       };
     }
