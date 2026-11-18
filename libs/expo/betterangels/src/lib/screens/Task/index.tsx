@@ -1,5 +1,10 @@
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
-import { LoadingView, TextRegular } from '@monorepo/expo/shared/ui-components';
+import {
+  Button,
+  LoadingView,
+  TextBold,
+  TextRegular,
+} from '@monorepo/expo/shared/ui-components';
 import { formatScalarDate } from '@monorepo/shared/scalars';
 import { router, useNavigation } from 'expo-router';
 import { useCallback, useEffect, useMemo } from 'react';
@@ -66,8 +71,42 @@ export default function Task({
     return <LoadingView />;
   }
 
-  if (error) throw new Error('Something went wrong. Please try again.');
-  if (!task) return null;
+  if (!task) {
+    // This used to be `if (!task) return null`, which draws a literally blank
+    // screen — what a stale link, a deleted task, or a task outside the
+    // caller's permissions looks like (BACS-128). Only a request that never
+    // got an answer is a real failure worth the crash boundary: a GraphQL
+    // error means the server *did* answer, and "task does not exist" is one
+    // of its ordinary answers.
+    //
+    // Apollo types `error` as `ErrorLike`, which does not declare the field,
+    // so it is read structurally rather than by cast to `ApolloError`.
+    const graphQLErrors = (
+      error as { graphQLErrors?: readonly unknown[] } | undefined
+    )?.graphQLErrors;
+
+    if (error && !graphQLErrors?.length) {
+      throw new Error('Something went wrong. Please try again.');
+    }
+
+    return (
+      <View style={styles.unavailable}>
+        <TextBold size="lg">This task is not available</TextBold>
+        <TextRegular size="sm" textAlign="center">
+          It may have been deleted, or you may not have access to it.
+        </TextRegular>
+        <Button
+          style={styles.unavailableButton}
+          onPress={() => router.back()}
+          size="full"
+          fontSize="sm"
+          accessibilityHint="go back"
+          variant="primary"
+          title="Go back"
+        />
+      </View>
+    );
+  }
 
   return (
     <MainScrollContainer bg={Colors.NEUTRAL_EXTRA_LIGHT}>
@@ -143,5 +182,23 @@ const styles = StyleSheet.create({
   },
   attribution: {
     flexShrink: 1,
+  },
+  /**
+   * The "task isn't available" fallback covers the whole screen rather than
+   * sitting at the top: with no card to read, a centred message is the only
+   * thing there is, and it also makes the state obviously different from a
+   * screen that simply failed to paint.
+   */
+  unavailable: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacings.sm,
+    paddingHorizontal: Spacings.lg,
+    backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
+  },
+  unavailableButton: {
+    marginTop: Spacings.sm,
+    paddingHorizontal: 40,
   },
 });
