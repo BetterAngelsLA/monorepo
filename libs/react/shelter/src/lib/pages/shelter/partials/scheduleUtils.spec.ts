@@ -127,6 +127,34 @@ describe('getWeeklySchedule overnight windows', () => {
     ]);
   });
 
+  it('lets a shift that started the day before finish into a closed day', () => {
+    const result = week([
+      row({
+        day: DayOfWeekChoices.Monday,
+        startTime: '18:00:00',
+        endTime: '06:00:00',
+      }),
+      row({
+        id: 'tuesday-day',
+        day: DayOfWeekChoices.Tuesday,
+        startTime: '10:00:00',
+        endTime: '17:00:00',
+      }),
+      row({
+        isException: true,
+        startDate: '2026-03-03',
+        endDate: '2026-03-03',
+      }),
+    ]);
+
+    expect(result[DayOfWeekChoices.Monday]).toStrictEqual([
+      '18:00:00-23:59:00',
+    ]);
+    expect(result[DayOfWeekChoices.Tuesday]).toStrictEqual([
+      '00:00:00-06:00:00',
+    ]);
+  });
+
   it('carries Sunday night into the following Monday', () => {
     const result = week([
       row({
@@ -164,7 +192,7 @@ describe('getWeeklySchedule overnight windows', () => {
     expect(result[DayOfWeekChoices.Tuesday]).toStrictEqual([]);
   });
 
-  it('keeps an all-day Monday closure from leaking into Tuesday', () => {
+  it('clears the shift that starts on an all-day closed date', () => {
     const result = week([
       mondayNight,
       row({
@@ -174,10 +202,9 @@ describe('getWeeklySchedule overnight windows', () => {
       }),
     ]);
 
+    // The closure cancels Monday's shift for its whole length, tail included.
     expect(result[DayOfWeekChoices.Monday]).toStrictEqual([]);
-    expect(result[DayOfWeekChoices.Tuesday]).toStrictEqual([
-      '00:00:00-08:00:00',
-    ]);
+    expect(result[DayOfWeekChoices.Tuesday]).toStrictEqual([]);
   });
 });
 

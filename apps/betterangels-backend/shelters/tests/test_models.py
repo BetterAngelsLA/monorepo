@@ -978,6 +978,146 @@ class ShiftScopedScheduleTestCase(TestCase):
         self.assertTrue(self.is_open(shelter, 2026, 12, 24, 8, 0))
         self.assertTrue(self.is_open(shelter, 2026, 12, 25, 2, 0))
 
+    def test_all_day_closure_cancels_the_shift_it_starts(self) -> None:
+        shelter = self.make_shelter(
+            {
+                "day": DayOfWeekChoices.MONDAY,
+                "start_time": datetime.time(20, 30),
+                "end_time": datetime.time(7, 30),
+            },
+            {
+                "day": None,
+                "start_date": datetime.date(2026, 3, 2),
+                "end_date": datetime.date(2026, 3, 2),
+                "is_exception": True,
+            },
+        )
+
+        self.assertFalse(self.is_open(shelter, 2026, 3, 2, 22, 0))
+        self.assertFalse(self.is_open(shelter, 2026, 3, 3, 2, 0))
+
+    def test_all_day_closure_does_not_cancel_a_later_shift(self) -> None:
+        shelter = self.make_shelter(
+            {
+                "day": DayOfWeekChoices.MONDAY,
+                "start_time": datetime.time(20, 30),
+                "end_time": datetime.time(7, 30),
+            },
+            {
+                "day": DayOfWeekChoices.TUESDAY,
+                "start_time": datetime.time(9, 0),
+                "end_time": datetime.time(17, 0),
+            },
+            {
+                "day": None,
+                "start_date": datetime.date(2026, 3, 2),
+                "end_date": datetime.date(2026, 3, 2),
+                "is_exception": True,
+            },
+        )
+
+        self.assertTrue(self.is_open(shelter, 2026, 3, 3, 10, 0))
+
+    def test_all_day_closure_on_the_tail_date_does_not_cancel_the_earlier_shift(self) -> None:
+        shelter = self.make_shelter(
+            {
+                "day": DayOfWeekChoices.MONDAY,
+                "start_time": datetime.time(20, 30),
+                "end_time": datetime.time(7, 30),
+            },
+            {
+                "day": None,
+                "start_date": datetime.date(2026, 3, 3),
+                "end_date": datetime.date(2026, 3, 3),
+                "is_exception": True,
+            },
+        )
+
+        # The shift started before the closure date, so it runs to its end; only
+        # shifts starting on the closure date are cancelled.
+        self.assertTrue(self.is_open(shelter, 2026, 3, 2, 22, 0))
+        self.assertTrue(self.is_open(shelter, 2026, 3, 3, 2, 0))
+
+    def test_all_day_closure_lets_an_in_progress_shift_finish(self) -> None:
+        shelter = self.make_shelter(
+            {
+                "day": DayOfWeekChoices.MONDAY,
+                "start_time": datetime.time(18, 0),
+                "end_time": datetime.time(6, 0),
+            },
+            {
+                "day": DayOfWeekChoices.TUESDAY,
+                "start_time": datetime.time(10, 0),
+                "end_time": datetime.time(17, 0),
+            },
+            {
+                "day": None,
+                "start_date": datetime.date(2026, 3, 3),
+                "end_date": datetime.date(2026, 3, 3),
+                "is_exception": True,
+            },
+        )
+
+        self.assertTrue(self.is_open(shelter, 2026, 3, 2, 22, 0))
+        self.assertTrue(self.is_open(shelter, 2026, 3, 3, 2, 0))
+        self.assertFalse(self.is_open(shelter, 2026, 3, 3, 12, 0))
+
+    def test_every_day_overnight_row_is_cancelled_by_an_all_day_closure(self) -> None:
+        shelter = self.make_shelter(
+            {
+                "day": None,
+                "start_time": datetime.time(20, 30),
+                "end_time": datetime.time(7, 30),
+            },
+            {
+                "day": None,
+                "start_date": datetime.date(2026, 3, 2),
+                "end_date": datetime.date(2026, 3, 2),
+                "is_exception": True,
+            },
+        )
+
+        self.assertFalse(self.is_open(shelter, 2026, 3, 2, 22, 0))
+        self.assertFalse(self.is_open(shelter, 2026, 3, 3, 2, 0))
+        self.assertTrue(self.is_open(shelter, 2026, 3, 3, 21, 0))
+
+    def test_all_day_closure_range_covers_the_last_morning(self) -> None:
+        shelter = self.make_shelter(
+            {
+                "day": None,
+                "start_time": datetime.time(20, 30),
+                "end_time": datetime.time(7, 30),
+            },
+            {
+                "day": None,
+                "start_date": datetime.date(2026, 3, 2),
+                "end_date": datetime.date(2026, 3, 3),
+                "is_exception": True,
+            },
+        )
+
+        self.assertFalse(self.is_open(shelter, 2026, 3, 3, 22, 0))
+        self.assertFalse(self.is_open(shelter, 2026, 3, 4, 2, 0))
+        self.assertTrue(self.is_open(shelter, 2026, 3, 5, 2, 0))
+
+    def test_day_specific_all_day_closure_cancels_its_shift(self) -> None:
+        shelter = self.make_shelter(
+            {
+                "day": DayOfWeekChoices.MONDAY,
+                "start_time": datetime.time(20, 30),
+                "end_time": datetime.time(7, 30),
+            },
+            {
+                "day": DayOfWeekChoices.MONDAY,
+                "start_date": datetime.date(2026, 3, 2),
+                "end_date": datetime.date(2026, 3, 2),
+                "is_exception": True,
+            },
+        )
+
+        self.assertFalse(self.is_open(shelter, 2026, 3, 2, 22, 0))
+        self.assertFalse(self.is_open(shelter, 2026, 3, 3, 2, 0))
+
     def test_weekly_overnight_row_without_date_bounds(self) -> None:
         shelter = self.make_shelter(
             {

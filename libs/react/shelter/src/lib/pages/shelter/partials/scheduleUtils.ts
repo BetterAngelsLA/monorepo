@@ -228,21 +228,28 @@ function getEffectiveTimeWindows(
 ): TimeWindow[] {
   const today = getDayEntries(schedules, date, scheduleType);
 
-  if (today.closedAllDay) {
-    return [];
-  }
-
   const yesterday = getDayEntries(schedules, addDays(date, -1), scheduleType);
+
+  // An all-day closure closes every shift that starts on that date, tail
+  // included, so yesterday contributes nothing to today.
+  const previousBase = yesterday.closedAllDay ? [] : yesterday.baseWindows;
+  const previousExceptions = yesterday.closedAllDay
+    ? []
+    : yesterday.exceptionWindows;
 
   const shift = (windows: TimeWindow[], by: number) =>
     windows.map((w) => ({ open: w.open + by, close: w.close + by }));
 
+  // A closure today cancels the shifts that start today, not a shift already in
+  // progress from yesterday; that tail is still shown.
+  const todayBase = today.closedAllDay ? [] : today.baseWindows;
+
   const baseWindows = [
-    ...shift(yesterday.baseWindows, 0),
-    ...shift(today.baseWindows, MINUTES_PER_DAY),
+    ...shift(previousBase, 0),
+    ...shift(todayBase, MINUTES_PER_DAY),
   ];
   const exceptionWindows = [
-    ...shift(yesterday.exceptionWindows, 0),
+    ...shift(previousExceptions, 0),
     ...shift(today.exceptionWindows, MINUTES_PER_DAY),
   ];
 
