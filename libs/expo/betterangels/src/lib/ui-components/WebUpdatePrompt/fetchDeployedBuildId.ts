@@ -13,18 +13,24 @@ type TVersionManifest = {
 };
 
 /**
- * Absolute path to the manifest, honouring a sub-path deploy.
+ * Absolute path to the manifest for a given deploy prefix.
  *
- * A deployed branch bundle lives under `experiments.baseUrl` (`/branches/x`),
- * so a root-absolute `/version.json` would look in the wrong place. The base
+ * Split out from `getVersionManifestUrl` so the sub-path case is testable
+ * without faking `expo-constants`: a deployed branch bundle lives under
+ * `experiments.baseUrl` (`/branches/x`), and a root-absolute `/version.json`
+ * would read *another deployment's* manifest and prompt on every load. The base
  * path is absent for a root deployment, which is the common case.
  */
-export function getVersionManifestUrl(): string {
-  const baseUrl = Constants.expoConfig?.experiments?.baseUrl;
-
-  const base = typeof baseUrl === 'string' ? baseUrl.replace(/\/+$/, '') : '';
+export function buildVersionManifestUrl(baseUrl?: string | null): string {
+  const base =
+    typeof baseUrl === 'string' ? baseUrl.trim().replace(/\/+$/, '') : '';
 
   return `${base}/${VERSION_MANIFEST_FILE}`;
+}
+
+/** The manifest URL for the deployment this bundle was built into. */
+export function getVersionManifestUrl(): string {
+  return buildVersionManifestUrl(Constants.expoConfig?.experiments?.baseUrl);
 }
 
 /**
@@ -32,10 +38,10 @@ export function getVersionManifestUrl(): string {
  * be determined.
  *
  * `null` rather than throwing for every failure mode — offline, a 404 on a
- * deploy that predates the manifest, malformed JSON — because the caller's only
- * decision is "should I interrupt the user?", and the answer to all of them is
- * no. A background check that surfaces its own errors would be worse than the
- * staleness it is trying to fix.
+ * deployment that predates the manifest, a 200 that is really the SPA fallback
+ * HTML, malformed JSON — because the caller's only decision is "should I
+ * interrupt the user?", and the answer to all of them is no. A background check
+ * that surfaced its own errors would be worse than the staleness it fixes.
  */
 export async function fetchDeployedBuildId(
   fetchImpl: typeof fetch = fetch,
@@ -50,7 +56,9 @@ export async function fetchDeployedBuildId(
 
     const manifest = (await response.json()) as TVersionManifest;
 
-    return manifest.buildId?.trim() || null;
+    return typeof manifest?.buildId === 'string' && manifest.buildId.trim()
+      ? manifest.buildId.trim()
+      : null;
   } catch {
     return null;
   }

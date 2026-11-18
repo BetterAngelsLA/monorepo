@@ -74,8 +74,9 @@ export const createWebFetchClient = (apiUrl?: string) => {
       prefix ? `${prefix}${CSRF_LOGIN_PATH}` : CSRF_LOGIN_PATH,
     ),
     includeCredentialsInterceptor,
-    // Not part of the auth chain: this only labels the request. Kept last so
-    // an interceptor that rewrites headers still sees the original value.
+    // Not part of the auth chain: this only labels the request. Kept last
+    // because composition is right-to-left, so this is the innermost step —
+    // the request is final by then and nothing downstream can drop the header.
     createClientVersionInterceptor(getClientVersion),
   );
 };

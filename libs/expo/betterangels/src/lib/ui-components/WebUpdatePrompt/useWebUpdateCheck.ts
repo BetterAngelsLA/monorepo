@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState, Platform } from 'react-native';
 import { fetchDeployedBuildId } from './fetchDeployedBuildId';
+import { isReloadGuardActive, markReloadAttempt } from './reloadGuard';
 
 /**
  * How often a visible tab asks whether it is still current.
@@ -18,16 +19,36 @@ export const POLL_INTERVAL_MS = 10 * 60 * 1000;
 export const MIN_RECHECK_INTERVAL_MS = 60 * 1000;
 
 /**
+ * How many leading characters of a build id are compared.
+ *
+ * The same commit is spelled differently on the two sides: the bundle carries
+ * whatever `EXPO_PUBLIC_BUILD_ID` held at export time (a full sha in CI), while
+ * `version.json` is written by the deploy, which falls back to a 12-character
+ * `git rev-parse` for apps that do not set the variable. Comparing prefixes
+ * makes a length difference harmless, and twelve hex characters identify a
+ * commit for every practical purpose.
+ */
+export const COMPARABLE_BUILD_ID_LENGTH = 12;
+
+const normalizeBuildId = (value: string) =>
+  value.trim().toLowerCase().slice(0, COMPARABLE_BUILD_ID_LENGTH);
+
+/**
  * Is the running build behind the deployment?
  *
  * Missing inputs are "no": a bundle built without an id (a dev server, or a
- * deployment that predates `version.json`) must never compare equal-or-unequal
- * against nothing and interrupt the user.
+ * deployment that predates `version.json`) must never compare against nothing
+ * and interrupt the user.
  */
 export const isStaleBuild = (
   ownBuildId: string | undefined,
   deployedBuildId: string | null,
-): boolean => Boolean(ownBuildId && deployedBuildId && ownBuildId !== deployedBuildId);
+): boolean =>
+  Boolean(
+    ownBuildId &&
+      deployedBuildId &&
+      normalizeBuildId(ownBuildId) !== normalizeBuildId(deployedBuildId),
+  );
 
 /**
  * Whether the running build is stale, and how to act on it.
@@ -48,6 +69,10 @@ export function useWebUpdateCheck(ownBuildId: string | undefined) {
 
   const check = useCallback(async () => {
     if (!ownBuildId || isCheckingRef.current) return;
+
+    // We just reloaded for this deployment; give the edge time to settle rather
+    // than offering a reload that would land on the same bundle again.
+    if (isReloadGuardActive()) return;
 
     isCheckingRef.current = true;
 
@@ -92,5 +117,8 @@ export function useWebUpdateCheck(ownBuildId: string | undefined) {
 
   const dismiss = useCallback(() => setDismissed(true), []);
 
-  return { updateAvailable, dismissed, dismiss };
+  /** Called by the prompt before reloading, so this cannot become a loop. */
+  const noteReloadAttempt = useCallback(() => markReloadAttempt(), []);
+
+  return { updateAvailable, dismissed, dismiss, noteReloadAttempt };
 }

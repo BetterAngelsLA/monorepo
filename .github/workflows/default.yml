@@ -472,6 +472,11 @@ jobs:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
           GITHUB_EVENT_NAME: ${{ github.event_name }}
           GITHUB_SHA: ${{ github.sha }}
+          # Baked into the JS bundle the OTA update ships, so a device reports the
+          # commit it is running instead of `unknown`. Embedded binaries built by
+          # EAS cannot see this (their env comes from eas.json), which is why the
+          # client falls back to the runtime version for those.
+          EXPO_PUBLIC_BUILD_ID: ${{ github.sha }}
           EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY: ${{ secrets.EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY }}
           EXPO_PUBLIC_NEW_RELIC_WEB_LICENSE_KEY: ${{ secrets.EXPO_PUBLIC_NEW_RELIC_WEB_LICENSE_KEY }}
           EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY: ${{ secrets.EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY }}

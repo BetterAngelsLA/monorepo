@@ -186,6 +186,13 @@ export const CLIENT_VERSION_HEADER = 'x-client-version';
  *
  * An existing header is never overwritten: a caller that already knows a more
  * specific version wins.
+ *
+ * Place it **last** in `composeFetchInterceptors`. That composition is a
+ * `reduceRight`, so the last interceptor is the innermost one and runs after
+ * every other: at that point the request is final, and nothing downstream can
+ * replace the headers it was just added to. (Being last does *not* make the
+ * value visible to the others — if a future interceptor needs to read it, this
+ * has to move first.)
  */
 export const createClientVersionInterceptor =
   (

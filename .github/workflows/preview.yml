@@ -32,6 +32,11 @@ jobs:
       PR_NUMBER: ${{ github.event.pull_request.number }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      # Without this the preview bundle has no build id: the web update prompt is
+      # inert (it refuses to compare against nothing) and the preview publishes a
+      # version.json no bundle can match. It also keeps the Nx `export-web` cache
+      # key aligned with default.yml, which sets the same variable.
+      EXPO_PUBLIC_BUILD_ID: ${{ github.event.pull_request.head.sha }}
       # Build even though a build exists for the fingerprint.
       FORCE_EAS_BUILD: ${{ contains(github.event.pull_request.labels.*.name, 'force-eas-build') }}
       VITE_SHELTER_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_SHELTER_GOOGLE_MAPS_API_KEY }}
