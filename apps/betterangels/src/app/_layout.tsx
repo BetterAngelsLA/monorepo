@@ -10,12 +10,13 @@ import {
   AppUpdatePrompt,
   ErrorCrashView,
   useNewRelic,
+  WebUpdateManager,
 } from '@monorepo/expo/betterangels';
 import { asyncStorageAdapter } from '@monorepo/expo/shared/utils';
 
 import { apiUrl, demoApiUrl, localApiUrl } from '../../config';
 import { buildApiEnvironments } from '../apiEnvironments';
-import { buildFetchClient } from '../init';
+import { BUILD_ID, buildFetchClient } from '../init';
 import { BaDataProviders } from '../providers/BaDataProviders';
 import { BaUiProviders } from '../providers/BaUiProviders';
 import AppRoutesStack from './AppRoutesStack';
@@ -67,6 +68,13 @@ export default function RootLayout() {
         >
           <BaDataProviders>
             <AppUpdatePrompt />
+            {/*
+              Web's half of the same problem `AppUpdatePrompt` solves on native.
+              A browser tab never picks up a deploy on its own — there is no OTA
+              channel there — so this offers a reload once the deployed build id
+              differs from the one compiled into this bundle.
+            */}
+            <WebUpdateManager ownBuildId={BUILD_ID} />
             <StatusBar style={Platform.OS === 'ios' ? 'light' : 'auto'} />
             <AppRoutesStack />
           </BaDataProviders>
