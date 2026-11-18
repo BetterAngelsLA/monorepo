@@ -160,3 +160,50 @@ export const createCsrfTokenRefresher =
       }
     }
   };
+
+// ---------------------------------------------------------------------------
+// Client version interceptor
+// ---------------------------------------------------------------------------
+
+/**
+ * Header carrying the identity of the build that made the request.
+ *
+ * Sent on every request so a report like "the browser version shows a blank
+ * screen" can be tied to a specific bundle in the server logs. Without it the
+ * only client signal in a request log is the user agent, which is identical
+ * across every revision of the app — including the ones a long-lived tab is
+ * still running after a deploy.
+ */
+export const CLIENT_VERSION_HEADER = 'x-client-version';
+
+/**
+ * Tag outgoing requests with the caller's build identity.
+ *
+ * The value is read per request rather than captured once, because a native
+ * build can move to a new OTA update without a process restart on some
+ * platforms, and because tests substitute it. Returning a falsy value from
+ * the reader omits the header entirely rather than sending `"undefined"`.
+ *
+ * An existing header is never overwritten: a caller that already knows a more
+ * specific version wins.
+ */
+export const createClientVersionInterceptor =
+  (
+    readVersion: () => string | null | undefined,
+    headerName: string = CLIENT_VERSION_HEADER,
+  ): FetchInterceptor =>
+  async (input, init, next) => {
+    const version = readVersion();
+
+    if (!version) {
+      return next(input, init);
+    }
+
+    const headers = new Headers(init.headers);
+
+    if (!headers.has(headerName)) {
+      headers.set(headerName, version);
+    }
+
+    return next(input, { ...init, headers });
+  };

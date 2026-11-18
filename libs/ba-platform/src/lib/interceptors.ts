@@ -12,6 +12,8 @@ export {
   type TokenRefresher,
   type CookiePersister,
   composeFetchInterceptors,
+  CLIENT_VERSION_HEADER,
+  createClientVersionInterceptor,
   createCsrfInterceptor,
   createCsrfTokenRefresher,
   includeCredentialsInterceptor,

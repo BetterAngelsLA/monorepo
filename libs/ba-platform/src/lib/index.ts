@@ -3,6 +3,7 @@
 // NOT from this file directly.
 export * from './activeOrg';
 export * from './apollo';
+export * from './clientVersion';
 export * from './constants';
 export * from './errors';
 export * from './interceptors';

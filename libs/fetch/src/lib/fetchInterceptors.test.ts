@@ -1,6 +1,10 @@
 /**
  */
-import { createCsrfInterceptor } from './fetchInterceptors';
+import {
+  CLIENT_VERSION_HEADER,
+  createClientVersionInterceptor,
+  createCsrfInterceptor,
+} from './fetchInterceptors';
 
 describe('createCsrfInterceptor', () => {
   it('injects CSRF header when token is available', async () => {
@@ -165,5 +169,56 @@ describe('createCsrfInterceptor', () => {
         ),
       ).toBe('existing');
     });
+  });
+});
+
+describe('createClientVersionInterceptor', () => {
+  const nextFor = () => vi.fn().mockResolvedValue(new Response());
+
+  it('tags the request with the build identity', async () => {
+    const next = nextFor();
+
+    await createClientVersionInterceptor(() => 'abc123')( '/graphql', {}, next);
+
+    const init = next.mock.calls[0][1] as RequestInit;
+    expect(new Headers(init.headers).get(CLIENT_VERSION_HEADER)).toBe('abc123');
+  });
+
+  it('omits the header when there is no build identity', async () => {
+    const next = nextFor();
+
+    await createClientVersionInterceptor(() => undefined)('/graphql', {}, next);
+
+    expect(
+      new Headers((next.mock.calls[0][1] as RequestInit).headers).has(
+        CLIENT_VERSION_HEADER,
+      ),
+    ).toBe(false);
+  });
+
+  it('leaves a caller-supplied version alone', async () => {
+    const next = nextFor();
+
+    await createClientVersionInterceptor(() => 'mine')('/graphql', {
+      headers: { [CLIENT_VERSION_HEADER]: 'explicit' },
+    }, next);
+
+    expect(
+      new Headers((next.mock.calls[0][1] as RequestInit).headers).get(
+        CLIENT_VERSION_HEADER,
+      ),
+    ).toBe('explicit');
+  });
+
+  it('keeps the headers it was given', async () => {
+    const next = nextFor();
+
+    await createClientVersionInterceptor(() => 'abc123')('/graphql', {
+      headers: { 'content-type': 'application/json' },
+    }, next);
+
+    const headers = new Headers((next.mock.calls[0][1] as RequestInit).headers);
+    expect(headers.get('content-type')).toBe('application/json');
+    expect(headers.get(CLIENT_VERSION_HEADER)).toBe('abc123');
   });
 });

@@ -1,8 +1,10 @@
 import { composeFetchInterceptors } from '@monorepo/fetch';
 import {
   configureActiveOrgStorage,
+  createClientVersionInterceptor,
   createCsrfInterceptor,
   createCsrfTokenRefresher,
+  getClientVersion,
   includeCredentialsInterceptor,
   CSRF_COOKIE_NAME,
   CSRF_HEADER_NAME,
@@ -72,5 +74,8 @@ export const createWebFetchClient = (apiUrl?: string) => {
       prefix ? `${prefix}${CSRF_LOGIN_PATH}` : CSRF_LOGIN_PATH,
     ),
     includeCredentialsInterceptor,
+    // Not part of the auth chain: this only labels the request. Kept last so
+    // an interceptor that rewrites headers still sees the original value.
+    createClientVersionInterceptor(getClientVersion),
   );
 };

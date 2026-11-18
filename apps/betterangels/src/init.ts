@@ -15,14 +15,20 @@ import { createBaTypePolicies } from '@monorepo/expo/betterangels';
 import { configureWebMaps } from '@monorepo/expo/shared/ui-components';
 
 import { googlePlacesApiKey } from '../config';
+import { installClientVersion } from './clientVersion';
 
 export { buildFetchClient } from './fetchClient';
+export { BUILD_ID, getBundleVersion } from './clientVersion';
 
 // ---- Compile-time constants ----
 export const isDevEnv = process.env['NODE_ENV'] === 'development';
 
 // ---- One-time side effects ----
 initApolloRuntimeConfig({ isDevEnv: false });
+
+// Label every request with the build that made it. Before the provider tree, so
+// no request can escape untagged.
+installClientVersion();
 
 // The browser's Maps JavaScript API takes its key as a prop on the map itself,
 // while the native SDKs read theirs from the app.config.js plugins. Hand it to
