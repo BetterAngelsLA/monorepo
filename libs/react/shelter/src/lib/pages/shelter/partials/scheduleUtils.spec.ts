@@ -89,9 +89,10 @@ describe('getWeeklySchedule overnight windows', () => {
   it('shows a 24 h window as 00:00–23:59 on every day', () => {
     const result = week([row({ startTime: '00:00:00', endTime: '00:00:00' })]);
 
-    expect(result[DayOfWeekChoices.Wednesday]).toStrictEqual([
-      '00:00:00-23:59:00',
-    ]);
+    expect(Object.values(result)).toHaveLength(7);
+    for (const windows of Object.values(result)) {
+      expect(windows).toStrictEqual(['00:00:00-23:59:00']);
+    }
   });
 
   it('shows a window that ends at midnight as the minute before it', () => {
@@ -386,9 +387,36 @@ describe('getAggregateStatus', () => {
       endTime: '17:00:00',
     });
 
+    // If a closing-soon type were counted as closed, this would be Partially
+    // Open instead, so the case pins the closing-soon-is-open rule.
     expect(
       getAggregateStatus(
         [lateShift, intakeOpen],
+        [ScheduleTypeChoices.Operating, ScheduleTypeChoices.Intake],
+        now,
+      ),
+    ).toStrictEqual({ tone: 'open', statusText: 'Open Now' });
+  });
+
+  it('reports open when no type is closing soon', () => {
+    const operatingOpen = row({
+      id: 'operating-open',
+      scheduleType: ScheduleTypeChoices.Operating,
+      day: DayOfWeekChoices.Tuesday,
+      startTime: '09:00:00',
+      endTime: '20:00:00',
+    });
+    const intakeOpen = row({
+      id: 'intake-open-wide',
+      scheduleType: ScheduleTypeChoices.Intake,
+      day: DayOfWeekChoices.Tuesday,
+      startTime: '09:00:00',
+      endTime: '17:00:00',
+    });
+
+    expect(
+      getAggregateStatus(
+        [operatingOpen, intakeOpen],
         [ScheduleTypeChoices.Operating, ScheduleTypeChoices.Intake],
         now,
       ),
