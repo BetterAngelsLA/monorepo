@@ -817,8 +817,8 @@ class OvernightExceptionTestCase(TestCase):
             is_exception=True,
         )
 
-    def is_open_at(self, *when: int) -> bool:
-        return self.shelter in Shelter.objects.open_at(datetime.datetime(*when))
+    def is_open_at(self, year: int, month: int, day: int, hour: int, minute: int) -> bool:
+        return self.shelter in Shelter.objects.open_at(datetime.datetime(year, month, day, hour, minute))
 
     def test_closure_starts_when_its_window_starts(self) -> None:
         """The morning before the exception date is not part of the closure."""
@@ -902,8 +902,8 @@ class ShiftScopedScheduleTestCase(TestCase):
             "is_exception": is_exception,
         }
 
-    def is_open(self, shelter: Shelter, *when: int) -> bool:
-        return shelter in Shelter.objects.open_at(datetime.datetime(*when))
+    def is_open(self, shelter: Shelter, year: int, month: int, day: int, hour: int, minute: int) -> bool:
+        return shelter in Shelter.objects.open_at(datetime.datetime(year, month, day, hour, minute))
 
     def test_overnight_exception_range_covers_the_last_morning(self) -> None:
         shelter = self.make_shelter(self.OPEN_24H, self.overnight("2026-12-24", "2026-12-26"))
