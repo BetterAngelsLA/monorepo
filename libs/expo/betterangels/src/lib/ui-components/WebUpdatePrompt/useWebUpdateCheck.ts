@@ -18,6 +18,18 @@ export const POLL_INTERVAL_MS = 10 * 60 * 1000;
 export const MIN_RECHECK_INTERVAL_MS = 60 * 1000;
 
 /**
+ * Is the running build behind the deployment?
+ *
+ * Missing inputs are "no": a bundle built without an id (a dev server, or a
+ * deployment that predates `version.json`) must never compare equal-or-unequal
+ * against nothing and interrupt the user.
+ */
+export const isStaleBuild = (
+  ownBuildId: string | undefined,
+  deployedBuildId: string | null,
+): boolean => Boolean(ownBuildId && deployedBuildId && ownBuildId !== deployedBuildId);
+
+/**
  * Whether the running build is stale, and how to act on it.
  *
  * Web only: native already has `expo-updates` behind `AppUpdatePrompt`, and
@@ -39,14 +51,16 @@ export function useWebUpdateCheck(ownBuildId: string | undefined) {
 
     isCheckingRef.current = true;
 
+    // Recorded on the attempt, not the success: an offline tab would otherwise
+    // never advance this clock and would re-check on every focus.
+    lastCheckRef.current = Date.now();
+
     try {
       const deployedBuildId = await fetchDeployedBuildId();
 
       if (!deployedBuildId) return;
 
-      lastCheckRef.current = Date.now();
-
-      if (deployedBuildId !== ownBuildId) {
+      if (isStaleBuild(ownBuildId, deployedBuildId)) {
         setUpdateAvailable(true);
       }
     } finally {

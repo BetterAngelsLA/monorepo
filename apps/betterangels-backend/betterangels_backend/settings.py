@@ -547,6 +547,11 @@ CORS_ALLOWED_ORIGIN_REGEXES = env("CORS_ALLOWED_ORIGIN_REGEXES")
 CORS_ALLOW_HEADERS = [
     *default_headers,
     "x-goog-fieldmask",
+    # Which build made the request (see common/request_metadata.py). A custom
+    # header makes every cross-origin call a non-simple request, so if this is
+    # not listed the browser's preflight rejects the *whole* API — the deploy
+    # domain and the API domain are different origins in production.
+    "x-client-version",
 ]
 CSRF_COOKIE_DOMAIN = env("CSRF_COOKIE_DOMAIN")
 CSRF_COOKIE_SECURE = env("CSRF_COOKIE_SECURE")

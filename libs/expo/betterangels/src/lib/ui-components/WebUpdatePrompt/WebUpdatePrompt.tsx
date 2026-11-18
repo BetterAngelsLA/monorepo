@@ -40,6 +40,8 @@ export function WebUpdatePrompt(props: TProps) {
   return (
     <AppUpdatePromptModal
       visible
+      primaryButtonTitle="Reload"
+      secondaryButtonTitle="Not now"
       setVisible={() => dismiss()}
       onAccept={onAccept}
       onDismiss={() => dismiss()}

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { execSync } from 'child_process';
-import { existsSync, writeFileSync } from 'fs';
+import { existsSync, readdirSync, writeFileSync } from 'fs';
+import { join } from 'path';
 
 import { getBranchBasePath } from '../shared/get-base-path.mjs';
 
@@ -121,16 +122,40 @@ console.log('✅ S3 sync complete.');
  */
 const ASSET_RETENTION_DAYS = Number(process.env.ASSET_RETENTION_DAYS || 30);
 const cutoff = new Date(Date.now() - ASSET_RETENTION_DAYS * 24 * 60 * 60 * 1000).toISOString();
+const prefixBase = s3Path ? `${s3Path}/` : '';
+
+/*
+ * Age alone is not a safe criterion: an asset the current build still references
+ * can be older than the window (a font nobody has touched), and deleting it
+ * would break the app that is serving right now. So the current build's own keys
+ * are excluded unconditionally, and the window only ever applies to superseded
+ * assets.
+ */
+const currentKeys = new Set(
+  readdirSync(distPath, { recursive: true, withFileTypes: true })
+    .filter((entry) => entry.isFile())
+    .map((entry) => {
+      const relative = join(entry.parentPath ?? entry.path, entry.name);
+
+      return relative.startsWith(distPath)
+        ? relative.slice(distPath.length).replace(/^\/+/, '')
+        : relative;
+    }),
+);
 
 try {
-  const listing = execSync(
-    `aws s3api list-objects-v2 --bucket "${S3_BUCKET}" --prefix "${s3Path ? `${s3Path}/` : ''}_expo/static/" --query "Contents[?LastModified<='${cutoff}'].[Key]" --output text --no-cli-pager`,
-    { encoding: 'utf8' },
-  ).trim();
+  let pruned = 0;
 
-  const stale = listing ? listing.split(/\s+/).filter(Boolean) : [];
+  for (const assetPrefix of ['_expo/static/', 'assets/']) {
+    const listing = execSync(
+      `aws s3api list-objects-v2 --bucket "${S3_BUCKET}" --prefix "${prefixBase}${assetPrefix}" --query "Contents[?LastModified<='${cutoff}'].[Key]" --output text --no-cli-pager`,
+      { encoding: 'utf8' },
+    ).trim();
 
-  if (stale.length) {
+    const stale = (listing ? listing.split(/\s+/).filter(Boolean) : []).filter(
+      (key) => !currentKeys.has(key.slice(prefixBase.length)),
+    );
+
     // Batched: delete-objects takes at most 1000 keys per call.
     for (let i = 0; i < stale.length; i += 1000) {
       const batch = stale.slice(i, i + 1000);
@@ -142,10 +167,14 @@ try {
       );
     }
 
-    console.log(`🧹 Pruned ${stale.length} asset(s) older than ${ASSET_RETENTION_DAYS}d.`);
-  } else {
-    console.log(`🧹 No assets older than ${ASSET_RETENTION_DAYS}d to prune.`);
+    pruned += stale.length;
   }
+
+  console.log(
+    pruned
+      ? `🧹 Pruned ${pruned} superseded asset(s) older than ${ASSET_RETENTION_DAYS}d.`
+      : `🧹 Nothing to prune (${ASSET_RETENTION_DAYS}d window).`,
+  );
 } catch (err) {
   // Never fail a deploy on housekeeping: the new revision is already up.
   console.warn(`⚠️  Asset pruning skipped: ${err.message}`);
