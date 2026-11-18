@@ -10,11 +10,11 @@ from typing import Any
 
 import pytest
 import structlog
-from django.test import RequestFactory
-
 from django.conf import settings
+from django.test import Client, RequestFactory
 from django_structlog import signals
 
+from common.constants import CLIENT_VERSION_HEADER
 from common.request_metadata import MAX_CLIENT_VERSION_LENGTH, bind_client_version
 
 
@@ -64,11 +64,40 @@ def test_receiver_is_connected_to_the_request_signals() -> None:
     id.
     """
     live = signals.bind_extra_request_metadata._live_receivers(None)  # noqa: SLF001
+    # Django returns `(receivers, senders)`; the first half is what matters here.
+    receivers = live[0] if isinstance(live, tuple) else live
 
-    assert bind_client_version in live
+    assert bind_client_version in receivers
 
 
 def test_request_logging_middleware_is_installed() -> None:
     """The other half of the wiring: without it no request lifecycle is logged."""
 
     assert "django_structlog.middlewares.RequestMiddleware" in settings.MIDDLEWARE
+
+
+def test_the_middleware_binds_it_during_a_real_request() -> None:
+    """End of the chain, exercised through the actual middleware.
+
+    The tests above call the receiver directly, which proves what it does but not
+    that a request ever reaches it. This drives a request through
+    `RequestMiddleware` and reads the structlog context at `request_finished` —
+    exactly the point where the log line is rendered — so an unwired receiver or
+    a missing middleware fails here.
+
+    At `bind_extra_request_finished_metadata`, not the log call: the signal is
+    emitted regardless of the logger's level, while the log line is filtered by
+    it — and in tests the level is not the production one.
+    """
+    seen: dict[str, Any] = {}
+
+    def probe(sender: Any = None, **kwargs: Any) -> None:
+        seen.update(structlog.contextvars.get_contextvars())
+
+    signals.bind_extra_request_finished_metadata.connect(probe)
+    try:
+        Client().get("/graphql", headers={CLIENT_VERSION_HEADER: "abc123"})
+    finally:
+        signals.bind_extra_request_finished_metadata.disconnect(probe)
+
+    assert seen.get("client_version") == "abc123"
