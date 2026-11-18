@@ -21,14 +21,38 @@ export const MIN_RECHECK_INTERVAL_MS = 60 * 1000;
 /**
  * How many leading characters of a build id are compared.
  *
- * The same commit is spelled differently on the two sides: the bundle carries
- * whatever `EXPO_PUBLIC_BUILD_ID` held at export time (a full sha in CI), while
- * `version.json` is written by the deploy, which falls back to a 12-character
- * `git rev-parse` for apps that do not set the variable. Comparing prefixes
- * makes a length difference harmless, and twelve hex characters identify a
- * commit for every practical purpose.
+ * The same commit is spelled at different lengths on the two sides — the bundle
+ * carries whatever `EXPO_PUBLIC_BUILD_ID` held at export time, while
+ * `version.json` is written by the deploy — so comparing prefixes makes a length
+ * difference harmless. Twelve hex characters identify a commit for every
+ * practical purpose.
  */
 export const COMPARABLE_BUILD_ID_LENGTH = 12;
+
+/**
+ * What a build id is allowed to look like.
+ *
+ * Both sides must be a commit sha. A comparison between arbitrary strings is
+ * worse than no comparison: a deployment that published `2026.11.17` (or a
+ * branch name) would compare *equal* to itself forever, silently disabling the
+ * feature, while a one-off typo would prompt every tab forever. Anything that is
+ * not a sha is treated as "cannot tell", which is safe.
+ */
+const BUILD_ID_PATTERN = /^[0-9a-f]{7,40}$/i;
+
+export const isComparableBuildId = (value: string | null | undefined): boolean =>
+  typeof value === 'string' && BUILD_ID_PATTERN.test(value.trim());
+
+let hasWarnedAboutUnusableId = false;
+
+const warnOnceAboutUnusableId = (value: string) => {
+  if (hasWarnedAboutUnusableId) return;
+
+  hasWarnedAboutUnusableId = true;
+  console.warn(
+    `[WebUpdatePrompt] build id ${JSON.stringify(value)} is not a commit sha; the update check is disabled for this session.`,
+  );
+};
 
 const normalizeBuildId = (value: string) =>
   value.trim().toLowerCase().slice(0, COMPARABLE_BUILD_ID_LENGTH);
@@ -36,19 +60,26 @@ const normalizeBuildId = (value: string) =>
 /**
  * Is the running build behind the deployment?
  *
- * Missing inputs are "no": a bundle built without an id (a dev server, or a
- * deployment that predates `version.json`) must never compare against nothing
- * and interrupt the user.
+ * Missing or unusable inputs are "no": a bundle built without an id (a dev
+ * server, or a deployment that predates `version.json`) must never compare
+ * against nothing and interrupt the user.
  */
 export const isStaleBuild = (
   ownBuildId: string | undefined,
   deployedBuildId: string | null,
-): boolean =>
-  Boolean(
-    ownBuildId &&
-      deployedBuildId &&
-      normalizeBuildId(ownBuildId) !== normalizeBuildId(deployedBuildId),
-  );
+): boolean => {
+  if (!ownBuildId || !deployedBuildId) return false;
+
+  if (!isComparableBuildId(ownBuildId) || !isComparableBuildId(deployedBuildId)) {
+    warnOnceAboutUnusableId(
+      isComparableBuildId(ownBuildId) ? deployedBuildId : ownBuildId,
+    );
+
+    return false;
+  }
+
+  return normalizeBuildId(ownBuildId) !== normalizeBuildId(deployedBuildId);
+};
 
 /**
  * Whether the running build is stale, and how to act on it.
@@ -64,15 +95,12 @@ export const isStaleBuild = (
 export function useWebUpdateCheck(ownBuildId: string | undefined) {
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const [dismissed, setDismissed] = useState(false);
+  const [deployedBuildId, setDeployedBuildId] = useState<string | null>(null);
   const lastCheckRef = useRef(0);
   const isCheckingRef = useRef(false);
 
-  const check = useCallback(async () => {
+  const check = useCallback(async (reArmDismissal = false) => {
     if (!ownBuildId || isCheckingRef.current) return;
-
-    // We just reloaded for this deployment; give the edge time to settle rather
-    // than offering a reload that would land on the same bundle again.
-    if (isReloadGuardActive()) return;
 
     isCheckingRef.current = true;
 
@@ -81,12 +109,24 @@ export function useWebUpdateCheck(ownBuildId: string | undefined) {
     lastCheckRef.current = Date.now();
 
     try {
-      const deployedBuildId = await fetchDeployedBuildId();
+      const deployed = await fetchDeployedBuildId();
 
-      if (!deployedBuildId) return;
+      if (!deployed) return;
 
-      if (isStaleBuild(ownBuildId, deployedBuildId)) {
+      setDeployedBuildId(deployed);
+
+      // We just reloaded for this deployment; give the edge time to settle
+      // rather than offering a reload that would land on the same bundle again.
+      if (isReloadGuardActive(deployed)) return;
+
+      if (isStaleBuild(ownBuildId, deployed)) {
         setUpdateAvailable(true);
+
+        // Only a scheduled poll re-arms a "Not now". Doing it on every check
+        // would turn returning to the tab into a nag; doing it never would let
+        // one dismissal hide a stale build for the tab's whole life, which is
+        // the outcome this feature exists to prevent.
+        if (reArmDismissal) setDismissed(false);
       }
     } finally {
       isCheckingRef.current = false;
@@ -100,7 +140,7 @@ export function useWebUpdateCheck(ownBuildId: string | undefined) {
     // check immediately instead of waiting out the first interval.
     void check();
 
-    const interval = setInterval(() => void check(), POLL_INTERVAL_MS);
+    const interval = setInterval(() => void check(true), POLL_INTERVAL_MS);
 
     const subscription = AppState.addEventListener('change', (state) => {
       if (state !== 'active') return;
@@ -117,8 +157,13 @@ export function useWebUpdateCheck(ownBuildId: string | undefined) {
 
   const dismiss = useCallback(() => setDismissed(true), []);
 
-  /** Called by the prompt before reloading, so this cannot become a loop. */
-  const noteReloadAttempt = useCallback(() => markReloadAttempt(), []);
+  /**
+   * Called by the prompt before reloading. Keyed on the deployment the user was
+   * looking at, so a *newer* deployment clears the suppression immediately.
+   */
+  const noteReloadAttempt = useCallback(() => {
+    if (deployedBuildId) markReloadAttempt(deployedBuildId);
+  }, [deployedBuildId]);
 
   return { updateAvailable, dismissed, dismiss, noteReloadAttempt };
 }

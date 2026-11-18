@@ -100,7 +100,7 @@
         "export-web"
       ],
       "options": {
-        "command": "node tools/deploy/cloudfront-deploy.mjs"
+        "command": "REQUIRES_BUNDLE_ID=1 node tools/deploy/cloudfront-deploy.mjs"
       },
       "configurations": {
         "preview": {

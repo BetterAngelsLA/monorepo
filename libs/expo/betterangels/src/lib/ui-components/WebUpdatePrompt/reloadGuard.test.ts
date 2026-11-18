@@ -6,10 +6,10 @@ import {
 } from './reloadGuard';
 
 /**
- * These run under the native test environment, which has no `window` or
- * `sessionStorage` — the same situation as SSR. Installing a small in-memory
- * stand-in keeps the test on the real code path (it reads `globalThis`) and lets
- * the unavailable-storage case be exercised exactly.
+ * These run under the native test environment, which has no `window` or `sessionStorage`
+ * — the same situation as SSR. Installing a small in-memory stand-in keeps the
+ * test on the real code path (it reads `globalThis`) and lets the
+ * unavailable-storage case be exercised exactly.
  */
 const makeStorage = () => {
   const store = new Map<string, string>();
@@ -18,7 +18,6 @@ const makeStorage = () => {
     getItem: (key: string) => store.get(key) ?? null,
     setItem: (key: string, value: string) => void store.set(key, value),
     removeItem: (key: string) => void store.delete(key),
-    clear: () => store.clear(),
   };
 };
 
@@ -31,6 +30,9 @@ const install = (storage: unknown) => {
     writable: true,
   });
 };
+
+const DEPLOYED = 'aaaa11112222';
+const NEXT_DEPLOY = 'bbbb33334444';
 
 describe('reloadGuard', () => {
   let storage: ReturnType<typeof makeStorage>;
@@ -46,34 +48,53 @@ describe('reloadGuard', () => {
   });
 
   it('is inactive before any reload', () => {
-    expect(isReloadGuardActive()).toBe(false);
+    expect(isReloadGuardActive(DEPLOYED)).toBe(false);
   });
 
-  it('suppresses the prompt right after a reload', () => {
+  it('suppresses the prompt for the build that was just reloaded', () => {
     const now = 1_000_000;
-    markReloadAttempt(now);
+    markReloadAttempt(DEPLOYED, now);
 
-    expect(isReloadGuardActive(now + 1000)).toBe(true);
+    expect(isReloadGuardActive(DEPLOYED, now + 1000)).toBe(true);
   });
 
   it('lets the prompt return once the window has passed', () => {
     const now = 1_000_000;
-    markReloadAttempt(now);
+    markReloadAttempt(DEPLOYED, now);
 
-    expect(isReloadGuardActive(now + RELOAD_GUARD_MS + 1)).toBe(false);
+    expect(isReloadGuardActive(DEPLOYED, now + RELOAD_GUARD_MS + 1)).toBe(false);
   });
 
-  it('records the attempt itself, so a later reload can re-arm it', () => {
-    markReloadAttempt(1_000);
+  it('clears immediately when a newer deployment appears', () => {
+    // Otherwise a reload that happened to land on the old HTML would mute the
+    // prompt while the fix was already live.
+    const now = 1_000_000;
+    markReloadAttempt(DEPLOYED, now);
 
-    expect(Number(storage.getItem(RELOAD_GUARD_KEY))).toBe(1000);
+    expect(isReloadGuardActive(NEXT_DEPLOY, now + 1000)).toBe(false);
+  });
+
+  it('does not stick when the clock moves backwards', () => {
+    const now = 1_000_000;
+    markReloadAttempt(DEPLOYED, now);
+
+    expect(isReloadGuardActive(DEPLOYED, now - 60_000)).toBe(false);
+  });
+
+  it('records the build it was armed for', () => {
+    markReloadAttempt(DEPLOYED, 1_000);
+
+    expect(JSON.parse(storage.getItem(RELOAD_GUARD_KEY) ?? '{}')).toMatchObject({
+      buildId: DEPLOYED,
+      at: 1000,
+    });
   });
 
   it('degrades to no guard when storage is unavailable', () => {
     install(undefined);
 
-    expect(isReloadGuardActive()).toBe(false);
-    expect(() => markReloadAttempt()).not.toThrow();
+    expect(isReloadGuardActive(DEPLOYED)).toBe(false);
+    expect(() => markReloadAttempt(DEPLOYED)).not.toThrow();
   });
 
   it('degrades to no guard when storage throws', () => {
@@ -86,7 +107,13 @@ describe('reloadGuard', () => {
       },
     });
 
-    expect(isReloadGuardActive()).toBe(false);
-    expect(() => markReloadAttempt()).not.toThrow();
+    expect(isReloadGuardActive(DEPLOYED)).toBe(false);
+    expect(() => markReloadAttempt(DEPLOYED)).not.toThrow();
+  });
+
+  it('ignores a corrupt record', () => {
+    storage.setItem(RELOAD_GUARD_KEY, 'not json');
+
+    expect(isReloadGuardActive(DEPLOYED)).toBe(false);
   });
 });

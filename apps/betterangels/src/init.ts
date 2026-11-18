@@ -18,7 +18,7 @@ import { googlePlacesApiKey } from '../config';
 import { installClientVersion } from './clientVersion';
 
 export { buildFetchClient } from './fetchClient';
-export { BUILD_ID, getBundleVersion } from './clientVersion';
+export { BUILD_ID } from './clientVersion';
 
 // ---- Compile-time constants ----
 export const isDevEnv = process.env['NODE_ENV'] === 'development';

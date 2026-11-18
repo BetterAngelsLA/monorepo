@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { execSync } from 'child_process';
 import { existsSync, readdirSync, writeFileSync } from 'fs';
-import { join } from 'path';
+import { basename, relative, resolve } from 'path';
 
 import { getBranchBasePath } from '../shared/get-base-path.mjs';
 
@@ -88,7 +88,18 @@ const buildId = (
  * of them, and a git fallback is a reasonable label for an artifact nobody
  * compares against.
  */
-const appReadsManifest = NX_TASK_TARGET_PROJECT === 'betterangels';
+/*
+ * Which apps must not ship without a matching manifest id. The Nx project name
+ * is not enough: a manual `--dist` run has no Nx environment, so the name
+ * defaults to `'web'` and the guard would silently fail open on exactly the kind
+ * of hand-run production deploy that most needs it. So the deploy target sets an
+ * explicit flag, and the dist directory name is a second signal for the manual
+ * path.
+ */
+const appReadsManifest =
+  process.env.REQUIRES_BUNDLE_ID === '1' ||
+  NX_TASK_TARGET_PROJECT === 'betterangels' ||
+  basename(distPath) === 'betterangels';
 
 if (!buildIdFromEnv && appReadsManifest) {
   console.error(
@@ -111,6 +122,42 @@ const versionManifest = `${distPath}/version.json`;
 writeFileSync(
   versionManifest,
   `${JSON.stringify({ buildId, deployedAt: new Date().toISOString() }, null, 2)}\n`,
+);
+
+const ASSET_RETENTION_DAYS = Number(process.env.ASSET_RETENTION_DAYS ?? 30);
+
+/*
+ * Validated *before* the upload below, not when it is finally used: a bad value
+ * used to throw on `new Date(NaN).toISOString()` after both syncs and before the
+ * invalidation, which fails a deploy that has already shipped the revision and
+ * left the edge unpurged. And a zero or negative window would make every asset
+ * ever uploaded eligible for deletion.
+ */
+if (!Number.isInteger(ASSET_RETENTION_DAYS) || ASSET_RETENTION_DAYS < 1) {
+  console.error(
+    `❌ ASSET_RETENTION_DAYS must be a positive integer (got ${JSON.stringify(process.env.ASSET_RETENTION_DAYS)}).`,
+  );
+  process.exit(1);
+}
+
+const prefixBase = s3Path ? `${s3Path}/` : '';
+
+/*
+ * Age alone is not a safe criterion: an asset the current build still references
+ * can be older than the window (a font nobody has touched), and deleting it
+ * would break the app that is serving right now. So the current build's own keys
+ * are excluded unconditionally, and the window only ever applies to superseded
+ * assets.
+ */
+const distRoot = resolve(distPath);
+const currentKeys = new Set(
+  readdirSync(distRoot, { recursive: true, withFileTypes: true })
+    .filter((entry) => entry.isFile())
+    // Resolved on both sides: a `--dist` of `./dist/apps/betterangels`, a
+    // trailing slash or a symlinked path all normalise to the same root, where a
+    // `startsWith` on the raw strings silently matched nothing — which would
+    // have made every asset look superseded.
+    .map((entry) => relative(distRoot, resolve(entry.parentPath, entry.name))),
 );
 
 // --- Deploy ---
@@ -149,44 +196,12 @@ console.log('✅ S3 sync complete.');
  * `index.html` on every load now (the `no-cache` above), so the window only has
  * to cover a tab left open across a deploy, plus headroom for a client whose
  * clock or cache behaviour is unusual.
+ *
+ * Everything this block needs is computed *before* the upload below: a bad
+ * `ASSET_RETENTION_DAYS` used to abort the deploy after S3 had received the new
+ * revision and before the edge was purged, which is the one state that leaves
+ * production inconsistent.
  */
-const ASSET_RETENTION_DAYS = Number(process.env.ASSET_RETENTION_DAYS ?? 30);
-
-/*
- * Validated *before* the upload below, not when it is finally used: a bad value
- * used to throw on `new Date(NaN).toISOString()` after both syncs and before the
- * invalidation, which fails a deploy that has already shipped the revision and
- * left the edge unpurged. And a zero or negative window would make every asset
- * ever uploaded eligible for deletion.
- */
-if (!Number.isInteger(ASSET_RETENTION_DAYS) || ASSET_RETENTION_DAYS < 1) {
-  console.error(
-    `❌ ASSET_RETENTION_DAYS must be a positive integer (got ${JSON.stringify(process.env.ASSET_RETENTION_DAYS)}).`,
-  );
-  process.exit(1);
-}
-
-const prefixBase = s3Path ? `${s3Path}/` : '';
-
-/*
- * Age alone is not a safe criterion: an asset the current build still references
- * can be older than the window (a font nobody has touched), and deleting it
- * would break the app that is serving right now. So the current build's own keys
- * are excluded unconditionally, and the window only ever applies to superseded
- * assets.
- */
-const currentKeys = new Set(
-  readdirSync(distPath, { recursive: true, withFileTypes: true })
-    .filter((entry) => entry.isFile())
-    .map((entry) => {
-      const relative = join(entry.parentPath ?? entry.path, entry.name);
-
-      return relative.startsWith(distPath)
-        ? relative.slice(distPath.length).replace(/^\/+/, '')
-        : relative;
-    }),
-);
-
 try {
   const cutoff = new Date(
     Date.now() - ASSET_RETENTION_DAYS * 24 * 60 * 60 * 1000,
@@ -221,8 +236,10 @@ try {
 
       // Per-key failures come back as a 200 with an `Errors` array, so an
       // unchecked delete reports more than it achieved.
-      failed.push(...(JSON.parse(result || '[]') ?? []));
-      pruned += batch.length;
+      const batchErrors = JSON.parse(result || '[]') ?? [];
+
+      failed.push(...batchErrors);
+      pruned += batch.length - batchErrors.length;
     }
   }
 
