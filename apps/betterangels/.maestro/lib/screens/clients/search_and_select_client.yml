@@ -26,9 +26,5 @@ appId: ${MAESTRO_APP_ID}
     commands:
       - tapOn:
           id: ${'client-card-' + CLIENT_NAME}
-          # Tap the blue avatar area. Android has ignored center taps on the
-          # card even though Maestro reports that the selector was tapped.
-          point: '10%,50%'
-          retryTapIfNoChange: true
       - waitForAnimationToEnd
       - evalScript: ${output.clientFound = true}
