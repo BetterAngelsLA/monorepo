@@ -6,7 +6,13 @@
  * A regression in any one of them is invisible in the app but breaks the
  * funnel, so all three are asserted here.
  */
-import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react-native';
 import * as WebBrowser from 'expo-web-browser';
 import { ReactNode } from 'react';
 import { Text, View } from 'react-native';
@@ -270,23 +276,38 @@ it('renders the control the e2e suite and a screen reader address', async () => 
 });
 
 it('shows that it is opening instead of repeating the label', async () => {
-  let release: () => void = () => undefined;
+  let flushPending!: () => void;
+  let releaseOpen!: () => void;
+
+  // The open is only issued after the flush, so holding the flush open is what
+  // keeps the control busy long enough to observe: `fireEvent` itself flushes
+  // the microtasks, so a real (already resolved) flush leaves no window.
+  analytics.state.client!.flush = () =>
+    new Promise<void>((resolve) => {
+      flushPending = resolve;
+    });
 
   vi.mocked(WebBrowser.openBrowserAsync).mockReturnValue(
     new Promise<void>((resolve) => {
-      release = resolve;
+      releaseOpen = resolve;
     }) as never,
   );
 
   await render(<FindShelterButton />);
 
+  const control = () => screen.getByTestId('find-shelter-profile-btn');
   const press = fireEvent.press(screen.getByText('Find shelter'));
-  await new Promise((resolve) => setTimeout(resolve, 0));
 
-  expect(screen.getByTestId('find-shelter-profile-btn')).toHaveTextContent(
-    'opening',
-  );
+  // The handler is suspended on the flush, so the busy state is committed here
+  // and stays until the flush resolves — no timer race.
+  await act(async () => undefined);
+  expect(control()).toHaveTextContent('opening');
 
-  await act(async () => release());
+  // Issuing the open releases the control, even though `openBrowserAsync` — which
+  // settles on dismissal — is still pending.
+  await act(async () => flushPending());
+  await waitFor(() => expect(control()).toHaveTextContent('Find shelter'));
+
+  await act(async () => releaseOpen());
   await press;
 });
