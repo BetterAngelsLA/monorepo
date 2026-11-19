@@ -671,6 +671,10 @@ class ServiceCategoryAdmin(SortableAdminMixin, admin.ModelAdmin):
 
 
 class ShelterResource(resources.ModelResource):
+    # Exported so an export can be traced back to the shelters it came from, but
+    # readonly so a round-tripped sheet cannot repoint a row at another primary
+    # key: imports still match on ``import_id_fields``.
+    id = Field(column_name="id", attribute="id", readonly=True)
     organization = Field(
         column_name="organization", attribute="organization", widget=ForeignKeyWidget(Organization, "name")
     )
@@ -755,7 +759,7 @@ class ShelterResource(resources.ModelResource):
             "name",
             "organization",
         )
-        exclude = ("id", "created_at", "updated_at")
+        exclude = ("created_at", "updated_at")
 
     def skip_or_raise(self, row: Any, col_of_choice: str) -> None:
         logger.warning(f"Row {self.count}: Bad {col_of_choice} value")

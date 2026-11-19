@@ -1,3 +1,6 @@
+import csv
+import io
+
 from django.contrib import admin
 from django.contrib.auth.models import Permission
 from django.http import HttpRequest, QueryDict
@@ -442,3 +445,29 @@ class ShelterResourceContactImportTestCase(TestCase):
         )
 
         self.assertFalse(ContactInfo.objects.filter(shelter=shelter).exists())
+
+
+class ShelterResourceExportTestCase(TestCase):
+    """``ShelterResource`` exports the shelter's primary key, but never imports it."""
+
+    def setUp(self) -> None:
+        self.shelter = Shelter.objects.create(name="Exported Shelter")
+
+    def test_csv_export_leads_with_the_shelter_id(self) -> None:
+        """An export must be traceable back to the rows it came from."""
+        csv_content = ShelterResource().export(queryset=Shelter.objects.filter(pk=self.shelter.pk)).csv
+
+        header, row = list(csv.reader(io.StringIO(csv_content)))
+
+        self.assertEqual(header[0], "id")
+        self.assertEqual(row[0], str(self.shelter.pk))
+
+    def test_id_is_export_only(self) -> None:
+        """The exported id is reference-only, so a sheet cannot repoint a row at another primary key."""
+        other = Shelter.objects.create(name="Other Shelter")
+        other_pk = other.pk
+        resource = ShelterResource()
+
+        resource.import_field(resource.fields["id"], other, {"id": str(self.shelter.pk)})
+
+        self.assertEqual(other.pk, other_pk)
