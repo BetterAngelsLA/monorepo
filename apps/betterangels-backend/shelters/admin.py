@@ -37,6 +37,7 @@ from betterangels_backend import settings
 from common.images import build_img_url
 from common.models import Location
 from shelters.managers import BedQuerySet, RoomQuerySet
+from shelters.services.availability import apply_availability
 
 from .enums import (
     AccessibilityChoices,
@@ -58,6 +59,7 @@ from .enums import (
     VaccinationRequirementChoices,
 )
 from .models import (
+    AVAILABILITY_FIELDS,
     SPA,
     Accessibility,
     Bed,
@@ -89,6 +91,7 @@ from .models import (
     Video,
     get_fields_with_other_option,
 )
+from .validators import validate_availability_counts
 from .widgets import MultiDayCheckboxWidget
 
 T = TypeVar("T", bound=models.Model)
@@ -207,6 +210,26 @@ class ShelterForm(forms.ModelForm):
         help_text="Check to remove the current hero image.",
     )
 
+    # Availability — lives on the ``Shelter.availability`` OneToOne.
+    non_restricted_beds = forms.IntegerField(
+        min_value=0,
+        initial=0,
+        label="Available unrestricted beds",
+        help_text="Number of unrestricted beds available.",
+    )
+    restricted_beds = forms.IntegerField(
+        min_value=0,
+        initial=0,
+        label="Available restricted beds",
+        help_text="Number of restricted beds available.",
+    )
+    restriction_notes = forms.CharField(
+        required=False,
+        label="Restriction notes",
+        help_text="Global restriction note for this availability record.",
+        widget=forms.Textarea(attrs={"rows": 3}),
+    )
+
     # Summary Info
     demographics = create_select2_multiple_field(DemographicChoices, "Select demographics...", required=True)
     demographics_other = create_other_text_field()
@@ -290,6 +313,30 @@ class ShelterForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self._pending_service_entries: list[tuple[int, str]] = []
 
+        # Older rows predate the auto-created availability; the defaults declared
+        # above stand in until ``save_availability()`` creates it.
+        availability = getattr(self.instance, "availability", None) if self.instance.pk else None
+        if availability is not None:
+            self.initial.update({name: getattr(availability, name) for name in AVAILABILITY_FIELDS})
+
+    def save_availability(self) -> None:
+        """Write the availability fields this submission changed.
+
+        Only the changed fields reach the writer: the admin re-reads the object
+        when the form is posted, so ``initial`` is the current row, and comparing
+        against it keeps a page that was left open from reverting an edit made
+        elsewhere — the same partial update the API performs.
+        """
+        if not self.instance.pk:
+            return
+
+        changed = {
+            name: self.cleaned_data[name]
+            for name in AVAILABILITY_FIELDS
+            if name in self.cleaned_data and self.cleaned_data[name] != self.initial.get(name)
+        }
+        apply_availability(self.instance, changed)
+
     def clean_services(self) -> Any:
         services = self.cleaned_data.get("services")
         raw_entries = self.data.getlist("services__new") if hasattr(self.data, "getlist") else []
@@ -350,8 +397,27 @@ class ShelterForm(forms.ModelForm):
 
         # Validate fields with "_other" using the centralized constant
         self._validate_other_fields(cleaned_data)
+        self._validate_availability_counts(cleaned_data)
 
         return cleaned_data
+
+    def _validate_availability_counts(self, cleaned_data: dict) -> None:
+        """Surface the shared rule as a field error before ``save_related`` saves."""
+
+        non_restricted_beds = cleaned_data.get("non_restricted_beds")
+        restricted_beds = cleaned_data.get("restricted_beds")
+        if non_restricted_beds is None or restricted_beds is None:
+            return
+
+        try:
+            validate_availability_counts(
+                non_restricted_beds=non_restricted_beds,
+                restricted_beds=restricted_beds,
+                total_beds=cleaned_data.get("total_beds"),
+            )
+        except ValidationError as exc:
+            # ``add_error(None, …)`` distributes a multi-field ValidationError.
+            self.add_error(None, exc)
 
     def _validate_other_fields(self, cleaned_data: dict) -> None:
         """Validate that _other fields are filled when 'Other' is selected."""
@@ -605,6 +671,10 @@ class ServiceCategoryAdmin(SortableAdminMixin, admin.ModelAdmin):
 
 
 class ShelterResource(resources.ModelResource):
+    # Exported so an export can be traced back to the shelters it came from, but
+    # readonly so a round-tripped sheet cannot repoint a row at another primary
+    # key: imports still match on ``import_id_fields``.
+    id = Field(column_name="id", attribute="id", readonly=True)
     organization = Field(
         column_name="organization", attribute="organization", widget=ForeignKeyWidget(Organization, "name")
     )
@@ -689,7 +759,7 @@ class ShelterResource(resources.ModelResource):
             "name",
             "organization",
         )
-        exclude = ("id", "created_at", "updated_at")
+        exclude = ("created_at", "updated_at")
 
     def skip_or_raise(self, row: Any, col_of_choice: str) -> None:
         logger.warning(f"Row {self.count}: Bad {col_of_choice} value")
@@ -993,6 +1063,9 @@ class ShelterAdmin(ImportExportModelAdmin):
             {
                 "fields": (
                     "total_beds",
+                    "non_restricted_beds",
+                    "restricted_beds",
+                    "restriction_notes",
                     "room_styles",
                     "room_styles_other",
                     "add_notes_sleeping_details",
@@ -1311,6 +1384,7 @@ class ShelterAdmin(ImportExportModelAdmin):
     ) -> None:
         super().save_related(request, form, formsets, change)
         form.save_pending_service_entries()
+        form.save_availability()
 
         if form.cleaned_data.get("clear_hero_image"):
             form.instance.hero_image = None
@@ -1339,6 +1413,25 @@ class ShelterAdmin(ImportExportModelAdmin):
     @admin.display(ordering="total_photo_count", description="Total Photos")
     def total_photo_count(self, obj: Shelter) -> int:
         return getattr(obj, "total_photo_count", 0)
+
+    # Read-only availability display.  Django resolves a read-only declared field
+    # against the model, which has no such column, so these admin methods are what
+    # the readonly branch of the fieldset renders (and labels) for view-only users.
+    def _availability_value(self, obj: Shelter, name: str) -> Any:
+        availability = getattr(obj, "availability", None)
+        return getattr(availability, name, None)
+
+    @admin.display(description="Available unrestricted beds")
+    def non_restricted_beds(self, obj: Shelter) -> Any:
+        return self._availability_value(obj, "non_restricted_beds")
+
+    @admin.display(description="Available restricted beds")
+    def restricted_beds(self, obj: Shelter) -> Any:
+        return self._availability_value(obj, "restricted_beds")
+
+    @admin.display(description="Restriction notes")
+    def restriction_notes(self, obj: Shelter) -> Any:
+        return self._availability_value(obj, "restriction_notes")
 
     def updated_by(self, obj: Shelter) -> str:
         data = getattr(obj, "last_event", None) or {}
@@ -1619,15 +1712,33 @@ class ReservationAdmin(admin.ModelAdmin):
 class ShelterAvailabilityAdmin(admin.ModelAdmin):
     list_display = ("shelter", "non_restricted_beds", "restricted_beds", "updated_by", "updated_at", "created_at")
     list_filter = ("updated_at",)
+    # `list_display` renders the shelter per row; without this the changelist is
+    # one query per availability row.
+    list_select_related = ("shelter",)
     search_fields = ("shelter__name",)
     autocomplete_fields = ["shelter"]
-    readonly_fields = ("created_at", "updated_at", "updated_by")
+    readonly_fields = ("total_beds", "created_at", "updated_at", "updated_by")
+
+    def get_readonly_fields(self, request: HttpRequest, obj: Optional[ShelterAvailability] = None) -> tuple[str, ...]:
+        """``shelter`` is picked on the add form and fixed afterwards.
+
+        It is the FK every availability rule validates against, so it has to be
+        editable once — and read-only once a row exists, so the counts cannot be
+        moved to a different shelter behind the rule's back.
+        """
+        if obj is None:
+            return self.readonly_fields
+        return (*self.readonly_fields, "shelter")
+
     fieldsets = (
         (
             None,
             {
                 "fields": (
                     "shelter",
+                    # Read through to shelter.total_beds: the counts below are
+                    # validated against it, so it has to be visible alongside them.
+                    "total_beds",
                     "non_restricted_beds",
                     "restricted_beds",
                     "restriction_notes",
@@ -1667,6 +1778,13 @@ class ShelterAvailabilityAdmin(admin.ModelAdmin):
                 scoped_events.filter(pgh_obj_id=Cast(OuterRef("pk"), output_field=models.TextField())).values("obj")[:1]
             ),
         )
+
+    @admin.display(description="Total beds")
+    def total_beds(self, obj: ShelterAvailability) -> Optional[int]:
+        """The shelter's capacity — read-only context for the counts below."""
+        if not obj.shelter_id:
+            return None
+        return obj.shelter.total_beds
 
     def updated_by(self, obj: ShelterAvailability) -> str:
         data = getattr(obj, "last_event", None) or {}

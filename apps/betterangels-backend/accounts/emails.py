@@ -19,7 +19,7 @@ def base_url_for(template_config: TemplateConfig) -> str:
     sends someone to their app resolves the host this way, so a welcome message
     and the invitation that preceded it cannot point at different places.
     """
-    return str(getattr(settings, template_config.base_url_setting, ""))
+    return str(getattr(settings, template_config.base_url_setting, "")).rstrip("/")
 
 
 def send_welcome_email(user: User, organization: Organization, template_config: TemplateConfig) -> None:

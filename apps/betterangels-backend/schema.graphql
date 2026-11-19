@@ -710,7 +710,7 @@ input CreateNoteInput {
   clientProfile: ID = null
   isSubmitted: Boolean = false
   interactedAt: DateTime = null
-  organizationId: ID = null
+  organizationId: ID!
   location: LocationInput = null
   providedServices: [CreateNoteServiceInput!] = null
   requestedServices: [CreateNoteServiceInput!] = null
@@ -853,7 +853,7 @@ input CreateShelterInput {
   spaId: ID
 }
 
-union CreateShelterPayload = ShelterType | OperationInfo
+union CreateShelterPayload = OperatorShelterType | OperationInfo
 
 union CreateSocialMediaProfilePayload = SocialMediaProfileType | OperationInfo
 
@@ -867,7 +867,7 @@ input CreateTaskInput {
   teamId: ID
   assigneeId: ID
   status: TaskStatusEnum
-  organizationId: ID
+  organizationId: ID!
 }
 
 union CreateTaskPayload = TaskType | OperationInfo
@@ -1884,7 +1884,6 @@ input OperatorShelterFilter {
   openNow: OpenNowInput
   mapBounds: MapBoundsInput
   geolocation: GeolocationInput
-  hasAvailableBeds: Boolean
   spa: [ID!]
   onSiteSecurity: Boolean
   city: [ID!]
@@ -1892,6 +1891,7 @@ input OperatorShelterFilter {
   spasServed: [ID!]
   services: [ID!]
   organizations: [ID!]
+  hasAvailableBeds: Boolean
   search: String
   status: [StatusChoices!]
   cityCouncilDistrict: [Int!]
@@ -1955,12 +1955,12 @@ type OperatorShelterType {
   visitorsAllowed: Boolean
   website: String
   mediaLinks: [MediaLinkType!]!
-  availability: ShelterAvailabilityType
   HeroPhotos: [ShelterPhotoType!]
   heroImage(preset: ImagePresetEnum = null, processingOptions: String = null): ShelterHeroImageType
   distanceInMiles: Float
   bedCounts: BedCountType!
   roomCounts: RoomCountType!
+  availability: ShelterAvailabilityType
   overallRating: Int
   subjectiveReview: String
   declinedBaVisit: Boolean
@@ -2223,7 +2223,6 @@ input PublicShelterFilter {
   openNow: OpenNowInput
   mapBounds: MapBoundsInput
   geolocation: GeolocationInput
-  hasAvailableBeds: Boolean
   spa: [ID!]
   onSiteSecurity: Boolean
   city: [ID!]
@@ -2753,6 +2752,12 @@ type ServiceType {
   priority: Int!
 }
 
+input ShelterAvailabilityInput {
+  nonRestrictedBeds: Int
+  restrictedBeds: Int
+  restrictionNotes: String
+}
+
 type ShelterAvailabilityType {
   id: ID!
   nonRestrictedBeds: Int!
@@ -2955,7 +2960,6 @@ type ShelterType {
   visitorsAllowed: Boolean
   website: String
   mediaLinks: [MediaLinkType!]!
-  availability: ShelterAvailabilityType
   HeroPhotos: [ShelterPhotoType!]
   heroImage(preset: ImagePresetEnum = null, processingOptions: String = null): ShelterHeroImageType
   distanceInMiles: Float
@@ -3456,9 +3460,10 @@ input UpdateShelterInput {
   scheduleType: ScheduleTypeChoices
   services: [ServiceInput!]
   additionalContacts: [ShelterContactInfoInput!]
+  availability: ShelterAvailabilityInput
 }
 
-union UpdateShelterPayload = ShelterType | OperationInfo
+union UpdateShelterPayload = OperatorShelterType | OperationInfo
 
 input UpdateShelterPhotoInput {
   id: ID!

@@ -167,12 +167,17 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         self.graphql_client.force_login(self.org_1_case_manager_2)
         # self.note is created in the setup block by self.org_1_case_manager_1 for self.client_profile_1
         self.note_2 = self._create_note_fixture(
-            {"purpose": "Client 1's Note", "clientProfile": self.client_profile_1.pk}
+            {
+                "purpose": "Client 1's Note",
+                "clientProfile": self.client_profile_1.pk,
+                "organizationId": str(self.org_1.pk),
+            }
         )["data"]["createNote"]
         self.note_3 = self._create_note_fixture(
             {
                 "purpose": "Client 2's Note",
                 "clientProfile": self.client_profile_2.pk,
+                "organizationId": str(self.org_1.pk),
             }
         )["data"]["createNote"]
 
@@ -216,12 +221,17 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         self.graphql_client.force_login(self.org_2_case_manager_1)
         # self.note is created in the setup block by self.org_1_case_manager_1 for self.client_profile_1
         self.note_2 = self._create_note_fixture(
-            {"purpose": "Client 1's Note", "clientProfile": self.client_profile_1.pk}
+            {
+                "purpose": "Client 1's Note",
+                "clientProfile": self.client_profile_1.pk,
+                "organizationId": str(self.org_2.pk),
+            }
         )["data"]["createNote"]
         self.note_3 = self._create_note_fixture(
             {
                 "purpose": "Client 2's Note",
                 "clientProfile": self.client_profile_2.pk,
+                "organizationId": str(self.org_2.pk),
             }
         )["data"]["createNote"]
 

@@ -1,6 +1,6 @@
 mutation UpdateShelterProfile($data: UpdateShelterInput!) {
   updateShelter(data: $data) {
-    ... on ShelterType {
+    ... on OperatorShelterType {
       id
     }
     ... on OperationInfo {

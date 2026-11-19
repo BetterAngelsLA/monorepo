@@ -126,7 +126,7 @@ requires-dist = [
     { name = "django-phonenumber-field", extras = ["phonenumbers"], specifier = ">=9.0.0,<10" },
     { name = "django-post-office", specifier = ">=3.12.0,<4" },
     { name = "django-select2", specifier = ">=8.4.8,<9" },
-    { name = "django-ses", specifier = ">=4.8.2,<5" },
+    { name = "django-ses", specifier = ">=4.9.0,<5" },
     { name = "django-storages", extras = ["s3"], specifier = ">=1.14.6,<2" },
     { name = "django-structlog", specifier = ">=11.0.0,<12" },
     { name = "django-stubs-ext", specifier = ">=6.1.2,<7" },
@@ -136,7 +136,7 @@ requires-dist = [
     { name = "hiredis", specifier = ">=3.5.0,<4" },
     { name = "newrelic", git = "https://github.com/newrelic/newrelic-python-agent.git?rev=825d7bd3dd56b86576324d6e3f07dd2e7008e6cf" },
     { name = "openpyxl", specifier = ">=3.1.5" },
-    { name = "psycopg", specifier = ">=3.3.6,<4" },
+    { name = "psycopg", specifier = ">=3.3.8,<4" },
     { name = "pyjwt", specifier = ">=2.15.1,<3" },
     { name = "requests", specifier = ">=2.32.5,<3" },
     { name = "strawberry-graphql-django", specifier = ">=0.93.0,<1" },
@@ -175,15 +175,15 @@ wheels = [
 
 [[package]]
 name = "boto3-stubs"
-version = "1.43.118"
+version = "1.43.126"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "botocore-stubs" },
     { name = "types-s3transfer" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/75/15/d5faf1c0eb6998a6b2d46598a42a00e0af02f48e89b9e02161282ecff0b4/boto3_stubs-1.43.118.tar.gz", hash = "sha256:11a39b22fabd4ac0532904b0522e7491cc54b1a710e04ead30711ceafda6ba4f", size = 105504, upload-time = "2026-10-22T19:26:41.321Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/de/a7/74920bf09a4a3bd435d90997d5287c71ac8dfc7a94e006fc60d242ceccc5/boto3_stubs-1.43.126.tar.gz", hash = "sha256:a2d8d845e04adbc601fd0f0cb24de8ea7bc76efb2dddefd083efd9004f5acbbc", size = 105727, upload-time = "2026-11-06T23:29:31.871Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/cc/24/13aeefef9d1f7330692cfdacd98faae898e06b7f2d2926af4819ed0f5990/boto3_stubs-1.43.118-py3-none-any.whl", hash = "sha256:21c9fd6d24b99af97d5f04247b58b8072352f39d69233fe1c5f20676c5aa547b", size = 72011, upload-time = "2026-10-22T19:26:33.662Z" },
+    { url = "https://files.pythonhosted.org/packages/f0/3b/8c5639761ff552688f8b20eb8d1f6680f7f86afd4964832d33f473444853/boto3_stubs-1.43.126-py3-none-any.whl", hash = "sha256:fa14fa4586940fa632e9d2d6eb98c9a2be26dab7529f26329a35d666b2021827", size = 72097, upload-time = "2026-11-06T23:29:27.658Z" },
 ]
 
 [package.optional-dependencies]
@@ -843,15 +843,15 @@ wheels = [
 
 [[package]]
 name = "django-ses"
-version = "4.8.2"
+version = "4.9.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "boto3" },
     { name = "django" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/4f/8b/6fa3269f78012930544139aa5d71703a6bfb53d20257e63bafb5c722de05/django_ses-4.8.2.tar.gz", hash = "sha256:35f193be4c71c358e71eedc290eabf48227777377e58acdc67f3e8b6867ba651", size = 75632, upload-time = "2026-10-12T20:28:54.193Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b4/17/b116bb293964d54406b9d4337514f8053886eb66bbb42958286135ae71cd/django_ses-4.9.0.tar.gz", hash = "sha256:d1aa855d8415bb9991fc1fa427dd31a5bb55b98e27c1b19b973566b70a6e83dd", size = 79421, upload-time = "2026-10-29T23:59:48.57Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/1f/2e/4b2f232b84051577902f0d016fd216593a6c5be70aa95071e30e82b8b564/django_ses-4.8.2-py3-none-any.whl", hash = "sha256:07c2a847bb5e7494439f9c03a8827efb937d3dfc41b1a5d08c8dff9eab38b106", size = 39588, upload-time = "2026-10-12T20:28:52.654Z" },
+    { url = "https://files.pythonhosted.org/packages/2c/b9/28547a2f22e3ee3d5db1b3935462df2e4a62f9fb48fc01f0d111bc0ec424/django_ses-4.9.0-py3-none-any.whl", hash = "sha256:34e9f6f13b3ebd8618cfd8d9f93d75f40d6dc5a896a1b3ffa48c4054be75fbe5", size = 40891, upload-time = "2026-10-29T23:59:46.923Z" },
 ]
 
 [[package]]
@@ -1037,14 +1037,14 @@ wheels = [
 
 [[package]]
 name = "faker"
-version = "40.43.0"
+version = "40.44.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "tzdata", marker = "sys_platform == 'win32'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/33/6c/b8793efc2f00a912ef17cf0b61b717cddf34607499efcb8a32238c119368/faker-40.43.0.tar.gz", hash = "sha256:02fae4327c03a4a6315e1b428a3878f435bfc276c93435ea349b95c0c9372361", size = 2032713, upload-time = "2026-10-09T20:06:29.652Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/87/22/965c7b822f4c80f6e003c696d5fa01b48eea6cc7852d61aec8779519b346/faker-40.44.0.tar.gz", hash = "sha256:97245a3756dcaf35418b89bea9f03ae6881557db0032bf048744c2aaee2a9108", size = 2034259, upload-time = "2026-10-28T17:06:41.048Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/81/ed/0d6d0d6467ae3d009fb82fb411867c7fcfeadbdd25602cab0d7a7963f400/faker-40.43.0-py3-none-any.whl", hash = "sha256:9dd7c0ddfaf30c842b05502d3cf641c135e0120a3a19047008ba8525b72953ed", size = 2069082, upload-time = "2026-10-09T20:06:27.166Z" },
+    { url = "https://files.pythonhosted.org/packages/58/9e/3da962809aefa00ddf457d1b11bba41d7766373a0ad9e537fa0804604361/faker-40.44.0-py3-none-any.whl", hash = "sha256:db808a3ec33fe9ce5caf40b9fb61f85f46e429a56966f765209272adec83e4c6", size = 2069747, upload-time = "2026-10-28T17:06:39.109Z" },
 ]
 
 [[package]]
@@ -1359,13 +1359,13 @@ requires-dist = [{ name = "betterangels-backend", editable = "apps/betterangels-
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "boto3-stubs", extras = ["essential"], specifier = ">=1.43.118,<2" },
+    { name = "boto3-stubs", extras = ["essential"], specifier = ">=1.43.126,<2" },
     { name = "celery-types", specifier = ">=0.26.0,<1" },
     { name = "django-stubs", extras = ["compatible-mypy"], specifier = ">=6.1,<7" },
     { name = "django-stubs-ext", specifier = ">=6.1.2,<7" },
     { name = "djangorestframework-stubs", extras = ["compatible-mypy"], specifier = ">=3.18.1,<4" },
     { name = "djlint", specifier = ">=1.46.4,<2" },
-    { name = "faker", specifier = ">=40.43.0,<41" },
+    { name = "faker", specifier = ">=40.44.0,<41" },
     { name = "ipython", specifier = ">=9.18.1,<10" },
     { name = "model-bakery", specifier = ">=1.24.2,<2" },
     { name = "pre-commit", specifier = ">=4.7.0,<5" },
@@ -1373,9 +1373,9 @@ dev = [
     { name = "pytest-xdist", specifier = ">=3.8,<4" },
     { name = "ruff", specifier = ">=0.17.2,<1.0.0" },
     { name = "time-machine", specifier = ">=3.5.0,<4" },
-    { name = "types-gevent", specifier = ">=26.8.0.20260811,<27" },
+    { name = "types-gevent", specifier = ">=26.9.0.20261107,<27" },
     { name = "types-openpyxl", specifier = ">=3.1.5.20261017,<4" },
-    { name = "types-python-dateutil", specifier = ">=2.9.0.20261029,<3" },
+    { name = "types-python-dateutil", specifier = ">=2.9.0.20261104,<3" },
     { name = "types-requests", specifier = ">=2.33.0.20261030,<3" },
     { name = "unittest-parametrize", specifier = ">=1.9.0,<2" },
     { name = "vcrpy", specifier = ">=8.3.0,<9" },
@@ -1669,14 +1669,14 @@ wheels = [
 
 [[package]]
 name = "psycopg"
-version = "3.3.6"
+version = "3.3.8"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "tzdata", marker = "sys_platform == 'win32'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/76/26/3ea4ca5eaea1c0debcdf7ee7c1613fbe721dc27a03c461c0817ffd8a0601/psycopg-3.3.6.tar.gz", hash = "sha256:c081f2250df751a943036e42db6df4571c66cd0aabe8291a7a506512b12007d2", size = 168171, upload-time = "2026-09-18T13:22:55.152Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/11/c8/3bd7e09770a5829eb26667df5e49f084d78bd106d5949ade9447288a8e18/psycopg-3.3.8.tar.gz", hash = "sha256:86c135a9a6f5e98404975c5787e620bf436a7807e088baebd1b20fa48d3b4b4f", size = 168902, upload-time = "2026-11-04T09:44:26.142Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/4e/de/748bd7609c71cae5d737f0ba9192f19329f70180ecda8fff3cac02c5abe3/psycopg-3.3.6-py3-none-any.whl", hash = "sha256:a1db9f7148b06a28606767efaca51fa6f9398c5c0a3810519be69d7000bdb631", size = 215490, upload-time = "2026-09-18T13:15:29.374Z" },
+    { url = "https://files.pythonhosted.org/packages/7b/5c/50a0b0796ccb69b11934f7c5758051c08019bda2fafb417501109fffd569/psycopg-3.3.8-py3-none-any.whl", hash = "sha256:ca50af6072ba9ea6866f33021975230c2555d7bfdb9d8f94ca3af5c3d1bf2167", size = 216209, upload-time = "2026-11-04T09:37:35.491Z" },
 ]
 
 [[package]]
@@ -2025,15 +2025,15 @@ wheels = [
 
 [[package]]
 name = "types-gevent"
-version = "26.9.0.20261006"
+version = "26.9.0.20261107"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "types-greenlet" },
     { name = "types-psutil" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/77/7e/25c1b33d5f41812f02ece5e2271129dea1c55cdb62fcba9838e618e8d3e6/types_gevent-26.9.0.20261006.tar.gz", hash = "sha256:82aad7baa8e2bb8a1a41a90321cd1761ccb4d9cb1f9f6c875d9daacba7f1578f", size = 39173, upload-time = "2026-10-06T08:16:04.336Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/35/c5/8555123686e80ca6db6f4cb5446d20e7aec7fa3d28c3129b5bc77f587ec9/types_gevent-26.9.0.20261107.tar.gz", hash = "sha256:24e09dfe9adcae0f841acd83e09a651e7bcc3c275c543826a5ad74c26e439c1e", size = 39240, upload-time = "2026-11-07T07:55:35.842Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e2/39/d3c2e562640eff826840bbbe524a62347c88addb47c0b59c99a95120b33b/types_gevent-26.9.0.20261006-py3-none-any.whl", hash = "sha256:3c63cd5f812651a0a4e7c021ca99150a55da3fc25e227119f3893dcc0ea98304", size = 55541, upload-time = "2026-10-06T08:16:03.178Z" },
+    { url = "https://files.pythonhosted.org/packages/0c/dc/c94a9dc18eedef5297adc825e0e912595004842bf79c278e986bd1c9f624/types_gevent-26.9.0.20261107-py3-none-any.whl", hash = "sha256:02caa4f9eab6fceb640471572c269e8d2103762aa6ba79eabcba08811bc78de2", size = 55542, upload-time = "2026-11-07T07:55:34.85Z" },
 ]
 
 [[package]]
@@ -2065,11 +2065,11 @@ wheels = [
 
 [[package]]
 name = "types-python-dateutil"
-version = "2.9.0.20261029"
+version = "2.9.0.20261104"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/3f/1c/1ffbe325ab57b36f134f6c9b1074bfa36ed2a169e530ff7a70fafd5c3bb4/types_python_dateutil-2.9.0.20261029.tar.gz", hash = "sha256:3258b491686c441d8074cfc8712308741900c9ff128a06421baec3767c503511", size = 17805, upload-time = "2026-10-29T07:44:22.644Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/8c/da/aaf5b20ea6c9e714fae9fdc611b68bde4edcba0aa4b1b853fc157d3d7b37/types_python_dateutil-2.9.0.20261104.tar.gz", hash = "sha256:5d0495702a5f7343741f5d842c531bcd1c941da8b4a85307d52ef43ba80252db", size = 17861, upload-time = "2026-11-04T08:14:27.977Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/7a/c3/7972ebf51261cbe2b69d2e50117a2c4b121c530b4869c60cc5dcd7d8a628/types_python_dateutil-2.9.0.20261029-py3-none-any.whl", hash = "sha256:8fd04c6e1722d2523a74d6670596fc0007077651465b686f144ae1d200dcacf5", size = 18507, upload-time = "2026-10-29T07:44:21.529Z" },
+    { url = "https://files.pythonhosted.org/packages/9f/4d/f9beea6da46a838025209b06d91374c8af9fbb82c599167ae99ee59cfb7a/types_python_dateutil-2.9.0.20261104-py3-none-any.whl", hash = "sha256:f6ee76c91c547716b4795373a53d4c07e8e06cf98384ecb89fcf134d212de2ad", size = 18509, upload-time = "2026-11-04T08:14:26.989Z" },
 ]
 
 [[package]]

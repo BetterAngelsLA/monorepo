@@ -38,8 +38,13 @@ export function FormHeader(props: TProps) {
       )}
 
       {onEditClick && (
-        <button onClick={onEditClick} className={mergeCss([iconCss])}>
-          <Pencil />
+        <button
+          type="button"
+          aria-label={`Edit ${title ?? 'section'}`}
+          onClick={onEditClick}
+          className={mergeCss([iconCss])}
+        >
+          <Pencil aria-hidden="true" />
         </button>
       )}
     </div>

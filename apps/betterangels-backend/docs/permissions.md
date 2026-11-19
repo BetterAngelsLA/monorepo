@@ -15,6 +15,110 @@ Referrals are **grant-only**: the scoped `Caseworker` `Role` carries add/change/
 
 Both layers sit on Django's permission primitives, but they ask different questions and are checked independently.  **ADR 0001 is the source of truth** for the target model — this page describes the current backend wiring.
 
+## The golden path
+
+The common tasks, with the checks that fail when you get one wrong.
+
+### Gate a new mutation
+
+```python
+@strawberry_django.mutation(permission_classes=[IsAuthenticated])
+def rename_thing(self, info: Info, data: RenameThingInput) -> ThingType:
+    user = cast(User, get_current_user(info))
+    # The fetch *is* the check: an unfetchable row is simply not yours.
+    thing = get_writable_or_deny(Thing.objects.all(), data.id, user, Thing.perms.CHANGE)
+    return cast(ThingType, thing_update(thing=thing, data=asdict(data)))
+```
+
+Then run the two checks that will judge it:
+
+```bash
+python manage.py check                       # E005/E006/E007: declarations are legal
+pytest common/tests/test_org_mutation_gating.py   # every mutation carries a gate
+```
+
+If the tripwire fails it names the mutation and says what it wants:
+
+> `tasks.schema: mutation(s) without a grant gate: ['rename_thing']. Gate with
+> require_can()/can_obj() — or a scoped *_get/*_queryset load in the resolver or a
+> service it delegates to — or add a GATE_EXEMPT entry with the reason.`
+
+An exemption is a decision, not a shortcut: each one needs a written reason, and
+a stale entry (one that names a mutation that no longer exists) fails too.
+
+### Which predicate
+
+Pick by the question you are asking — the two axes are **scope** and
+**direction**:
+
+| Question | Call | Direction |
+|---|---|---|
+| "May they act in org O?" (a create — no row yet) | `require_can(user, perm, org=org)` | write |
+| "May they act on this row?" (already in hand) | `can_obj(user, perm, row)` | write |
+| "Which rows may they act on?" (and fetch them) | `writable(qs, user, perm)` | write |
+| "Fetch this one, or refuse" | `get_writable_or_deny(qs, pk, user, perm)` | write |
+| "Which rows may they see?" | `visible(qs, user, perm)` | read |
+| "Do they hold this anywhere?" | `can_anywhere(user, perm)` | read |
+| "Do they hold this at the global tier?" (platform-only) | `can_globally(user, perm)` | read |
+
+Declarative fields skip all of it: `HasPerm(perms, perm_checker=can_anywhere_checker,
+fail_silently=True)` answers both halves in one line, and a denial is an empty page.
+
+### Give a model a non-derived write rule
+
+Only do this when the derived rule is wrong. An org-anchored model derives ORG
+from `org_via`; a platform-shared or reachless model declares a class:
+
+```python
+class ClientProfile(OrgScoped, AbstractClientProfile):
+    org_via = None  # reach: platform-shared
+    access = Access(write=AccessClass.SHARED)  # authority: any holder, anywhere
+```
+
+`E007` refuses a write class on an org-anchored model, a non-`AccessClass` value,
+and the reserved `OBJECT` class — so a typo fails `manage.py check`, not a test.
+
+### Add a permission to a role
+
+Declare it on the model's `perms` (`PermissionSet`) or a `*Permissions`
+`TextChoices`, add it to the `RoleDef`, and make the legacy template a superset
+while both exist (`CASEWORKER` and `CASEWORKER_ROLE` share their bundles for
+exactly this reason). `sync_roles()` reconciles the deployed Role on migrate.
+
+### Row-invariant reads
+
+`perm_checker=can_anywhere_checker` answers *"does this user hold the permission
+anywhere?"* without looking at a row. That is only sound where the rows are
+deliberately row-invariant, so every such site on an **org-anchored** model is
+listed here with its reason. A platform-shared model needs no entry — its own
+`access` declaration is the proof.
+
+| Site                                  | Why the read is agency-wide                                                                        |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `notes.schema` · `Query.note`         | SHARED read on notes (RFC 0003 slice 2) — a product decision                                       |
+| `notes.schema` · `Query.notes`        | the list is agency-wide by the same decision                                                       |
+| `notes.schema` · `Query.services`     | reference data gated by note ADD — global service data, not org authority                          |
+| `notes.schema` · `Query.service_categories` | reference data gated by note ADD                                                             |
+| `notes.schema` · `Query.interaction_authors` | reference data gated by note ADD                                                            |
+| `tasks.schema` · `Query.task`         | SHARED read on tasks (RFC 0003 slice 1) — a product decision                                       |
+| `tasks.schema` · `Query.tasks`        | the list is agency-wide by the same decision                                                       |
+| `tasks.schema` · `Query.task_assignees` | the assignee picker lists the caller's org members; gated on `tasks.add`/`change` rather than the roster permission |
+
+Adding a SHARED read to an org-anchored model means adding a row here, in the
+same review — the alternative is an over-permission nobody argued for.
+
+### Debug a denial
+
+```bash
+python manage.py explain_permission --user jane@example.org --perm notes.view_note --org 7
+```
+
+It prints the canonical predicate's verdict plus the arms behind it (global tier,
+direct grant, delegated grant, the legacy arm), and exits 1 on a denial so it
+scripts. **Read the posture line**: a domain that has not cut over still enforces
+through the legacy arm, and the verdict shown is what the grant model *would*
+answer.
+
 ## How Org-Scoped Authority Works
 
 ### Where the org comes from

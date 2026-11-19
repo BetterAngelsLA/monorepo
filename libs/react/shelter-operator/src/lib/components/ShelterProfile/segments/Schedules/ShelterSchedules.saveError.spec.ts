@@ -19,7 +19,9 @@ describe('operationInfoMessage', () => {
   });
 
   it('is undefined when the payload succeeded', () => {
-    expect(operationInfoMessage({ __typename: 'ShelterType' })).toBeUndefined();
+    expect(
+      operationInfoMessage({ __typename: 'OperatorShelterType' }),
+    ).toBeUndefined();
   });
 
   it('is undefined when the rejection carries no text', () => {

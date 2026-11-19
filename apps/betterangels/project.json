@@ -220,8 +220,13 @@
       }
     },
     "build-list": {
-      "executor": "@nx/expo:build-list",
-      "cache": false
+      "executor": "nx:run-commands",
+      "cache": false,
+      "options": {
+        "command": "eas build:list",
+        "cwd": "apps/betterangels",
+        "forwardAllArgs": true
+      }
     },
     "privacy-test": {
       "executor": "nx:run-commands",

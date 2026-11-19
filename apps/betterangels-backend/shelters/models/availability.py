@@ -6,8 +6,14 @@ from django.core.validators import MinValueValidator
 from django.db import models
 
 from common.models import BaseModel, OrgScoped
+from shelters.validators import validate_availability_counts
 
 from .shelter import Shelter
+
+# The availability columns a payload may write.  The row also carries FKs and
+# timestamps that must never be payload-controlled.  One tuple so the admin form,
+# the ORM write path and the GraphQL input cannot drift apart.
+AVAILABILITY_FIELDS = ("non_restricted_beds", "restricted_beds", "restriction_notes")
 
 
 @pghistory.track(
@@ -24,6 +30,13 @@ from .shelter import Shelter
     },
 )
 class ShelterAvailability(OrgScoped, BaseModel):
+    """Bed availability for a shelter.
+
+    The model permissions guard the standalone availability admin only: the
+    shelter admin form and ``updateShelter`` write this row under
+    ``change_shelter``, like any other shelter field.
+    """
+
     org_via = ("shelter",)
 
     objects: models.Manager["ShelterAvailability"] = models.Manager()
@@ -53,6 +66,20 @@ class ShelterAvailability(OrgScoped, BaseModel):
         verbose_name = "Shelter Availability"
         verbose_name_plural = "Shelter Availabilities"
         ordering = ["-updated_at"]
+
+    def clean(self) -> None:
+        super().clean()
+        # ``clean_fields()`` has already reported the missing FK; dereferencing
+        # ``self.shelter`` here would raise ``RelatedObjectDoesNotExist`` (an
+        # ``AttributeError``, not a ``ValidationError``) and turn the admin's
+        # add form into a 500.
+        if not self.shelter_id:
+            return
+        validate_availability_counts(
+            non_restricted_beds=self.non_restricted_beds,
+            restricted_beds=self.restricted_beds,
+            total_beds=self.shelter.total_beds,
+        )
 
     def __str__(self) -> str:
         return f"{self.shelter.name} — {self.non_restricted_beds} non-restricted / {self.restricted_beds} restricted"

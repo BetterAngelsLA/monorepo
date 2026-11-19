@@ -18,3 +18,4 @@ export * from './analytics';
 export * from './framework';
 export * from './map';
 export * from './navigation';
+export * from './shelters';

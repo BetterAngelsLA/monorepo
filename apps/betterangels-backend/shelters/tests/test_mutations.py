@@ -7,9 +7,9 @@ from unittest_parametrize import ParametrizedTestCase
 
 from accounts.models import Role, User
 from accounts.services import role_assign
-from shelters.enums import DayOfWeekChoices, ScheduleTypeChoices
+from shelters.enums import DayOfWeekChoices, RoomStyleChoices, ScheduleTypeChoices
 from shelters.groups import GLOBAL_SHELTER_OPERATOR_ROLE
-from shelters.models import SPA, City, ContactInfo, Schedule, Service, ServiceCategory, Shelter
+from shelters.models import SPA, City, ContactInfo, Schedule, Service, ServiceCategory, Shelter, ShelterAvailability
 from shelters.tests.utils import ShelterTestCase
 
 
@@ -24,7 +24,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         mutation = """
             mutation ($data: CreateShelterInput!) {
                 createShelter(data: $data) {
-                    ... on ShelterType {
+                    ... on OperatorShelterType {
                         id
                         name
                         description
@@ -65,7 +65,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         mutation = """
             mutation ($data: CreateShelterInput!) {
                 createShelter(data: $data) {
-                    ... on ShelterType {
+                    ... on OperatorShelterType {
                         id
                         name
                         description
@@ -125,7 +125,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         mutation = """
             mutation ($data: CreateShelterInput!) {
                 createShelter(data: $data) {
-                    ... on ShelterType {
+                    ... on OperatorShelterType {
                         id
                         name
                         pets {
@@ -183,7 +183,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         mutation = """
             mutation ($data: CreateShelterInput!) {
                 createShelter(data: $data) {
-                    ... on ShelterType {
+                    ... on OperatorShelterType {
                         id
                         name
                         location {
@@ -224,7 +224,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         mutation = """
             mutation ($data: CreateShelterInput!) {
                 createShelter(data: $data) {
-                    ... on ShelterType {
+                    ... on OperatorShelterType {
                         id
                         name
                         services {
@@ -305,7 +305,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         mutation = """
             mutation ($data: CreateShelterInput!) {
                 createShelter(data: $data) {
-                    ... on ShelterType {
+                    ... on OperatorShelterType {
                         id
                     }
                     ... on OperationInfo {
@@ -343,7 +343,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         mutation = """
             mutation ($data: CreateShelterInput!) {
                 createShelter(data: $data) {
-                    ... on ShelterType {
+                    ... on OperatorShelterType {
                         id
                         name
                     }
@@ -373,7 +373,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         mutation = """
             mutation ($data: CreateShelterInput!) {
                 createShelter(data: $data) {
-                    ... on ShelterType {
+                    ... on OperatorShelterType {
                         id
                     }
                     ... on OperationInfo {
@@ -411,7 +411,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         mutation = """
             mutation ($data: CreateShelterInput!) {
                 createShelter(data: $data) {
-                    ... on ShelterType {
+                    ... on OperatorShelterType {
                         id
                         name
                     }
@@ -446,7 +446,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         mutation = """
             mutation ($data: CreateShelterInput!) {
                 createShelter(data: $data) {
-                    ... on ShelterType {
+                    ... on OperatorShelterType {
                         id
                     }
                     ... on OperationInfo {
@@ -486,7 +486,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         mutation = """
             mutation ($data: CreateShelterInput!) {
                 createShelter(data: $data) {
-                    ... on ShelterType {
+                    ... on OperatorShelterType {
                         id
                     }
                     ... on OperationInfo {
@@ -525,7 +525,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         mutation = """
             mutation ($data: UpdateShelterInput!) {
                 updateShelter(data: $data) {
-                    ... on ShelterType {
+                    ... on OperatorShelterType {
                         id
                         name
                         status
@@ -589,7 +589,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         mutation = """
             mutation ($data: UpdateShelterInput!) {
                 updateShelter(data: $data) {
-                    ... on ShelterType {
+                    ... on OperatorShelterType {
                         id
                         description
                         isPrivate
@@ -622,7 +622,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         mutation = """
             mutation ($data: UpdateShelterInput!) {
                 updateShelter(data: $data) {
-                    ... on ShelterType {
+                    ... on OperatorShelterType {
                         id
                         accessibility { name }
                         demographics { name }
@@ -661,7 +661,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         mutation = """
             mutation ($data: UpdateShelterInput!) {
                 updateShelter(data: $data) {
-                    ... on ShelterType {
+                    ... on OperatorShelterType {
                         id
                     }
                     ... on OperationInfo {
@@ -709,7 +709,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         mutation = """
             mutation ($data: UpdateShelterInput!) {
                 updateShelter(data: $data) {
-                    ... on ShelterType {
+                    ... on OperatorShelterType {
                         id
                         services {
                             id
@@ -743,7 +743,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         mutation = """
             mutation ($data: UpdateShelterInput!) {
                 updateShelter(data: $data) {
-                    ... on ShelterType {
+                    ... on OperatorShelterType {
                         id
                     }
                     ... on OperationInfo {
@@ -777,7 +777,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         mutation = """
             mutation ($data: UpdateShelterInput!) {
                 updateShelter(data: $data) {
-                    ... on ShelterType {
+                    ... on OperatorShelterType {
                         id
                     }
                     ... on OperationInfo {
@@ -818,7 +818,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         mutation = """
             mutation ($data: UpdateShelterInput!) {
                 updateShelter(data: $data) {
-                    ... on ShelterType {
+                    ... on OperatorShelterType {
                         id
                         citiesServed {
                             id
@@ -877,7 +877,7 @@ class CreateShelterTestCase(ShelterTestCase, ParametrizedTestCase, TestCase):
         mutation = """
             mutation ($data: UpdateShelterInput!) {
                 updateShelter(data: $data) {
-                    ... on ShelterType {
+                    ... on OperatorShelterType {
                         id
                         spasServed {
                             id
@@ -936,7 +936,7 @@ class ShelterMutationPermissionTestCase(ShelterTestCase, TestCase):
     CREATE_MUTATION = """
         mutation CreateShelter($data: CreateShelterInput!) {
             createShelter(data: $data) {
-                ... on ShelterType {
+                ... on OperatorShelterType {
                     id
                     name
                 }
@@ -953,7 +953,7 @@ class ShelterMutationPermissionTestCase(ShelterTestCase, TestCase):
     UPDATE_MUTATION = """
         mutation UpdateShelter($data: UpdateShelterInput!) {
             updateShelter(data: $data) {
-                ... on ShelterType {
+                ... on OperatorShelterType {
                     id
                     name
                 }
@@ -1264,6 +1264,261 @@ class ShelterMutationPermissionTestCase(ShelterTestCase, TestCase):
         self.assertTrue(Shelter.objects.filter(pk=self.shelter.pk).exists())
 
 
+class UpdateShelterAvailabilityTestCase(ShelterTestCase, TestCase):
+    """``updateShelter`` writes the nested availability payload as a partial update.
+
+    Availability lives on its own row (``Shelter.availability``), so it is a nested
+    input rather than flattened scalar fields; omitted fields keep their value and
+    an unchanged payload writes nothing (no ``ShelterAvailabilityEvent`` noise).
+    """
+
+    MUTATION = """
+        mutation UpdateShelter($data: UpdateShelterInput!) {
+            updateShelter(data: $data) {
+                ... on OperatorShelterType {
+                    id
+                }
+                ... on OperationInfo {
+                    messages {
+                        kind
+                        field
+                        message
+                    }
+                }
+            }
+        }
+    """
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.graphql_client.force_login(self.operator)
+        self.shelter = Shelter.objects.create(name="Availability Shelter", organization=self.org)
+        self.availability = ShelterAvailability.objects.get(shelter=self.shelter)
+
+    def test_writes_every_availability_field(self) -> None:
+        response = self.execute_graphql(
+            self.MUTATION,
+            {
+                "data": {
+                    "id": str(self.shelter.pk),
+                    "availability": {
+                        "nonRestrictedBeds": 6,
+                        "restrictedBeds": 3,
+                        "restrictionNotes": "Adults only",
+                    },
+                }
+            },
+        )
+
+        self.assertIsNone(response.get("errors"))
+        self.availability.refresh_from_db()
+        self.assertEqual(self.availability.non_restricted_beds, 6)
+        self.assertEqual(self.availability.restricted_beds, 3)
+        self.assertEqual(self.availability.restriction_notes, "Adults only")
+
+    def test_null_availability_is_a_no_op(self) -> None:
+        response = self.execute_graphql(
+            self.MUTATION,
+            {"data": {"id": str(self.shelter.pk), "availability": None}},
+        )
+
+        self.assertIsNone(response.get("errors"))
+        self.availability.refresh_from_db()
+        self.assertEqual(self.availability.non_restricted_beds, 0)
+        self.assertEqual(self.availability.restricted_beds, 0)
+        self.assertEqual(self.availability.restriction_notes, "")
+
+    def test_omitted_fields_keep_their_value(self) -> None:
+        """The availability payload is a partial update, not a replacement."""
+        ShelterAvailability.objects.filter(pk=self.availability.pk).update(
+            non_restricted_beds=3,
+            restricted_beds=2,
+            restriction_notes="Seeded note",
+        )
+
+        response = self.execute_graphql(
+            self.MUTATION,
+            {"data": {"id": str(self.shelter.pk), "availability": {"restrictedBeds": 5}}},
+        )
+
+        self.assertIsNone(response.get("errors"))
+        self.availability.refresh_from_db()
+        self.assertEqual(self.availability.non_restricted_beds, 3)
+        self.assertEqual(self.availability.restricted_beds, 5)
+        self.assertEqual(self.availability.restriction_notes, "Seeded note")
+
+    def test_null_restriction_notes_clears_them(self) -> None:
+        ShelterAvailability.objects.filter(pk=self.availability.pk).update(restriction_notes="Clear me")
+
+        response = self.execute_graphql(
+            self.MUTATION,
+            {"data": {"id": str(self.shelter.pk), "availability": {"restrictionNotes": None}}},
+        )
+
+        self.assertIsNone(response.get("errors"))
+        self.availability.refresh_from_db()
+        self.assertEqual(self.availability.restriction_notes, "")
+
+    def test_unchanged_payload_writes_nothing(self) -> None:
+        """A save that does not change availability adds no availability audit event."""
+        ShelterAvailability.objects.filter(pk=self.availability.pk).update(
+            non_restricted_beds=2,
+            restricted_beds=1,
+            restriction_notes="Stable",
+        )
+        self.availability.refresh_from_db()
+        event_model = ShelterAvailability.pgh_event_model  # type: ignore[attr-defined]
+        watermark = event_model.objects.order_by("-pgh_id").values_list("pgh_id", flat=True).first() or 0
+        updated_at = self.availability.updated_at
+
+        response = self.execute_graphql(
+            self.MUTATION,
+            {
+                "data": {
+                    "id": str(self.shelter.pk),
+                    # A shelter edit that leaves availability untouched.
+                    "name": "Renamed Without Availability",
+                    "availability": {"nonRestrictedBeds": 2},
+                }
+            },
+        )
+
+        self.assertIsNone(response.get("errors"))
+        self.availability.refresh_from_db()
+        self.assertEqual(self.availability.updated_at, updated_at)
+        self.assertFalse(event_model.objects.filter(pgh_id__gt=watermark).exists())
+
+    def test_negative_count_returns_field_validation(self) -> None:
+        response = self.execute_graphql(
+            self.MUTATION,
+            {"data": {"id": str(self.shelter.pk), "availability": {"nonRestrictedBeds": -1}}},
+        )
+
+        self.assertIsNone(response.get("errors"))
+        messages = response["data"]["updateShelter"]["messages"]
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(messages[0]["kind"], "VALIDATION")
+        self.assertEqual(messages[0]["field"], "availability.nonRestrictedBeds")
+
+        self.availability.refresh_from_db()
+        self.assertEqual(self.availability.non_restricted_beds, 0)
+
+    def test_recreates_a_missing_row_in_a_single_write(self) -> None:
+        """A deleted availability row is re-created with one INSERT, not insert+update."""
+        ShelterAvailability.objects.filter(shelter=self.shelter).delete()
+        event_model = ShelterAvailability.pgh_event_model  # type: ignore[attr-defined]
+        watermark = event_model.objects.order_by("-pgh_id").values_list("pgh_id", flat=True).first() or 0
+
+        response = self.execute_graphql(
+            self.MUTATION,
+            {
+                "data": {
+                    "id": str(self.shelter.pk),
+                    "availability": {"nonRestrictedBeds": 3, "restrictedBeds": 1, "restrictionNotes": "New row"},
+                }
+            },
+        )
+
+        self.assertIsNone(response.get("errors"))
+        recreated = ShelterAvailability.objects.get(shelter=self.shelter)
+        self.assertEqual(recreated.non_restricted_beds, 3)
+        self.assertEqual(recreated.restricted_beds, 1)
+        self.assertEqual(recreated.restriction_notes, "New row")
+        self.assertEqual(
+            list(event_model.objects.filter(pgh_id__gt=watermark).values_list("pgh_label", flat=True)),
+            ["shelter.availability.add"],
+        )
+
+    def test_counts_above_total_beds_returns_field_validation(self) -> None:
+        """Availability never advertises more beds than the shelter has."""
+        self.shelter.total_beds = 4
+        self.shelter.save()
+
+        response = self.execute_graphql(
+            self.MUTATION,
+            {"data": {"id": str(self.shelter.pk), "availability": {"nonRestrictedBeds": 3, "restrictedBeds": 2}}},
+        )
+
+        self.assertIsNone(response.get("errors"))
+        messages = response["data"]["updateShelter"]["messages"]
+        self.assertEqual(len(messages), 2)
+        self.assertSetEqual(
+            {message["field"] for message in messages},
+            {"availability.nonRestrictedBeds", "availability.restrictedBeds"},
+        )
+        for message in messages:
+            self.assertEqual(message["kind"], "VALIDATION")
+            self.assertIn("cannot exceed the shelter's total beds", message["message"])
+
+        self.availability.refresh_from_db()
+        self.assertEqual(self.availability.non_restricted_beds, 0)
+        self.assertEqual(self.availability.restricted_beds, 0)
+
+    def test_total_beds_below_current_availability_returns_field_validation(self) -> None:
+        """Lowering capacity must not strand availability above it."""
+        ShelterAvailability.objects.filter(pk=self.availability.pk).update(non_restricted_beds=8)
+        self.shelter.total_beds = 10
+        self.shelter.save()
+
+        response = self.execute_graphql(
+            self.MUTATION,
+            {"data": {"id": str(self.shelter.pk), "totalBeds": 5}},
+        )
+
+        self.assertIsNone(response.get("errors"))
+        messages = response["data"]["updateShelter"]["messages"]
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(messages[0]["kind"], "VALIDATION")
+        self.assertEqual(messages[0]["field"], "totalBeds")
+        self.assertIn("cannot exceed the shelter's total beds", messages[0]["message"])
+
+        self.shelter.refresh_from_db()
+        self.assertEqual(self.shelter.total_beds, 10)
+
+    def test_lowering_total_beds_is_validated_even_with_an_empty_availability_payload(self) -> None:
+        ShelterAvailability.objects.filter(pk=self.availability.pk).update(non_restricted_beds=8)
+        self.shelter.total_beds = 10
+        self.shelter.save()
+
+        response = self.execute_graphql(
+            self.MUTATION,
+            {"data": {"id": str(self.shelter.pk), "totalBeds": 5, "availability": {}}},
+        )
+
+        self.assertIsNone(response.get("errors"))
+        messages = response["data"]["updateShelter"]["messages"]
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(messages[0]["field"], "totalBeds")
+
+    def test_an_unchanged_total_beds_does_not_revalidate_a_stranded_row(self) -> None:
+        """The rule is about lowering capacity, not about re-checking every save.
+
+        A shelter whose counts already exceed its total (data that predates the
+        rule, or a write that bypassed the API) must still accept edits that do
+        not touch the total — otherwise the profile tab is frozen.
+        """
+        ShelterAvailability.objects.filter(pk=self.availability.pk).update(non_restricted_beds=8)
+        self.shelter.total_beds = 10
+        self.shelter.save()
+        ShelterAvailability.objects.filter(pk=self.availability.pk).update(non_restricted_beds=12)
+
+        response = self.execute_graphql(
+            self.MUTATION,
+            {"data": {"id": str(self.shelter.pk), "totalBeds": 10, "roomStyles": ["SINGLE_ROOM"]}},
+        )
+
+        self.assertIsNone(response.get("errors"))
+        payload = response["data"]["updateShelter"]
+        self.assertNotIn("messages", payload)
+        self.assertEqual(payload["id"], str(self.shelter.pk))
+
+        # The edit itself has to land — a mutation that refuses to write would
+        # also answer without messages.
+        self.shelter.refresh_from_db()
+        self.assertEqual(self.shelter.total_beds, 10)
+        self.assertEqual(list(self.shelter.room_styles.values_list("name", flat=True)), [RoomStyleChoices.SINGLE_ROOM])
+
+
 class UpdateShelterAdditionalContactsErrorShapeTestCase(ShelterTestCase, TestCase):
     """Documents the OperationInfo shape for per-contact validation failures.
 
@@ -1275,7 +1530,7 @@ class UpdateShelterAdditionalContactsErrorShapeTestCase(ShelterTestCase, TestCas
     MUTATION = """
         mutation UpdateShelter($data: UpdateShelterInput!) {
             updateShelter(data: $data) {
-                ... on ShelterType {
+                ... on OperatorShelterType {
                     id
                 }
                 ... on OperationInfo {
@@ -1301,6 +1556,16 @@ class UpdateShelterAdditionalContactsErrorShapeTestCase(ShelterTestCase, TestCas
         self.shelter = Shelter.objects.create(name="Contacts Error Shelter", organization=self.org)
 
     def test_two_new_contacts_each_with_error(self) -> None:
+        # A valid entry and a pre-existing contact make the atomicity claim
+        # observable: per-item semantics would write the valid entry (and, with
+        # replacement semantics, drop the one absent from the payload).
+        ContactInfo.objects.create(
+            shelter=self.shelter,
+            contact_name="Existing",
+            contact_number="2125550199",
+        )
+        before = set(ContactInfo.objects.filter(shelter=self.shelter).values_list("pk", flat=True))
+
         response = self.execute_graphql(
             self.MUTATION,
             {
@@ -1309,6 +1574,7 @@ class UpdateShelterAdditionalContactsErrorShapeTestCase(ShelterTestCase, TestCas
                     "additionalContacts": [
                         {"contactName": "Ada", "contactNumber": "bad-phone"},
                         {"contactName": "Grace", "contactNumber": "2125550101", "contactEmail": "nope"},
+                        {"contactName": "Valid", "contactNumber": "2125550177"},
                     ],
                 }
             },
@@ -1326,6 +1592,11 @@ class UpdateShelterAdditionalContactsErrorShapeTestCase(ShelterTestCase, TestCas
         self.assertEqual(messages[1]["field"], "additionalContacts.1.contactEmail")
         self.assertIn("email", messages[1]["message"].lower())
 
+        # Refused as a whole: the valid entry is not written, and the existing
+        # contact is neither replaced nor deleted.
+        after = set(ContactInfo.objects.filter(shelter=self.shelter).values_list("pk", flat=True))
+        self.assertSetEqual(after, before)
+
 
 class UpdateShelterSchedulesTestCase(ShelterTestCase, TestCase):
     """updateShelter reconciles schedules in place (upsert) instead of replacing them."""
@@ -1333,7 +1604,7 @@ class UpdateShelterSchedulesTestCase(ShelterTestCase, TestCase):
     UPDATE_MUTATION = """
         mutation ($data: UpdateShelterInput!) {
             updateShelter(data: $data) {
-                ... on ShelterType {
+                ... on OperatorShelterType {
                     id
                 }
                 ... on OperationInfo {

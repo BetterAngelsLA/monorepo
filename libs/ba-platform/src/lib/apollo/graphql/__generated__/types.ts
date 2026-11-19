@@ -700,7 +700,7 @@ export type CreateNoteInput = {
   interactedAt?: InputMaybe<Scalars['DateTime']['input']>;
   isSubmitted?: InputMaybe<Scalars['Boolean']['input']>;
   location?: InputMaybe<LocationInput>;
-  organizationId?: InputMaybe<Scalars['ID']['input']>;
+  organizationId: Scalars['ID']['input'];
   privateDetails?: InputMaybe<Scalars['String']['input']>;
   providedServices?: InputMaybe<Array<CreateNoteServiceInput>>;
   publicDetails?: InputMaybe<Scalars['String']['input']>;
@@ -847,7 +847,7 @@ export type CreateShelterInput = {
   website?: InputMaybe<Scalars['String']['input']>;
 };
 
-export type CreateShelterPayload = OperationInfo | ShelterType;
+export type CreateShelterPayload = OperationInfo | OperatorShelterType;
 
 export type CreateSocialMediaProfilePayload = OperationInfo | SocialMediaProfileType;
 
@@ -858,7 +858,7 @@ export type CreateTaskInput = {
   hmisClientProfile?: InputMaybe<Scalars['ID']['input']>;
   hmisNote?: InputMaybe<Scalars['ID']['input']>;
   note?: InputMaybe<Scalars['ID']['input']>;
-  organizationId?: InputMaybe<Scalars['ID']['input']>;
+  organizationId: Scalars['ID']['input'];
   status?: InputMaybe<TaskStatusEnum>;
   summary: Scalars['String']['input'];
   teamId?: InputMaybe<Scalars['ID']['input']>;
@@ -2661,7 +2661,6 @@ export type PublicShelterFilter = {
   citiesServed?: InputMaybe<Array<Scalars['ID']['input']>>;
   city?: InputMaybe<Array<Scalars['ID']['input']>>;
   geolocation?: InputMaybe<GeolocationInput>;
-  hasAvailableBeds?: InputMaybe<Scalars['Boolean']['input']>;
   isAccessCenter?: InputMaybe<Scalars['Boolean']['input']>;
   isPrivate?: InputMaybe<Scalars['Boolean']['input']>;
   mapBounds?: InputMaybe<MapBoundsInput>;
@@ -3536,6 +3535,12 @@ export type ServiceType = {
   priority: Scalars['Int']['output'];
 };
 
+export type ShelterAvailabilityInput = {
+  nonRestrictedBeds?: InputMaybe<Scalars['Int']['input']>;
+  restrictedBeds?: InputMaybe<Scalars['Int']['input']>;
+  restrictionNotes?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type ShelterAvailabilityType = {
   __typename: 'ShelterAvailabilityType';
   id: Scalars['ID']['output'];
@@ -3696,7 +3701,6 @@ export type ShelterType = {
   accessibility: Array<AccessibilityType>;
   addNotesShelterDetails?: Maybe<Scalars['String']['output']>;
   addNotesSleepingDetails?: Maybe<Scalars['String']['output']>;
-  availability?: Maybe<ShelterAvailabilityType>;
   bedCounts: BedCountType;
   bedFees?: Maybe<Scalars['String']['output']>;
   citiesServed: Array<CityType>;
@@ -4202,6 +4206,7 @@ export type UpdateShelterInput = {
   addNotesShelterDetails?: InputMaybe<Scalars['String']['input']>;
   addNotesSleepingDetails?: InputMaybe<Scalars['String']['input']>;
   additionalContacts?: InputMaybe<Array<ShelterContactInfoInput>>;
+  availability?: InputMaybe<ShelterAvailabilityInput>;
   bedFees?: InputMaybe<Scalars['String']['input']>;
   citiesServedIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   cityCouncilDistrict?: InputMaybe<Scalars['Int']['input']>;
@@ -4256,7 +4261,7 @@ export type UpdateShelterInput = {
   website?: InputMaybe<Scalars['String']['input']>;
 };
 
-export type UpdateShelterPayload = OperationInfo | ShelterType;
+export type UpdateShelterPayload = OperationInfo | OperatorShelterType;
 
 export type UpdateShelterPhotoInput = {
   id: Scalars['ID']['input'];
