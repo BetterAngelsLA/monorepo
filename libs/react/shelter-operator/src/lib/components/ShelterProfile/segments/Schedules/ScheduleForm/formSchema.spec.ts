@@ -2,9 +2,10 @@ import {
   ConditionChoices,
   DayOfWeekChoices,
   ScheduleTypeChoices,
+  type ScheduleType,
 } from '@monorepo/react/shelter';
 import { scheduleFormSchema, timeRangeSchema } from './formSchema';
-import { buildScheduleInputs } from './utils';
+import { buildScheduleInputs, hydrateWeekly } from './utils';
 import type { WeeklyFormState } from './types';
 import { buildDefaultWeeklyState } from './WeeklyScheduleEditor';
 
@@ -61,12 +62,43 @@ describe('timeRangeSchema', () => {
   });
 
   it.each([
-    ['17:00', '09:00'],
-    ['09:00', '09:00'],
-  ])('rejects %s → %s', (startTime, endTime) => {
+    ['20:30', '07:30'],
+    ['22:00', '06:00'],
+  ])('accepts an overnight range %s → %s', (startTime, endTime) => {
     expect(
       timeRangeSchema.safeParse({ _id: 'r1', startTime, endTime }).success,
-    ).toBe(false);
+    ).toBe(true);
+  });
+
+  it('rejects equal times', () => {
+    // Equal times would read as 24 hours to the model, which the schedule UI
+    // cannot show; a same-time typo should be an error, not an all-day shelter.
+    const result = timeRangeSchema.safeParse({
+      _id: 'r1',
+      startTime: '09:00',
+      endTime: '09:00',
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues.map((issue) => issue.message)).toStrictEqual([
+      "Start and end time can't be the same",
+    ]);
+    expect(result.error?.issues[0].path).toStrictEqual(['endTime']);
+  });
+
+  it('reports a blank range as missing times, not as equal times', () => {
+    // Both fields already fail their own check; "can't be the same" would be
+    // wrong advice for a row where nothing has been typed yet.
+    const result = timeRangeSchema.safeParse({
+      _id: 'r1',
+      startTime: '',
+      endTime: '',
+    });
+
+    expect(result.error?.issues.map((issue) => issue.message)).toStrictEqual([
+      'Invalid time format (HH:MM)',
+      'Invalid time format (HH:MM)',
+    ]);
   });
 });
 
@@ -88,15 +120,81 @@ describe('scheduleFormSchema', () => {
     ).toStrictEqual([]);
   });
 
-  it('rejects a weekly range whose end time is not after the start', () => {
+  it('accepts a weekly range whose end time is before the start (overnight)', () => {
+    // 8:30 PM – 7:30 AM: the shelter's overnight operating hours. The Schedule
+    // model measures the duration modulo 24 h, so this is a normal range.
     expect(
       issueMessages({
         weekly: weeklyWithMondayRanges([
-          { startTime: '17:00', endTime: '09:00' },
+          { startTime: '20:30', endTime: '07:30' },
         ]),
         exceptions: [],
       }),
-    ).toContain('Start time must be before end time');
+    ).toStrictEqual([]);
+  });
+
+  it('accepts an exception whose hours cross midnight', () => {
+    expect(
+      issueMessages({
+        weekly: buildDefaultWeeklyState(),
+        exceptions: [
+          { ...openException, startTime: '20:30', endTime: '07:30' },
+        ],
+      }),
+    ).toStrictEqual([]);
+  });
+
+  it('reports a blank exception as missing times, not as equal times', () => {
+    expect(
+      issueMessages({
+        weekly: buildDefaultWeeklyState(),
+        exceptions: [{ ...openException, startTime: '', endTime: '' }],
+      }),
+    ).toStrictEqual([
+      'Invalid time format (HH:MM)',
+      'Invalid time format (HH:MM)',
+    ]);
+  });
+
+  it('rejects an exception with equal times', () => {
+    expect(
+      issueMessages({
+        weekly: buildDefaultWeeklyState(),
+        exceptions: [
+          { ...openException, startTime: '09:00', endTime: '09:00' },
+        ],
+      }),
+    ).toStrictEqual(["Start and end time can't be the same"]);
+  });
+
+  it('round-trips a saved overnight row through validation and save', () => {
+    // A row already stored as 8:30 PM – 7:30 AM must load, validate, and save
+    // unchanged: rejecting it on load is what blocked overnight hours.
+    const weekly = hydrateWeekly([
+      {
+        id: 'mon-night',
+        scheduleType: ScheduleTypeChoices.Operating,
+        day: DayOfWeekChoices.Monday,
+        isException: false,
+        startTime: '20:30:00',
+        endTime: '07:30:00',
+      } as ScheduleType,
+    ]);
+
+    // `parse` throws on a rejection, which fails the test with the zod issues.
+    const parsed = scheduleFormSchema.parse({ weekly, exceptions: [] });
+
+    const [input] = buildScheduleInputs(
+      ScheduleTypeChoices.Operating,
+      parsed.weekly,
+      parsed.exceptions,
+    );
+
+    expect(input).toMatchObject({
+      id: 'mon-night',
+      startTime: '20:30:00',
+      endTime: '07:30:00',
+    });
   });
 
   it('ignores the times of an all-day closure', () => {
@@ -111,14 +209,12 @@ describe('scheduleFormSchema', () => {
   });
 
   it('requires valid times for an exception that is not closed all day', () => {
-    // The ordering refinement also fires on the unparsable value, so only the
-    // format message is asserted here.
     expect(
       issueMessages({
         weekly: buildDefaultWeeklyState(),
         exceptions: [{ ...openException, startTime: 'not-a-time' }],
       }),
-    ).toContain('Invalid time format (HH:MM)');
+    ).toStrictEqual(['Invalid time format (HH:MM)']);
   });
 
   it('rejects an end date before the start date', () => {

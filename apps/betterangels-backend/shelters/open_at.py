@@ -3,7 +3,7 @@
 import datetime
 from typing import TYPE_CHECKING, Sequence
 
-from django.db.models import Exists, F, OuterRef, Q, QuerySet, Value
+from django.db.models import Case, CharField, DateField, Exists, F, IntegerField, OuterRef, Q, QuerySet, Value, When
 from django.db.models.functions import Mod
 from django.db.models.lookups import LessThan
 
@@ -52,6 +52,19 @@ def shelters_open_at(
     For every-day schedules (``day=None``) the interval is stored on a
     1440-minute daily clock instead.
 
+    **Date bounds follow the shift's start**
+
+    ``start_date`` / ``end_date`` and exception dates bound the day the window
+    *starts*: a Monday 20:30-07:30 shift is Monday's for its whole length, so
+    Tuesday 02:00 is checked against Monday's date. ``shift_date`` below is that
+    date — today, or yesterday when the after-midnight tail is being queried.
+
+    **An all-day closure cancels the shifts that start on its date**
+
+    A closure with no times does not cut a shift that started the day before:
+    that shift finishes. The shift that would start on the closed date never
+    starts, so its after-midnight tail is cancelled too.
+
     .. note::
 
         Start time is **inclusive**, end time is **exclusive**.
@@ -65,6 +78,7 @@ def shelters_open_at(
     query_dm = dt.hour * 60 + dt.minute
     date = dt.date()
     day_enum = DayOfWeekChoices.from_date(date)
+    previous_day_enum = DayOfWeekChoices.from_date(date - datetime.timedelta(days=1))
 
     # Branchless time-window cover for both normal and overnight schedules.
     # Every-day schedules (day=None) use the daily clock; day-specific
@@ -92,6 +106,35 @@ def shelters_open_at(
 
     covers = timed_covers | full_day_covers
 
+    # A window belongs to the day it starts: a Monday 20:30-07:30 shift is
+    # Monday's for its whole length. Seasonal bounds and exception dates must
+    # therefore be checked against the shift's start date, not the query date,
+    # or the after-midnight tail is evaluated against the wrong day.
+    #
+    # ``elapsed_minutes`` is how long ago the current shift started (0-1439 on
+    # the clock the row uses). If that is longer than the minutes elapsed today,
+    # the start crossed midnight and the shift belongs to yesterday.
+    elapsed_minutes = Case(
+        When(
+            day__isnull=True,
+            then=Mod(Value(query_dm) - F("start_cycle_minutes") + DAILY_MINUTES, DAILY_MINUTES),
+        ),
+        default=Mod(Value(query_wm) - F("start_cycle_minutes") + WEEK_MINUTES, WEEK_MINUTES),
+        output_field=IntegerField(),
+    )
+    shift_date = Case(
+        When(
+            LessThan(Value(query_dm), elapsed_minutes),
+            then=Value(date - datetime.timedelta(days=1)),
+        ),
+        default=Value(date),
+        output_field=DateField(),
+    )
+    shift_date_bounds = [
+        Q(start_date=None) | Q(start_date__lte=shift_date),
+        Q(end_date=None) | Q(end_date__gte=shift_date),
+    ]
+
     # For each requested schedule type independently:
     #   - The shelter must have a non-exception schedule row of that type
     #     covering *dt*.
@@ -102,27 +145,59 @@ def shelters_open_at(
     # results in ``Q()``, which is a no-op filter.
     open_condition = Q()
     for schedule_type in schedule_types:
-        is_open = Exists(
+        # A full-day closure cancels every shift that *starts* on its date, for
+        # the shift's whole length. It has no time window, so it cannot be
+        # matched by the exception check below; it has to be correlated with the
+        # base row's shift start instead.
+        base_rows = (
             Schedule.objects.filter(
                 shelter=OuterRef("pk"),
                 schedule_type=schedule_type,
                 is_exception=False,
-            ).filter(
+            )
+            .filter(
                 covers,
-                Q(start_date=None) | Q(start_date__lte=date),
-                Q(end_date=None) | Q(end_date__gte=date),
+                *shift_date_bounds,
+            )
+            .annotate(
+                shift_start=shift_date,
+                # The shift starts today or yesterday, so its weekday is one of
+                # these two — no date extraction needed.
+                shift_day=Case(
+                    When(
+                        LessThan(Value(query_dm), elapsed_minutes),
+                        then=Value(previous_day_enum),
+                    ),
+                    default=Value(day_enum),
+                    output_field=CharField(),
+                ),
             )
         )
+        full_day_closures = Schedule.objects.filter(
+            shelter=OuterRef("shelter_id"),
+            schedule_type=schedule_type,
+            is_exception=True,
+            start_time__isnull=True,
+        ).filter(
+            Q(day__isnull=True) | Q(day=OuterRef("shift_day")),
+            Q(start_date=None) | Q(start_date__lte=OuterRef("shift_start")),
+            Q(end_date=None) | Q(end_date__gte=OuterRef("shift_start")),
+        )
 
+        is_open = Exists(base_rows.filter(~Exists(full_day_closures)))
+
+        # Only timed exceptions are window closures. A full-day closure is
+        # handled by the per-base check above: it cancels the shifts that start
+        # on its date, not a shift already in progress from the day before.
         has_active_exception = Exists(
             Schedule.objects.filter(
                 shelter=OuterRef("pk"),
                 schedule_type=schedule_type,
                 is_exception=True,
+                start_time__isnull=False,
             ).filter(
                 covers,
-                Q(start_date=None) | Q(start_date__lte=date),
-                Q(end_date=None) | Q(end_date__gte=date),
+                *shift_date_bounds,
             )
         )
 
