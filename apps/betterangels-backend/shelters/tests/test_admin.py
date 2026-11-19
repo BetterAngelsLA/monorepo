@@ -6,6 +6,8 @@ from django.contrib.auth.models import Permission
 from django.http import HttpRequest, QueryDict
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
+from organizations.models import Organization
+from tablib import Dataset
 
 from accounts.models import User
 from shelters.admin import (
@@ -451,7 +453,9 @@ class ShelterResourceExportTestCase(TestCase):
     """``ShelterResource`` exports the shelter's primary key, but never imports it."""
 
     def setUp(self) -> None:
-        self.shelter = Shelter.objects.create(name="Exported Shelter")
+        self.org = Organization.objects.create(name="Export Test Org")
+        self.shelter = Shelter.objects.create(name="Exported Shelter", organization=self.org, description="before")
+        self.other = Shelter.objects.create(name="Other Shelter", organization=self.org, description="untouched")
 
     def test_csv_export_leads_with_the_shelter_id(self) -> None:
         """An export must be traceable back to the rows it came from."""
@@ -462,12 +466,22 @@ class ShelterResourceExportTestCase(TestCase):
         self.assertEqual(header[0], "id")
         self.assertEqual(row[0], str(self.shelter.pk))
 
-    def test_id_is_export_only(self) -> None:
-        """The exported id is reference-only, so a sheet cannot repoint a row at another primary key."""
-        other = Shelter.objects.create(name="Other Shelter")
-        other_pk = other.pk
-        resource = ShelterResource()
+    def test_import_cannot_repoint_a_row_by_id(self) -> None:
+        """A sheet whose ``id`` names another shelter still updates the row its name and org select."""
+        dataset = ShelterResource().export(queryset=Shelter.objects.filter(pk=self.shelter.pk))
+        row = dataset.dict[0]
+        row["id"] = str(self.other.pk)  # edited against the wrong primary key
+        row["description"] = "imported"
+        # ``before_import_row`` matches status on its display label, and the import
+        # path indexes ``additional_contacts``, which no export carries.
+        row["status"] = ""
+        headers = [*dataset.headers, "additional_contacts"]
+        import_dataset = Dataset(headers=headers)
+        import_dataset.append([row.get(header, "") for header in headers])
 
-        resource.import_field(resource.fields["id"], other, {"id": str(self.shelter.pk)})
+        result = ShelterResource().import_data(import_dataset, dry_run=False)
 
-        self.assertEqual(other.pk, other_pk)
+        self.assertFalse(result.has_errors())
+        self.assertEqual(result.totals["update"], 1)
+        self.assertEqual(Shelter.objects.get(pk=self.shelter.pk).description, "imported")
+        self.assertEqual(Shelter.objects.get(pk=self.other.pk).description, "untouched")
