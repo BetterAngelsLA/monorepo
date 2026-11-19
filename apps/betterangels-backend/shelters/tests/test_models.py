@@ -1016,12 +1016,20 @@ class ShiftScopedScheduleTestCase(TestCase):
             },
         )
 
+        # Control: the same closure does cancel the shift that starts on its
+        # date, so this test fails if closures stop being applied.
+        self.assertFalse(self.is_open(shelter, 2026, 3, 2, 22, 0))
         self.assertTrue(self.is_open(shelter, 2026, 3, 3, 10, 0))
 
     def test_all_day_closure_on_the_tail_date_does_not_cancel_the_earlier_shift(self) -> None:
         shelter = self.make_shelter(
             {
                 "day": DayOfWeekChoices.MONDAY,
+                "start_time": datetime.time(20, 30),
+                "end_time": datetime.time(7, 30),
+            },
+            {
+                "day": DayOfWeekChoices.TUESDAY,
                 "start_time": datetime.time(20, 30),
                 "end_time": datetime.time(7, 30),
             },
@@ -1033,10 +1041,12 @@ class ShiftScopedScheduleTestCase(TestCase):
             },
         )
 
-        # The shift started before the closure date, so it runs to its end; only
-        # shifts starting on the closure date are cancelled.
+        # The Monday shift started before the closure date, so it runs to its
+        # end. The Tuesday shift starts on the closure date, so it is cancelled;
+        # that control is what makes this test fail if closures stop working.
         self.assertTrue(self.is_open(shelter, 2026, 3, 2, 22, 0))
         self.assertTrue(self.is_open(shelter, 2026, 3, 3, 2, 0))
+        self.assertFalse(self.is_open(shelter, 2026, 3, 3, 22, 0))
 
     def test_all_day_closure_lets_an_in_progress_shift_finish(self) -> None:
         shelter = self.make_shelter(
