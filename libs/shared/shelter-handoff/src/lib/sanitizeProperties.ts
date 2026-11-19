@@ -54,14 +54,23 @@ function pathOf(key: string, value: unknown): string | undefined {
   }
 }
 
-/** Whether a path is the private prefix itself or sits underneath it. */
+/**
+ * Whether a path is a private route: the prefix itself (`/operator`), its root
+ * under a deployment base path (`/branches/<branch>/operator`), or anything
+ * below either (`/branches/<branch>/operator/shelter/1`).
+ *
+ * The prefix has to be a whole segment, so `/operators` and `/foo/myoperator`
+ * do not match.
+ */
 function isUnderPrefix(path: string, prefixes: readonly string[]): boolean {
   return prefixes.some((prefix) => {
     /**
      * Not `startsWith`: only production is served from the root. Every other
      * deployment sits under the branch base path (`/branches/<branch>`), so the
-     * operator route is really `/branches/<branch>/operator/…`. The prefix is
-     * therefore matched at any segment boundary.
+     * operator route is really `/branches/<branch>/operator/…`.
+     *
+     * `endsWith` is what covers the operator root at the end of a base path —
+     * `/branches/<branch>/operator` with nothing after it.
      */
     return (
       path === prefix || path.endsWith(prefix) || path.includes(`${prefix}/`)

@@ -53,7 +53,9 @@ it('redacts the operator path but keeps a public page URL', () => {
   };
 
   expect(redactPrivateRouteProperties(operator, ['/operator'])).toEqual({});
-  expect(redactPrivateRouteProperties(publicPage, ['/operator'])).toBe(
+  // Compared against a copy: `toBe` (or comparing to the object that was passed
+  // in) also passes when the implementation redacts in place and returns it.
+  expect(redactPrivateRouteProperties({ ...publicPage }, ['/operator'])).toEqual(
     publicPage,
   );
 });
@@ -66,7 +68,7 @@ it('treats a prefix as a path segment, not a string prefix', () => {
   };
 
   // `/operators` is not `/operator`; a naive startsWith would redact it.
-  expect(redactPrivateRouteProperties(lookalike, ['/operator'])).toBe(
+  expect(redactPrivateRouteProperties({ ...lookalike }, ['/operator'])).toEqual(
     lookalike,
   );
 });
@@ -116,7 +118,21 @@ it('redacts the operator route under a branch base path', () => {
   expect(redactPrivateRouteProperties(previewOperator, ['/operator'])).toEqual(
     {},
   );
-  expect(redactPrivateRouteProperties(previewPublic, ['/operator'])).toBe(
-    previewPublic,
-  );
+  // Against a copy, so an in-place redaction cannot satisfy it.
+  expect(
+    redactPrivateRouteProperties({ ...previewPublic }, ['/operator']),
+  ).toEqual(previewPublic);
+});
+
+it('redacts the operator root at the end of a base path', () => {
+  const operatorRoot = {
+    $current_url:
+      'https://shelter.dev.betterangels.la/branches/feat-x/operator',
+    $pathname: '/branches/feat-x/operator',
+    $host: 'shelter.dev.betterangels.la',
+  };
+
+  // No trailing segment: only the `endsWith` branch matches this one, so
+  // dropping it would ship the operator root from every preview.
+  expect(redactPrivateRouteProperties(operatorRoot, ['/operator'])).toEqual({});
 });
