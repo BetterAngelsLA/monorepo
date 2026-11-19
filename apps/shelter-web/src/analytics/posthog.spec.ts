@@ -15,6 +15,9 @@ import {
 it('records this site but never leaves an input unmasked', () => {
   const config = buildInitConfig({ handoff: {} });
 
+  // The title claims recording is on: a project-side default must not be the
+  // only thing keeping this true.
+  expect(config.disable_session_recording).not.toBe(true);
   expect(config.session_recording?.maskAllInputs).toBe(true);
   expect(config.session_recording?.blockSelector).toBe('.ph-no-capture');
 });
@@ -37,7 +40,11 @@ it('keeps a public page url but drops the operator one', () => {
   };
 
   // Page views stay on for the public routes, so their URL is worth keeping.
-  expect(beforeSend({ properties: publicPage })?.properties).toBe(publicPage);
+  // Compared by value: `toBe` is an identity check, so a `before_send` that
+  // redacted in place would still pass while the URL was gone.
+  expect(beforeSend({ properties: publicPage })?.properties).toEqual(
+    publicPage,
+  );
   // The operator app shares the origin; New Relic redacts these paths too.
   expect(beforeSend({ properties: operatorPage })?.properties).toEqual({});
 });

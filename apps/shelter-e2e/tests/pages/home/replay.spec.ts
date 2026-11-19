@@ -49,9 +49,10 @@ test('records and delivers session snapshots', async ({ page }) => {
   expect(snapshotSizes.length, 'no snapshot payload was sent').toBeGreaterThan(
     0,
   );
-  // A 400/401/413 means the server refused the snapshot, not that replay works.
+  // A 3xx/4xx means the snapshot was not delivered: a redirected POST does not
+  // carry its body to ingest, so only a 2xx proves replay works.
   expect(
-    snapshotStatuses.every((status) => status > 0 && status < 400),
+    snapshotStatuses.every((status) => status >= 200 && status < 300),
     `snapshot delivery failed: ${JSON.stringify(snapshotStatuses)}`,
   ).toBe(true);
   // A full snapshot carries the DOM; a keepalive-only payload would be tiny.
