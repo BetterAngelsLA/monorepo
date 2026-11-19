@@ -80,18 +80,37 @@ describe('AnalyticsIdentity', () => {
     });
   });
 
-  it('stops carrying the id once a sign-out has reset the client', async () => {
+  it('drops the id when only the client is reset, worker still signed in', async () => {
     state.userId = 'user-1';
     state.distinctId = 'user-1';
 
     const view = await render(<AnalyticsIdentity />);
     expect(getHandoffIdentity().distinctId).toBe('user-1');
 
-    // `useClearLocalSession` resets the client to a fresh anonymous id. The
-    // remembered id is deliberately *not* cleared, so this comparison is the
-    // only thing dropping it.
-    state.userId = undefined;
+    // `useClearLocalSession` resets the client to a fresh anonymous id. Only
+    // that input changes here: `useUser()` still reports the worker, and the
+    // remembered marker is deliberately never cleared. So the id comparison is
+    // the only thing that can drop it — an implementation that dropped the
+    // handoff on sign-out instead would still carry `user-1`.
     state.distinctId = 'anonymous-2';
+    await view.rerender(<AnalyticsIdentity />);
+
+    expect(getHandoffIdentity()).toEqual({
+      distinctId: undefined,
+      sessionId: undefined,
+    });
+  });
+
+  it('stays dropped once the sign-out has also cleared the user', async () => {
+    state.userId = 'user-1';
+    state.distinctId = 'user-1';
+
+    const view = await render(<AnalyticsIdentity />);
+    expect(getHandoffIdentity().distinctId).toBe('user-1');
+
+    state.distinctId = 'anonymous-2';
+    await view.rerender(<AnalyticsIdentity />);
+    state.userId = undefined;
     await view.rerender(<AnalyticsIdentity />);
 
     expect(getHandoffIdentity()).toEqual({
