@@ -79,6 +79,7 @@ export function TasksTab(props: TProps) {
           data: {
             summary: task.summary ?? '',
             description: task.description,
+            assigneeId: task.assigneeId || null,
             status: task.status,
             teamId: task.teamId ?? undefined,
             clientProfile: client.clientProfile.id,
@@ -134,6 +135,7 @@ export function TasksTab(props: TProps) {
         <IconButton
           variant="secondary"
           borderColor={Colors.WHITE}
+          testID="create-task-btn"
           accessibilityLabel="open Task form"
           accessibilityHint="opens Task form"
           onPress={openTaskForm}
@@ -155,7 +157,7 @@ export function TasksTab(props: TProps) {
         <TaskForm
           onCancel={close}
           onSubmit={(task) => onSubmit(task, close)}
-          initialValues={{ teamId: teamPreference }}
+          initialValues={{ teamId: teamPreference ?? null }}
         />
       ),
       title: 'Follow-Up Task',

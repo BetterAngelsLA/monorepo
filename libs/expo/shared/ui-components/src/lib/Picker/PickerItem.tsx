@@ -15,6 +15,7 @@ export function PickerItem(props: TProps) {
 
   return (
     <Pressable
+      testID="picker-option"
       onPress={() => onPress(value)}
       accessibilityRole="button"
       style={styles.container}
