@@ -43,6 +43,9 @@
           "env": "EXPO_WEB_BASE_URL"
         },
         {
+          "env": "EXPO_PUBLIC_BUILD_ID"
+        },
+        {
           "env": "APP_VARIANT"
         },
         {

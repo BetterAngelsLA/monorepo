@@ -29,3 +29,10 @@ DEFAULT_DOCUMENT_CONTENT_TYPES = frozenset(
 )
 HMIS_SESSION_KEY_NAME = "is_hmis_session"
 HMIS_AUTH_COOKIE_NAME = "auth_token"
+
+#: Header the app's fetch client uses to report which build made a request.
+#: Must match `CLIENT_VERSION_HEADER` in `libs/fetch`.
+CLIENT_VERSION_HEADER = "X-Client-Version"
+
+#: structlog field the header value is bound to.
+CLIENT_VERSION_LOG_KEY = "client_version"

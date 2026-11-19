@@ -8,11 +8,13 @@ import {
 } from '@monorepo/fetch';
 import {
   configureActiveOrgStorage,
+  createClientVersionInterceptor,
   createCsrfInterceptor,
   createCsrfTokenRefresher,
   CSRF_COOKIE_NAME,
   CSRF_HEADER_NAME,
   CSRF_LOGIN_PATH,
+  getClientVersion,
 } from '@monorepo/ba-platform';
 import CookieManager from '@preeternal/react-native-cookie-manager';
 
@@ -57,5 +59,6 @@ export const createExpoFetchClient = (
     bodyInterceptor,
     includeCredentialsInterceptor,
     ...extraInterceptors,
+    createClientVersionInterceptor(getClientVersion),
   );
 };

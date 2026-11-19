@@ -36,6 +36,7 @@ jobs:
       PR_NUMBER: ${{ github.event.pull_request.number }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      EXPO_PUBLIC_BUILD_ID: ${{ github.event.pull_request.head.sha }}
       # Build even though a build exists for the fingerprint.
       FORCE_EAS_BUILD: ${{ contains(github.event.pull_request.labels.*.name, 'force-eas-build') }}
       EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY: ${{ secrets.EXPO_PUBLIC_WEB_GOOGLEMAPS_JS_APIKEY }}

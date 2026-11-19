@@ -10,6 +10,7 @@ class CommonConfig(AppConfig):
     name = "common"
 
     def ready(self) -> None:
+        from common import request_metadata as _request_metadata  # noqa: F401
         from common.permissions import checks as _permission_checks  # noqa: F401
 
         self._register_imgproxy_image_type()
