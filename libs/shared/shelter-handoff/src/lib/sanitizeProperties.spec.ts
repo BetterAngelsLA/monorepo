@@ -70,3 +70,53 @@ it('treats a prefix as a path segment, not a string prefix', () => {
     lookalike,
   );
 });
+
+it('redacts when the session began on a private route, from a public page', () => {
+  const startedOnOperator = {
+    $current_url: 'https://shelter.betterangels.la/shelter/456',
+    $pathname: '/shelter/456',
+    $host: 'shelter.betterangels.la',
+    $session_entry_url: 'https://shelter.betterangels.la/operator/shelter/123',
+    $session_entry_pathname: '/operator/shelter/123',
+  };
+
+  // The current path is public, so `$pathname` alone says "keep". The set-once
+  // copy still carries the operator route, and that is what ships.
+  expect(redactPrivateRouteProperties(startedOnOperator, ['/operator'])).toEqual(
+    {},
+  );
+});
+
+it('derives the path from the url when no pathname was sent', () => {
+  const urlOnly = {
+    $current_url: 'https://shelter.betterangels.la/operator/shelter/123',
+    $host: 'shelter.betterangels.la',
+  };
+
+  // A missing `$pathname` must not read as "public".
+  expect(redactPrivateRouteProperties(urlOnly, ['/operator'])).toEqual({});
+});
+
+it('redacts the operator route under a branch base path', () => {
+  const previewOperator = {
+    $current_url:
+      'https://shelter.dev.betterangels.la/branches/feat-x/operator/shelter/123',
+    $pathname: '/branches/feat-x/operator/shelter/123',
+    $host: 'shelter.dev.betterangels.la',
+  };
+  const previewPublic = {
+    $current_url:
+      'https://shelter.dev.betterangels.la/branches/feat-x/shelter/123',
+    $pathname: '/branches/feat-x/shelter/123',
+    $host: 'shelter.dev.betterangels.la',
+  };
+
+  // Only production is served from the root; a `startsWith('/operator')` check
+  // would miss every preview and leave these paths in the payload.
+  expect(redactPrivateRouteProperties(previewOperator, ['/operator'])).toEqual(
+    {},
+  );
+  expect(redactPrivateRouteProperties(previewPublic, ['/operator'])).toBe(
+    previewPublic,
+  );
+});

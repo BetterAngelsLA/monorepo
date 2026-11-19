@@ -27,6 +27,48 @@ export function stripUrlProperties(
   return kept;
 }
 
+/** Properties whose value *is* a path. */
+const PATH_PROPERTY = /pathname$/;
+
+/** Properties whose value is a URL, from which the path is derived. */
+const URL_VALUE_PROPERTY = /url$/;
+
+/**
+ * The path a property carries, whether it holds a path or a whole URL.
+ *
+ * `$pathname` is not guaranteed — a payload may carry only `$current_url` — and
+ * reading its absence as "public" is how a private route ships.
+ * `$referrer`/`$referring_domain` are deliberately left out: they say where the
+ * visitor came from, not which route this event happened on.
+ */
+function pathOf(key: string, value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  if (PATH_PROPERTY.test(key)) return value;
+  if (!URL_VALUE_PROPERTY.test(key)) return undefined;
+  if (value.startsWith('/')) return value;
+
+  try {
+    return new URL(value).pathname;
+  } catch {
+    return undefined;
+  }
+}
+
+/** Whether a path is the private prefix itself or sits underneath it. */
+function isUnderPrefix(path: string, prefixes: readonly string[]): boolean {
+  return prefixes.some((prefix) => {
+    /**
+     * Not `startsWith`: only production is served from the root. Every other
+     * deployment sits under the branch base path (`/branches/<branch>`), so the
+     * operator route is really `/branches/<branch>/operator/…`. The prefix is
+     * therefore matched at any segment boundary.
+     */
+    return (
+      path === prefix || path.endsWith(prefix) || path.includes(`${prefix}/`)
+    );
+  });
+}
+
 /**
  * Drops the URL only where the path belongs to a signed-in surface.
  *
@@ -34,20 +76,21 @@ export function stripUrlProperties(
  * the staff operator app under `/operator`, and those paths are redacted by the
  * site's own New Relic privacy rules — so they come off the event here too,
  * while the public routes keep their context.
+ *
+ * Every route-bearing property is checked, not just `$pathname`: the SDK's
+ * set-once copies (`$session_entry_*`, `$initial_*`) survive navigation, so a
+ * session that began on an operator page would otherwise keep sending that path
+ * from every public page afterwards.
  */
 export function redactPrivateRouteProperties(
   properties: Record<string, unknown>,
   privatePrefixes: readonly string[],
 ): Record<string, unknown> {
-  const pathname = properties['$pathname'];
+  const hasPrivateRoute = Object.entries(properties).some(([key, value]) => {
+    const path = pathOf(key, value);
 
-  if (typeof pathname !== 'string') {
-    return properties;
-  }
+    return path !== undefined && isUnderPrefix(path, privatePrefixes);
+  });
 
-  const isPrivate = privatePrefixes.some(
-    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
-  );
-
-  return isPrivate ? stripUrlProperties(properties) : properties;
+  return hasPrivateRoute ? stripUrlProperties(properties) : properties;
 }
