@@ -81,18 +81,21 @@ export function webAnalyticsConfig(): Partial<PostHogConfig> {
   };
 }
 
-/**
- * `posthog-js` names its accessors differently from the React Native SDK, and
- * its types omit `flush()` even though the instance has one after `init()`.
- */
+/** `posthog-js` names its accessors differently from the React Native SDK. */
 function toAnalyticsClient(instance: typeof posthog): AnalyticsClient {
   return {
     capture: (event, properties) => instance.capture(event, properties),
-    flush: async () => {
-      const flush = (instance as { flush?: () => Promise<void> }).flush;
-
-      await flush?.call(instance);
-    },
+    /**
+     * Nothing to delegate to: a `posthog-js` instance has no `flush` at all
+     * (checked on 1.447.9, own property and prototype chain), and `shutdown()`
+     * — the only public one — tears the client down. The queue drains on its own
+     * timer and on pagehide, so this is a deliberate no-op.
+     *
+     * Nothing on web calls it either: `shouldFlushBeforeOpen('web')` is false,
+     * because awaiting here would spend the user activation `window.open` needs.
+     * If posthog-js ever grows a queue flush, delegate to it here.
+     */
+    flush: async () => undefined,
     identify: (distinctId) => instance.identify(distinctId),
     /** Same reason as the native client: `reset()` drops registered props. */
     reset: () => {
