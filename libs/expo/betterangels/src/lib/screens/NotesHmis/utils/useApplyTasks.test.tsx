@@ -14,18 +14,17 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('../../../hooks', () => ({
   useActiveOrgId: () => mocks.activeOrgId,
+  useCreateTask: () => mocks.createTask,
 }));
 
 // Identify the mutation by the generated document's operation name.  The real
-// documents are static objects, so this keeps the test from mocking three
+// documents are static objects, so this keeps the test from mocking two
 // generated modules just to tell the hooks apart.
 vi.mock('@apollo/client/react', () => ({
   useMutation: (document: {
     definitions?: Array<{ name?: { value?: string } }>;
   }) => {
     switch (document?.definitions?.[0]?.name?.value) {
-      case 'CreateTask':
-        return [mocks.createTask, { loading: false, error: undefined }];
       case 'UpdateTask':
         return [mocks.updateTask, { loading: false, error: undefined }];
       case 'DeleteTask':
@@ -50,7 +49,7 @@ function draftTask(overrides: Partial<DraftTask> = {}): DraftTask {
 
 beforeEach(() => {
   mocks.activeOrgId = null;
-  mocks.createTask.mockReset().mockResolvedValue({ data: {} });
+  mocks.createTask.mockReset().mockResolvedValue({ ok: true, result: {} });
   mocks.updateTask.mockReset().mockResolvedValue({ data: {} });
   mocks.deleteTask.mockReset().mockResolvedValue({ data: {} });
 });
@@ -92,26 +91,75 @@ describe('useApplyTasks', () => {
     expect(mocks.createTask).not.toHaveBeenCalled();
   });
 
-  it('sends the active organization on creates', async () => {
+  it('passes creates through the shared create hook', async () => {
     mocks.activeOrgId = 'org-1';
     const { result } = await renderHook(() => useApplyTasks());
 
-    await result.current.applyTasks(
+    const outcome = await result.current.applyTasks(
       [draftTask()],
       'hmis-note-1',
       'hmis-client-1',
     );
 
     expect(mocks.createTask).toHaveBeenCalledTimes(1);
-    expect(mocks.createTask).toHaveBeenCalledWith({
-      variables: {
-        data: expect.objectContaining({
-          organizationId: 'org-1',
-          hmisNote: 'hmis-note-1',
-          hmisClientProfile: 'hmis-client-1',
-          summary: 'A task',
-        }),
-      },
+    expect(mocks.createTask).toHaveBeenCalledWith(
+      expect.objectContaining({
+        summary: 'A task',
+        hmisNote: 'hmis-note-1',
+        hmisClientProfile: 'hmis-client-1',
+      }),
+    );
+    expect(outcome.failedCreates).toEqual([]);
+    expect(outcome.message).toBeUndefined();
+  });
+
+  it('reports a refused create instead of discarding it', async () => {
+    mocks.activeOrgId = 'org-1';
+    mocks.createTask.mockResolvedValue({
+      ok: false,
+      message: 'You cannot add tasks.',
+      result: undefined,
     });
+
+    const { result } = await renderHook(() => useApplyTasks());
+
+    const outcome = await result.current.applyTasks(
+      [draftTask()],
+      'hmis-note-1',
+      'hmis-client-1',
+    );
+
+    expect(outcome.failedCreates).toEqual([
+      { summary: 'A task', message: 'You cannot add tasks.' },
+    ]);
+    expect(outcome.message).toContain('You cannot add tasks.');
+  });
+
+  it('still applies updates and deletes when a create is refused', async () => {
+    mocks.activeOrgId = 'org-1';
+    mocks.createTask.mockResolvedValue({
+      ok: false,
+      message: 'You cannot add tasks.',
+      result: undefined,
+    });
+
+    const { result } = await renderHook(() => useApplyTasks());
+
+    await result.current.applyTasks(
+      [
+        draftTask(),
+        draftTask({ id: '42', summary: 'existing task' }),
+        draftTask({
+          id: '43',
+          summary: 'deleted task',
+          markedForDeletion: true,
+        }),
+      ],
+      'hmis-note-1',
+      'hmis-client-1',
+    );
+
+    expect(mocks.updateTask).toHaveBeenCalledTimes(1);
+    expect(mocks.deleteTask).toHaveBeenCalledTimes(1);
   });
 });

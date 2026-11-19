@@ -1,9 +1,8 @@
 import { useMutation } from '@apollo/client/react';
 import { TaskStatusEnum, UpdateTaskInput } from '../../apollo';
-import { useActiveOrgId, useSnackbar } from '../../hooks';
+import { useCreateTask, useSnackbar } from '../../hooks';
 
 // 1. Import Mutations
-import { CreateTaskDocument } from '../TaskForm/__generated__/createTask.generated';
 import { DeleteTaskDocument } from '../TaskForm/__generated__/deleteTask.generated';
 import { UpdateTaskDocument } from '../TaskForm/__generated__/updateTask.generated';
 
@@ -18,9 +17,27 @@ interface INoteTasksModalProps {
   refetch: () => void;
   teamId?: string | null;
   task?: UpdateTaskInput;
-  onSubmit?: (data: TaskFormData, existingId?: string) => void;
+  onSubmit?: (
+    data: TaskFormData,
+    existingId?: string,
+  ) =>
+    | Promise<boolean | TTaskFormSubmitResult | void>
+    | boolean
+    | TTaskFormSubmitResult
+    | void;
   onDelete?: (id: string) => void;
   closeModal: () => void;
+}
+
+/** Map the API's field names onto the form's. */
+function toTaskFormField(
+  apiField: string | null | undefined,
+): keyof TaskFormData | undefined {
+  if (!apiField) return undefined;
+  if (apiField === 'assignee') return 'assigneeId';
+  if (apiField === 'team') return 'teamId';
+
+  return apiField as keyof TaskFormData;
 }
 
 export default function NoteTasksModal(props: INoteTasksModalProps) {
@@ -38,9 +55,8 @@ export default function NoteTasksModal(props: INoteTasksModalProps) {
   } = props;
 
   const { showSnackbar } = useSnackbar();
-  const activeOrgId = useActiveOrgId();
 
-  const [createTask] = useMutation(CreateTaskDocument);
+  const createTask = useCreateTask();
   const [updateTask] = useMutation(UpdateTaskDocument);
   const [deleteTask] = useMutation(DeleteTaskDocument, {
     update(cache, { data }) {
@@ -70,7 +86,19 @@ export default function NoteTasksModal(props: INoteTasksModalProps) {
   ): Promise<TTaskFormSubmitResult | void> => {
     // A. Draft Mode
     if (onSubmit) {
-      onSubmit(formData, task?.id);
+      const saved = await onSubmit(formData, task?.id);
+
+      // `false` means the caller showed a refusal; leave the sheet open.
+      // A `{ field, message }` result is propagated so the form marks the
+      // offending field. `true`/void keep the old close-on-save behavior.
+      if (saved === false) {
+        return undefined;
+      }
+
+      if (saved && typeof saved === 'object') {
+        return saved;
+      }
+
       closeModal();
       return undefined;
     }
@@ -97,28 +125,37 @@ export default function NoteTasksModal(props: INoteTasksModalProps) {
           },
         });
       } else {
-        if (!activeOrgId) return;
+        const created = await createTask({
+          summary: formData.summary || '',
+          description: formData.description,
+          status: cleanStatus,
+          teamId: cleanTeamId ?? teamId ?? undefined,
+          assigneeId: cleanAssigneeId,
 
-        result = await createTask({
-          variables: {
-            data: {
-              summary: formData.summary || '',
-              description: formData.description,
-              status: cleanStatus,
-              teamId: cleanTeamId ?? teamId ?? undefined,
-              assigneeId: cleanAssigneeId,
+          // FIX: Map IDs correctly based on which props are present
+          clientProfile: clientProfileId ?? undefined,
+          hmisClientProfile: hmisClientProfileId ?? undefined,
 
-              // FIX: Map IDs correctly based on which props are present
-              clientProfile: clientProfileId ?? undefined,
-              hmisClientProfile: hmisClientProfileId ?? undefined,
-
-              note: noteId ?? undefined,
-              hmisNote: hmisNoteId ?? undefined,
-
-              organizationId: activeOrgId,
-            },
-          },
+          note: noteId ?? undefined,
+          hmisNote: hmisNoteId ?? undefined,
         });
+
+        if (!created.ok) {
+          showSnackbar({ message: created.message, type: 'error' });
+
+          const refusal = created.result?.data?.createTask;
+
+          if (refusal?.__typename === 'OperationInfo') {
+            return {
+              field: toTaskFormField(refusal.messages[0]?.field),
+              message: created.message,
+            };
+          }
+
+          return;
+        }
+
+        result = created.result;
       }
       // A rejected value (e.g. an assignee who is not in the task's org)
       // comes back as OperationInfo rather than an exception; without this the
@@ -131,21 +168,17 @@ export default function NoteTasksModal(props: INoteTasksModalProps) {
             : undefined;
 
       if (payload?.__typename === 'OperationInfo') {
+        const first = payload.messages[0];
+
         showSnackbar({
-          message: payload.messages[0]?.message ?? 'Failed to save task.',
+          message: first?.message ?? 'Failed to save task.',
           type: 'error',
         });
 
-        const first = payload.messages[0];
-        const apiField = first?.field ?? null;
-        const field =
-          apiField === 'assignee'
-            ? 'assigneeId'
-            : apiField === 'team'
-              ? 'teamId'
-              : (apiField as keyof TaskFormData | null);
-
-        return { field: field ?? undefined, message: first?.message ?? '' };
+        return {
+          field: toTaskFormField(first?.field),
+          message: first?.message ?? '',
+        };
       }
 
       refetch();

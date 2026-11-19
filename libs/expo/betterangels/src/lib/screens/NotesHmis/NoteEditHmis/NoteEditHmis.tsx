@@ -38,6 +38,7 @@ import {
   noteFormEmptyStateHmis,
 } from '../NoteFormHmis';
 import splitBucket, { TBucket } from '../utils/splitBucket';
+import { reportTaskFailures } from '../utils/reportTaskFailures';
 import { useApplyTasks } from '../utils/useApplyTasks';
 import { HmisNoteDocument } from './__generated__/getClientNoteHmis.generated';
 import {
@@ -293,7 +294,9 @@ export function NoteEditHmis(props: TProps) {
         });
       }
 
-      await applyTasks(tasks, id, clientId);
+      const taskResult = await applyTasks(tasks, id, clientId);
+
+      reportTaskFailures(taskResult.message, showSnackbar);
 
       await applyBucket(
         id,

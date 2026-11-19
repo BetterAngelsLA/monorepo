@@ -23,6 +23,7 @@ import {
   NoteFormFieldNamesHmis,
 } from '../NoteFormHmis/formSchema';
 import splitBucket, { TBucket } from '../utils/splitBucket';
+import { reportTaskFailures } from '../utils/reportTaskFailures';
 import { useApplyTasks } from '../utils/useApplyTasks';
 import { CreateNoteHmisDocument } from './__generated__/createClientNoteHmis.generated';
 import {
@@ -181,7 +182,9 @@ export function NoteCreateHmis(props: TProps) {
       }
       // 4. Create Tasks (Link to the new Note)
 
-      await applyTasks(tasks, hmisNoteId, clientId);
+      const taskResult = await applyTasks(tasks, hmisNoteId, clientId);
+
+      reportTaskFailures(taskResult.message, showSnackbar);
 
       const draftServices = services ?? {};
 
