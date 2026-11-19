@@ -3,7 +3,11 @@ import {
   useFileHeadersHmis,
 } from '@monorepo/expo/shared/clients';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
-import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
+import {
+  ReplayMask,
+  TextBold,
+  TextRegular,
+} from '@monorepo/expo/shared/ui-components';
 import { formatScalarDate } from '@monorepo/shared/scalars';
 import { Image } from 'expo-image';
 import { useNavigation } from 'expo-router';
@@ -45,15 +49,17 @@ export default function FileInfoScreenHmis(props: FileInfoHmisProps) {
         <TextBold size="lg">{label || `Document ${id}`}</TextBold>
         {!!contentUri && (
           <View style={styles.previewContainer}>
-            <Image
-              style={styles.previewImage}
-              source={{
-                uri: contentUri,
-                headers: headers ?? undefined,
-              }}
-              contentFit="contain"
-              accessibilityIgnoresInvertColors
-            />
+            <ReplayMask style={styles.previewImage}>
+              <Image
+                style={StyleSheet.absoluteFill}
+                source={{
+                  uri: contentUri,
+                  headers: headers ?? undefined,
+                }}
+                contentFit="contain"
+                accessibilityIgnoresInvertColors
+              />
+            </ReplayMask>
           </View>
         )}
       </View>

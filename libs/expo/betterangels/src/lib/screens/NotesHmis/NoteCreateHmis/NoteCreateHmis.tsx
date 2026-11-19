@@ -11,7 +11,7 @@ import {
 import { applyManualFormErrors } from '../../../errors';
 import { useSnackbar } from '../../../hooks';
 import { InteractionListHmisDocument } from '../../../ui-components/InteractionListHmis/__generated__/interactionListHmis.generated';
-import { ClientViewTabEnum } from '../../Client/ClientTabs';
+import { ClientViewTabEnum } from '../../Client/clientViewTab';
 import {
   NoteFormHmis,
   NoteFormSchemaHmis,

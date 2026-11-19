@@ -1,7 +1,7 @@
 import type { ReactElement } from 'react';
 import { HmisClientProfileType } from '../../../../apollo';
 import { ClientProfileSectionEnum } from '../../../../screenRouting';
-import { ClientViewTabEnum } from '../../../Client/ClientTabs';
+import { ClientViewTabEnum } from '../../../Client/clientViewTab';
 import { ClientDocsViewHmis } from '../ClientDocsViewHmis';
 import { ClientInteractionsViewHmis } from '../ClientInteractionsViewHmis';
 import { ClientLocationsViewHmis } from '../ClientLocationsViewHmis';

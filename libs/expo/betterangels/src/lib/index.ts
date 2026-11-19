@@ -1,3 +1,5 @@
+export * from './analytics';
+export { AnalyticsIdentity } from './analytics/AnalyticsIdentity';
 export * from './apollo';
 export * from './constants';
 export * from './errors';

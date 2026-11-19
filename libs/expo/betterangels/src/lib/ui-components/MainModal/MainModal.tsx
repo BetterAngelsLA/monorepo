@@ -1,12 +1,23 @@
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { useRouter } from 'expo-router';
-import { ElementType, Fragment, ReactNode, isValidElement } from 'react';
+import {
+  ElementType,
+  Fragment,
+  ReactNode,
+  isValidElement,
+  useCallback,
+  useEffect,
+  useRef,
+} from 'react';
 import { DimensionValue, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BaseModal } from '@monorepo/expo/shared/ui-components';
 import { MainModalActionBtn } from './MainModalActionBtn';
 import { MainModalCloseBtn } from './MainModalCloseBtn';
+
+/** A margin past `BaseModal`'s 200ms out-animation, used as a navigation net. */
+const NAVIGATION_FALLBACK_MS = 800;
 
 export type TMainModalAction = {
   title: string | ReactNode;
@@ -52,12 +63,71 @@ export function MainModal({
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
+  /**
+   * Where an action is going, once the sheet has finished closing.
+   *
+   * Navigating *while* the sheet animates out crashes the native mounting layer
+   * when the destination has a header: iOS segfaults inside Fabric's
+   * `uiManagerDidFinishTransaction`. So the press closes and remembers, and the
+   * navigation happens afterwards.
+   */
+  const pendingRoute = useRef<{
+    route: string;
+    params?: Record<string, string>;
+  } | null>(null);
+
+  /** The fallback below, kept so it can be cancelled rather than merely ignored. */
+  const fallbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearFallback = useCallback(() => {
+    if (fallbackTimer.current) {
+      clearTimeout(fallbackTimer.current);
+      fallbackTimer.current = null;
+    }
+  }, []);
+
+  // The sheet can be unmounted mid-animation; nothing should navigate then.
+  useEffect(() => clearFallback, [clearFallback]);
+
+  /**
+   * Consumes the destination and navigates, so it can only happen once.
+   *
+   * `onCloseComplete` is not guaranteed: `BaseModal` calls its callback only
+   * when the out-animation *finishes*, so an interrupted close would drop the
+   * press silently. The press therefore also arms this as a fallback, a margin
+   * beyond the 200ms animation.
+   */
+  const navigateToPending = useCallback(() => {
+    clearFallback();
+
+    const pending = pendingRoute.current;
+
+    if (!pending) return;
+
+    pendingRoute.current = null;
+    router.navigate({ pathname: pending.route, params: pending.params });
+  }, [router, clearFallback]);
+
+  function closeAndGo(route: string, params?: Record<string, string>) {
+    pendingRoute.current = { route, params };
+    clearFallback();
+    closeModal();
+
+    fallbackTimer.current = setTimeout(
+      navigateToPending,
+      NAVIGATION_FALLBACK_MS,
+    );
+  }
+
   return (
     <BaseModal
       title={null}
       isOpen={isModalVisible}
       onClose={closeModal}
-      onCloseComplete={onCloseComplete}
+      onCloseComplete={() => {
+        onCloseComplete?.();
+        navigateToPending();
+      }}
       variant="sheet"
       direction={vertical ? 'up' : 'right'}
       panelOffset={ml}
@@ -95,9 +165,13 @@ export function MainModal({
               Icon={Icon}
               onPress={() => {
                 if (onPress) return onPress();
-                // Original behavior: close then navigate immediately
+
+                if (route) {
+                  closeAndGo(route, params);
+                  return;
+                }
+
                 closeModal();
-                if (route) router.navigate({ pathname: route, params });
               }}
             />
           );

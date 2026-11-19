@@ -5,6 +5,7 @@ import {
 } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { TextMedium, TextRegular } from '@monorepo/expo/shared/ui-components';
+import { ReactNode } from 'react';
 import { View } from 'react-native';
 import { enumDisplayLanguage } from '../../../static/enumDisplayMapping';
 import { ClientProfilePhotoUploader } from '../../../ui-components';
@@ -13,10 +14,12 @@ import { ClientCaseManager } from './ClientCaseManager';
 
 interface IClientHeaderProps {
   client: ClientProfileQuery['clientProfile'] | undefined;
+  /** Rendered at the end of the name row — a client-level action, not data. */
+  action?: ReactNode;
 }
 
 export function ClientHeader(props: IClientHeaderProps) {
-  const { client } = props;
+  const { client, action } = props;
 
   return (
     <View
@@ -38,10 +41,19 @@ export function ClientHeader(props: IClientHeaderProps) {
           clientId={client?.id ?? ''}
           imageUrl={client?.profilePhoto?.url}
         />
-        <TextMedium selectable size="lg">
-          {client?.firstName} {client?.lastName}{' '}
-          {client?.nickname && `(${client.nickname})`}
-        </TextMedium>
+        {/* The name yields to the action: a long name wraps instead of pushing
+            the pill off the row. */}
+        <View style={{ flexShrink: 1 }}>
+          <TextMedium selectable size="lg">
+            {client?.firstName} {client?.lastName}{' '}
+            {client?.nickname && `(${client.nickname})`}
+          </TextMedium>
+        </View>
+        {action && (
+          <View style={{ marginLeft: 'auto', paddingLeft: Spacings.xs }}>
+            {action}
+          </View>
+        )}
       </View>
 
       <View

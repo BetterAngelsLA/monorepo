@@ -9,6 +9,7 @@ import {
   TThumbnailSize,
 } from '@monorepo/expo/shared/static';
 import { Image } from 'expo-image';
+import { ReplayMask } from '@monorepo/expo/shared/ui-components';
 import { TouchableOpacity, View } from 'react-native';
 import { ThumbnailDeleteButton } from './ThumbnailDeleteButton';
 
@@ -99,15 +100,14 @@ function FileThumbnailBase(props: IProps) {
       )}
 
       {isImage && (
-        <Image
-          style={{
-            height: '100%',
-            width: '100%',
-          }}
-          source={{ uri, headers }}
-          contentFit="cover"
-          accessibilityIgnoresInvertColors
-        />
+        <ReplayMask style={{ height: '100%', width: '100%' }}>
+          <Image
+            style={{ height: '100%', width: '100%' }}
+            source={{ uri, headers }}
+            contentFit="cover"
+            accessibilityIgnoresInvertColors
+          />
+        </ReplayMask>
       )}
 
       {isPdf && (

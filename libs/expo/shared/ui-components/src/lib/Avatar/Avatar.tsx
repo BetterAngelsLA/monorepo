@@ -4,6 +4,7 @@ import { Image } from 'expo-image';
 import { useState } from 'react';
 import { View } from 'react-native';
 import Loading from '../Loading';
+import { ReplayMask } from '../ReplayMask';
 
 /**
  * The CDN re-signs the same photo on every response, so the query changes while
@@ -154,32 +155,40 @@ export function Avatar(props: IAvatarProps) {
         {!!loading && <Loading />}
         {!loading && !imageUrl && getTextComponent(size)}
         {!loading && !!imageUrl && (
-          <Image
-            onError={adoptCurrent}
-            accessible
-            accessibilityLabel={accessibilityLabel}
-            accessibilityRole="image"
-            accessibilityHint={accessibilityHint}
-            accessibilityIgnoresInvertColors
-            cachePolicy={headers ? 'none' : 'memory-disk'}
-            contentFit="cover"
-            recyclingKey={cacheKey}
-            // Avatars are small and cached for a year, and windowing means only
-            // the mounted rows ask for one, so there is nothing to defer —
-            // `loading="lazy"` (expo-image's web default) just lets a fresh
-            // <img> paint blank first.
-            loading="eager"
+          <ReplayMask
             style={{
               height: SIZE[size] - 1,
               width: SIZE[size] - 1,
               borderRadius: Radiuses.xxxl,
+              overflow: 'hidden',
             }}
-            source={{
-              uri: stableImageUrl,
-              cacheKey,
-              headers: headers ?? undefined,
-            }}
-          />
+          >
+            <Image
+              onError={adoptCurrent}
+              accessible
+              accessibilityLabel={accessibilityLabel}
+              accessibilityRole="image"
+              accessibilityHint={accessibilityHint}
+              accessibilityIgnoresInvertColors
+              cachePolicy={headers ? 'none' : 'memory-disk'}
+              contentFit="cover"
+              recyclingKey={cacheKey}
+              // Avatars are small and cached for a year, and windowing means only
+              // the mounted rows ask for one, so there is nothing to defer —
+              // `loading="lazy"` (expo-image's web default) just lets a fresh
+              // <img> paint blank first.
+              loading="eager"
+              style={{
+                height: '100%',
+                width: '100%',
+              }}
+              source={{
+                uri: stableImageUrl,
+                cacheKey,
+                headers: headers ?? undefined,
+              }}
+            />
+          </ReplayMask>
         )}
       </View>
     </View>

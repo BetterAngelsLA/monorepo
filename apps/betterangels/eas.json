@@ -53,11 +53,13 @@
   "submit": {
     "production": {
       "ios": {
-        "ascAppId": "6468135540"
+        "ascAppId": "6468135540",
+        "bundleIdentifier": "la.betterangels.app"
       },
       "android": {
         "track": "internal",
-        "releaseStatus": "draft"
+        "releaseStatus": "draft",
+        "applicationId": "la.betterangels.app"
       }
     }
   },

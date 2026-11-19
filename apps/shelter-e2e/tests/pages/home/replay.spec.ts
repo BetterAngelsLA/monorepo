@@ -1,0 +1,60 @@
+import { expect, test } from '@playwright/test';
+import { analyticsConfigured } from '../../../lib/analytics';
+import { shelterEntryUrl } from '../../../lib/framework';
+
+/**
+ * Session replay actually delivering, not just enabled.
+ *
+ * `$recording_status` is misleading on its own: the event captured at init
+ * reports `disabled` because the SDK has not fetched its remote config yet, and
+ * reading that one field says "off" while the recorder is starting up. What
+ * proves replay works is a snapshot payload leaving the browser.
+ *
+ * The recorder flushes on an interval and on activity, so this waits for real
+ * traffic rather than asserting immediately.
+ *
+ * It reads the capture payloads, which only exist on a build that accepts an
+ * automated browser: a dev server, or a preview built with `VITE_POSTHOG_E2E`
+ * (see `buildInitConfig`). Both are what CI runs, so there is nothing to skip.
+ */
+test('records and delivers session snapshots', async ({ page }) => {
+  test.skip(
+    !analyticsConfigured(),
+    'shelter-web is running without VITE_POSTHOG_API_KEY',
+  );
+  test.setTimeout(120_000);
+
+  const snapshotSizes: number[] = [];
+  const snapshotStatuses: number[] = [];
+
+  // A response, not a request: `request` fires even for a payload the proxy or
+  // PostHog rejected, which is the silent drop this test exists to catch.
+  page.on('response', (response) => {
+    const { pathname } = new URL(response.url());
+    const body = response.request().postDataBuffer();
+
+    if (pathname === '/s/' && body) {
+      snapshotSizes.push(body.length);
+      snapshotStatuses.push(response.status());
+    }
+  });
+
+  await page.goto(shelterEntryUrl());
+  await page.waitForTimeout(10_000);
+
+  // Give the recorder something to record and a reason to flush.
+  await page.mouse.wheel(0, 400);
+  await page.waitForTimeout(15_000);
+
+  expect(snapshotSizes.length, 'no snapshot payload was sent').toBeGreaterThan(
+    0,
+  );
+  // A 3xx/4xx means the snapshot was not delivered: a redirected POST does not
+  // carry its body to ingest, so only a 2xx proves replay works.
+  expect(
+    snapshotStatuses.every((status) => status >= 200 && status < 300),
+    `snapshot delivery failed: ${JSON.stringify(snapshotStatuses)}`,
+  ).toBe(true);
+  // A full snapshot carries the DOM; a keepalive-only payload would be tiny.
+  expect(Math.max(...snapshotSizes)).toBeGreaterThan(1_000);
+});

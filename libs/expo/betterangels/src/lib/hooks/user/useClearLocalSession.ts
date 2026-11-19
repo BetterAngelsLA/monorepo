@@ -7,6 +7,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
+import { getAnalyticsClient } from '../../analytics/client';
 import { cancelAllUploadRunners } from '../../providers/uploadProgress/uploadRunnerRegistry';
 import { clearReferralExportCache } from '../../screens/Client/Referrals/shareReferralText';
 import { useUser } from '../../providers/user/UserProvider';
@@ -63,5 +64,10 @@ export default function useClearLocalSession() {
     // The next user must not inherit this one's organization.
     clearActiveOrgId();
     setUser(undefined);
+
+    // Nor this one's analytics identity: a shared tablet would otherwise merge
+    // two workers into one person. Here rather than in `useSignOut`, because the
+    // `/auth` screen clears the session without a sign-out.
+    getAnalyticsClient()?.reset();
   }, [client, queryClient, setUser]);
 }
