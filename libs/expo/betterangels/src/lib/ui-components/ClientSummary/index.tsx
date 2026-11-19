@@ -53,7 +53,10 @@ export function ClientSummary(props: IClientSummaryProps) {
   }, [client.id, teamPreference, arrivedFrom]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: Colors.WHITE }}>
+    <View
+      testID="client-profile-summary"
+      style={{ flex: 1, backgroundColor: Colors.WHITE }}
+    >
       <MainScrollContainer keyboardAware>
         <ScrollView
           contentContainerStyle={{
@@ -96,6 +99,7 @@ export function ClientSummary(props: IClientSummaryProps) {
             variant="secondary"
             title="Add Interaction"
             accessibilityHint="Add interaction for the client"
+            testID="client-summary-add-interaction-btn"
           />
         </View>
         <View style={{ flex: 1 }}>
@@ -106,6 +110,7 @@ export function ClientSummary(props: IClientSummaryProps) {
             variant="primary"
             title="See Details"
             accessibilityHint="see client details"
+            testID="client-summary-see-details-btn"
           />
         </View>
       </View>
