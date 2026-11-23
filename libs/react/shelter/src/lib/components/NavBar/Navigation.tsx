@@ -5,13 +5,13 @@ import { Link } from 'react-router';
 import {
   FeatureFlags,
   aboutUsPath,
-  operatorPath,
   shelterHomePath,
   shelterVideoPath,
   signInPath,
 } from '../../constants';
 import { useSignOut, useUser } from '../../providers';
 import { FlyoutAnimationEnum, flyoutAtom } from '../Flyout';
+import { operatorHref } from './operatorHref';
 import { MenuMobile } from './MenuMobile';
 import { UserMenu } from './UserMenu';
 
@@ -56,13 +56,7 @@ export function Navigation() {
         </Link>
 
         {showOperator && (
-          /**
-           * A full page load, not a router `Link`: the operator app masks its
-           * recordings differently, and that choice is made once when the
-           * recorder initialises. A client-side hop would keep the public
-           * settings, which mask inputs but not page text.
-           */
-          <a aria-label="navigate to operator dashboard" href={operatorPath}>
+          <a aria-label="navigate to operator dashboard" href={operatorHref}>
             Operator
           </a>
         )}

@@ -4,13 +4,13 @@ import { useAtom } from 'jotai';
 import { Link } from 'react-router';
 import {
   aboutUsPath,
-  operatorPath,
   shelterHomePath,
   shelterVideoPath,
   signInPath,
 } from '../../constants';
 import { TUser } from '../../providers';
 import { flyoutAtom } from '../Flyout';
+import { operatorHref } from './operatorHref';
 
 type MenuMobileProps = {
   showOperator: boolean;
@@ -97,11 +97,9 @@ export function MenuMobile({ showOperator, user, signOut }: MenuMobileProps) {
 
         {showOperator ? (
           <div className={mergeCss(borderCss)}>
-            {/* Full page load: the operator app needs its own replay masking
-                at init; a router navigation would keep the public settings. */}
             <a
               aria-label="navigate to operator dashboard"
-              href={operatorPath}
+              href={operatorHref}
               className={mergeCss(hoverBtnCss)}
             >
               Operator

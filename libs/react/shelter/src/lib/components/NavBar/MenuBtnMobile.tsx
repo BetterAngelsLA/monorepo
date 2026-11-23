@@ -4,13 +4,13 @@ import { useAtom } from 'jotai';
 import { Link } from 'react-router';
 import {
   aboutUsPath,
-  operatorPath,
   shelterHomePath,
   signInPath,
 } from '../../constants';
 import { FeatureFlags } from '../../constants/featureFlags';
 import { useSignOut, useUser } from '../../providers';
 import { FlyoutAnimationEnum, flyoutAtom } from '../Flyout';
+import { operatorHref } from './operatorHref';
 import { MenuMobile } from './MenuMobile';
 
 export function MenuBtnMobile() {
@@ -42,9 +42,7 @@ export function MenuBtnMobile() {
           About Us
         </Link>
         {showOperator ? (
-          // Full page load: the operator app needs its own replay masking at
-          // init; a router navigation would keep the public settings.
-          <a aria-label="navigate to operator dashboard" href={operatorPath}>
+          <a aria-label="navigate to operator dashboard" href={operatorHref}>
             Operator
           </a>
         ) : null}
