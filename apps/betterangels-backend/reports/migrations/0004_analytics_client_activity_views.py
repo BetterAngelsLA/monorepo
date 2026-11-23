@@ -1,6 +1,6 @@
 """Client activity views: interactions, their services, tasks, documents, referrals.
 
-Five read-only projections over existing tables, joining ``analytics_client_summary``
+Read-only projections over existing tables, joining ``analytics_client_summary``
 (the client dimension) on ``client_id``. Nothing is copied, refreshed, or scheduled —
 each is a live view, so the daily-freshness requirement is met by the database rather
 than by a pipeline we operate.
@@ -11,7 +11,6 @@ than by a pipeline we operate.
 * ``analytics_note_provided_service`` — one row per provided-service link on a note.
 * ``analytics_note_requested_service`` — one row per requested-service link on a note.
 * ``analytics_service_rollup`` — one row per (organisation × service × direction).
-* ``analytics_client_service_request`` — one row per ``ServiceRequest`` with a client.
 * ``analytics_client_task`` — one row per ``Task`` with a client.
 * ``analytics_client_document`` — one row per client ``Attachment``.
 * ``analytics_client_referral`` — one row per ``Referral`` with a client.
@@ -21,14 +20,31 @@ next are time-series and sliced ("interactions per month", "tasks by status"), a
 count column cannot answer those. ``analytics_client_summary`` keeps its own counts for
 the single-number questions; the duplication is deliberate.
 
+**Service requests have no view of their own.** An SR reaches a client through a *note*;
+its own ``client_profile`` is usually null (only some creation paths set it). The two
+service-link views are therefore the service-request source, and they are keyed by the
+link — a client-per-request view would need ``COALESCE(sr.client_profile_id,
+note.client_profile_id)``, a composite key, and no cursor, to reproduce data these views
+already carry.
+
+**No due date and no status on the links.** ``ServiceRequest`` has ``due_by`` and
+``status`` fields, but nothing writes them: ``due_by`` is absent from every create input
+and the only mutation that could set it (``updateServiceRequest``) is never called, and
+``status`` is fixed at creation by direction (provided → completed, requested → to-do) and
+never transitions. ``service_due_by`` would be null in every row, ``service_completed_on``
+would restate ``note_interacted_at``, and ``is_overdue`` would be permanently false, so all
+three are omitted — a column that is always empty is worse than a missing one, because a
+chart of it looks like a finding. Status is likewise left off: it is
+``note_service_direction`` restated. Add them back the day the app captures either.
+
 **A ``has_*`` flag appears only where the value itself is withheld.** Free text gets a flag
 because the text never leaves the database; an id that is not published gets one because
 there is nothing else to test. Where the value is exposed in the same row, a flag would be
-duplication that can drift, so ``service_due_by``, ``team_id``, ``shelter_id`` and
-``service_label`` stand alone. ``has_summary`` on a task is always true today and is kept
+duplication that can drift, so ``team_id``, ``shelter_id`` and ``service_label`` stand
+alone. ``has_summary`` on a task is always true today and is kept
 anyway: it is a presence surface, so it keeps its meaning if the constraint is ever
-relaxed. Categorical fields (``task_status``, ``service_request_status``,
-``referral_status``, ``attachment_type``, ``document_namespace``) carry no flag: their
+relaxed. Categorical fields (``task_status``, ``referral_status``, ``attachment_type``,
+``document_namespace``) carry no flag: their
 absence is impossible and the value is the information. ``task_origin`` replaces the flag a
 task's parent would otherwise need — a task can belong to a note or to an HMIS note, and a
 boolean would report the second case as "no parent".
@@ -36,10 +52,8 @@ boolean would report the second case as "no parent".
 **Timestamps and counts carry their entity.** ``created_at``/``updated_at`` are prefixed
 (``task_created_at``, ``referral_updated_at``) because these views get joined to each
 other, where two bare ``created_at`` columns mean two different things.
-``analytics_client_summary`` also distinguishes ``service_request_count`` (service-request
-rows attached to a client) from the rollup's ``service_use_count`` (times a service was
-recorded on a note): one request attached to three notes is one of the former and three of
-the latter.
+``service_use_count`` in the rollup counts *links* — a service recorded on a note — so one
+service request attached to three notes counts three times there.
 
 **Documents and attachments are two words for one table.** ``client_document_count`` and
 ``analytics_client_document`` count ``common_attachment`` rows owned by the client;
@@ -62,12 +76,12 @@ type anything into one. Worth a look at the distinct values before the first exp
 Notes with no client, and tasks linked only to an HMIS profile, are excluded: there is no
 ``client_id`` to key them by, so they cannot be joined to the rest.
 
-**Every view exposes a stable key.** ``note_id``, ``task_id``, ``attachment_id``,
-``referral_id`` and ``service_request_id`` are their tables' own primary keys;
-``client_summary`` uses ``client_id``; the two service-link views use ``note_service_link_id``. Postgres
-reports no primary key for a view, so a sync tool cannot dedupe or upsert on one unless a
-column exists that it can be told to trust. ``analytics_service_rollup`` is the exception:
-it has no key because it is an aggregate small enough to re-read in full.
+**Every view exposes a stable key.** ``note_id``, ``task_id``, ``attachment_id`` and
+``referral_id`` are their tables' own primary keys; ``client_summary`` uses ``client_id``;
+the two service-link views use ``note_service_link_id``. Postgres reports no primary key
+for a view, so a sync tool cannot dedupe or upsert on one unless a column exists that it
+can be told to trust. ``analytics_service_rollup`` is the exception: it has no key because
+it is an aggregate small enough to re-read in full.
 
 ``note_service_link_id`` is unique **within** each of the two link views, which is all a
 per-table sync needs. Across a union of them it is not: the two through-tables have
@@ -154,10 +168,7 @@ SELECT
     s.label             AS service_label,
     s.organization_id   AS service_organization_id,
     n.organization_id AS note_organization_id,
-    n.interacted_at   AS note_interacted_at,
-    sr.status         AS service_request_status,
-    sr.due_by         AS service_due_by,
-    sr.completed_on   AS service_completed_on
+    n.interacted_at   AS note_interacted_at
 FROM notes_note_provided_services link
 JOIN notes_note n ON n.id = link.note_id
 JOIN notes_servicerequest sr ON sr.id = link.servicerequest_id
@@ -176,10 +187,7 @@ SELECT
     s.label             AS service_label,
     s.organization_id   AS service_organization_id,
     n.organization_id AS note_organization_id,
-    n.interacted_at   AS note_interacted_at,
-    sr.status         AS service_request_status,
-    sr.due_by         AS service_due_by,
-    sr.completed_on   AS service_completed_on
+    n.interacted_at   AS note_interacted_at
 FROM notes_note_requested_services link
 JOIN notes_note n ON n.id = link.note_id
 JOIN notes_servicerequest sr ON sr.id = link.servicerequest_id
@@ -233,30 +241,6 @@ FROM (
     LEFT JOIN notes_organizationservicecategory sc ON sc.id = s.category_id
 ) x
 GROUP BY x.organization_id, x.service_category, x.service_label, x.note_service_direction
-"""
-
-# `is_overdue` requires `completed_on IS NULL`: a request that finished late was late,
-# it is not still overdue. `analytics_client_summary` counts the same way.
-CREATE_SERVICE_REQUEST_VIEW = """
-CREATE OR REPLACE VIEW analytics_client_service_request AS
-SELECT
-    sr.client_profile_id AS client_id,
-    sr.id                AS service_request_id,
-    s.label              AS service_label,
-    s.organization_id    AS service_organization_id,
-    sr.status         AS service_request_status,
-    sr.due_by         AS service_due_by,
-    sr.completed_on   AS service_completed_on,
-    (
-        sr.due_by IS NOT NULL
-        AND sr.due_by < now()
-        AND sr.completed_on IS NULL
-    ) AS is_overdue,
-    sr.created_at AS service_request_created_at,
-    sr.updated_at AS service_request_updated_at
-FROM notes_servicerequest sr
-LEFT JOIN notes_organizationservice s ON s.id = sr.service_id
-WHERE sr.client_profile_id IS NOT NULL
 """
 
 CREATE_TASK_VIEW = """
@@ -337,7 +321,6 @@ class Migration(migrations.Migration):
             ("analytics_note_provided_service", CREATE_PROVIDED_SERVICE_VIEW),
             ("analytics_note_requested_service", CREATE_REQUESTED_SERVICE_VIEW),
             ("analytics_service_rollup", CREATE_SERVICE_ROLLUP_VIEW),
-            ("analytics_client_service_request", CREATE_SERVICE_REQUEST_VIEW),
             ("analytics_client_task", CREATE_TASK_VIEW),
             ("analytics_client_document", CREATE_DOCUMENT_VIEW),
             ("analytics_client_referral", CREATE_REFERRAL_VIEW),

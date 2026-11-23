@@ -51,9 +51,6 @@ EXPECTED_COLUMNS = frozenset(
         "task_count",
         "task_assigned_count",
         "task_completed_count",
-        "service_request_count",
-        "service_request_due_count",
-        "service_request_overdue_count",
     }
 )
 

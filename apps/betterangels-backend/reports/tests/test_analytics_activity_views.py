@@ -11,18 +11,14 @@ The per-entity views are the ones worth testing with data: a wrong join directio
 ``analytics_note_provided_service`` still produces rows, just the wrong number of them.
 """
 
-from datetime import timedelta
-
 import pytest
 from django.contrib.contenttypes.models import ContentType
 from django.db import connection
-from django.utils import timezone
 from model_bakery import baker
 
 from accounts.models import Organization
 from clients.models import ClientProfile
 from common.models import Attachment
-from notes.enums import ServiceRequestStatusEnum
 from notes.models import Note, OrganizationService, ServiceRequest
 from tasks.models import Task
 
@@ -58,9 +54,6 @@ VIEW_COLUMNS: dict[str, frozenset[str]] = {
             "service_organization_id",
             "note_organization_id",
             "note_interacted_at",
-            "service_request_status",
-            "service_due_by",
-            "service_completed_on",
         }
     ),
     "analytics_note_requested_service": frozenset(
@@ -74,9 +67,6 @@ VIEW_COLUMNS: dict[str, frozenset[str]] = {
             "service_organization_id",
             "note_organization_id",
             "note_interacted_at",
-            "service_request_status",
-            "service_due_by",
-            "service_completed_on",
         }
     ),
     "analytics_service_rollup": frozenset(
@@ -89,20 +79,6 @@ VIEW_COLUMNS: dict[str, frozenset[str]] = {
             "distinct_client_count",
             "distinct_note_count",
             "last_used_at",
-        }
-    ),
-    "analytics_client_service_request": frozenset(
-        {
-            "client_id",
-            "service_request_id",
-            "service_label",
-            "service_organization_id",
-            "service_request_status",
-            "service_due_by",
-            "service_completed_on",
-            "is_overdue",
-            "service_request_created_at",
-            "service_request_updated_at",
         }
     ),
     "analytics_client_task": frozenset(
@@ -262,34 +238,6 @@ def test_task_origin_covers_both_parent_kinds() -> None:
     origins = sorted(str(row["task_origin"]) for row in rows_of("analytics_client_task"))
 
     assert origins == ["note", "standalone"]
-
-
-@pytest.mark.django_db
-def test_service_request_overdue_excludes_completed() -> None:
-    """A request that finished late was late; it is not still overdue."""
-    client = baker.make(ClientProfile, first_name="Dale")
-    past = timezone.now() - timedelta(days=30)
-
-    baker.make(
-        ServiceRequest,
-        client_profile=client,
-        service=None,
-        status=ServiceRequestStatusEnum.TO_DO,
-        due_by=past,
-        completed_on=None,
-    )
-    baker.make(
-        ServiceRequest,
-        client_profile=client,
-        service=None,
-        status=ServiceRequestStatusEnum.COMPLETED,
-        due_by=past,
-        completed_on=past,
-    )
-
-    overdue = {row["is_overdue"] for row in rows_of("analytics_client_service_request")}
-
-    assert overdue == {True, False}
 
 
 @pytest.mark.django_db

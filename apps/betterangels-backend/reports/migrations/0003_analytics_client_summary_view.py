@@ -19,6 +19,10 @@ A plain view, not a materialized one — it is always current, needs no refresh
 machinery, and at this row count the join is cheap. Materialize it only if the reports
 actually get slow.
 
+Service requests are deliberately not counted here. An SR reaches a client through a
+*note*; its own ``client_profile`` is usually null, so counting on that FK undercounts by
+an order of magnitude. The service-link views in ``0004`` are the service-request source.
+
 Purely additive: the reverse is a drop, and nothing else depends on it.
 """
 
@@ -45,20 +49,6 @@ task_rollup AS (
     FROM tasks_task t
     WHERE t.client_profile_id IS NOT NULL
     GROUP BY t.client_profile_id
-),
--- A task has an assignee and a status; it has no due date. `due_by` lives on the
--- requested service, so the due-date columns are counted there, not here.
-service_request_rollup AS (
-    SELECT
-        sr.client_profile_id AS client_id,
-        count(*) AS service_request_count,
-        count(*) FILTER (WHERE sr.due_by IS NOT NULL) AS service_request_due_count,
-        count(*) FILTER (
-            WHERE sr.due_by IS NOT NULL AND sr.due_by < now() AND sr.completed_on IS NULL
-        ) AS service_request_overdue_count
-    FROM notes_servicerequest sr
-    WHERE sr.client_profile_id IS NOT NULL
-    GROUP BY sr.client_profile_id
 ),
 phone_rollup AS (
     SELECT pn.object_id AS client_id, count(*) AS phone_number_count
@@ -145,14 +135,9 @@ SELECT
 
     coalesce(t.task_count, 0) AS task_count,
     coalesce(t.task_assigned_count, 0) AS task_assigned_count,
-    coalesce(t.task_completed_count, 0) AS task_completed_count,
-
-    coalesce(sr.service_request_count, 0) AS service_request_count,
-    coalesce(sr.service_request_due_count, 0) AS service_request_due_count,
-    coalesce(sr.service_request_overdue_count, 0) AS service_request_overdue_count
+    coalesce(t.task_completed_count, 0) AS task_completed_count
 FROM clients_clientprofile cp
 LEFT JOIN task_rollup t ON t.client_id = cp.id
-LEFT JOIN service_request_rollup sr ON sr.client_id = cp.id
 LEFT JOIN phone_rollup pn ON pn.client_id = cp.id
 LEFT JOIN document_rollup d ON d.client_id = cp.id
 LEFT JOIN hmis_rollup h ON h.client_id = cp.id
