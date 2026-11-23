@@ -17,6 +17,7 @@ import pytest
 from django.db import connection
 from model_bakery import baker
 
+from clients.enums import RelationshipTypeEnum
 from clients.models import ClientContact, ClientHouseholdMember, ClientProfile, SocialMediaProfile
 
 # The complete column list, not a forbidden-name check: adding a client-identifying
@@ -44,6 +45,7 @@ EXPECTED_COLUMNS = frozenset(
         "has_hmis_profile",
         "client_document_count",
         "contact_count",
+        "current_case_manager_count",
         "household_member_count",
         "social_media_profile_count",
         "task_count",
@@ -132,6 +134,24 @@ def test_sub_record_counts() -> None:
     assert row["contact_count"] == 2
     assert row["household_member_count"] == 1
     assert row["social_media_profile_count"] == 1
+
+
+@pytest.mark.django_db
+def test_current_case_manager_count() -> None:
+    """The client profile lists current case managers separately, and allows more than one."""
+    client = baker.make(ClientProfile, first_name="Dale")
+    for _ in range(2):
+        baker.make(
+            ClientContact,
+            client_profile=client,
+            relationship_to_client=RelationshipTypeEnum.CURRENT_CASE_MANAGER,
+        )
+    baker.make(ClientContact, client_profile=client, relationship_to_client=RelationshipTypeEnum.MOTHER)
+
+    row = summary_row(client)
+    assert row is not None
+    assert row["current_case_manager_count"] == 2
+    assert row["contact_count"] == 3
 
 
 @pytest.mark.django_db

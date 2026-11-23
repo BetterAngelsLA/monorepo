@@ -85,6 +85,15 @@ contact_rollup AS (
     FROM clients_clientcontact c
     GROUP BY c.client_profile_id
 ),
+-- The one relationship worth its own column: the client profile lists current case
+-- managers separately from other contacts, and more than one can be recorded. Counting
+-- rather than flagging so the "how many" question does not need a second pass.
+case_manager_rollup AS (
+    SELECT c.client_profile_id AS client_id, count(*) AS current_case_manager_count
+    FROM clients_clientcontact c
+    WHERE c.relationship_to_client = 'current_case_manager'
+    GROUP BY c.client_profile_id
+),
 household_member_rollup AS (
     SELECT m.client_profile_id AS client_id, count(*) AS household_member_count
     FROM clients_clienthouseholdmember m
@@ -130,6 +139,7 @@ SELECT
     coalesce(d.document_count, 0) AS client_document_count,
 
     coalesce(c.contact_count, 0) AS contact_count,
+    coalesce(cm.current_case_manager_count, 0) AS current_case_manager_count,
     coalesce(m.household_member_count, 0) AS household_member_count,
     coalesce(sm.social_media_profile_count, 0) AS social_media_profile_count,
 
@@ -147,6 +157,7 @@ LEFT JOIN phone_rollup pn ON pn.client_id = cp.id
 LEFT JOIN document_rollup d ON d.client_id = cp.id
 LEFT JOIN hmis_rollup h ON h.client_id = cp.id
 LEFT JOIN contact_rollup c ON c.client_id = cp.id
+LEFT JOIN case_manager_rollup cm ON cm.client_id = cp.id
 LEFT JOIN household_member_rollup m ON m.client_id = cp.id
 LEFT JOIN social_media_rollup sm ON sm.client_id = cp.id
 -- Merged profiles are hidden by `ClientProfileManager`, so a view that kept them would
