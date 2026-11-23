@@ -12,13 +12,34 @@
  * (`$session_entry_*`) and initial (`$initial_*`) copies go too while a custom
  * property that happens to end in `_url` is left alone.
  */
-const SDK_URL_PROPERTY = /^\$.*(?:url|pathname|host|referrer|referring_domain)$/;
+const PATH_SUFFIXES = ['pathname'] as const;
+const URL_VALUE_SUFFIXES = ['url', 'referrer'] as const;
+const HOST_SUFFIXES = ['host', 'referring_domain'] as const;
+
+/**
+ * Every suffix the SDK puts on a property whose value carries a URL.
+ *
+ * Composed rather than repeated, so the strip list cannot fall behind the two
+ * matchers that decide *what* to redact: a property dropped from an event but
+ * not recognised by `pathOf` would keep a private path, which is a silent leak
+ * rather than a visible failure.
+ */
+const SDK_URL_SUFFIXES = [
+  ...PATH_SUFFIXES,
+  ...URL_VALUE_SUFFIXES,
+  ...HOST_SUFFIXES,
+];
+
+const sdkPropertyWithSuffix = (suffixes: readonly string[]) =>
+  new RegExp(`^\\$.*(?:${suffixes.join('|')})$`);
+
+const SDK_URL_PROPERTY = sdkPropertyWithSuffix(SDK_URL_SUFFIXES);
 
 /** SDK properties whose value *is* a path. */
-const SDK_PATH_PROPERTY = /^\$.*pathname$/;
+const SDK_PATH_PROPERTY = sdkPropertyWithSuffix(PATH_SUFFIXES);
 
 /** SDK properties whose value is a URL, from which the path is derived. */
-const SDK_URL_VALUE_PROPERTY = /^\$.*(?:url|referrer)$/;
+const SDK_URL_VALUE_PROPERTY = sdkPropertyWithSuffix(URL_VALUE_SUFFIXES);
 
 /** Drops the URL-bearing properties from one event's properties. */
 export function stripUrlProperties(
