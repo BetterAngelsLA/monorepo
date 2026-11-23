@@ -10,7 +10,7 @@ than by a pipeline we operate.
 * ``analytics_client_interaction`` — one row per ``Note`` with a client.
 * ``analytics_note_provided_service`` — one row per provided-service link on a note.
 * ``analytics_note_requested_service`` — one row per requested-service link on a note.
-* ``analytics_service_rollup`` — one row per (organisation × service × kind).
+* ``analytics_service_rollup`` — one row per (organisation × service × direction).
 * ``analytics_client_service_request`` — one row per ``ServiceRequest`` with a client.
 * ``analytics_client_task`` — one row per ``Task`` with a client.
 * ``analytics_client_document`` — one row per client ``Attachment``.
@@ -21,18 +21,38 @@ next are time-series and sliced ("interactions per month", "tasks by status"), a
 count column cannot answer those. ``analytics_client_summary`` keeps its own counts for
 the single-number questions; the duplication is deliberate.
 
-**``has_*`` means "a value is present", not "the field is optional".** Free-text fields
-and optional keys get a flag so a consumer never has to know whether the column is
-required. ``has_summary`` on a task is always true today; that is fine — the surface
-stays uniform, and it keeps its meaning if the constraint is ever relaxed. Categorical
-fields (``status``, ``attachment_type``, ``namespace``) carry no flag: their absence is
-impossible and the value is the information.
+**A ``has_*`` flag appears only where the value itself is withheld.** Free text gets a flag
+because the text never leaves the database; an id that is not published gets one because
+there is nothing else to test. Where the value is exposed in the same row, a flag would be
+duplication that can drift, so ``service_due_by``, ``team_id``, ``shelter_id`` and
+``service_label`` stand alone. ``has_summary`` on a task is always true today and is kept
+anyway: it is a presence surface, so it keeps its meaning if the constraint is ever
+relaxed. Categorical fields (``task_status``, ``service_request_status``,
+``referral_status``, ``attachment_type``, ``document_namespace``) carry no flag: their
+absence is impossible and the value is the information. ``task_origin`` replaces the flag a
+task's parent would otherwise need — a task can belong to a note or to an HMIS note, and a
+boolean would report the second case as "no parent".
+
+**Timestamps and counts carry their entity.** ``created_at``/``updated_at`` are prefixed
+(``task_created_at``, ``referral_updated_at``) because these views get joined to each
+other, where two bare ``created_at`` columns mean two different things.
+``analytics_client_summary`` also distinguishes ``service_request_count`` (service-request
+rows attached to a client) from the rollup's ``service_use_count`` (times a service was
+recorded on a note): one request attached to three notes is one of the former and three of
+the latter.
+
+**Documents and attachments are two words for one table.** ``client_document_count`` and
+``analytics_client_document`` count ``common_attachment`` rows owned by the client;
+``note_attachment_count`` counts the rows owned by a note. The split is the generic
+relation's content type, and the names now say which side of it a row is on.
 
 **What is deliberately not exposed.** Free text never leaves the database: note
-``public_details``/``private_details``, task ``summary``/``description``, referral
-``notes`` — only their presence. Note ``location_id`` is reduced to a flag: a service
-location plus a timestamp is close enough to an address to be worth avoiding. Uploaded
-filenames are reduced to a flag for the same reason.
+``purpose``, ``public_details`` and ``private_details``, task ``summary`` and
+``description``, referral ``notes`` — only their presence. Note ``purpose`` is a
+``CharField``, but the app captures it from a free-text input rather than a picker, so it
+is treated as free text however catalogue-like its values look. Note ``location_id`` is
+reduced to a flag: a service location plus a timestamp is close enough to an address to be
+worth avoiding. Uploaded filenames are reduced to a flag for the same reason.
 
 **Service labels are organisation-authored text**, not a fixed enum, so they are the one
 field here whose content we do not fully control. They read like catalogue entries
@@ -44,10 +64,17 @@ Notes with no client, and tasks linked only to an HMIS profile, are excluded: th
 
 **Every view exposes a stable key.** ``note_id``, ``task_id``, ``attachment_id``,
 ``referral_id`` and ``service_request_id`` are their tables' own primary keys;
-``client_summary`` uses ``client_id``; the two service-link views use ``link_id``. Postgres
+``client_summary`` uses ``client_id``; the two service-link views use ``note_service_link_id``. Postgres
 reports no primary key for a view, so a sync tool cannot dedupe or upsert on one unless a
 column exists that it can be told to trust. ``analytics_service_rollup`` is the exception:
 it has no key because it is an aggregate small enough to re-read in full.
+
+``note_service_link_id`` is unique **within** each of the two link views, which is all a
+per-table sync needs. Across a union of them it is not: the two through-tables have
+independent id sequences, both starting at 1, so identity there is the pair with
+``note_service_direction``. Anyone unioning the two should count or join on the pair — a
+`count(DISTINCT note_service_link_id)` over the union undercounts — or read
+``service_use_count`` from the rollup instead.
 
 **The service links are split in two, and are insert-only.** ``provided_services`` and
 ``requested_services`` are separate through-tables with separate ``id`` sequences, so one
@@ -71,22 +98,20 @@ CREATE OR REPLACE VIEW analytics_client_interaction AS
 SELECT
     n.client_profile_id AS client_id,
     n.id                AS note_id,
-    n.interacted_at,
-    n.created_at,
-    n.updated_at,
-    n.purpose,
+    n.interacted_at     AS note_interacted_at,
+    n.created_at        AS note_created_at,
+    n.updated_at        AS note_updated_at,
     nullif(btrim(n.purpose), '') IS NOT NULL AS has_purpose,
     n.is_submitted,
-    n.organization_id,
-    n.team_id,
-    n.team_id IS NOT NULL      AS has_team,
+    n.organization_id AS note_organization_id,
+    n.team_id         AS note_team_id,
     n.location_id IS NOT NULL  AS has_location,
     n.created_by_id IS NOT NULL AS has_creator,
     nullif(btrim(n.public_details), '') IS NOT NULL  AS has_public_details,
     nullif(btrim(n.private_details), '') IS NOT NULL AS has_private_details,
     coalesce(ps.provided_service_count, 0)  AS provided_service_count,
     coalesce(rs.requested_service_count, 0) AS requested_service_count,
-    coalesce(at.attachment_count, 0)        AS attachment_count
+    coalesce(at.attachment_count, 0)        AS note_attachment_count
 FROM notes_note n
 LEFT JOIN (
     SELECT note_id, count(*) AS provided_service_count
@@ -108,24 +133,31 @@ LEFT JOIN (
 WHERE n.client_profile_id IS NOT NULL
 """
 
-# One view per through-table so each has its own `link_id` cursor. A consumer that wants
+# One view per through-table so each has its own `note_service_link_id` cursor. A consumer that wants
 # both directions unions them at query time, which costs nothing at sync time.
+#
+# `note_service_direction` is a constant within each view — "provided" in the first, "requested" in the
+# second — and stays anyway. The two views have identical column order, so without it a positional
+# `SELECT * FROM a UNION ALL SELECT * FROM b` silently merges the two directions and a
+# `GROUP BY service_label` returns one number that means neither. It is also half of the composite
+# identity, `(note_service_link_id, note_service_direction)`, which is only meaningful if both halves
+# are selected. Dropping it would move the "add the literal yourself" burden to every union site, where
+# forgetting it produces a plausible wrong number rather than an error.
 CREATE_PROVIDED_SERVICE_VIEW = """
 CREATE OR REPLACE VIEW analytics_note_provided_service AS
 SELECT
-    link.id             AS link_id,
-    'provided'          AS kind,
+    link.id             AS note_service_link_id,
+    'provided'          AS note_service_direction,
     n.client_profile_id AS client_id,
     n.id                AS note_id,
     sr.id               AS service_request_id,
     s.label             AS service_label,
     s.organization_id   AS service_organization_id,
-    n.organization_id,
-    n.interacted_at,
-    sr.status,
-    sr.due_by IS NOT NULL AS has_due_date,
-    sr.due_by,
-    sr.completed_on
+    n.organization_id AS note_organization_id,
+    n.interacted_at   AS note_interacted_at,
+    sr.status         AS service_request_status,
+    sr.due_by         AS service_due_by,
+    sr.completed_on   AS service_completed_on
 FROM notes_note_provided_services link
 JOIN notes_note n ON n.id = link.note_id
 JOIN notes_servicerequest sr ON sr.id = link.servicerequest_id
@@ -136,19 +168,18 @@ WHERE n.client_profile_id IS NOT NULL
 CREATE_REQUESTED_SERVICE_VIEW = """
 CREATE OR REPLACE VIEW analytics_note_requested_service AS
 SELECT
-    link.id             AS link_id,
-    'requested'         AS kind,
+    link.id             AS note_service_link_id,
+    'requested'         AS note_service_direction,
     n.client_profile_id AS client_id,
     n.id                AS note_id,
     sr.id               AS service_request_id,
     s.label             AS service_label,
     s.organization_id   AS service_organization_id,
-    n.organization_id,
-    n.interacted_at,
-    sr.status,
-    sr.due_by IS NOT NULL AS has_due_date,
-    sr.due_by,
-    sr.completed_on
+    n.organization_id AS note_organization_id,
+    n.interacted_at   AS note_interacted_at,
+    sr.status         AS service_request_status,
+    sr.due_by         AS service_due_by,
+    sr.completed_on   AS service_completed_on
 FROM notes_note_requested_services link
 JOIN notes_note n ON n.id = link.note_id
 JOIN notes_servicerequest sr ON sr.id = link.servicerequest_id
@@ -162,20 +193,20 @@ WHERE n.client_profile_id IS NOT NULL
 CREATE_SERVICE_ROLLUP_VIEW = """
 CREATE OR REPLACE VIEW analytics_service_rollup AS
 SELECT
-    x.organization_id,
+    x.organization_id AS note_organization_id,
     x.service_category,
     x.service_label,
-    x.kind,
-    count(*)                    AS link_count,
-    count(DISTINCT x.client_id) AS client_count,
-    count(DISTINCT x.note_id)   AS note_count,
-    max(x.interacted_at)        AS last_interacted_at
+    x.note_service_direction,
+    count(*)                    AS service_use_count,
+    count(DISTINCT x.client_id) AS distinct_client_count,
+    count(DISTINCT x.note_id)   AS distinct_note_count,
+    max(x.interacted_at)        AS last_used_at
 FROM (
     SELECT
         n.organization_id,
         sc.name AS service_category,
         s.label AS service_label,
-        'provided' AS kind,
+        'provided' AS note_service_direction,
         n.client_profile_id AS client_id,
         n.id AS note_id,
         n.interacted_at
@@ -201,7 +232,7 @@ FROM (
     LEFT JOIN notes_organizationservice s ON s.id = sr.service_id
     LEFT JOIN notes_organizationservicecategory sc ON sc.id = s.category_id
 ) x
-GROUP BY x.organization_id, x.service_category, x.service_label, x.kind
+GROUP BY x.organization_id, x.service_category, x.service_label, x.note_service_direction
 """
 
 # `is_overdue` requires `completed_on IS NULL`: a request that finished late was late,
@@ -213,18 +244,16 @@ SELECT
     sr.id                AS service_request_id,
     s.label              AS service_label,
     s.organization_id    AS service_organization_id,
-    sr.status,
-    sr.service_id IS NOT NULL AS has_service,
-    sr.due_by IS NOT NULL     AS has_due_date,
-    sr.due_by,
-    sr.completed_on,
+    sr.status         AS service_request_status,
+    sr.due_by         AS service_due_by,
+    sr.completed_on   AS service_completed_on,
     (
         sr.due_by IS NOT NULL
         AND sr.due_by < now()
         AND sr.completed_on IS NULL
     ) AS is_overdue,
-    sr.created_at,
-    sr.updated_at
+    sr.created_at AS service_request_created_at,
+    sr.updated_at AS service_request_updated_at
 FROM notes_servicerequest sr
 LEFT JOIN notes_organizationservice s ON s.id = sr.service_id
 WHERE sr.client_profile_id IS NOT NULL
@@ -235,17 +264,22 @@ CREATE OR REPLACE VIEW analytics_client_task AS
 SELECT
     t.client_profile_id AS client_id,
     t.id                AS task_id,
-    t.status,
+    t.status AS task_status,
     t.assignee_id IS NOT NULL AS is_assigned,
     nullif(btrim(t.summary), '')     IS NOT NULL AS has_summary,
     nullif(btrim(t.description), '') IS NOT NULL AS has_description,
-    t.organization_id,
-    t.team_id,
-    t.team_id IS NOT NULL       AS has_team,
-    t.note_id IS NOT NULL       AS has_note,
+    t.organization_id AS task_organization_id,
+    t.team_id         AS task_team_id,
+    -- Not a `has_note` flag: a task can hang off an HMIS note instead, and a false
+    -- would then read as "no parent" rather than "a parent we did not look for".
+    CASE
+        WHEN t.note_id IS NOT NULL      THEN 'note'
+        WHEN t.hmis_note_id IS NOT NULL THEN 'hmis_note'
+        ELSE 'standalone'
+    END AS task_origin,
     t.created_by_id IS NOT NULL AS has_creator,
-    t.created_at,
-    t.updated_at
+    t.created_at AS task_created_at,
+    t.updated_at AS task_updated_at
 FROM tasks_task t
 WHERE t.client_profile_id IS NOT NULL
 """
@@ -256,13 +290,13 @@ SELECT
     a.object_id AS client_id,
     a.id        AS attachment_id,
     a.attachment_type,
-    a.namespace,
+    a.namespace AS document_namespace,
     a.mime_type,
     a.upload_org_id,
     nullif(btrim(a.original_filename), '') IS NOT NULL AS has_original_filename,
     a.uploaded_by_id IS NOT NULL AS has_uploader,
-    a.created_at,
-    a.updated_at
+    a.created_at AS document_created_at,
+    a.updated_at AS document_updated_at
 FROM common_attachment a
 JOIN django_content_type ct ON ct.id = a.content_type_id
 WHERE ct.app_label = 'clients' AND ct.model = 'clientprofile'
@@ -273,14 +307,13 @@ CREATE OR REPLACE VIEW analytics_client_referral AS
 SELECT
     r.client_profile_id AS client_id,
     r.id                AS referral_id,
-    r.status,
+    r.status AS referral_status,
     r.shelter_id,
-    r.shelter_id IS NOT NULL    AS has_shelter,
-    r.organization_id,
-    nullif(btrim(r.notes), '') IS NOT NULL AS has_notes,
+    r.organization_id AS referral_organization_id,
+    nullif(btrim(r.notes), '') IS NOT NULL AS has_referral_notes,
     r.created_by_id IS NOT NULL AS has_creator,
-    r.created_at,
-    r.updated_at
+    r.created_at AS referral_created_at,
+    r.updated_at AS referral_updated_at
 FROM referrals_referral r
 WHERE r.client_profile_id IS NOT NULL
 """

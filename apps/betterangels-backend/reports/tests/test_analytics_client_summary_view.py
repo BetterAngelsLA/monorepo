@@ -24,8 +24,8 @@ from clients.models import ClientContact, ClientHouseholdMember, ClientProfile, 
 EXPECTED_COLUMNS = frozenset(
     {
         "client_id",
-        "created_at",
-        "updated_at",
+        "client_created_at",
+        "client_updated_at",
         "has_date_of_birth",
         "has_california_id",
         "has_email",
@@ -40,9 +40,9 @@ EXPECTED_COLUMNS = frozenset(
         "has_pronouns",
         "has_preferred_language",
         "has_important_notes",
-        "has_photo",
-        "has_hmis_id",
-        "has_documents",
+        "has_profile_photo",
+        "has_hmis_profile",
+        "client_document_count",
         "contact_count",
         "household_member_count",
         "social_media_profile_count",
@@ -116,7 +116,7 @@ def test_a_no_op_save_still_bumps_updated_at() -> None:
 
     after = summary_row(client)
     assert after is not None
-    assert timestamp(after, "updated_at") > timestamp(before, "updated_at")
+    assert timestamp(after, "client_updated_at") > timestamp(before, "client_updated_at")
 
 
 @pytest.mark.django_db

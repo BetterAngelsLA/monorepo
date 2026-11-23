@@ -101,9 +101,9 @@ SELECT
     -- of a small sequential integer would obscure nothing while making the join
     -- impossible.
     cp.id AS client_id,
-    cp.created_at,
+    cp.created_at AS client_created_at,
     -- Raw, and inflated by no-op saves: what counts as a real change is deferred.
-    cp.updated_at,
+    cp.updated_at AS client_updated_at,
 
     cp.date_of_birth IS NOT NULL AS has_date_of_birth,
     nullif(btrim(cp.california_id), '') IS NOT NULL AS has_california_id,
@@ -125,9 +125,9 @@ SELECT
     ) AS has_pronouns,
     nullif(btrim(cp.preferred_language), '') IS NOT NULL AS has_preferred_language,
     nullif(btrim(cp.important_notes), '') IS NOT NULL AS has_important_notes,
-    nullif(btrim(cp.profile_photo), '') IS NOT NULL AS has_photo,
-    coalesce(h.hmis_profile_count, 0) > 0 AS has_hmis_id,
-    coalesce(d.document_count, 0) > 0 AS has_documents,
+    nullif(btrim(cp.profile_photo), '') IS NOT NULL AS has_profile_photo,
+    coalesce(h.hmis_profile_count, 0) > 0 AS has_hmis_profile,
+    coalesce(d.document_count, 0) AS client_document_count,
 
     coalesce(c.contact_count, 0) AS contact_count,
     coalesce(m.household_member_count, 0) AS household_member_count,

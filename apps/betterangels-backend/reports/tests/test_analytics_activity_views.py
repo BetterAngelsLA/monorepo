@@ -31,68 +31,64 @@ VIEW_COLUMNS: dict[str, frozenset[str]] = {
         {
             "client_id",
             "note_id",
-            "interacted_at",
-            "created_at",
-            "updated_at",
-            "purpose",
+            "note_interacted_at",
+            "note_created_at",
+            "note_updated_at",
             "has_purpose",
             "is_submitted",
-            "organization_id",
-            "team_id",
-            "has_team",
+            "note_organization_id",
+            "note_team_id",
             "has_location",
             "has_creator",
             "has_public_details",
             "has_private_details",
             "provided_service_count",
             "requested_service_count",
-            "attachment_count",
+            "note_attachment_count",
         }
     ),
     "analytics_note_provided_service": frozenset(
         {
-            "link_id",
-            "kind",
+            "note_service_link_id",
+            "note_service_direction",
             "client_id",
             "note_id",
             "service_request_id",
             "service_label",
             "service_organization_id",
-            "organization_id",
-            "interacted_at",
-            "status",
-            "has_due_date",
-            "due_by",
-            "completed_on",
+            "note_organization_id",
+            "note_interacted_at",
+            "service_request_status",
+            "service_due_by",
+            "service_completed_on",
         }
     ),
     "analytics_note_requested_service": frozenset(
         {
-            "link_id",
-            "kind",
+            "note_service_link_id",
+            "note_service_direction",
             "client_id",
             "note_id",
             "service_request_id",
             "service_label",
             "service_organization_id",
-            "organization_id",
-            "interacted_at",
-            "status",
-            "has_due_date",
-            "due_by",
-            "completed_on",
+            "note_organization_id",
+            "note_interacted_at",
+            "service_request_status",
+            "service_due_by",
+            "service_completed_on",
         }
     ),
     "analytics_service_rollup": frozenset(
         {
-            "organization_id",
+            "note_organization_id",
             "service_category",
             "service_label",
-            "kind",
-            "link_count",
-            "client_count",
-            "note_count",
-            "last_interacted_at",
+            "note_service_direction",
+            "service_use_count",
+            "distinct_client_count",
+            "distinct_note_count",
+            "last_used_at",
         }
     ),
     "analytics_client_service_request": frozenset(
@@ -101,31 +97,28 @@ VIEW_COLUMNS: dict[str, frozenset[str]] = {
             "service_request_id",
             "service_label",
             "service_organization_id",
-            "status",
-            "has_service",
-            "has_due_date",
-            "due_by",
-            "completed_on",
+            "service_request_status",
+            "service_due_by",
+            "service_completed_on",
             "is_overdue",
-            "created_at",
-            "updated_at",
+            "service_request_created_at",
+            "service_request_updated_at",
         }
     ),
     "analytics_client_task": frozenset(
         {
             "client_id",
             "task_id",
-            "status",
+            "task_status",
             "is_assigned",
             "has_summary",
             "has_description",
-            "organization_id",
-            "team_id",
-            "has_team",
-            "has_note",
+            "task_organization_id",
+            "task_team_id",
+            "task_origin",
             "has_creator",
-            "created_at",
-            "updated_at",
+            "task_created_at",
+            "task_updated_at",
         }
     ),
     "analytics_client_document": frozenset(
@@ -133,27 +126,26 @@ VIEW_COLUMNS: dict[str, frozenset[str]] = {
             "client_id",
             "attachment_id",
             "attachment_type",
-            "namespace",
+            "document_namespace",
             "mime_type",
             "upload_org_id",
             "has_original_filename",
             "has_uploader",
-            "created_at",
-            "updated_at",
+            "document_created_at",
+            "document_updated_at",
         }
     ),
     "analytics_client_referral": frozenset(
         {
             "client_id",
             "referral_id",
-            "status",
+            "referral_status",
             "shelter_id",
-            "has_shelter",
-            "organization_id",
-            "has_notes",
+            "referral_organization_id",
+            "has_referral_notes",
             "has_creator",
-            "created_at",
-            "updated_at",
+            "referral_created_at",
+            "referral_updated_at",
         }
     ),
 }
@@ -197,15 +189,15 @@ def test_service_link_views_record_both_directions_separately() -> None:
     note.provided_services.add(provided)
     note.requested_services.add(requested)
 
-    assert [(row["kind"], row["service_label"]) for row in rows_of("analytics_note_provided_service")] == [
-        ("provided", "Tarp")
-    ]
-    assert [(row["kind"], row["service_label"]) for row in rows_of("analytics_note_requested_service")] == [
-        ("requested", "Tarp")
-    ]
+    assert [
+        (row["note_service_direction"], row["service_label"]) for row in rows_of("analytics_note_provided_service")
+    ] == [("provided", "Tarp")]
+    assert [
+        (row["note_service_direction"], row["service_label"]) for row in rows_of("analytics_note_requested_service")
+    ] == [("requested", "Tarp")]
 
     rollup = {
-        (row["kind"], row["service_label"], row["link_count"], row["client_count"])
+        (row["note_service_direction"], row["service_label"], row["service_use_count"], row["distinct_client_count"])
         for row in rows_of("analytics_service_rollup")
     }
     assert rollup == {("provided", "Tarp", 1, 1), ("requested", "Tarp", 1, 1)}
@@ -216,7 +208,7 @@ def test_removing_a_link_drops_it_from_the_views() -> None:
     """The views are live, so a removal shows up here.
 
     Append-only is a property of a synced copy driven by a cursor, not of the view: a
-    consumer syncing on `link_id` would keep the removed row. This test pins the half
+    consumer syncing on `note_service_link_id` would keep the removed row. This test pins the half
     that lives in our database so the difference stays visible.
     """
     org = baker.make(Organization)
@@ -255,6 +247,21 @@ def test_task_presence_flags_do_not_expose_the_text() -> None:
     assert row["has_summary"] is True
     assert row["has_description"] is False
     assert "Follow up" not in str(row.values())
+
+
+@pytest.mark.django_db
+def test_task_origin_covers_both_parent_kinds() -> None:
+    """A boolean would report an HMIS-parented task as having no parent at all."""
+    org = baker.make(Organization)
+    client = baker.make(ClientProfile, first_name="Dale")
+    note = baker.make(Note, client_profile=client, organization=org)
+
+    baker.make(Task, client_profile=client, summary="From a note", note=note)
+    baker.make(Task, client_profile=client, summary="No parent")
+
+    origins = sorted(str(row["task_origin"]) for row in rows_of("analytics_client_task"))
+
+    assert origins == ["note", "standalone"]
 
 
 @pytest.mark.django_db
@@ -307,5 +314,5 @@ def test_attachment_count_only_counts_note_attachments() -> None:
 
     (interaction,) = rows_of("analytics_client_interaction")
 
-    assert interaction["attachment_count"] == 1
+    assert interaction["note_attachment_count"] == 1
     assert len(rows_of("analytics_client_document")) == 1
