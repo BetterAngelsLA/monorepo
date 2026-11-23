@@ -84,9 +84,15 @@ export function LocationPicker({
 
       {error && <p className="text-sm text-red-600">{error}</p>}
 
+      {/*
+        Blocked from session replay: a map is canvas plus an SVG marker, and
+        `maskTextSelector` has no text to replace there — the pin's position is
+        the shelter's address. `ph-no-capture` is the shelter site's block
+        selector, so the recording shows a placeholder of the same size.
+      */}
       <div
         className={mergeCss([
-          'w-full rounded-md overflow-hidden border border-gray-300 shadow-xs relative',
+          'w-full rounded-md overflow-hidden border border-gray-300 shadow-xs relative ph-no-capture',
           mapHeightCss,
         ])}
       >
