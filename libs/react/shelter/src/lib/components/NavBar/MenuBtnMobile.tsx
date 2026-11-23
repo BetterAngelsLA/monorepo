@@ -42,9 +42,11 @@ export function MenuBtnMobile() {
           About Us
         </Link>
         {showOperator ? (
-          <Link aria-label="navigate to operator dashboard" to={operatorPath}>
+          // Full page load: the operator app needs its own replay masking at
+          // init; a router navigation would keep the public settings.
+          <a aria-label="navigate to operator dashboard" href={operatorPath}>
             Operator
-          </Link>
+          </a>
         ) : null}
         {user ? (
           <button aria-label="sign out" onClick={signOut}>

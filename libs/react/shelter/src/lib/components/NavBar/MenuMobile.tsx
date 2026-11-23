@@ -97,13 +97,15 @@ export function MenuMobile({ showOperator, user, signOut }: MenuMobileProps) {
 
         {showOperator ? (
           <div className={mergeCss(borderCss)}>
-            <Link
+            {/* Full page load: the operator app needs its own replay masking
+                at init; a router navigation would keep the public settings. */}
+            <a
               aria-label="navigate to operator dashboard"
-              to={operatorPath}
+              href={operatorPath}
               className={mergeCss(hoverBtnCss)}
             >
               Operator
-            </Link>
+            </a>
           </div>
         ) : null}
 

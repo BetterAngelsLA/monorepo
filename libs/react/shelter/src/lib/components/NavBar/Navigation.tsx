@@ -56,9 +56,15 @@ export function Navigation() {
         </Link>
 
         {showOperator && (
-          <Link aria-label="navigate to operator dashboard" to={operatorPath}>
+          /**
+           * A full page load, not a router `Link`: the operator app masks its
+           * recordings differently, and that choice is made once when the
+           * recorder initialises. A client-side hop would keep the public
+           * settings, which mask inputs but not page text.
+           */
+          <a aria-label="navigate to operator dashboard" href={operatorPath}>
             Operator
-          </Link>
+          </a>
         )}
 
         {user ? (
