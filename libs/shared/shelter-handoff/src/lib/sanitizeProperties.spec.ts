@@ -52,7 +52,10 @@ it('redacts the operator path but keeps a public page URL', () => {
     $host: 'shelter.betterangels.la',
   };
 
-  expect(redactPrivateRouteProperties(operator, ['/operator'])).toEqual({});
+  // The path is what goes; `$host` carries no route, so it stays.
+  expect(redactPrivateRouteProperties(operator, ['/operator'])).toEqual({
+    $host: 'shelter.betterangels.la',
+  });
   // Compared against a copy: `toBe` (or comparing to the object that was passed
   // in) also passes when the implementation redacts in place and returns it.
   expect(redactPrivateRouteProperties({ ...publicPage }, ['/operator'])).toEqual(
@@ -82,10 +85,15 @@ it('redacts when the session began on a private route, from a public page', () =
     $session_entry_pathname: '/operator/shelter/123',
   };
 
-  // The current path is public, so `$pathname` alone says "keep". The set-once
-  // copy still carries the operator route, and that is what ships.
+  // The current path is public, so it survives. The set-once copy still carries
+  // the operator route, and only that copy is dropped — the public page keeps
+  // its context instead of losing the whole session's URLs.
   expect(redactPrivateRouteProperties(startedOnOperator, ['/operator'])).toEqual(
-    {},
+    {
+      $current_url: 'https://shelter.betterangels.la/shelter/456',
+      $pathname: '/shelter/456',
+      $host: 'shelter.betterangels.la',
+    },
   );
 });
 
@@ -96,7 +104,9 @@ it('derives the path from the url when no pathname was sent', () => {
   };
 
   // A missing `$pathname` must not read as "public".
-  expect(redactPrivateRouteProperties(urlOnly, ['/operator'])).toEqual({});
+  expect(redactPrivateRouteProperties(urlOnly, ['/operator'])).toEqual({
+    $host: 'shelter.betterangels.la',
+  });
 });
 
 it('redacts the operator route under a branch base path', () => {
@@ -115,9 +125,9 @@ it('redacts the operator route under a branch base path', () => {
 
   // Only production is served from the root; a `startsWith('/operator')` check
   // would miss every preview and leave these paths in the payload.
-  expect(redactPrivateRouteProperties(previewOperator, ['/operator'])).toEqual(
-    {},
-  );
+  expect(redactPrivateRouteProperties(previewOperator, ['/operator'])).toEqual({
+    $host: 'shelter.dev.betterangels.la',
+  });
   // Against a copy, so an in-place redaction cannot satisfy it.
   expect(
     redactPrivateRouteProperties({ ...previewPublic }, ['/operator']),
@@ -134,5 +144,31 @@ it('redacts the operator root at the end of a base path', () => {
 
   // No trailing segment: only the `endsWith` branch matches this one, so
   // dropping it would ship the operator root from every preview.
-  expect(redactPrivateRouteProperties(operatorRoot, ['/operator'])).toEqual({});
+  expect(redactPrivateRouteProperties(operatorRoot, ['/operator'])).toEqual({
+    $host: 'shelter.dev.betterangels.la',
+  });
+});
+
+it('leaves custom properties that merely end in "url" or "host"', () => {
+  // Matched inside the SDK's `$` namespace only: a suffix rule over every key
+  // would silently drop these.
+  expect(
+    stripUrlProperties({
+      shelter_url: 'https://shelter.betterangels.la/shelter/1',
+      shelter_host: 'shelter.betterangels.la',
+      $current_url: 'https://shelter.betterangels.la/shelter/1',
+    }),
+  ).toEqual({
+    shelter_url: 'https://shelter.betterangels.la/shelter/1',
+    shelter_host: 'shelter.betterangels.la',
+  });
+
+  // And a custom property is never mistaken for a route to redact.
+  const withCustomUrl = {
+    shelter_url: 'https://shelter.betterangels.la/operator/shelter/1',
+    $pathname: '/shelter/2',
+  };
+  expect(
+    redactPrivateRouteProperties(withCustomUrl, ['/operator']),
+  ).toEqual(withCustomUrl);
 });

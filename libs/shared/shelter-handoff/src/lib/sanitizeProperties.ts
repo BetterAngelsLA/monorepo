@@ -8,9 +8,17 @@
  * keeps out of observability vendors — New Relic obfuscates the same route, and
  * the native client disables network telemetry for the same reason.
  *
- * Matched by suffix so the `$initial_*` and `$session_entry_*` copies go too.
+ * Matched by suffix inside the SDK's `$` namespace only, so the set-once
+ * (`$session_entry_*`) and initial (`$initial_*`) copies go too while a custom
+ * property that happens to end in `_url` is left alone.
  */
-const URL_PROPERTY = /(?:url|pathname|host|referrer|referring_domain)$/;
+const SDK_URL_PROPERTY = /^\$.*(?:url|pathname|host|referrer|referring_domain)$/;
+
+/** SDK properties whose value *is* a path. */
+const SDK_PATH_PROPERTY = /^\$.*pathname$/;
+
+/** SDK properties whose value is a URL, from which the path is derived. */
+const SDK_URL_VALUE_PROPERTY = /^\$.*(?:url|referrer)$/;
 
 /** Drops the URL-bearing properties from one event's properties. */
 export function stripUrlProperties(
@@ -19,7 +27,7 @@ export function stripUrlProperties(
   const kept: Record<string, unknown> = {};
 
   for (const [key, value] of Object.entries(properties)) {
-    if (!URL_PROPERTY.test(key)) {
+    if (!SDK_URL_PROPERTY.test(key)) {
       kept[key] = value;
     }
   }
@@ -27,24 +35,17 @@ export function stripUrlProperties(
   return kept;
 }
 
-/** Properties whose value *is* a path. */
-const PATH_PROPERTY = /pathname$/;
-
-/** Properties whose value is a URL, from which the path is derived. */
-const URL_VALUE_PROPERTY = /url$/;
-
 /**
  * The path a property carries, whether it holds a path or a whole URL.
  *
  * `$pathname` is not guaranteed — a payload may carry only `$current_url` — and
  * reading its absence as "public" is how a private route ships.
- * `$referrer`/`$referring_domain` are deliberately left out: they say where the
- * visitor came from, not which route this event happened on.
+ * `$referring_domain` is host-only, so it carries no path at all.
  */
 function pathOf(key: string, value: unknown): string | undefined {
   if (typeof value !== 'string') return undefined;
-  if (PATH_PROPERTY.test(key)) return value;
-  if (!URL_VALUE_PROPERTY.test(key)) return undefined;
+  if (SDK_PATH_PROPERTY.test(key)) return value;
+  if (!SDK_URL_VALUE_PROPERTY.test(key)) return undefined;
   if (value.startsWith('/')) return value;
 
   try {
@@ -79,27 +80,52 @@ function isUnderPrefix(path: string, prefixes: readonly string[]): boolean {
 }
 
 /**
- * Drops the URL only where the path belongs to a signed-in surface.
+ * Whether a path belongs to a signed-in surface (see `isUnderPrefix` for what
+ * counts as under one).
+ *
+ * Exported so the recorder can be configured per surface without re-deriving
+ * the base-path rules.
+ */
+export function isPrivateRoutePath(
+  path: string,
+  prefixes: readonly string[],
+): boolean {
+  return isUnderPrefix(path, prefixes);
+}
+
+/**
+ * Drops the URL properties that point at a signed-in surface.
  *
  * The shelter site is public, so its page URLs are worth keeping. It also hosts
  * the staff operator app under `/operator`, and those paths are redacted by the
  * site's own New Relic privacy rules — so they come off the event here too,
  * while the public routes keep their context.
  *
- * Every route-bearing property is checked, not just `$pathname`: the SDK's
- * set-once copies (`$session_entry_*`, `$initial_*`) survive navigation, so a
- * session that began on an operator page would otherwise keep sending that path
- * from every public page afterwards.
+ * Redaction is per property, not per event: every route-bearing property is
+ * checked (`$session_entry_*` and `$initial_*` survive navigation, so a session
+ * that began on an operator page would otherwise keep sending that path from
+ * every public page), and only the properties carrying a private path are
+ * dropped. Dropping the whole URL context would cost the public pages a session
+ * whose first page happened to be the operator app.
  */
 export function redactPrivateRouteProperties(
   properties: Record<string, unknown>,
   privatePrefixes: readonly string[],
 ): Record<string, unknown> {
-  const hasPrivateRoute = Object.entries(properties).some(([key, value]) => {
+  const kept: Record<string, unknown> = {};
+  let droppedAny = false;
+
+  for (const [key, value] of Object.entries(properties)) {
     const path = pathOf(key, value);
 
-    return path !== undefined && isUnderPrefix(path, privatePrefixes);
-  });
+    if (path !== undefined && isUnderPrefix(path, privatePrefixes)) {
+      droppedAny = true;
 
-  return hasPrivateRoute ? stripUrlProperties(properties) : properties;
+      continue;
+    }
+
+    kept[key] = value;
+  }
+
+  return droppedAny ? kept : properties;
 }

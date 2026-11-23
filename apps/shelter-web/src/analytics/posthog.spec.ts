@@ -22,6 +22,60 @@ it('records this site but never leaves an input unmasked', () => {
   expect(config.session_recording?.blockSelector).toBe('.ph-no-capture');
 });
 
+/**
+ * The operator app shares the origin, so the two surfaces have to disagree
+ * about their defaults: public content is the funnel, staff content is not.
+ */
+it('masks operator text and inputs unless they opt in', () => {
+  const config = buildInitConfig({
+    handoff: {},
+    pathname: '/operator/shelter/123',
+  });
+  const recording = config.session_recording as {
+    maskTextSelector?: string;
+    maskTextFn?: (text: string, element?: HTMLElement) => string;
+    maskInputFn?: (text: string, element?: HTMLElement) => string;
+  };
+
+  // Everything is masked by default, so a component added later is redacted
+  // until someone deliberately reveals it.
+  expect(recording.maskTextSelector).toBe('*');
+  // Autocapture would ship the same text as `$el_text`, where masks do not
+  // reach.
+  expect(config.autocapture).toBe(false);
+
+  const marked = { dataset: { record: 'true' } } as unknown as HTMLElement;
+  const unmarked = { dataset: {} } as unknown as HTMLElement;
+
+  expect(recording.maskTextFn?.('Angela Davis', unmarked)).toBe(
+    '*'.repeat('Angela Davis'.length),
+  );
+  expect(recording.maskTextFn?.('Angela Davis', marked)).toBe('Angela Davis');
+  expect(recording.maskInputFn?.('angela@example.com', unmarked)).toBe(
+    '*'.repeat('angela@example.com'.length),
+  );
+  // Whitespace stays, so the recording keeps its layout.
+  expect(recording.maskTextFn?.('\n   ', unmarked)).toBe('\n   ');
+});
+
+it('treats an operator route under a base path as operator', () => {
+  const config = buildInitConfig({
+    handoff: {},
+    pathname: '/branches/feat-x/operator/shelter/123',
+  });
+
+  expect(config.autocapture).toBe(false);
+});
+
+it('leaves public page text visible', () => {
+  const config = buildInitConfig({ handoff: {}, pathname: '/shelter/123' });
+
+  expect(
+    (config.session_recording as Record<string, unknown>)['maskTextSelector'],
+  ).toBeUndefined();
+  expect(config.autocapture).toBeUndefined();
+});
+
 it('keeps a public page url but drops the operator one', () => {
   const config = buildInitConfig({ handoff: {} });
   const beforeSend = config.before_send as unknown as (
@@ -40,13 +94,16 @@ it('keeps a public page url but drops the operator one', () => {
   };
 
   // Page views stay on for the public routes, so their URL is worth keeping.
-  // Compared by value: `toBe` is an identity check, so a `before_send` that
-  // redacted in place would still pass while the URL was gone.
-  expect(beforeSend({ properties: publicPage })?.properties).toEqual(
+  // Against a copy: comparing to the object that was passed in also passes when
+  // `before_send` redacts that object in place.
+  expect(beforeSend({ properties: { ...publicPage } })?.properties).toEqual(
     publicPage,
   );
-  // The operator app shares the origin; New Relic redacts these paths too.
-  expect(beforeSend({ properties: operatorPage })?.properties).toEqual({});
+  // The operator app shares the origin; New Relic redacts these paths too. Only
+  // the route-bearing properties go — `$host` carries no path.
+  expect(beforeSend({ properties: operatorPage })?.properties).toEqual({
+    $host: 'shelter.betterangels.la',
+  });
 });
 
 it('continues the handed-over session when one arrives', () => {

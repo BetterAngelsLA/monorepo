@@ -71,10 +71,15 @@ export function webAnalyticsConfig(): Partial<PostHogConfig> {
      * events, and anything that wants the surface can send it as its own
      * non-identifying property.
      */
-    before_send: (event) => ({
-      ...event,
-      properties: stripUrlProperties(event.properties),
-    }),
+    before_send: (event) => {
+      // A throw here makes posthog-js drop the event silently, so an event
+      // without properties is returned untouched rather than looked into.
+      if (!event?.properties) {
+        return event;
+      }
+
+      return { ...event, properties: stripUrlProperties(event.properties) };
+    },
     // localStorage rather than the default cookie jar: nothing else on this
     // origin needs the id, and no cookie is set in a staff browser.
     persistence: 'localStorage',
