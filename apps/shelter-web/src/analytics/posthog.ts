@@ -31,13 +31,27 @@ function isMarkedSafe(element?: HTMLElement): boolean {
 }
 
 /**
- * Masks text and input values unless the element opted in.
+ * Masks text unless the element opted in.
  *
  * Whitespace is left alone so the recording keeps its layout rather than
  * turning every newline into asterisks.
  */
-function maskUnlessMarked(text: string, element?: HTMLElement): string {
+function maskTextUnlessMarked(text: string, element?: HTMLElement): string {
   if (isMarkedSafe(element) || text.trim().length === 0) {
+    return text;
+  }
+
+  return '*'.repeat(text.length);
+}
+
+/**
+ * Masks a field's value unless the element opted in.
+ *
+ * No whitespace exception here: spaces are still a value, and the layout
+ * argument that applies to text nodes does not apply to what an input holds.
+ */
+function maskInputUnlessMarked(text: string, element?: HTMLElement): string {
+  if (isMarkedSafe(element)) {
     return text;
   }
 
@@ -74,8 +88,8 @@ const PUBLIC_RECORDING = {
 const OPERATOR_RECORDING = {
   maskAllInputs: true,
   maskTextSelector: '*',
-  maskTextFn: maskUnlessMarked,
-  maskInputFn: maskUnlessMarked,
+  maskTextFn: maskTextUnlessMarked,
+  maskInputFn: maskInputUnlessMarked,
   blockSelector: BLOCK_SELECTOR,
 } as const;
 

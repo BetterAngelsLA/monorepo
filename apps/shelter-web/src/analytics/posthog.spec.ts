@@ -56,6 +56,9 @@ it('masks operator text and inputs unless they opt in', () => {
   );
   // Whitespace stays, so the recording keeps its layout.
   expect(recording.maskTextFn?.('\n   ', unmarked)).toBe('\n   ');
+  // An input holding only spaces is still an input value.
+  expect(recording.maskInputFn?.('   ', unmarked)).toBe('   '.replace(/ /g, '*'));
+  expect(recording.maskInputFn?.('   ', marked)).toBe('   ');
 });
 
 it('treats an operator route under a base path as operator', () => {
