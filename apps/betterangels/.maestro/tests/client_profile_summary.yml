@@ -1,0 +1,62 @@
+appId: ${MAESTRO_APP_ID}
+---
+- runFlow: ../lib/framework/start_test.yml
+
+- assertVisible:
+    id: clients-screen
+
+# Use separate fixture names so iOS and Android runs can run in parallel.
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - evalScript: ${output.fixtureClientName = 'e2e-test-ios-client'}
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - evalScript: ${output.fixtureClientName = 'e2e-test-android-client'}
+
+# Reuse the fixture client if it exists.
+- runFlow:
+    file: ../lib/screens/clients/search_and_select_client.yml
+    env:
+      CLIENT_NAME: ${output.fixtureClientName}
+
+# Otherwise create it, return to the list, and select it to open its summary.
+- runFlow:
+    when:
+      visible: 'No results'
+    commands:
+      - tapOn:
+          id: main-plus-tab-btn
+      - tapOn: 'Add client'
+      - assertVisible: 'Create Client Profile'
+      - tapOn:
+          id: firstName
+      - inputText: ${output.fixtureClientName}
+      - hideKeyboard
+      - tapOn:
+          id: action-btn-primary
+      - waitForAnimationToEnd
+      - assertVisible: ${output.fixtureClientName}
+      - assertVisible:
+          id: client-tab-profile
+      - tapOn:
+          id: client-screen-back-btn
+      - waitForAnimationToEnd
+      - assertVisible:
+          id: clients-screen
+      - runFlow:
+          file: ../lib/screens/clients/search_and_select_client.yml
+          env:
+            CLIENT_NAME: ${output.fixtureClientName}
+
+# Finish on the Profile Summary; don't take its "See Details" action.
+- assertVisible:
+    id: client-profile-summary
+- assertVisible: ${output.fixtureClientName}
+- assertVisible:
+    id: client-summary-see-details-btn
+- assertVisible:
+    id: client-summary-add-interaction-btn
