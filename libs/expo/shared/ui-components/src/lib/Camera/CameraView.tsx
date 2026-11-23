@@ -8,6 +8,7 @@ import {
 } from 'expo-camera';
 import { useRef, useState } from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
+import { ReplayMask } from '../ReplayMask';
 import { CameraFooter, CameraHeader } from './ui';
 import { useCapturePicture } from './useCapturePicture';
 import { shouldMockCamera } from './utils';
@@ -81,7 +82,7 @@ export function CameraView(props: CameraProps) {
   }
 
   return (
-    <View style={[styles.root, style]} testID="camera-view">
+    <ReplayMask style={[styles.root, style]} testID="camera-view">
       {!shouldMockCamera && (
         // standard prd expo-camera experience (non iOS simulator)
         <ExpoCamera
@@ -108,7 +109,7 @@ export function CameraView(props: CameraProps) {
         onCapture={handleCapture}
         onToggleCameraType={toggleCameraType}
       />
-    </View>
+    </ReplayMask>
   );
 }
 

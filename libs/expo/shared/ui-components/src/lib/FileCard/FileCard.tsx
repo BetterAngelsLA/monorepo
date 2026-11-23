@@ -1,6 +1,7 @@
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { formatScalarDate } from '@monorepo/shared/scalars';
 import { Image } from 'expo-image';
+import { ReplayMask } from '../ReplayMask';
 import { ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import TextRegular from '../TextRegular';
@@ -25,12 +26,14 @@ export function FileCard(props: IFileCardProps) {
         <View style={styles.thumbnail}>
           {!!thumbnail && thumbnail}
           {!thumbnail && (
-            <Image
-              style={{ width: 36, height: 36 }}
-              source={{ uri: url }}
-              contentFit="cover"
-              accessibilityIgnoresInvertColors
-            />
+            <ReplayMask style={{ width: 36, height: 36 }}>
+              <Image
+                style={StyleSheet.absoluteFill}
+                source={{ uri: url }}
+                contentFit="cover"
+                accessibilityIgnoresInvertColors
+              />
+            </ReplayMask>
           )}
         </View>
         <View style={styles.meta}>

@@ -12,7 +12,7 @@ import { hasGqlCombinedApiError } from '../../apollo';
 import { useSnackbar } from '../../hooks';
 import { ClientProfileSectionEnum } from '../../screenRouting';
 import { MainContainer } from '../../ui-components';
-import { ClientViewTabEnum } from '../Client/ClientTabs';
+import { ClientViewTabEnum } from '../Client/clientViewTab';
 import { ClientProfileHeaderHmis } from './ClientProfileHeaderHmis';
 import { ClientProfileHmisDocument } from './__generated__/getClientHmis.generated';
 import { renderTabComponent } from './tabs/utils/renderTabComponent';

@@ -1,0 +1,32 @@
+appId: ${MAESTRO_APP_ID}
+---
+# Find shelter from both entry points: the add menu (client picker) and the pill
+# in the client header.
+#
+# Neither is pressed through to the browser. That would hand control to Safari
+# or Chrome, which this suite does not drive; the handoff itself — fragment
+# passed, session continued — is asserted in `apps/shelter-e2e`.
+- runFlow: ../lib/framework/start_test.yml
+
+- assertVisible:
+    id: clients-screen
+
+- tapOn:
+    id: main-plus-tab-btn
+- waitForAnimationToEnd
+
+- assertVisible: 'Find shelter'
+- tapOn: 'Find shelter'
+
+- assertVisible:
+    id: find-shelter-screen
+- assertVisible: 'Who are you finding shelter for?'
+
+- tapOn: 'Back'
+- assertVisible:
+    id: clients-screen
+
+- runFlow: ../lib/screens/clients/visit_fixture_client_profile.yml
+
+- assertVisible:
+    id: find-shelter-profile-btn

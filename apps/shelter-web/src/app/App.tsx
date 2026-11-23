@@ -20,6 +20,11 @@ export function App() {
     <MapsApiProvider apiKey={googleMapsApiKey} onError={onMapsProviderError}>
       <Routes>
         <Route element={<MainLayout />}>{shelterRoutes}</Route>
+        {/**
+         * Not wrapped in `ph-no-capture`: the operator surface is recorded, with
+         * every text node and input masked unless it opts in with
+         * `data-record="true"` (see `OPERATOR_RECORDING`).
+         */}
         <Route path={`${operatorPath}/*`} element={<OperatorApp />} />
       </Routes>
     </MapsApiProvider>

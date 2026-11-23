@@ -1,6 +1,7 @@
 import { ReactNode, RefObject, useState } from 'react';
-import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
+import { StyleProp, StyleSheet, ViewStyle } from 'react-native';
 import type { Details, Region } from 'react-native-maps';
+import { ReplayMask } from '../ReplayMask';
 import { defaultMapRegion } from './constants';
 import { MapLocateMeBtn } from './MapLocateMeBtn';
 import MapView from './mapsApi';
@@ -49,7 +50,7 @@ export function MapViewport(props: TMapProps) {
   }
 
   return (
-    <View style={[styles.wrapper, style]}>
+    <ReplayMask style={[styles.wrapper, style]}>
       <MapView
         ref={ref}
         provider={provider}
@@ -69,7 +70,7 @@ export function MapViewport(props: TMapProps) {
       </MapView>
 
       {!!enableUserLocation && <MapLocateMeBtn mapRef={ref} />}
-    </View>
+    </ReplayMask>
   );
 }
 

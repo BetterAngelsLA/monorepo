@@ -36,7 +36,13 @@ function monitoringEnvPlugin(env: Record<string, string>, isCI: boolean) {
     buildStart() {
       assertMonitoringEnv({
         label: 'shelter-web-monitoring',
-        required: ['VITE_SHELTER_WEB_NEW_RELIC_LICENSE_KEY', 'VITE_APP_ENV'],
+        // Analytics is in this list for the same reason: a build without the
+        // key ships and reports nothing, which is silent in production.
+        required: [
+          'VITE_SHELTER_WEB_NEW_RELIC_LICENSE_KEY',
+          'VITE_APP_ENV',
+          'VITE_POSTHOG_API_KEY',
+        ],
         env,
         isCI,
       });

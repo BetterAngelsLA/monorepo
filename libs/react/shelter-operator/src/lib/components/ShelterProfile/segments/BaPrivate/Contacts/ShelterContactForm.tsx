@@ -50,7 +50,7 @@ export function ShelterContactForm(props: TProps) {
             variant="trash"
             onClick={onRemove}
             disabled={disabled}
-            aria-label={`Remove contact: ${entry.contactName || 'name field empty'}`}
+            aria-label="Remove contact"
           />
         )}
       </div>

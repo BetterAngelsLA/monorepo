@@ -21,7 +21,7 @@ import {
   DEFAULT_PAGINATION_LIMIT,
   DEFAULT_QUERY_ORDER,
 } from '../../../ui-components/InteractionListHmis/constants';
-import { ClientViewTabEnum } from '../../Client/ClientTabs';
+import { ClientViewTabEnum } from '../../Client/clientViewTab';
 
 import {
   CreateServiceRequestHmisDocument,

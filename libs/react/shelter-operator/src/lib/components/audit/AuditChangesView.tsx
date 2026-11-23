@@ -37,7 +37,7 @@ function renderChange(change: AuditChange): ReactNode {
           <Text
             variant="caption"
             textColor="text-alert-60"
-            title={`Removed: ${removed}`}
+            title="Removed values"
           >
             Removed: {truncateValue(removed)}
           </Text>
@@ -47,7 +47,7 @@ function renderChange(change: AuditChange): ReactNode {
           <Text
             variant="caption"
             textColor="text-success-30"
-            title={`Added: ${added}`}
+            title="Added values"
           >
             Added: {truncateValue(added)}
           </Text>

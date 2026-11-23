@@ -4,13 +4,13 @@ import { useAtom } from 'jotai';
 import { Link } from 'react-router';
 import {
   aboutUsPath,
-  operatorPath,
   shelterHomePath,
   shelterVideoPath,
   signInPath,
 } from '../../constants';
 import { TUser } from '../../providers';
 import { flyoutAtom } from '../Flyout';
+import { operatorHref } from './operatorHref';
 
 type MenuMobileProps = {
   showOperator: boolean;
@@ -97,13 +97,13 @@ export function MenuMobile({ showOperator, user, signOut }: MenuMobileProps) {
 
         {showOperator ? (
           <div className={mergeCss(borderCss)}>
-            <Link
+            <a
               aria-label="navigate to operator dashboard"
-              to={operatorPath}
+              href={operatorHref}
               className={mergeCss(hoverBtnCss)}
             >
               Operator
-            </Link>
+            </a>
           </div>
         ) : null}
 

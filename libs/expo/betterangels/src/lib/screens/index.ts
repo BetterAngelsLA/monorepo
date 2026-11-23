@@ -12,6 +12,7 @@ export { default as CreateClientProfile } from './CreateClientProfile';
 export * from './CreateClientProfileHmis';
 export { default as FileInfoScreenHmis } from './FileInfoHmis';
 export { default as FileScreenComponent } from './FileScreenComponent';
+export * from './FindShelter';
 export { default as Interactions } from './Interactions';
 export { default as InteractionsHmis } from './InteractionsHmis';
 export { default as Note } from './Note';

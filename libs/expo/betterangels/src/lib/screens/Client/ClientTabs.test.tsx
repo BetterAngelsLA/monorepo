@@ -9,10 +9,8 @@
 import { ActiveOrgProvider, type Org } from '@monorepo/ba-platform';
 import { render, screen } from '@testing-library/react-native';
 import { Pressable, Text } from 'react-native';
-import ClientTabs, {
-  ClientViewTabEnum,
-  resolveClientTab,
-} from './ClientTabs';
+import ClientTabs, { resolveClientTab } from './ClientTabs';
+import { ClientViewTabEnum } from './clientViewTab';
 
 const flags = vi.hoisted(() => ({ referrals: false }));
 

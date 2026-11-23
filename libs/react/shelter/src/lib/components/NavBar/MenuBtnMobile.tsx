@@ -4,13 +4,13 @@ import { useAtom } from 'jotai';
 import { Link } from 'react-router';
 import {
   aboutUsPath,
-  operatorPath,
   shelterHomePath,
   signInPath,
 } from '../../constants';
 import { FeatureFlags } from '../../constants/featureFlags';
 import { useSignOut, useUser } from '../../providers';
 import { FlyoutAnimationEnum, flyoutAtom } from '../Flyout';
+import { operatorHref } from './operatorHref';
 import { MenuMobile } from './MenuMobile';
 
 export function MenuBtnMobile() {
@@ -42,9 +42,9 @@ export function MenuBtnMobile() {
           About Us
         </Link>
         {showOperator ? (
-          <Link aria-label="navigate to operator dashboard" to={operatorPath}>
+          <a aria-label="navigate to operator dashboard" href={operatorHref}>
             Operator
-          </Link>
+          </a>
         ) : null}
         {user ? (
           <button aria-label="sign out" onClick={signOut}>

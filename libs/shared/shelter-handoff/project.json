@@ -1,0 +1,40 @@
+{
+  "name": "shared-shelter-handoff",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/shared/shelter-handoff/src",
+  "projectType": "library",
+  "tags": ["type:util", "scope:shared"],
+  "targets": {
+    "lint": {
+      "executor": "nx:run-commands",
+      "inputs": ["default", "{workspaceRoot}/eslint.config.mjs"],
+      "options": {
+        "cwd": "libs/shared/shelter-handoff",
+        "command": "eslint ."
+      }
+    },
+    "test": {
+      "options": {},
+      "configurations": {
+        "ci": {
+          "ci": true,
+          "coverage": true
+        }
+      }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "libs/shared/shelter-handoff",
+        "commands": [
+          {
+            "command": "tsc --noEmit -p tsconfig.lib.json"
+          },
+          {
+            "command": "tsc --noEmit -p tsconfig.spec.json"
+          }
+        ]
+      }
+    }
+  }
+}
