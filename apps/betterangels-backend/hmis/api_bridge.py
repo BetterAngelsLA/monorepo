@@ -10,23 +10,13 @@ import requests
 import strawberry
 from django.conf import settings
 from django.core.exceptions import PermissionDenied, ValidationError
-from graphql import (
-    FieldNode,
-    FragmentSpreadNode,
-    GraphQLError,
-    InlineFragmentNode,
-    SelectionSetNode,
-)
+from graphql import FieldNode, FragmentSpreadNode, GraphQLError, InlineFragmentNode, SelectionSetNode
 from strawberry import UNSET, Info
 from strawberry.utils.str_converters import to_snake_case
 
 from common.errors import NotFoundGQLError, UnauthenticatedGQLError
 from common.utils import dict_keys_to_snake
-from hmis.types import (
-    CreateHmisClientProfileInput,
-    CreateHmisNoteInput,
-    UpdateHmisNoteInput,
-)
+from hmis.types import CreateHmisClientProfileInput, CreateHmisNoteInput, UpdateHmisNoteInput
 
 DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 LOS_ANGELES_TZ = "America/Los_Angeles"
@@ -39,6 +29,9 @@ HMIS_LOGIN_USER_AGENT = (
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
     "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
 )
+# Clarity's Horizon login issues no bearer token; HMIS API calls are authenticated by the
+# cookie session captured at login, kept in the Django session between requests.
+HMIS_SESSION_COOKIES_KEY = "hmis_session_cookies"
 
 METADATA_FIELDS = {"id", "added_date", "last_updated"}
 NOTE_FIELDS = {"title", "note", "date", "ref_client_program"}
@@ -118,6 +111,12 @@ class HmisApiBridge:
         user_agent_header = {"User-Agent": forwarded_user_agent} if forwarded_user_agent else {}
 
         self.http = requests.Session()
+
+        # Reuse the HMIS cookie session captured at login. requests matches cookies against the
+        # ``Host`` header (which we force to ``hmis_host``), so scope them to that host.
+        hmis_cookies = request.session.get(HMIS_SESSION_COOKIES_KEY) or {}
+        for name, value in hmis_cookies.items():
+            self.http.cookies.set(name, value, domain=hmis_host, path="/")
 
         self.headers = {
             "Accept": "application/json, text/plain, */*",
@@ -415,6 +414,9 @@ class HmisApiBridge:
             # what authenticates /api1, so verify the session and forward the cookie jar.
             if self._session_is_authenticated():
                 self._forward_cookies_to_client(list(self.http.cookies))
+                self.info.context["request"].session[HMIS_SESSION_COOKIES_KEY] = {
+                    cookie.name: cookie.value for cookie in self.http.cookies
+                }
                 return
 
             if "Incorrect" in post_response.text:
