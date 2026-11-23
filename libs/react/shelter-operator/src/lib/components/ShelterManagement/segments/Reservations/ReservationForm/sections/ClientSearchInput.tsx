@@ -172,9 +172,7 @@ export function ClientSearchInput({
                     type="button"
                     className="flex-shrink-0"
                     onClick={() => onSetPrimary(client.id)}
-                    aria-label={`Set ${
-                      formatClientDisplayName(client) || 'client'
-                    } as primary`}
+                    aria-label="Set primary client"
                   >
                     <Star
                       size={18}
@@ -219,7 +217,7 @@ export function ClientSearchInput({
                     type="button"
                     className="flex-shrink-0 rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
                     onClick={() => onRemoveClient(client.id)}
-                    aria-label={`Remove ${client.firstName} ${client.lastName}`}
+                    aria-label="Remove client"
                   >
                     <X size={16} />
                   </button>
