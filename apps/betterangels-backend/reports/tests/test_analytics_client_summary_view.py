@@ -26,7 +26,7 @@ EXPECTED_COLUMNS = frozenset(
     {
         "client_id",
         "client_created_at",
-        "client_updated_at",
+        "client_last_saved_at",
         "has_date_of_birth",
         "has_california_id",
         "has_email",
@@ -48,9 +48,9 @@ EXPECTED_COLUMNS = frozenset(
         "current_case_manager_count",
         "household_member_count",
         "social_media_profile_count",
-        "task_count",
-        "task_assigned_count",
-        "task_completed_count",
+        "client_task_count",
+        "client_task_assigned_count",
+        "client_task_completed_count",
     }
 )
 
@@ -99,7 +99,7 @@ def test_view_exposes_only_the_agreed_columns() -> None:
 
 
 @pytest.mark.django_db
-def test_a_no_op_save_still_bumps_updated_at() -> None:
+def test_a_no_op_save_still_moves_client_last_saved_at() -> None:
     """Pins the overcount deliberately — the raw column is what the spike surfaces.
 
     A save that changes nothing moves ``updated_at``, so "updated in the last 90 days"
@@ -115,7 +115,7 @@ def test_a_no_op_save_still_bumps_updated_at() -> None:
 
     after = summary_row(client)
     assert after is not None
-    assert timestamp(after, "client_updated_at") > timestamp(before, "client_updated_at")
+    assert timestamp(after, "client_last_saved_at") > timestamp(before, "client_last_saved_at")
 
 
 @pytest.mark.django_db

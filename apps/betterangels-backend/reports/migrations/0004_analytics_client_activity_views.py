@@ -49,16 +49,31 @@ absence is impossible and the value is the information. ``task_origin`` replaces
 task's parent would otherwise need — a task can belong to a note or to an HMIS note, and a
 boolean would report the second case as "no parent".
 
+**Codes ship as labels, never as ints.** ``Task.Status`` and ``Referral.Status`` are
+``IntegerChoicesField``s, so a naive view would export ``0/1/2`` and leave every consumer
+to guess the mapping — a guess that inverts an entire analysis when it is wrong, with
+nothing in the data to contradict it. Both are rendered to text here (``task_origin``
+already did this for its three-way parent kind). Same rule for anything added later: if a
+value needs a legend to be read, the legend belongs in the value.
+
+**A stable id sits next to every free-text grouping key.** ``service_label`` is
+authored by each organisation, so it groups by spelling and changes retroactively when
+someone renames the service; ``service_id`` is what a count or a join should use. The two
+are different questions — read the label, count the id — so both are exported.
+
 **Timestamps and counts carry their entity.** ``created_at``/``updated_at`` are prefixed
 (``task_created_at``, ``referral_updated_at``) because these views get joined to each
-other, where two bare ``created_at`` columns mean two different things.
-``service_use_count`` in the rollup counts *links* — a service recorded on a note — so one
-service request attached to three notes counts three times there.
+other, where two bare ``created_at`` columns mean two different things. Counts carry their
+grain for the same reason: ``client_task_count`` on the summary, ``note_provided_service_count``
+and ``note_document_count`` here, so summing the wrong one across a join is a mistake the
+name argues against. ``service_use_count`` in the rollup counts *links* — a service recorded
+on a note — so one service request attached to three notes counts three times there.
 
 **Documents and attachments are two words for one table.** ``client_document_count`` and
 ``analytics_client_document`` count ``common_attachment`` rows owned by the client;
-``note_attachment_count`` counts the rows owned by a note. The split is the generic
-relation's content type, and the names now say which side of it a row is on.
+``note_document_count`` counts the rows owned by a note. The split is the generic
+relation's content type, and the names now say which side of it a row is on — which is why
+the note-side count stopped being called ``note_attachment_count``.
 
 **What is deliberately not exposed.** Free text never leaves the database: note
 ``purpose``, ``public_details`` and ``private_details``, task ``summary`` and
@@ -123,9 +138,9 @@ SELECT
     n.created_by_id IS NOT NULL AS has_creator,
     nullif(btrim(n.public_details), '') IS NOT NULL  AS has_public_details,
     nullif(btrim(n.private_details), '') IS NOT NULL AS has_private_details,
-    coalesce(ps.provided_service_count, 0)  AS provided_service_count,
-    coalesce(rs.requested_service_count, 0) AS requested_service_count,
-    coalesce(at.attachment_count, 0)        AS note_attachment_count
+    coalesce(ps.provided_service_count, 0)  AS note_provided_service_count,
+    coalesce(rs.requested_service_count, 0) AS note_requested_service_count,
+    coalesce(at.attachment_count, 0)        AS note_document_count
 FROM notes_note n
 LEFT JOIN (
     SELECT note_id, count(*) AS provided_service_count
@@ -165,6 +180,7 @@ SELECT
     n.client_profile_id AS client_id,
     n.id                AS note_id,
     sr.id               AS service_request_id,
+    sr.service_id       AS service_id,
     s.label             AS service_label,
     s.organization_id   AS service_organization_id,
     n.organization_id AS note_organization_id,
@@ -184,6 +200,7 @@ SELECT
     n.client_profile_id AS client_id,
     n.id                AS note_id,
     sr.id               AS service_request_id,
+    sr.service_id       AS service_id,
     s.label             AS service_label,
     s.organization_id   AS service_organization_id,
     n.organization_id AS note_organization_id,
@@ -248,7 +265,14 @@ CREATE OR REPLACE VIEW analytics_client_task AS
 SELECT
     t.client_profile_id AS client_id,
     t.id                AS task_id,
-    t.status AS task_status,
+    -- Mirrors `tasks.models.Task.Status`. Rendered as text because a bare `0/1/2` is a
+    -- guess for every consumer of the export, and a wrong guess inverts the analysis
+    -- without leaving anything in the data to contradict it.
+    CASE t.status
+        WHEN 0 THEN 'to_do'
+        WHEN 1 THEN 'in_progress'
+        WHEN 2 THEN 'completed'
+    END AS task_status,
     t.assignee_id IS NOT NULL AS is_assigned,
     nullif(btrim(t.summary), '')     IS NOT NULL AS has_summary,
     nullif(btrim(t.description), '') IS NOT NULL AS has_description,
@@ -276,7 +300,7 @@ SELECT
     a.attachment_type,
     a.namespace AS document_namespace,
     a.mime_type,
-    a.upload_org_id,
+    a.upload_org_id AS attachment_organization_id,
     nullif(btrim(a.original_filename), '') IS NOT NULL AS has_original_filename,
     a.uploaded_by_id IS NOT NULL AS has_uploader,
     a.created_at AS document_created_at,
@@ -291,7 +315,14 @@ CREATE OR REPLACE VIEW analytics_client_referral AS
 SELECT
     r.client_profile_id AS client_id,
     r.id                AS referral_id,
-    r.status AS referral_status,
+    -- Mirrors `referrals.models.Referral.Status`; text for the same reason as
+    -- `task_status`. A `CASE` with no `ELSE` yields null for a value this view does not
+    -- know about, which is louder than silently exporting a code nobody can read.
+    CASE r.status
+        WHEN 0 THEN 'pending'
+        WHEN 1 THEN 'accepted'
+        WHEN 2 THEN 'declined'
+    END AS referral_status,
     r.shelter_id,
     r.organization_id AS referral_organization_id,
     nullif(btrim(r.notes), '') IS NOT NULL AS has_referral_notes,

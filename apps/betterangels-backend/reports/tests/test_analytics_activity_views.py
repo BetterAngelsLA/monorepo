@@ -20,6 +20,7 @@ from accounts.models import Organization
 from clients.models import ClientProfile
 from common.models import Attachment
 from notes.models import Note, OrganizationService, ServiceRequest
+from referrals.models import Referral
 from tasks.models import Task
 
 VIEW_COLUMNS: dict[str, frozenset[str]] = {
@@ -38,9 +39,9 @@ VIEW_COLUMNS: dict[str, frozenset[str]] = {
             "has_creator",
             "has_public_details",
             "has_private_details",
-            "provided_service_count",
-            "requested_service_count",
-            "note_attachment_count",
+            "note_provided_service_count",
+            "note_requested_service_count",
+            "note_document_count",
         }
     ),
     "analytics_note_provided_service": frozenset(
@@ -50,6 +51,7 @@ VIEW_COLUMNS: dict[str, frozenset[str]] = {
             "client_id",
             "note_id",
             "service_request_id",
+            "service_id",
             "service_label",
             "service_organization_id",
             "note_organization_id",
@@ -63,6 +65,7 @@ VIEW_COLUMNS: dict[str, frozenset[str]] = {
             "client_id",
             "note_id",
             "service_request_id",
+            "service_id",
             "service_label",
             "service_organization_id",
             "note_organization_id",
@@ -104,7 +107,7 @@ VIEW_COLUMNS: dict[str, frozenset[str]] = {
             "attachment_type",
             "document_namespace",
             "mime_type",
-            "upload_org_id",
+            "attachment_organization_id",
             "has_original_filename",
             "has_uploader",
             "document_created_at",
@@ -166,17 +169,33 @@ def test_service_link_views_record_both_directions_separately() -> None:
     note.requested_services.add(requested)
 
     assert [
-        (row["note_service_direction"], row["service_label"]) for row in rows_of("analytics_note_provided_service")
-    ] == [("provided", "Tarp")]
+        (row["note_service_direction"], row["service_id"], row["service_label"])
+        for row in rows_of("analytics_note_provided_service")
+    ] == [("provided", catalogue.pk, "Tarp")]
     assert [
-        (row["note_service_direction"], row["service_label"]) for row in rows_of("analytics_note_requested_service")
-    ] == [("requested", "Tarp")]
+        (row["note_service_direction"], row["service_id"], row["service_label"])
+        for row in rows_of("analytics_note_requested_service")
+    ] == [("requested", catalogue.pk, "Tarp")]
 
     rollup = {
         (row["note_service_direction"], row["service_label"], row["service_use_count"], row["distinct_client_count"])
         for row in rows_of("analytics_service_rollup")
     }
     assert rollup == {("provided", "Tarp", 1, 1), ("requested", "Tarp", 1, 1)}
+
+
+@pytest.mark.django_db
+def test_status_enums_export_as_labels() -> None:
+    """A ``0/1/2`` is a guess for every consumer of the export; the label is not."""
+    client = baker.make(ClientProfile, first_name="Dale")
+    baker.make(Task, client_profile=client, summary="Follow up", status=Task.Status.COMPLETED)
+    baker.make(Referral, client_profile=client, status=Referral.Status.ACCEPTED)
+
+    (task,) = rows_of("analytics_client_task")
+    (referral,) = rows_of("analytics_client_referral")
+
+    assert task["task_status"] == "completed"
+    assert referral["referral_status"] == "accepted"
 
 
 @pytest.mark.django_db
@@ -262,5 +281,5 @@ def test_attachment_count_only_counts_note_attachments() -> None:
 
     (interaction,) = rows_of("analytics_client_interaction")
 
-    assert interaction["note_attachment_count"] == 1
+    assert interaction["note_document_count"] == 1
     assert len(rows_of("analytics_client_document")) == 1

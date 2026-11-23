@@ -19,6 +19,15 @@ A plain view, not a materialized one — it is always current, needs no refresh
 machinery, and at this row count the join is cheap. Materialize it only if the reports
 actually get slow.
 
+**``client_last_saved_at``, not ``client_updated_at``.** The column is a row-write
+wedge, not evidence that the client changed, and the name has to say so: a report writer
+who reads "updated" filters on it and gets the inflated number without noticing, while
+one who reads "last saved" has the overcount in the name.
+
+**Counts carry their grain.** ``client_task_count`` rather than ``task_count``, because
+this view gets joined to the per-interaction view, where ``note_*`` counts mean something
+else entirely. A bare ``task_count`` invites summing client grain across a note-grain join.
+
 Service requests are deliberately not counted here. An SR reaches a client through a
 *note*; its own ``client_profile`` is usually null, so counting on that FK undercounts by
 an order of magnitude. The service-link views in ``0004`` are the service-request source.
@@ -102,7 +111,7 @@ SELECT
     cp.id AS client_id,
     cp.created_at AS client_created_at,
     -- Raw, and inflated by no-op saves: what counts as a real change is deferred.
-    cp.updated_at AS client_updated_at,
+    cp.updated_at AS client_last_saved_at,
 
     cp.date_of_birth IS NOT NULL AS has_date_of_birth,
     nullif(btrim(cp.california_id), '') IS NOT NULL AS has_california_id,
@@ -133,9 +142,9 @@ SELECT
     coalesce(m.household_member_count, 0) AS household_member_count,
     coalesce(sm.social_media_profile_count, 0) AS social_media_profile_count,
 
-    coalesce(t.task_count, 0) AS task_count,
-    coalesce(t.task_assigned_count, 0) AS task_assigned_count,
-    coalesce(t.task_completed_count, 0) AS task_completed_count
+    coalesce(t.task_count, 0) AS client_task_count,
+    coalesce(t.task_assigned_count, 0) AS client_task_assigned_count,
+    coalesce(t.task_completed_count, 0) AS client_task_completed_count
 FROM clients_clientprofile cp
 LEFT JOIN task_rollup t ON t.client_id = cp.id
 LEFT JOIN phone_rollup pn ON pn.client_id = cp.id
