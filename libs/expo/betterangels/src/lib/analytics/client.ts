@@ -72,6 +72,12 @@ export function getAnalyticsClient(): AnalyticsClient | null {
           maskAllTextInputs: true,
           maskAllImages: true,
           maskAllSandboxedViews: true,
+          /**
+           * Tap coordinates on a known keypad reveal what was typed, and no
+           * text mask can undo that — the input is masked, the order of the taps
+           * is not. The recording keeps its screenshots and loses only markers.
+           */
+          captureTouches: false,
           // Console output carries API responses and debug payloads.
           captureLog: false,
           // Request URLs carry client ids in their path.

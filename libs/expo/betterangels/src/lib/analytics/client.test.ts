@@ -76,6 +76,8 @@ it('records screenshots only with every masking control on', async () => {
   // Console output and request paths both carry client data.
   expect(replay['captureLog']).toBe(false);
   expect(replay['captureNetworkTelemetry']).toBe(false);
+  // Tap coordinates survive text masking: the keypad order is still readable.
+  expect(replay['captureTouches']).toBe(false);
 });
 
 it('does not send the launch deep link with the app lifecycle events', async () => {
