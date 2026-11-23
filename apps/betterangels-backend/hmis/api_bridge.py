@@ -20,7 +20,6 @@ from graphql import (
 from strawberry import UNSET, Info
 from strawberry.utils.str_converters import to_snake_case
 
-from common.constants import HMIS_AUTH_COOKIE_NAME
 from common.errors import NotFoundGQLError, UnauthenticatedGQLError
 from common.utils import dict_keys_to_snake
 from hmis.types import (
@@ -34,6 +33,12 @@ LOS_ANGELES_TZ = "America/Los_Angeles"
 CLIENT_DATE_FORMAT = "%Y-%m-%d"
 PROGRAM_NOTE_DATE_FORMAT = "%Y-%m-%d"
 NOTE_DATE_FORMAT = "%m/%d/%Y"
+# Clarity redirects non-browser user agents to /outdated-browser-warning, which fails the
+# login form flow, so the login page is always requested as a browser.
+HMIS_LOGIN_USER_AGENT = (
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+)
 
 METADATA_FIELDS = {"id", "added_date", "last_updated"}
 NOTE_FIELDS = {"title", "note", "date", "ref_client_program"}
@@ -304,12 +309,12 @@ class HmisApiBridge:
 
             raise GraphQLError("Validation Errors", extensions={"errors": errors})
 
-    def _forward_cookies_to_client(self, resp: requests.Response) -> None:
+    def _forward_cookies_to_client(self, cookies: Iterable[Any]) -> None:
         django_response = self.info.context.get("response")
         if not django_response:
             return
 
-        for cookie in resp.cookies:
+        for cookie in cookies:
             django_response.set_cookie(
                 key=cookie.name,
                 value=cookie.value,
@@ -339,14 +344,40 @@ class HmisApiBridge:
 
         # Transparently forward any cookie updates from HMIS to the client
         if "Set-Cookie" in resp.headers:
-            self._forward_cookies_to_client(resp)
+            self._forward_cookies_to_client(resp.cookies)
 
         return resp
+
+    def _session_is_authenticated(self) -> bool:
+        """Check the login session against Clarity's /api1 endpoints.
+
+        Horizon (current Clarity login) no longer issues an ``auth_token`` cookie; the web
+        session cookie is what authenticates ``/api1`` (verified: ``current-user`` -> 200).
+        """
+        headers = {k: v for k, v in self.headers.items() if k != "Host"}
+        headers.update(
+            {
+                "Accept": "application/json, text/plain, */*",
+                "User-Agent": HMIS_LOGIN_USER_AGENT,
+                "X-Requested-With": "XMLHttpRequest",
+                "x-app-name": "Horizon",
+            }
+        )
+
+        try:
+            resp = self.http.get(f"{self.endpoint}/api1/current-user", params={"fields": "id"}, headers=headers)
+        except Exception:
+            return False
+
+        return resp.status_code == 200
 
     def login(self, username: str, password: str) -> None:
         headers = self.headers.copy()
         headers.pop("Host", None)
         headers["Accept"] = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+        # Clarity serves /outdated-browser-warning (no auth cookie) to non-browser user agents,
+        # so the login page flow must always look like a browser regardless of the client UA.
+        headers["User-Agent"] = HMIS_LOGIN_USER_AGENT
         login_url = f"{self.endpoint}/login"
 
         try:
@@ -379,20 +410,17 @@ class HmisApiBridge:
                 allow_redirects=True,
             )
 
-            if post_response.url != login_url and "login" not in post_response.url:
-                auth_token = post_response.cookies.get(HMIS_AUTH_COOKIE_NAME)
-                if not auth_token:
-                    raise ValidationError(f"Status Code: {post_response.status_code}")
-
-                # Forward cookies from login response to client
-                self._forward_cookies_to_client(post_response)
+            # requests keeps cookies set on a login redirect in the session jar only.
+            # Horizon (current Clarity login) issues no auth_token: the session cookie is
+            # what authenticates /api1, so verify the session and forward the cookie jar.
+            if self._session_is_authenticated():
+                self._forward_cookies_to_client(list(self.http.cookies))
                 return
 
-            elif "Incorrect username or password" in post_response.text:
+            if "Incorrect" in post_response.text:
                 raise PermissionDenied("Login Failed: Invalid credentials.")
 
-            else:
-                raise ValidationError(f"Status Code: {post_response.status_code}")
+            raise ValidationError(f"Status Code: {post_response.status_code}")
 
         except Exception as e:
             raise ValidationError(f"An error occurred: {e}")
