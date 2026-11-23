@@ -171,6 +171,20 @@ yarn ba:e2e -- landing
 yarn ba:e2e:android -- landing
 ```
 
+**Task create, update, and delete flow:**
+
+```bash
+yarn ba:e2e -- task_crud
+# Android
+yarn ba:e2e:android -- task_crud
+```
+
+`task_crud.yml` uses the fixture client's Tasks tab to create a uniquely named
+task, update its title and description, and delete it through the confirmation
+dialog. It checks the saved values on the detail screen and verifies the task
+is absent from the client list after deletion. Run against a development build
+ loading the current source so the task button selectors are available.
+
 **Pass extra flags to Maestro:**
 
 Everything after `--` is forwarded to the script. However, nx reserves some
@@ -508,3 +522,8 @@ Notes:
 [Maestro CLI commands and options](https://docs.maestro.dev/maestro-cli/maestro-cli-commands-and-options)
 
 [Run E2E tests on EAS Workflows and Maestro](https://docs.expo.dev/eas/workflows/examples/e2e-tests/)
+
+The task CRUD flow requires an active team and the assignable member **Aaron Pollock**
+in the test organization. It selects that name explicitly, skipping unnamed roster
+rows, verifies the saved assignment, then clears it during editing and reopens the
+form to verify that saving an unassigned task works.

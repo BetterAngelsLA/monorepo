@@ -31,6 +31,7 @@ export default function DeleteTask(props: TDeleteTaskProps) {
         onDelete={handleDeletePress}
         button={
           <Pressable
+            testID="delete-task-btn"
             disabled={isDeleting}
             accessibilityRole="button"
             accessibilityHint="delete this task"
