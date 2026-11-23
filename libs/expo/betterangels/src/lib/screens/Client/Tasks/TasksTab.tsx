@@ -1,4 +1,3 @@
-import { useMutation } from '@apollo/client/react';
 import { PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
@@ -10,7 +9,12 @@ import { router } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { TaskStatusEnum, TaskType, toTaskFilter } from '../../../apollo';
-import { useActiveOrgId, useSnackbar } from '../../../hooks';
+import {
+  TASK_CREATE_FAILED_MESSAGE,
+  useActiveOrgId,
+  useCreateTask,
+  useSnackbar,
+} from '../../../hooks';
 import { useModalScreen } from '../../../providers';
 import { useUserTeamPreference } from '../../../state';
 import { enumDisplayTaskStatus, pagePaddingHorizontal } from '../../../static';
@@ -23,7 +27,6 @@ import {
   toModelFilterValues,
 } from '../../../ui-components';
 import { TaskFormData } from '../../../ui-components/TaskForm/TaskForm';
-import { CreateTaskDocument } from '../../../ui-components/TaskForm/__generated__/createTask.generated';
 import { TasksDocument } from '../../../ui-components/TaskList/__generated__/Tasks.generated';
 import { ClientProfileQuery } from '../__generated__/Client.generated';
 
@@ -48,7 +51,7 @@ export function TasksTab(props: TProps) {
 
   const [search, setSearch] = useState('');
 
-  const [createTask] = useMutation(CreateTaskDocument);
+  const createTask = useCreateTask();
   const { showSnackbar } = useSnackbar();
   const { showModalScreen } = useModalScreen();
   const [teamPreference] = useUserTeamPreference();
@@ -71,32 +74,32 @@ export function TasksTab(props: TProps) {
     setFiltersKey((k) => k + 1); // inc key to trigger remount
   }
 
-  const onSubmit = async (task: TaskFormData, closeForm: () => void) => {
-    if (!client?.clientProfile.id || !activeOrgId) return;
+  const onSubmit = async (
+    task: TaskFormData,
+    closeForm: () => void,
+    clientProfileId: string,
+  ) => {
     try {
-      const result = await createTask({
-        variables: {
-          data: {
-            summary: task.summary ?? '',
-            description: task.description,
-            status: task.status,
-            teamId: task.teamId ?? undefined,
-            clientProfile: client.clientProfile.id,
-            organizationId: activeOrgId,
-          },
+      const outcome = await createTask(
+        {
+          summary: task.summary ?? '',
+          description: task.description,
+          status: task.status,
+          teamId: task.teamId ?? undefined,
+          clientProfile: clientProfileId,
         },
-        refetchQueries: [TasksDocument],
-        awaitRefetchQueries: true,
-      });
+        { refetchQueries: [TasksDocument], awaitRefetchQueries: true },
+      );
 
-      if (result.data?.createTask.__typename === 'OperationInfo') {
-        console.log(result.data.createTask.messages);
+      if (!outcome.ok) {
+        showSnackbar({ message: outcome.message, type: 'error' });
+        return;
       }
 
       closeForm();
     } catch (e) {
       showSnackbar({
-        message: 'Error creating a task.',
+        message: TASK_CREATE_FAILED_MESSAGE,
         type: 'error',
       });
       console.error(e);
@@ -131,15 +134,17 @@ export function TasksTab(props: TProps) {
           Displaying {visible} of {total} tasks
         </TextRegular>
 
-        <IconButton
-          variant="secondary"
-          borderColor={Colors.WHITE}
-          accessibilityLabel="open Task form"
-          accessibilityHint="opens Task form"
-          onPress={openTaskForm}
-        >
-          <PlusIcon />
-        </IconButton>
+        {activeOrgId ? (
+          <IconButton
+            variant="secondary"
+            borderColor={Colors.WHITE}
+            accessibilityLabel="open Task form"
+            accessibilityHint="opens Task form"
+            onPress={openTaskForm}
+          >
+            <PlusIcon />
+          </IconButton>
+        ) : null}
       </View>
     );
   }
@@ -148,13 +153,15 @@ export function TasksTab(props: TProps) {
     throw new Error('Something went wrong. Please try again.');
   }
 
+  const clientProfileId = client.clientProfile.id;
+
   function openTaskForm() {
     showModalScreen({
       presentation: 'fullScreenModal',
       renderContent: ({ close }) => (
         <TaskForm
           onCancel={close}
-          onSubmit={(task) => onSubmit(task, close)}
+          onSubmit={(task) => onSubmit(task, close, clientProfileId)}
           initialValues={{ teamId: teamPreference }}
         />
       ),

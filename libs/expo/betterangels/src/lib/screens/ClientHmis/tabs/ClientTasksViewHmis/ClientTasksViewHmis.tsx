@@ -1,4 +1,3 @@
-import { useMutation } from '@apollo/client/react';
 import { PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
@@ -15,7 +14,12 @@ import {
   TaskType,
   toTaskFilter,
 } from '../../../../apollo';
-import { useActiveOrgId, useSnackbar } from '../../../../hooks';
+import {
+  TASK_CREATE_FAILED_MESSAGE,
+  useActiveOrgId,
+  useCreateTask,
+  useSnackbar,
+} from '../../../../hooks';
 import { useModalScreen } from '../../../../providers';
 import {
   enumDisplayTaskStatus,
@@ -30,7 +34,6 @@ import {
   toModelFilterValues,
 } from '../../../../ui-components';
 import { TaskFormData } from '../../../../ui-components/NoteTasks';
-import { CreateTaskDocument } from '../../../../ui-components/TaskForm/__generated__/createTask.generated';
 import { TasksDocument } from '../../../../ui-components/TaskList/__generated__/Tasks.generated';
 
 function getInitialTaskFilters(): TModelFilters {
@@ -53,7 +56,7 @@ export function ClientTasksViewHmis(props: TProps) {
   const { client } = props;
 
   const [search, setSearch] = useState('');
-  const [createTask] = useMutation(CreateTaskDocument);
+  const createTask = useCreateTask();
   const { showSnackbar } = useSnackbar();
   const { showModalScreen } = useModalScreen();
   const activeOrgId = useActiveOrgId();
@@ -75,32 +78,32 @@ export function ClientTasksViewHmis(props: TProps) {
     setFiltersKey((k) => k + 1);
   }
 
-  const onSubmit = async (task: TaskFormData, closeForm: () => void) => {
-    if (!client?.id || !activeOrgId) return;
+  const onSubmit = async (
+    task: TaskFormData,
+    closeForm: () => void,
+    clientId: string,
+  ) => {
     try {
-      const result = await createTask({
-        variables: {
-          data: {
-            summary: task.summary ?? '',
-            description: task.description,
-            status: task.status,
-            teamId: task.teamId ?? undefined,
-            hmisClientProfile: client.id,
-            organizationId: activeOrgId,
-          },
+      const outcome = await createTask(
+        {
+          summary: task.summary ?? '',
+          description: task.description,
+          status: task.status,
+          teamId: task.teamId ?? undefined,
+          hmisClientProfile: clientId,
         },
-        refetchQueries: [TasksDocument],
-        awaitRefetchQueries: true,
-      });
+        { refetchQueries: [TasksDocument], awaitRefetchQueries: true },
+      );
 
-      if (result.data?.createTask.__typename === 'OperationInfo') {
-        console.log(result.data.createTask.messages);
+      if (!outcome.ok) {
+        showSnackbar({ message: outcome.message, type: 'error' });
+        return;
       }
 
       closeForm();
     } catch (e) {
       showSnackbar({
-        message: 'Error creating a task.',
+        message: TASK_CREATE_FAILED_MESSAGE,
         type: 'error',
       });
       console.error(e);
@@ -127,15 +130,17 @@ export function ClientTasksViewHmis(props: TProps) {
           Displaying {visible} of {total} tasks
         </TextRegular>
 
-        <IconButton
-          variant="secondary"
-          borderColor={Colors.WHITE}
-          accessibilityLabel="open Task form"
-          accessibilityHint="opens Task form"
-          onPress={openTaskForm}
-        >
-          <PlusIcon />
-        </IconButton>
+        {activeOrgId ? (
+          <IconButton
+            variant="secondary"
+            borderColor={Colors.WHITE}
+            accessibilityLabel="open Task form"
+            accessibilityHint="opens Task form"
+            onPress={openTaskForm}
+          >
+            <PlusIcon />
+          </IconButton>
+        ) : null}
       </View>
     );
   }
@@ -144,11 +149,16 @@ export function ClientTasksViewHmis(props: TProps) {
     throw new Error('Something went wrong. Please try again.');
   }
 
+  const clientId = client.id;
+
   function openTaskForm() {
     showModalScreen({
       presentation: 'fullScreenModal',
       renderContent: ({ close }) => (
-        <TaskForm onCancel={close} onSubmit={(task) => onSubmit(task, close)} />
+        <TaskForm
+          onCancel={close}
+          onSubmit={(task) => onSubmit(task, close, clientId)}
+        />
       ),
       title: 'Follow-Up Task',
     });

@@ -8,10 +8,9 @@ import {
 import { RefObject } from 'react';
 import { ScrollView, View } from 'react-native';
 import { TaskStatusEnum, UpdateTaskInput } from '../../apollo';
-import { useActiveOrgId, useSnackbar } from '../../hooks';
+import { useCreateTask, useSnackbar } from '../../hooks';
 import { useModalScreen } from '../../providers';
 import { DraftTask as LocalDraftTask } from '../../screens/NotesHmis/NoteFormHmis/formSchema';
-import { CreateTaskDocument } from '../TaskForm/__generated__/createTask.generated';
 import { DeleteTaskDocument } from '../TaskForm/__generated__/deleteTask.generated';
 import { UpdateTaskDocument } from '../TaskForm/__generated__/updateTask.generated';
 import NoteTasksModal from './NoteTasksModal';
@@ -63,10 +62,9 @@ export default function NoteTasks(props: INoteTasksProps) {
 
   const { showModalScreen } = useModalScreen();
   const { showSnackbar } = useSnackbar();
-  const activeOrgId = useActiveOrgId();
 
   // --- MUTATIONS ---
-  const [createTask] = useMutation(CreateTaskDocument);
+  const createTask = useCreateTask();
   const [updateTask] = useMutation(UpdateTaskDocument);
   const [deleteTask] = useMutation(DeleteTaskDocument, {
     update(cache, { data }) {
@@ -93,7 +91,7 @@ export default function NoteTasks(props: INoteTasksProps) {
 
   // --- DRAFT HANDLERS ---
   const handleDraftSave = (data: TaskFormData, existingId?: string) => {
-    if (!onDraftTasksChange) return;
+    if (!onDraftTasksChange) return true;
 
     const newTask: LocalDraftTask = {
       // eslint-disable-next-line react-hooks/purity -- Date.now() is called in event handler, not render
@@ -114,6 +112,8 @@ export default function NoteTasks(props: INoteTasksProps) {
     } else {
       onDraftTasksChange([...(tasks as LocalDraftTask[]), newTask]);
     }
+
+    return true;
   };
 
   const handleDraftDelete = (id: string) => {
@@ -123,13 +123,18 @@ export default function NoteTasks(props: INoteTasksProps) {
   };
 
   // --- LIVE HANDLERS ---
-  const handleLiveSave = async (data: TaskFormData, existingId?: string) => {
+  // NoteForm currently mounts this component only in draft mode. Keep the live
+  // branch honest for a future consumer: `false` is what keeps the sheet open.
+  const handleLiveSave = async (
+    data: TaskFormData,
+    existingId?: string,
+  ): Promise<boolean> => {
     try {
       const cleanStatus = data.status || undefined;
       const cleanTeamId = !data.teamId ? null : data.teamId;
 
       if (existingId) {
-        await updateTask({
+        const updated = await updateTask({
           variables: {
             data: {
               ...data,
@@ -139,31 +144,47 @@ export default function NoteTasks(props: INoteTasksProps) {
             },
           },
         });
-      } else {
-        if (!activeOrgId) return;
 
-        delete data.id;
-        await createTask({
-          variables: {
-            data: {
-              ...data,
-              summary: data.summary || '',
-              status: cleanStatus,
-              clientProfile: clientProfileId,
-              hmisClientProfile: hmisClientProfileId,
-              teamId: cleanTeamId ?? teamId ?? undefined,
-              // Handle linking to either Note type
-              note: noteId ?? undefined,
-              hmisNote: hmisNoteId ?? undefined,
-              organizationId: activeOrgId,
-            },
-          },
+        const updatedTask = updated.data?.updateTask;
+
+        if (updatedTask?.__typename === 'OperationInfo') {
+          showSnackbar({
+            message: updatedTask.messages[0]?.message ?? 'Failed to save task',
+            type: 'error',
+          });
+
+          return false;
+        }
+      } else {
+        // `id` belongs to an update payload; a create names no row.
+        const { id: _existingId, ...fields } = data;
+        const created = await createTask({
+          ...fields,
+          summary: data.summary || '',
+          status: cleanStatus,
+          clientProfile: clientProfileId,
+          hmisClientProfile: hmisClientProfileId,
+          teamId: cleanTeamId ?? teamId ?? undefined,
+          // Handle linking to either Note type
+          note: noteId ?? undefined,
+          hmisNote: hmisNoteId ?? undefined,
         });
+
+        if (!created.ok) {
+          showSnackbar({ message: created.message, type: 'error' });
+
+          return false;
+        }
       }
+
       refetch?.();
+
+      return true;
     } catch (err) {
       console.error(err);
       showSnackbar({ message: 'Failed to save task', type: 'error' });
+
+      return false;
     }
   };
 

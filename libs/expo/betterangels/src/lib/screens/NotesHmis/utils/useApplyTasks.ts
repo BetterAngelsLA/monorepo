@@ -1,15 +1,24 @@
 import { useMutation } from '@apollo/client/react';
 import { useCallback } from 'react';
-import { useActiveOrgId } from '../../../hooks';
-import { CreateTaskDocument } from '../../../ui-components/TaskForm/__generated__/createTask.generated';
+import { useActiveOrgId, useCreateTask } from '../../../hooks';
 import { DeleteTaskDocument } from '../../../ui-components/TaskForm/__generated__/deleteTask.generated';
 import { UpdateTaskDocument } from '../../../ui-components/TaskForm/__generated__/updateTask.generated';
 import type { DraftTask } from '../NoteFormHmis';
 import splitTasks from './splitTasks';
 import { toClearableId } from './toClearableId';
 
+export type TTaskCreateFailure = {
+  summary: string;
+  message: string;
+};
+
+export type TApplyTasksResult = {
+  failedCreates: TTaskCreateFailure[];
+  message?: string;
+};
+
 export function useApplyTasks() {
-  const [createTask] = useMutation(CreateTaskDocument);
+  const createTask = useCreateTask();
   const [updateTask] = useMutation(UpdateTaskDocument);
   const [deleteTask] = useMutation(DeleteTaskDocument);
   const activeOrgId = useActiveOrgId();
@@ -19,7 +28,7 @@ export function useApplyTasks() {
       tasks: DraftTask[] | undefined,
       hmisNoteId: string,
       hmisClientProfileId: string,
-    ) => {
+    ): Promise<TApplyTasksResult> => {
       const { toCreateTask, toUpdateTask, toDeleteTask } = splitTasks(tasks);
 
       // Creates need an org to anchor to (none remembered / none to join).
@@ -30,22 +39,30 @@ export function useApplyTasks() {
         throw new Error('Cannot create tasks without an active organization.');
       }
 
+      const failedCreates: TTaskCreateFailure[] = [];
+
       if (activeOrgId) {
         for (const s of toCreateTask) {
-          await createTask({
-            variables: {
-              data: {
-                summary: s.summary || '',
-                teamId: s.teamId || undefined,
-                assigneeId: s.assigneeId || undefined,
-                description: s.description,
-                status: s.status,
-                hmisClientProfile: hmisClientProfileId,
-                hmisNote: hmisNoteId,
-                organizationId: activeOrgId,
-              },
-            },
+          // A refusal (e.g. an assignee outside the org) is a resolved
+          // OperationInfo, not an exception. The note is already saved by this
+          // point, so collect it and let the screen report it rather than throw
+          // into the note save's catch and invite a duplicate note.
+          const outcome = await createTask({
+            summary: s.summary || '',
+            teamId: s.teamId || undefined,
+            assigneeId: s.assigneeId || undefined,
+            description: s.description,
+            status: s.status,
+            hmisClientProfile: hmisClientProfileId,
+            hmisNote: hmisNoteId,
           });
+
+          if (!outcome.ok) {
+            failedCreates.push({
+              summary: s.summary || 'Untitled task',
+              message: outcome.message,
+            });
+          }
         }
       }
 
@@ -71,6 +88,15 @@ export function useApplyTasks() {
           },
         });
       }
+
+      const message =
+        failedCreates.length === 0
+          ? undefined
+          : failedCreates.length === 1
+            ? `Could not create task "${failedCreates[0].summary}": ${failedCreates[0].message}`
+            : `${failedCreates.length} tasks could not be created. ${failedCreates[0].message}`;
+
+      return { failedCreates, message };
     },
     [activeOrgId, createTask, deleteTask, updateTask],
   );
