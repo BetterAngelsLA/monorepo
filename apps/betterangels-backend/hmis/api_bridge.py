@@ -353,7 +353,7 @@ class HmisApiBridge:
         Horizon (current Clarity login) no longer issues an ``auth_token`` cookie; the web
         session cookie is what authenticates ``/api1`` (verified: ``current-user`` -> 200).
         """
-        headers = {k: v for k, v in self.headers.items() if k != "Host"}
+        headers = {k: v for k, v in self.headers.items() if k not in ("Host", "Authorization")}
         headers.update(
             {
                 "Accept": "application/json, text/plain, */*",
@@ -413,9 +413,10 @@ class HmisApiBridge:
             # Horizon (current Clarity login) issues no auth_token: the session cookie is
             # what authenticates /api1, so verify the session and forward the cookie jar.
             if self._session_is_authenticated():
-                self._forward_cookies_to_client(list(self.http.cookies))
+                jar = {cookie.name: cookie for cookie in self.http.cookies}
+                self._forward_cookies_to_client(jar.values())
                 self.info.context["request"].session[HMIS_SESSION_COOKIES_KEY] = {
-                    cookie.name: cookie.value for cookie in self.http.cookies
+                    name: cookie.value for name, cookie in jar.items()
                 }
                 return
 
