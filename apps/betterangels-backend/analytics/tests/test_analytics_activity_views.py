@@ -136,7 +136,7 @@ def columns_of(view: str) -> set[str]:
             """
             SELECT column_name
             FROM information_schema.columns
-            WHERE table_schema = current_schema() AND table_name = %s
+            WHERE table_schema = 'analytics' AND table_name = %s
             """,
             [view],
         )
@@ -145,7 +145,7 @@ def columns_of(view: str) -> set[str]:
 
 def rows_of(view: str) -> list[dict[str, object]]:
     with connection.cursor() as cursor:
-        cursor.execute(f"SELECT * FROM {view}")
+        cursor.execute(f"SELECT * FROM analytics.{view}")
         column_names = [column[0] for column in cursor.description or ()]
         return [dict(zip(column_names, row)) for row in cursor.fetchall()]
 

@@ -61,7 +61,7 @@ def view_columns() -> set[str]:
             """
             SELECT column_name
             FROM information_schema.columns
-            WHERE table_schema = current_schema() AND table_name = 'analytics_client_summary'
+            WHERE table_schema = 'analytics' AND table_name = 'analytics_client_summary'
             """
         )
         return {row[0] for row in cursor.fetchall()}
@@ -70,7 +70,7 @@ def view_columns() -> set[str]:
 def summary_row(client: ClientProfile) -> dict[str, object] | None:
     with connection.cursor() as cursor:
         cursor.execute(
-            "SELECT * FROM analytics_client_summary WHERE client_id = %s",
+            "SELECT * FROM analytics.analytics_client_summary WHERE client_id = %s",
             [client.pk],
         )
         column_names = [column[0] for column in cursor.description or ()]

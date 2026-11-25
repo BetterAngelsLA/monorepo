@@ -11,6 +11,7 @@ which points here.
 | `docs/styleguides/python.md`                       | Python / Django styleguide     |
 | `docs/styleguides/react.md`                        | React / Frontend styleguide    |
 | `docs/tooling.md`                                  | Commands, MCP bootstrap        |
+| `docs/analytics.md`                                | Analytics views / reporting    |
 | `apps/betterangels-backend/docs/graphql_errors.md` | Backend GraphQL error handling |
 
 ## Iterative Learning

@@ -30,14 +30,19 @@ else entirely. A bare ``task_count`` invites summing client grain across a note-
 
 Service requests are deliberately not counted here. An SR reaches a client through a
 *note*; its own ``client_profile`` is usually null, so counting on that FK undercounts by
-an order of magnitude. The service-link views in ``0004`` are the service-request source.
+an order of magnitude. The service-link views in ``0002`` are the service-request source.
 
-Purely additive: the reverse is a drop, and nothing else depends on it.
+**It lives in a schema of its own.** ``analytics`` rather than ``public``, because the
+grant that follows is ``USAGE`` on that one schema instead of ``USAGE ON SCHEMA public``,
+which every PHI table shares. The migration creates the schema, so the reverse drops
+both — and the view is dropped first, so ``DROP SCHEMA`` never needs ``CASCADE``: if
+something else has been put in there, the reverse should fail rather than delete it.
 """
 
 from django.db import migrations
 
-SUMMARY_VIEW = "analytics_client_summary"
+SCHEMA = "analytics"
+SUMMARY_VIEW = f"{SCHEMA}.analytics_client_summary"
 
 # `CREATE OR REPLACE` so a later field-list change is a one-line edit that keeps the
 # name, rather than a drop-and-recreate that breaks anything pointed at it.
@@ -169,9 +174,13 @@ class Migration(migrations.Migration):
         ("clients", "0002_initial"),
         ("notes", "0004_alter_note_team"),
         ("tasks", "0006_task_assignee"),
-        ("reports", "0002_report_schedule_local_time"),
     ]
 
     operations = [
+        # Reversed last, after every view in it has been dropped.
+        migrations.RunSQL(
+            f"CREATE SCHEMA IF NOT EXISTS {SCHEMA};",
+            f"DROP SCHEMA IF EXISTS {SCHEMA};",
+        ),
         migrations.RunSQL(CREATE_SUMMARY_VIEW, DROP_SUMMARY_VIEW),
     ]

@@ -122,8 +122,11 @@ negligible the trade costs nothing.
 
 from django.db import migrations
 
-CREATE_INTERACTION_VIEW = """
-CREATE OR REPLACE VIEW analytics_client_interaction AS
+# Created by `0001`; every view below lands in it.
+SCHEMA = "analytics"
+
+CREATE_INTERACTION_VIEW = f"""
+CREATE OR REPLACE VIEW {SCHEMA}.analytics_client_interaction AS
 SELECT
     n.client_profile_id AS client_id,
     n.id                AS note_id,
@@ -172,8 +175,8 @@ WHERE n.client_profile_id IS NOT NULL
 # identity, `(note_service_link_id, note_service_direction)`, which is only meaningful if both halves
 # are selected. Dropping it would move the "add the literal yourself" burden to every union site, where
 # forgetting it produces a plausible wrong number rather than an error.
-CREATE_PROVIDED_SERVICE_VIEW = """
-CREATE OR REPLACE VIEW analytics_note_provided_service AS
+CREATE_PROVIDED_SERVICE_VIEW = f"""
+CREATE OR REPLACE VIEW {SCHEMA}.analytics_note_provided_service AS
 SELECT
     link.id             AS note_service_link_id,
     'provided'          AS note_service_direction,
@@ -192,8 +195,8 @@ LEFT JOIN notes_organizationservice s ON s.id = sr.service_id
 WHERE n.client_profile_id IS NOT NULL
 """
 
-CREATE_REQUESTED_SERVICE_VIEW = """
-CREATE OR REPLACE VIEW analytics_note_requested_service AS
+CREATE_REQUESTED_SERVICE_VIEW = f"""
+CREATE OR REPLACE VIEW {SCHEMA}.analytics_note_requested_service AS
 SELECT
     link.id             AS note_service_link_id,
     'requested'         AS note_service_direction,
@@ -215,8 +218,8 @@ WHERE n.client_profile_id IS NOT NULL
 # The delete-correct answer. Aggregates straight from the through-tables, so a removed
 # service stops being counted; the grain keeps it to hundreds of rows, and no client filter
 # keeps the organisation totals complete.
-CREATE_SERVICE_ROLLUP_VIEW = """
-CREATE OR REPLACE VIEW analytics_service_rollup AS
+CREATE_SERVICE_ROLLUP_VIEW = f"""
+CREATE OR REPLACE VIEW {SCHEMA}.analytics_service_rollup AS
 SELECT
     x.organization_id AS note_organization_id,
     x.service_category,
@@ -260,8 +263,8 @@ FROM (
 GROUP BY x.organization_id, x.service_category, x.service_label, x.note_service_direction
 """
 
-CREATE_TASK_VIEW = """
-CREATE OR REPLACE VIEW analytics_client_task AS
+CREATE_TASK_VIEW = f"""
+CREATE OR REPLACE VIEW {SCHEMA}.analytics_client_task AS
 SELECT
     t.client_profile_id AS client_id,
     t.id                AS task_id,
@@ -292,8 +295,8 @@ FROM tasks_task t
 WHERE t.client_profile_id IS NOT NULL
 """
 
-CREATE_DOCUMENT_VIEW = """
-CREATE OR REPLACE VIEW analytics_client_document AS
+CREATE_DOCUMENT_VIEW = f"""
+CREATE OR REPLACE VIEW {SCHEMA}.analytics_client_document AS
 SELECT
     a.object_id AS client_id,
     a.id        AS attachment_id,
@@ -310,8 +313,8 @@ JOIN django_content_type ct ON ct.id = a.content_type_id
 WHERE ct.app_label = 'clients' AND ct.model = 'clientprofile'
 """
 
-CREATE_REFERRAL_VIEW = """
-CREATE OR REPLACE VIEW analytics_client_referral AS
+CREATE_REFERRAL_VIEW = f"""
+CREATE OR REPLACE VIEW {SCHEMA}.analytics_client_referral AS
 SELECT
     r.client_profile_id AS client_id,
     r.id                AS referral_id,
@@ -335,17 +338,17 @@ WHERE r.client_profile_id IS NOT NULL
 
 
 class Migration(migrations.Migration):
-    # `reports/0003` already pins clients, common, notes and tasks; only referrals is new
-    # here, so it is the one dependency that is not already implied.
+    # `analytics/0001` already pins clients, common, notes, tasks and contenttypes; only
+    # referrals is new here, so it is the one dependency that is not already implied.
     dependencies = [
-        ("reports", "0003_analytics_client_summary_view"),
+        ("analytics", "0001_analytics_client_summary_view"),
         ("referrals", "0002_initial"),
     ]
 
     operations = [
         migrations.RunSQL(
             statement,
-            f"DROP VIEW IF EXISTS {view};",
+            f"DROP VIEW IF EXISTS {SCHEMA}.{view};",
         )
         for view, statement in (
             ("analytics_client_interaction", CREATE_INTERACTION_VIEW),

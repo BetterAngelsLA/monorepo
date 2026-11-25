@@ -1,7 +1,7 @@
 # Analytics and reporting — conventions
 
 How the reporting surface is built and why. The views themselves live in
-`apps/betterangels-backend/reports/migrations/`; this doc is the rulebook they follow, so
+`apps/betterangels-backend/analytics/migrations/`; this doc is the rulebook they follow, so
 new views start consistent instead of re-deriving the reasoning.
 
 Origin: **[DEV-2642] Spike—evaluate connecting PostgreSQL to PostHog for reporting and
@@ -72,8 +72,10 @@ Two consequences worth carrying into review and into how answers are read:
 
 Eight read-only SQL views, created by `RunSQL` migrations (Django has no view primitive;
 `regions/0004`, `common/0003`, `referrals/0002` and `accounts/0007` are the house
-precedent). Nothing is copied, refreshed, or scheduled — each is a live view, so
-"updates at least daily" is the database's job, not a pipeline we operate.
+precedent). They live in a schema of their own, `analytics`, so a reporting consumer's
+grant is `USAGE` on that one schema rather than on `public`, which every PHI table shares.
+Nothing is copied, refreshed, or scheduled — each is a live view, so "updates at least
+daily" is the database's job, not a pipeline we operate.
 
 | View                               | Grain                                 | Stable key                                        |
 | ---------------------------------- | ------------------------------------- | ------------------------------------------------- |
@@ -102,9 +104,10 @@ task `summary`/`description` and referral `notes` are reduced to `has_*` flags. 
 `location_id` is reduced to a flag too: location plus timestamp is close enough to an
 address to avoid.
 
-This is structural, not policy. The intended grant is `SELECT` on eight views, and the
-views expose nothing to leak — instead of a column allowlist on `clients_clientprofile`
-that someone can widen by accident. Any new view starts from the same premise.
+This is structural, not policy. The intended grant is `SELECT` on the eight views in the
+`analytics` schema, and the views expose nothing to leak — instead of a column allowlist on
+`clients_clientprofile` that someone can widen by accident. Any new view starts from the
+same premise.
 
 ### 2. If a value needs a legend to be read, the legend belongs in the value
 
@@ -181,9 +184,10 @@ comparing consecutive events.
 
 1. **Decide the grain first.** One row per what? If the answer needs "and", it is two
    views.
-2. **Write it as `RunSQL` with `CREATE OR REPLACE`**, and give the reverse as a `DROP`.
-   Editing an **already-applied** migration does not re-run it — see below.
-3. **Add the column list to the tests.** `reports/tests/test_analytics_client_summary_view.py`
+2. **Write it as `RunSQL` with `CREATE OR REPLACE VIEW analytics.<name>`**, and give the
+   reverse as a `DROP`. It goes in the `analytics` schema — never `public`. Editing an
+   **already-applied** migration does not re-run it — see below.
+3. **Add the column list to the tests.** `analytics/tests/test_analytics_client_summary_view.py`
    and `test_analytics_activity_views.py` assert the view's columns are _exactly_ an agreed
    set. That allowlist is the drift detector: adding a free-text or identifying column has
    to fail there, not in review.
@@ -198,8 +202,9 @@ Both the dev database and the test database keep the old view, because migration
 _that_ they ran, not what they contained. To pick up an edit, from the repo root:
 
 ```bash
-# 1. dev database: unapply the view migration, then reapply
-yarn nx run betterangels-backend:manage -- migrate reports 0002
+# 1. dev database: unapply the view migrations, then reapply
+#    (`analytics zero` if the edited migration is 0001, which creates the schema)
+yarn nx run betterangels-backend:manage -- migrate analytics 0001
 yarn nx run betterangels-backend:migrate
 
 # 2. test database: drop the stale cache, then the database itself
@@ -221,10 +226,6 @@ disk, never view definitions.
 
 ## Not done yet
 
-- **A dedicated schema.** The views sit in `public` alongside every PHI table. A reporting
-  consumer needs `USAGE ON SCHEMA public` to read them, which is a blanket grant; an
-  `analytics` schema would be default-deny and let the grant be `USAGE` on that schema
-  only.
 - **`service_id` in the rollup grain.** It groups by `(org, category, label, direction)`,
   so two catalogue rows sharing a label merge with summed counts — reachable because
   `_resolve_service` does `get_or_create(label=...)` on free text. No duplicates today;
