@@ -165,10 +165,11 @@ view, so a union of the two identifies rows by `(note_service_link_id, note_serv
 
 `ServiceRequest` has `due_by` and `status`, but `due_by` is in no create input and the only
 mutation that could set it is called from nowhere; `status` is fixed at creation and never
-transitions. Both were dropped from the link views along with the derived
-`service_completed_on` and `is_overdue`. A column that is always empty is worse than a
-missing one, because a chart of it looks like a finding. Add them back the day the app
-captures either.
+transitions. Both are still editable in Django admin, so a hand-edited row can carry them —
+the rule is about what the product produces, not what the database permits. Both were
+dropped from the link views along with the derived `service_completed_on` and `is_overdue`.
+A column that is always empty is worse than a missing one, because a chart of it looks like
+a finding. Add them back the day the app captures either.
 
 ### 8. Do not "fix" overcounting timestamps inside a view
 
@@ -184,7 +185,7 @@ comparing consecutive events.
 
 1. **Decide the grain first.** One row per what? If the answer needs "and", it is two
    views.
-2. **Write it as `RunSQL` with `CREATE OR REPLACE VIEW analytics.<name>`**, and give the
+2. **Write it as a `RunSQL` migration that creates `analytics.<name>`**, and give the
    reverse as a `DROP`. It goes in the `analytics` schema — never `public`. Editing an
    **already-applied** migration does not re-run it — see below.
 3. **Add the column list to the tests.** `analytics/tests/test_analytics_client_summary_view.py`

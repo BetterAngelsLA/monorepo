@@ -11,14 +11,16 @@ filtering, so the number the PM is shown keeps matching the number we told them 
 expect.
 """
 
-from datetime import datetime
+from datetime import date, datetime
 
 import pytest
+from django.contrib.contenttypes.models import ContentType
 from django.db import connection
 from model_bakery import baker
 
 from clients.enums import RelationshipTypeEnum
 from clients.models import ClientContact, ClientHouseholdMember, ClientProfile, SocialMediaProfile
+from common.models import PhoneNumber
 
 # The complete column list, not a forbidden-name check: adding a client-identifying
 # column has to fail this test, and so does dropping one the reports read.
@@ -172,3 +174,66 @@ def test_merged_profiles_are_excluded() -> None:
     # The default manager hides merged profiles; the view has to agree with it or every
     # count it produces will disagree with the product's own.
     assert summary_row(merged) is None
+
+
+@pytest.mark.django_db
+def test_presence_flags_reflect_only_recorded_values() -> None:
+    """A field holding ``''`` or spaces is not data, so the flag has to say so."""
+    blank = baker.make(
+        ClientProfile,
+        first_name="Blank",
+        california_id="   ",
+        email="",
+        pronouns=None,
+        pronouns_other="  ",
+        important_notes="   ",
+        date_of_birth=None,
+    )
+    filled = baker.make(
+        ClientProfile,
+        first_name="Filled",
+        california_id="abc123",
+        email="filled@example.com",
+        pronouns=None,
+        pronouns_other="she/her",
+        important_notes="Allergic to peanuts",
+        date_of_birth=date(1990, 1, 1),
+    )
+
+    blank_row = summary_row(blank)
+    filled_row = summary_row(filled)
+    assert blank_row is not None
+    assert filled_row is not None
+
+    for column in (
+        "has_california_id",
+        "has_email",
+        "has_pronouns",
+        "has_important_notes",
+        "has_date_of_birth",
+    ):
+        assert blank_row[column] is False, column
+
+    assert filled_row["has_california_id"] is True
+    assert filled_row["has_email"] is True
+    assert filled_row["has_pronouns"] is True
+    assert filled_row["has_important_notes"] is True
+    assert filled_row["has_date_of_birth"] is True
+
+
+@pytest.mark.django_db
+def test_has_phone_number_covers_the_generic_phone_relation() -> None:
+    """``phone_number`` is the legacy column; the live one is ``common_phonenumber``."""
+    legacy = baker.make(ClientProfile, first_name="Legacy", phone_number="+12125550100")
+    recorded = baker.make(ClientProfile, first_name="Recorded", phone_number=None)
+    PhoneNumber.objects.create(
+        number="+12125550101",
+        content_type=ContentType.objects.get_for_model(ClientProfile),
+        object_id=recorded.pk,
+    )
+    without = baker.make(ClientProfile, first_name="Without", phone_number=None)
+
+    for client, expected in ((legacy, True), (recorded, True), (without, False)):
+        row = summary_row(client)
+        assert row is not None
+        assert row["has_phone_number"] is expected, client.first_name

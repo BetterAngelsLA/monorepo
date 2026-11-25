@@ -19,6 +19,7 @@ from model_bakery import baker
 from accounts.models import Organization
 from clients.models import ClientProfile
 from common.models import Attachment
+from hmis.models import HmisNote
 from notes.models import Note, OrganizationService, ServiceRequest
 from referrals.models import Referral
 from tasks.models import Task
@@ -245,18 +246,20 @@ def test_task_presence_flags_do_not_expose_the_text() -> None:
 
 
 @pytest.mark.django_db
-def test_task_origin_covers_both_parent_kinds() -> None:
+def test_task_origin_covers_every_parent_kind() -> None:
     """A boolean would report an HMIS-parented task as having no parent at all."""
     org = baker.make(Organization)
     client = baker.make(ClientProfile, first_name="Dale")
     note = baker.make(Note, client_profile=client, organization=org)
+    hmis_note = baker.make(HmisNote)
 
     baker.make(Task, client_profile=client, summary="From a note", note=note)
+    baker.make(Task, client_profile=client, summary="From an HMIS note", hmis_note=hmis_note)
     baker.make(Task, client_profile=client, summary="No parent")
 
     origins = sorted(str(row["task_origin"]) for row in rows_of("analytics_client_task"))
 
-    assert origins == ["note", "standalone"]
+    assert origins == ["hmis_note", "note", "standalone"]
 
 
 @pytest.mark.django_db

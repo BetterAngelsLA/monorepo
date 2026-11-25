@@ -1,7 +1,9 @@
 """Client activity views: interactions, their services, tasks, documents, referrals.
 
-Read-only projections over existing tables, joining ``analytics_client_summary``
-(the client dimension) on ``client_id``. Nothing is copied, refreshed, or scheduled —
+Read-only projections over existing tables, keyed by ``client_id``. No view here joins
+``analytics_client_summary`` — membership is decided by ``client_profile_id IS NOT NULL``
+on the entity's own table — but they share that key with it, which is what makes it the
+client dimension a consumer joins them to. Nothing is copied, refreshed, or scheduled —
 each is a live view, so the daily-freshness requirement is met by the database rather
 than by a pipeline we operate.
 
@@ -27,15 +29,9 @@ link — a client-per-request view would need ``COALESCE(sr.client_profile_id,
 note.client_profile_id)``, a composite key, and no cursor, to reproduce data these views
 already carry.
 
-**No due date and no status on the links.** ``ServiceRequest`` has ``due_by`` and
-``status`` fields, but nothing writes them: ``due_by`` is absent from every create input
-and the only mutation that could set it (``updateServiceRequest``) is never called, and
-``status`` is fixed at creation by direction (provided → completed, requested → to-do) and
-never transitions. ``service_due_by`` would be null in every row, ``service_completed_on``
-would restate ``note_interacted_at``, and ``is_overdue`` would be permanently false, so all
-three are omitted — a column that is always empty is worse than a missing one, because a
-chart of it looks like a finding. Status is likewise left off: it is
-``note_service_direction`` restated. Add them back the day the app captures either.
+**No status on the links.** ``ServiceRequest.status`` is fixed at creation by direction
+(provided → completed, requested → to-do) and never transitions, so it would restate
+``note_service_direction``.
 
 **A ``has_*`` flag appears only where the value itself is withheld.** Free text gets a flag
 because the text never leaves the database; an id that is not published gets one because
@@ -43,9 +39,10 @@ there is nothing else to test. Where the value is exposed in the same row, a fla
 duplication that can drift, so ``team_id``, ``shelter_id`` and ``service_label`` stand
 alone. ``has_summary`` on a task is always true today and is kept
 anyway: it is a presence surface, so it keeps its meaning if the constraint is ever
-relaxed. Categorical fields (``task_status``, ``referral_status``, ``attachment_type``,
-``document_namespace``) carry no flag: their
-absence is impossible and the value is the information. ``task_origin`` replaces the flag a
+relaxed. ``task_status`` and ``referral_status`` come from non-null enum fields and
+``attachment_type`` is a ``TextChoicesField``, so their absence is impossible and the value
+is the information. ``document_namespace`` is the exception: a nullable ``CharField`` that
+the upload path fills from ``ClientDocumentNamespaceEnum``. ``task_origin`` replaces the flag a
 task's parent would otherwise need — a task can belong to a note or to an HMIS note, and a
 boolean would report the second case as "no parent".
 
