@@ -288,13 +288,13 @@ SeaweedFS exposes local-only management UIs (IPv4 localhost):
 
 All local S3-related environment variables are committed in `.compose/local.shared.env` and applied automatically:
 
-| Variable                         | Value                   | Purpose                                                 |
-| -------------------------------- | ----------------------- | ------------------------------------------------------- |
-| `AWS_S3_STORAGE_BUCKET_NAME`     | `betterangels-local`    | Local bucket name                                       |
-| `LOCAL_S3_INTERNAL_ENDPOINT_URL` | `http://s3:8333`        | Docker-internal S3 endpoint (used by Django)            |
-| `LOCAL_S3_PUBLIC_ENDPOINT_URL`   | `http://localhost:9000` | Browser-reachable S3 endpoint (used for signed URLs)    |
-| `AWS_ACCESS_KEY_ID`              | `admin`                 | Local S3 access key                                     |
-| `AWS_SECRET_ACCESS_KEY`          | `password`              | Local S3 secret key                                     |
+| Variable                         | Value                   | Purpose                                              |
+| -------------------------------- | ----------------------- | ---------------------------------------------------- |
+| `AWS_S3_STORAGE_BUCKET_NAME`     | `betterangels-local`    | Local bucket name                                    |
+| `LOCAL_S3_INTERNAL_ENDPOINT_URL` | `http://s3:8333`        | Docker-internal S3 endpoint (used by Django)         |
+| `LOCAL_S3_PUBLIC_ENDPOINT_URL`   | `http://localhost:9000` | Browser-reachable S3 endpoint (used for signed URLs) |
+| `AWS_ACCESS_KEY_ID`              | `admin`                 | Local S3 access key                                  |
+| `AWS_SECRET_ACCESS_KEY`          | `password`              | Local S3 secret key                                  |
 
 You do **not** need to add any of these variables to your `.env.local` unless you want to override the defaults (e.g., to point at a real AWS bucket).
 
@@ -407,6 +407,7 @@ a clean slate without resetting the full database.
 
 ### Additional Documentation
 
+- **[Analytics & Reporting Views](analytics.md)** — the read-only `analytics` schema behind the PostHog spike: grain rules, key rules, and why nothing identifying is exposed
 - **[GraphQL Error Handling](../apps/betterangels-backend/docs/graphql_errors.md)** — how the backend produces `OperationInfo` / `GraphQLError` responses
 
 ### Troubleshooting

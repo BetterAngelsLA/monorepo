@@ -164,6 +164,7 @@ INSTALLED_APPS = [
     "waffle",
     # Our Apps
     "accounts",
+    "analytics",
     "audit",
     "clients",
     "common",
