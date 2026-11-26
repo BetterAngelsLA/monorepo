@@ -103,7 +103,7 @@ jobs:
 
       - name: 🐳 Login to Amazon ECR
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
-        uses: aws-actions/amazon-ecr-login@v2.1.7
+        uses: aws-actions/amazon-ecr-login@v2.2.0
 
       - name: 🐳 Set up Docker Buildx
         id: buildx
